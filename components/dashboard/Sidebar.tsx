@@ -8,8 +8,7 @@ import { useAppStore } from '@/lib/store/useAppStore';
 import {
   LayoutDashboard,
   Users,
-  BrainCircuit,
-  MessageSquare,
+  Briefcase,
   Archive,
   Settings,
   HelpCircle,
@@ -24,8 +23,7 @@ export function Sidebar() {
   const navItems = [
     { name: t.sidebar.dashboard, href: '/dashboard', icon: LayoutDashboard },
     { name: t.sidebar.candidatePipeline, href: '/pipeline', icon: Users },
-    { name: t.sidebar.aiInsights, href: '/insights', icon: BrainCircuit },
-    { name: t.sidebar.teamReviews, href: '/reviews', icon: MessageSquare },
+    { name: t.sidebar.jobOpenings, href: '/jobs', icon: Briefcase },
     { name: t.sidebar.archive, href: '/archive', icon: Archive },
   ];
 
@@ -68,10 +66,14 @@ export function Sidebar() {
             </div>
           </div>
 
-          <button className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-medium py-2.5 px-4 rounded-lg flex items-center justify-center gap-2 mb-8 transition-colors shadow-sm">
+          <Link 
+            href="/jobs/new" 
+            onClick={handleLinkClick}
+            className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-medium py-2.5 px-4 rounded-lg flex items-center justify-center gap-2 mb-8 transition-colors shadow-sm"
+          >
             <Plus size={20} />
             {t.sidebar.createNewJob}
-          </button>
+          </Link>
 
           <nav className="space-y-1">
             {navItems.map((item) => {
