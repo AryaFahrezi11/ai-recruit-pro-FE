@@ -5,11 +5,13 @@ import { useTranslation } from '@/hooks/useTranslation';
 import { KanbanColumn } from '@/components/pipeline/KanbanColumn';
 import { CandidateCard, CandidateStage, CandidateStatus } from '@/components/pipeline/CandidateCard';
 import { CandidateModal } from '@/components/pipeline/CandidateModal';
-import { Filter, ArrowUpDown } from 'lucide-react';
+import { Filter, ArrowUpDown, Download } from 'lucide-react';
 
 interface CandidateData {
   name: string;
   role: string;
+  education?: string;
+  university?: string;
   stage: CandidateStage;
   status?: CandidateStatus;
   cvScore?: number;
@@ -38,13 +40,17 @@ export default function PipelinePage() {
           </p>
         </div>
         <div className="flex items-center gap-3">
+          <button 
+            onClick={() => window.print()}
+            className="flex items-center gap-2 px-4 py-2 bg-card border border-border rounded-lg text-sm font-semibold text-foreground hover:bg-muted transition-colors shadow-2xs"
+            title="Ekspor Laporan Pipeline ke PDF"
+          >
+            <Download size={16} className="text-muted-foreground" />
+            Ekspor PDF Pipeline
+          </button>
           <button className="flex items-center gap-2 px-4 py-2 bg-card border border-border rounded-lg text-sm font-medium text-foreground hover:bg-muted transition-colors shadow-sm">
             <Filter size={16} className="text-muted-foreground" />
             {t.pipeline.filter}
-          </button>
-          <button className="flex items-center gap-2 px-4 py-2 bg-card border border-border rounded-lg text-sm font-medium text-foreground hover:bg-muted transition-colors shadow-sm">
-            <ArrowUpDown size={16} className="text-muted-foreground" />
-            {t.pipeline.sort}
           </button>
         </div>
       </div>
@@ -58,23 +64,29 @@ export default function PipelinePage() {
             <CandidateCard 
               name="Rina Permata"
               role="Frontend Developer"
+              education="S1 Sistem Informasi (IPK 3.91)"
+              university="Universitas Indonesia"
               stage="upload_cv"
               timeInfo={`${t.pipeline.uploadedAgo} 1h ago`}
-              onClick={() => setSelectedCandidate({ name: "Rina Permata", role: "Frontend Developer", stage: "upload_cv" })}
+              onClick={() => setSelectedCandidate({ name: "Rina Permata", role: "Frontend Developer", stage: "upload_cv", education: "S1 Sistem Informasi (IPK 3.91)", university: "Universitas Indonesia" })}
             />
             <CandidateCard 
               name="Budi Santoso"
               role="Backend Engineer"
+              education="S1 Teknik Informatika (IPK 3.75)"
+              university="Institut Teknologi Bandung"
               stage="upload_cv"
               timeInfo={`${t.pipeline.uploadedAgo} 3h ago`}
-              onClick={() => setSelectedCandidate({ name: "Budi Santoso", role: "Backend Engineer", stage: "upload_cv" })}
+              onClick={() => setSelectedCandidate({ name: "Budi Santoso", role: "Backend Engineer", stage: "upload_cv", education: "S1 Teknik Informatika (IPK 3.75)", university: "Institut Teknologi Bandung" })}
             />
             <CandidateCard 
               name="Dewi Lestari"
               role="UI/UX Designer"
+              education="S1 DKV (IPK 3.80)"
+              university="Universitas Gadjah Mada"
               stage="upload_cv"
               timeInfo={`${t.pipeline.uploadedAgo} 5h ago`}
-              onClick={() => setSelectedCandidate({ name: "Dewi Lestari", role: "UI/UX Designer", stage: "upload_cv" })}
+              onClick={() => setSelectedCandidate({ name: "Dewi Lestari", role: "UI/UX Designer", stage: "upload_cv", education: "S1 DKV (IPK 3.80)", university: "Universitas Gadjah Mada" })}
             />
           </KanbanColumn>
 
@@ -83,28 +95,24 @@ export default function PipelinePage() {
             <CandidateCard 
               name="Alex Mercer"
               role="React Developer @ TechCorp"
+              education="S1 Teknik Komputer (IPK 3.65)"
+              university="Universitas Indonesia"
               stage="cv_screening"
               status="processing"
               cvScore={92}
               timeInfo={t.pipeline.cosineSimilarity}
-              onClick={() => setSelectedCandidate({ name: "Alex Mercer", role: "React Developer @ TechCorp", stage: "cv_screening", cvScore: 92, status: "processing" })}
+              onClick={() => setSelectedCandidate({ name: "Alex Mercer", role: "React Developer @ TechCorp", stage: "cv_screening", cvScore: 92, status: "processing", education: "S1 Teknik Komputer (IPK 3.65)", university: "Universitas Indonesia" })}
             />
             <CandidateCard 
               name="Sarah Chen"
               role="UI Engineer @ StartupX"
+              education="S1 Computer Science (IPK 3.88)"
+              university="Universitas Bina Nusantara"
               stage="cv_screening"
               status="pending"
               cvScore={88}
               timeInfo={t.pipeline.cosineSimilarity}
-              onClick={() => setSelectedCandidate({ name: "Sarah Chen", role: "UI Engineer @ StartupX", stage: "cv_screening", cvScore: 88, status: "pending" })}
-            />
-            <CandidateCard 
-              name="Lisa Huang"
-              role="Full Stack Dev @ WebAgency"
-              stage="cv_screening"
-              status="processing"
-              timeInfo={t.pipeline.analyzing}
-              onClick={() => setSelectedCandidate({ name: "Lisa Huang", role: "Full Stack Dev @ WebAgency", stage: "cv_screening", status: "processing" })}
+              onClick={() => setSelectedCandidate({ name: "Sarah Chen", role: "UI Engineer @ StartupX", stage: "cv_screening", cvScore: 88, status: "pending", education: "S1 Computer Science (IPK 3.88)", university: "Universitas Bina Nusantara" })}
             />
           </KanbanColumn>
 
@@ -113,32 +121,26 @@ export default function PipelinePage() {
             <CandidateCard 
               name="David Kim"
               role="Sr. Frontend @ MegaWeb"
+              education="S1 Teknik Informatika (IPK 3.85)"
+              university="Universitas Indonesia"
               stage="interview"
               status="video_uploaded"
               cvScore={95}
               videoUploaded={true}
               timeInfo={t.pipeline.interviewDone}
-              onClick={() => setSelectedCandidate({ name: "David Kim", role: "Sr. Frontend @ MegaWeb", stage: "interview", cvScore: 95, status: "video_uploaded", videoUploaded: true })}
+              onClick={() => setSelectedCandidate({ name: "David Kim", role: "Sr. Frontend @ MegaWeb", stage: "interview", cvScore: 95, status: "video_uploaded", videoUploaded: true, education: "S1 Teknik Informatika (IPK 3.85)", university: "Universitas Indonesia" })}
             />
             <CandidateCard 
               name="Anisa Rahmawati"
               role="React Developer"
+              education="S1 Informatika (IPK 3.70)"
+              university="Universitas Telkom"
               stage="interview"
               status="awaiting_video"
               cvScore={84}
               videoUploaded={false}
               timeInfo={t.pipeline.waitingInterview}
-              onClick={() => setSelectedCandidate({ name: "Anisa Rahmawati", role: "React Developer", stage: "interview", cvScore: 84, status: "awaiting_video", videoUploaded: false })}
-            />
-            <CandidateCard 
-              name="Marco Valentino"
-              role="Frontend Engineer"
-              stage="interview"
-              status="awaiting_video"
-              cvScore={81}
-              videoUploaded={false}
-              timeInfo={t.pipeline.waitingInterview}
-              onClick={() => setSelectedCandidate({ name: "Marco Valentino", role: "Frontend Engineer", stage: "interview", cvScore: 81, status: "awaiting_video", videoUploaded: false })}
+              onClick={() => setSelectedCandidate({ name: "Anisa Rahmawati", role: "React Developer", stage: "interview", cvScore: 84, status: "awaiting_video", videoUploaded: false, education: "S1 Informatika (IPK 3.70)", university: "Universitas Telkom" })}
             />
           </KanbanColumn>
 
@@ -147,23 +149,17 @@ export default function PipelinePage() {
             <CandidateCard 
               name="David Kim"
               role="Sr. Frontend @ MegaWeb"
+              education="S1 Teknik Informatika (IPK 3.85)"
+              university="Universitas Indonesia"
               stage="ai_analysis"
               status="processing"
               videoScores={{ ability: 85, intelligent: 92, personality: 78, attitude: 88, emotionalIntelligence: 80 }}
               timeInfo={t.pipeline.analyzing}
               onClick={() => setSelectedCandidate({ 
                 name: "David Kim", role: "Sr. Frontend @ MegaWeb", stage: "ai_analysis", status: "processing",
-                cvScore: 95, videoUploaded: true,
+                cvScore: 95, videoUploaded: true, education: "S1 Teknik Informatika (IPK 3.85)", university: "Universitas Indonesia",
                 videoScores: { ability: 85, intelligent: 92, personality: 78, attitude: 88, emotionalIntelligence: 80 }
               })}
-            />
-            <CandidateCard 
-              name="Putri Ayu"
-              role="Vue.js Developer"
-              stage="ai_analysis"
-              status="pending"
-              timeInfo={t.pipeline.analyzing}
-              onClick={() => setSelectedCandidate({ name: "Putri Ayu", role: "Vue.js Developer", stage: "ai_analysis", status: "pending" })}
             />
           </KanbanColumn>
 
@@ -172,28 +168,30 @@ export default function PipelinePage() {
             <CandidateCard 
               name="David Kim"
               role="Sr. Frontend @ MegaWeb"
+              education="S1 Teknik Informatika (IPK 3.85)"
+              university="Universitas Indonesia"
               stage="human_validation"
               status="needs_approval"
               videoScores={{ ability: 85, intelligent: 92, personality: 78, attitude: 88, emotionalIntelligence: 80 }}
               timeInfo={t.pipeline.awaitingDecision}
-              avatar="HR"
               onClick={() => setSelectedCandidate({ 
                 name: "David Kim", role: "Sr. Frontend @ MegaWeb", stage: "human_validation", status: "needs_approval",
-                cvScore: 95, videoUploaded: true,
+                cvScore: 95, videoUploaded: true, education: "S1 Teknik Informatika (IPK 3.85)", university: "Universitas Indonesia",
                 videoScores: { ability: 85, intelligent: 92, personality: 78, attitude: 88, emotionalIntelligence: 80 }
               })}
             />
             <CandidateCard 
               name="Siti Nurhaliza"
               role="Angular Developer"
+              education="S1 Sistem Informasi (IPK 3.78)"
+              university="Universitas Padjadjaran"
               stage="human_validation"
               status="needs_approval"
               videoScores={{ ability: 80, intelligent: 85, personality: 90, attitude: 82, emotionalIntelligence: 88 }}
               timeInfo={t.pipeline.awaitingDecision}
-              avatar="HR"
               onClick={() => setSelectedCandidate({ 
                 name: "Siti Nurhaliza", role: "Angular Developer", stage: "human_validation", status: "needs_approval",
-                cvScore: 89, videoUploaded: true,
+                cvScore: 89, videoUploaded: true, education: "S1 Sistem Informasi (IPK 3.78)", university: "Universitas Padjadjaran",
                 videoScores: { ability: 80, intelligent: 85, personality: 90, attitude: 82, emotionalIntelligence: 88 }
               })}
             />

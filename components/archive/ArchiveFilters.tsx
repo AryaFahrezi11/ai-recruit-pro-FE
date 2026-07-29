@@ -34,9 +34,13 @@ export function ArchiveFilters() {
         </div>
       </div>
 
-      <button className="flex items-center gap-2 px-4 py-2 bg-card border border-border rounded-lg text-sm font-medium text-foreground hover:bg-muted transition-colors shadow-sm shrink-0">
+      <button 
+        onClick={() => window.print()}
+        className="flex items-center gap-2 px-4 py-2 bg-card border border-border rounded-lg text-sm font-semibold text-foreground hover:bg-muted transition-colors shadow-2xs shrink-0 cursor-pointer"
+        title="Ekspor Data Laporan Arsip ke PDF"
+      >
         <Download size={16} className="text-muted-foreground" />
-        {t.archive?.exportData}
+        {t.archive?.exportData} (PDF)
       </button>
 
     </div>

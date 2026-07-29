@@ -7,7 +7,7 @@ import {
   X, Play, CheckCircle2, XCircle,
   Check, Lightbulb, FileText, Video, BarChart3,
   Upload, Brain, UserCheck, Scan, Download, ExternalLink,
-  Clock, AlertCircle, Sparkles, Briefcase, Mail, Phone, Lock, Archive
+  Clock, AlertCircle, Sparkles, Briefcase, Mail, Phone, Lock, Archive, GraduationCap, Building2
 } from 'lucide-react';
 import { 
   Radar, RadarChart, PolarGrid, PolarAngleAxis, ResponsiveContainer 
@@ -17,6 +17,8 @@ interface CandidateModalProps {
   candidate: { 
     name: string; 
     role: string;
+    education?: string;
+    university?: string;
     stage?: 'upload_cv' | 'cv_screening' | 'interview' | 'ai_analysis' | 'human_validation' | string;
     status?: 'pending' | 'processing' | 'video_uploaded' | 'awaiting_video' | 'needs_approval' | string;
     cvScore?: number;
@@ -251,7 +253,8 @@ export function CandidateModal({ candidate, onClose }: CandidateModalProps) {
                       <Briefcase size={14} />
                       {candidate.role}
                     </p>
-                    <p className="text-xs text-muted-foreground mt-1 flex items-center gap-3">
+                    <p className="text-xs text-muted-foreground mt-1 flex flex-wrap items-center gap-3">
+                      <span className="flex items-center gap-1 font-bold text-violet-700 dark:text-violet-300 bg-violet-100 dark:bg-violet-950/60 px-2 py-0.5 rounded"><GraduationCap size={13} /> {candidate.university || 'Universitas Indonesia'}</span>
                       <span className="flex items-center gap-1"><Mail size={12} /> {safeEmailName}@email.com</span>
                       <span className="flex items-center gap-1"><Phone size={12} /> +62 812-9876-5432</span>
                     </p>

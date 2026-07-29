@@ -23,7 +23,10 @@ import {
   CheckCircle2,
   ChevronRight,
   TrendingUp,
-  FileText
+  FileText,
+  GraduationCap,
+  Activity,
+  Check
 } from 'lucide-react';
 
 export default function DashboardPage() {
@@ -35,6 +38,7 @@ export default function DashboardPage() {
     {
       name: "David Kim",
       role: "Sr. Frontend @ MegaWeb",
+      education: "S1 Teknik Informatika (IPK 3.85)",
       stage: "human_validation",
       status: "needs_approval",
       cvScore: 95,
@@ -44,6 +48,7 @@ export default function DashboardPage() {
     {
       name: "Siti Nurhaliza",
       role: "Angular Developer",
+      education: "S1 Sistem Informasi (IPK 3.78)",
       stage: "human_validation",
       status: "needs_approval",
       cvScore: 89,
@@ -81,109 +86,133 @@ export default function DashboardPage() {
   ];
 
   return (
-    <div className="max-w-7xl mx-auto space-y-8 pb-10 animate-in fade-in duration-300">
+    <div className="max-w-7xl mx-auto space-y-8 pb-16 animate-in fade-in duration-300">
       
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+      {/* Header Banner */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-border pb-5">
         <div>
-          <h1 className="text-2xl font-bold text-foreground mb-1">{t.dashboard.title}</h1>
-          <p className="text-muted-foreground">{t.dashboard.subtitle}</p>
+          <div className="flex items-center gap-2">
+            <h1 className="text-2xl font-extrabold text-foreground tracking-tight">{t.dashboard.title}</h1>
+            <span className="px-2.5 py-0.5 bg-primary/10 text-primary font-bold text-[10px] rounded-full border border-primary/20">
+              HR Suite
+            </span>
+          </div>
+          <p className="text-sm text-muted-foreground mt-1">{t.dashboard.subtitle}</p>
         </div>
-        <div className="flex items-center gap-3">
-          <button className="flex items-center gap-2 px-4 py-2 bg-card border border-border rounded-lg text-sm font-medium text-foreground hover:bg-muted transition-colors shadow-sm">
-            <CalendarDays size={16} className="text-muted-foreground" />
+
+        <div className="flex items-center gap-3 w-full sm:w-auto">
+          <button className="flex items-center gap-2 px-4 py-2 bg-card border border-border rounded-xl text-xs font-semibold text-foreground hover:bg-muted transition-colors shadow-2xs">
+            <CalendarDays size={15} className="text-muted-foreground" />
             {t.dashboard.last30Days}
           </button>
-          <button className="flex items-center gap-2 px-4 py-2 bg-card border border-border rounded-lg text-sm font-medium text-foreground hover:bg-muted transition-colors shadow-sm">
-            <Download size={16} className="text-muted-foreground" />
-            {t.dashboard.exportReport}
+          <button 
+            onClick={() => window.print()}
+            className="flex items-center gap-2 px-4 py-2 bg-primary hover:bg-primary/90 text-primary-foreground font-bold text-xs rounded-xl transition-all shadow-md shadow-primary/20 active:scale-95 cursor-pointer"
+            title="Ekspor Laporan Dasbor ke PDF"
+          >
+            <Download size={15} />
+            {t.dashboard.exportReport} (PDF)
           </button>
         </div>
       </div>
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      {/* Executive Stats Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
         <StatCard
-          title={t.dashboard.cvReceived || 'CV RECEIVED'}
+          title={t.dashboard.cvReceived || 'CV DITERIMA'}
           value="156"
-          subtitle={t.dashboard.cvReceivedSub || 'new this week'}
-          icon={<Users size={20} />}
+          subtitle={t.dashboard.cvReceivedSub || 'minggu ini'}
+          icon={<Users size={18} />}
           trend="up"
           trendValue="+24"
-          iconBgColor="bg-blue-100 dark:bg-blue-900/30"
+          iconBgColor="bg-blue-100 dark:bg-blue-950/60"
           iconColor="text-blue-600 dark:text-blue-400"
         />
         <StatCard
-          title={t.dashboard.passedScreening || 'PASSED CV SCREENING'}
+          title={t.dashboard.passedScreening || 'LOLOS CV SCREENING'}
           value="89"
-          subtitle={t.dashboard.passedScreeningSub || 'above 80% threshold'}
-          icon={<BrainCircuit size={20} />}
+          subtitle={t.dashboard.passedScreeningSub || 'threshold >= 80%'}
+          icon={<BrainCircuit size={18} />}
           trend="up"
           trendValue="57%"
-          iconBgColor="bg-emerald-100 dark:bg-emerald-900/30"
+          iconBgColor="bg-emerald-100 dark:bg-emerald-950/60"
           iconColor="text-emerald-600 dark:text-emerald-400"
         />
         <StatCard
-          title={t.dashboard.interviewScheduled || 'INTERVIEWS SCHEDULED'}
+          title={t.dashboard.interviewScheduled || 'WAWANCARA VIDEO'}
           value="34"
-          subtitle={t.dashboard.interviewScheduledSub || 'awaiting video analysis'}
-          icon={<Calendar size={20} />}
+          subtitle={t.dashboard.interviewScheduledSub || 'proses analisis AI'}
+          icon={<Calendar size={18} />}
           trend="neutral"
           trendValue="8"
-          iconBgColor="bg-amber-100 dark:bg-amber-900/30"
+          iconBgColor="bg-amber-100 dark:bg-amber-950/60"
           iconColor="text-amber-600 dark:text-amber-400"
         />
         <StatCard
-          title={t.dashboard.awaitingValidation || 'AWAITING VALIDATION'}
+          title={t.dashboard.awaitingValidation || 'MENUNGGU VALIDASI HR'}
           value="12"
-          subtitle={t.dashboard.awaitingValidationSub || 'ready for HR decision'}
-          icon={<Clock size={20} />}
+          subtitle={t.dashboard.awaitingValidationSub || 'siap dikonfirmasi HR'}
+          icon={<Clock size={18} />}
           trend="down"
           trendValue="-3"
-          iconBgColor="bg-violet-100 dark:bg-violet-900/30"
-          iconColor="text-violet-600 dark:text-violet-400"
+          iconBgColor="bg-rose-100 dark:bg-rose-950/60"
+          iconColor="text-rose-600 dark:text-rose-400"
         />
       </div>
 
-      {/* ==================== FEATURE 2: PENDING HR APPROVAL PANEL ==================== */}
-      <div className="bg-card p-6 rounded-xl border border-rose-200 dark:border-rose-900/50 shadow-sm relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-32 h-32 bg-rose-500/5 rounded-full blur-2xl pointer-events-none"></div>
+      {/* PENDING HR APPROVAL PANEL */}
+      <div className="bg-card p-6 rounded-2xl border border-rose-200 dark:border-rose-900/50 shadow-sm relative overflow-hidden space-y-4">
+        <div className="absolute top-0 right-0 w-40 h-40 bg-rose-500/5 rounded-full blur-3xl pointer-events-none"></div>
         
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4 border-b border-border pb-3">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-rose-500/10 text-rose-500 flex items-center justify-center font-bold">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-border pb-4">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-xl bg-rose-100 dark:bg-rose-950/80 text-rose-600 dark:text-rose-400 flex items-center justify-center font-bold border border-rose-300 dark:border-rose-800 shrink-0">
               <UserCheck size={18} />
             </div>
             <div>
-              <h2 className="font-bold text-base text-foreground">{t.dashboard.pendingApprovalTitle}</h2>
-              <p className="text-xs text-muted-foreground">{t.dashboard.pendingApprovalSub}</p>
+              <div className="flex items-center gap-2">
+                <h2 className="font-bold text-base text-foreground">{t.dashboard.pendingApprovalTitle}</h2>
+                <span className="px-2 py-0.5 bg-rose-500 text-white font-bold text-[10px] rounded-full animate-pulse">
+                  2 Perlu Validasi
+                </span>
+              </div>
+              <p className="text-xs text-muted-foreground mt-0.5">{t.dashboard.pendingApprovalSub}</p>
             </div>
           </div>
 
           <Link 
             href="/pipeline" 
-            className="text-xs font-semibold text-primary hover:underline flex items-center gap-1"
+            className="text-xs font-bold text-primary hover:underline flex items-center gap-1 shrink-0"
           >
-            Lihat Semua Pipeline
+            Lihat Semua di Pipeline
             <ArrowRight size={14} />
           </Link>
         </div>
 
+        {/* Candidate Cards Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {pendingCandidates.map((c, i) => (
-            <div key={i} className="p-4 bg-muted/30 rounded-lg border border-border flex items-center justify-between gap-4">
-              <div className="flex items-center gap-3">
-                <div className="w-11 h-11 rounded-full bg-blue-100 dark:bg-blue-950 text-blue-600 dark:text-blue-400 flex items-center justify-center font-bold text-sm border border-blue-200 dark:border-blue-800">
+            <div key={i} className="p-4 bg-muted/30 hover:bg-muted/50 rounded-xl border border-border transition-all flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+              <div className="flex items-start gap-3">
+                <div className="w-10 h-10 rounded-full bg-violet-600 text-white font-bold flex items-center justify-center text-sm border border-violet-400 shrink-0 mt-0.5 sm:mt-0 shadow-2xs">
                   {c.name.charAt(0)}
                 </div>
-                <div>
-                  <h4 className="font-bold text-sm text-foreground">{c.name}</h4>
-                  <p className="text-xs text-muted-foreground">{c.role}</p>
-                  <div className="flex items-center gap-2 mt-1 text-[10px]">
-                    <span className="px-2 py-0.5 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 font-bold rounded">
+                <div className="space-y-1">
+                  <h4 className="font-bold text-sm text-foreground leading-snug">{c.name}</h4>
+                  <p className="text-xs font-semibold text-muted-foreground">{c.role}</p>
+                  
+                  {c.education && (
+                    <div className="inline-flex items-center gap-1 text-[11px] font-bold text-violet-900 dark:text-violet-300 bg-violet-100/90 dark:bg-violet-950/60 px-2 py-0.5 rounded border border-violet-300 dark:border-violet-700">
+                      <GraduationCap size={12} className="text-violet-700 dark:text-violet-400 shrink-0" />
+                      <span>{c.education}</span>
+                    </div>
+                  )}
+
+                  <div className="flex flex-wrap items-center gap-2 pt-1">
+                    <span className="px-2 py-0.5 bg-emerald-100 text-emerald-950 dark:bg-emerald-950/70 dark:text-emerald-300 font-bold text-[10px] rounded border border-emerald-300 dark:border-emerald-700">
                       CV Match: {c.cvScore}%
                     </span>
-                    <span className="px-2 py-0.5 bg-violet-50 dark:bg-violet-950/40 text-violet-600 dark:text-violet-400 font-bold rounded">
+                    <span className="px-2 py-0.5 bg-blue-100 text-blue-950 dark:bg-blue-950/70 dark:text-blue-300 font-bold text-[10px] rounded border border-blue-300 dark:border-blue-700">
                       Video Score: 84.6
                     </span>
                   </div>
@@ -192,7 +221,7 @@ export default function DashboardPage() {
 
               <button 
                 onClick={() => setSelectedCandidate(c)}
-                className="px-3.5 py-2 bg-rose-500 hover:bg-rose-600 text-white font-semibold text-xs rounded-lg transition-colors shrink-0 flex items-center gap-1 shadow-sm active:scale-95"
+                className="w-full sm:w-auto px-4 py-2 bg-rose-500 hover:bg-rose-600 text-white font-bold text-xs rounded-xl transition-all shrink-0 flex items-center justify-center gap-1.5 shadow-sm active:scale-95 cursor-pointer"
               >
                 <UserCheck size={14} />
                 {t.dashboard.validateNow}
@@ -202,7 +231,7 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* Main Grid Section */}
+      {/* Main Content Grid (Chart + Jobs & AI Performance) */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         
         {/* Left Columns (Chart + Active Jobs) */}
@@ -211,11 +240,13 @@ export default function DashboardPage() {
           {/* Pipeline Growth Chart */}
           <PipelineChart />
 
-          {/* ==================== FEATURE 3: ACTIVE JOBS OVERVIEW ==================== */}
-          <div className="bg-card p-6 rounded-xl border border-border shadow-sm space-y-4">
-            <div className="flex items-center justify-between border-b border-border pb-3">
-              <div className="flex items-center gap-2">
-                <Briefcase size={18} className="text-primary" />
+          {/* ACTIVE JOBS OVERVIEW */}
+          <div className="bg-card p-5 sm:p-6 rounded-2xl border border-border shadow-sm space-y-4 w-full">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 border-b border-border pb-4">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-lg bg-primary/10 text-primary flex items-center justify-center font-bold shrink-0">
+                  <Briefcase size={18} />
+                </div>
                 <div>
                   <h3 className="font-bold text-base text-foreground">{t.dashboard.activeJobsTitle}</h3>
                   <p className="text-xs text-muted-foreground">{t.dashboard.activeJobsSub}</p>
@@ -224,7 +255,7 @@ export default function DashboardPage() {
 
               <Link 
                 href="/jobs" 
-                className="text-xs font-semibold text-primary hover:underline flex items-center gap-1"
+                className="text-xs font-bold text-primary hover:underline flex items-center gap-1 self-end sm:self-auto"
               >
                 {t.dashboard.viewAllJobs}
                 <ChevronRight size={14} />
@@ -233,30 +264,30 @@ export default function DashboardPage() {
 
             <div className="space-y-3">
               {activeJobs.map((job, idx) => (
-                <div key={idx} className="p-4 bg-muted/30 border border-border rounded-lg flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
-                  <div>
-                    <div className="flex items-center gap-2">
+                <div key={idx} className="p-4 bg-muted/30 border border-border rounded-xl flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3.5 hover:bg-muted/50 transition-colors w-full">
+                  <div className="space-y-1 w-full sm:w-auto">
+                    <div className="flex flex-wrap items-center gap-2">
                       <h4 className="font-bold text-sm text-foreground">{job.title}</h4>
-                      <span className="px-2 py-0.5 bg-muted text-muted-foreground text-[10px] rounded font-semibold">
+                      <span className="px-2 py-0.5 bg-muted text-muted-foreground text-[10px] rounded-md font-bold border border-border shrink-0">
                         {job.department}
                       </span>
                     </div>
-                    <p className="text-xs text-muted-foreground mt-0.5">
-                      Dipublikasikan {job.posted} &bull; <strong className="text-primary">Threshold PO-FIT: {job.threshold}%</strong>
+                    <p className="text-xs text-muted-foreground">
+                      Dipublikasikan {job.posted} &bull; <strong className="text-violet-600 dark:text-violet-400">Threshold: {job.threshold}%</strong>
                     </p>
                   </div>
 
-                  <div className="flex items-center gap-4 w-full sm:w-auto justify-between sm:justify-end">
-                    <div className="text-right">
+                  <div className="flex items-center justify-between sm:justify-end gap-3 w-full sm:w-auto border-t sm:border-t-0 border-border/60 pt-2 sm:pt-0">
+                    <div className="text-left sm:text-right">
                       <p className="text-xs font-bold text-foreground">{job.applicants} Pelamar</p>
-                      <p className="text-[10px] text-emerald-600 dark:text-emerald-400 font-medium">
+                      <p className="text-[11px] text-emerald-600 dark:text-emerald-400 font-bold">
                         {job.passed} Lolos Screening
                       </p>
                     </div>
 
                     <Link 
                       href="/pipeline" 
-                      className="px-3 py-1.5 bg-card border border-border hover:bg-muted text-foreground text-xs font-medium rounded-lg transition-colors flex items-center gap-1 shrink-0"
+                      className="px-3.5 py-1.5 bg-card border border-border hover:bg-muted text-foreground text-xs font-bold rounded-lg transition-colors flex items-center gap-1 shrink-0 shadow-2xs"
                     >
                       Pipeline
                       <ArrowRight size={12} />
@@ -269,48 +300,48 @@ export default function DashboardPage() {
 
         </div>
 
-        {/* Right Column (AI System Performance + Recent Activity) */}
+        {/* Right Column (AI Metrics & Recent Activity) */}
         <div className="space-y-6">
           
-          {/* ==================== FEATURE 4: AI SYSTEM PERFORMANCE METRICS ==================== */}
-          <div className="bg-card p-6 rounded-xl border border-border shadow-sm space-y-4">
+          {/* AI SYSTEM PERFORMANCE METRICS */}
+          <div className="bg-card p-6 rounded-2xl border border-border shadow-sm space-y-4">
             <div className="flex items-center gap-2 border-b border-border pb-3">
               <Zap size={18} className="text-amber-500" />
               <h3 className="font-bold text-base text-foreground">{t.dashboard.aiPerformanceTitle}</h3>
             </div>
 
-            <div className="space-y-4">
+            <div className="space-y-3">
               {/* Avg Cosine Similarity */}
-              <div className="p-3 bg-blue-50/50 dark:bg-blue-950/20 border border-blue-100 dark:border-blue-900 rounded-lg flex items-center justify-between">
-                <div>
-                  <p className="text-xs text-muted-foreground">{t.dashboard.avgCosineSimilarity}</p>
-                  <p className="text-xl font-bold text-blue-600 dark:text-blue-400">84.2% Match</p>
+              <div className="p-4 bg-muted/30 border border-border rounded-xl space-y-2">
+                <div className="flex justify-between items-center text-xs">
+                  <span className="font-bold text-foreground">{t.dashboard.avgCosineSimilarity}</span>
+                  <span className="font-bold text-blue-600 dark:text-blue-400">84.2%</span>
                 </div>
-                <div className="w-10 h-10 rounded-full bg-blue-500/10 text-blue-500 flex items-center justify-center font-bold text-xs">
-                  PO-FIT
+                <div className="w-full bg-muted rounded-full h-2 overflow-hidden">
+                  <div className="bg-blue-600 h-full rounded-full" style={{ width: '84.2%' }}></div>
                 </div>
               </div>
 
               {/* AI vs HR Accuracy */}
-              <div className="p-3 bg-emerald-50/50 dark:bg-emerald-950/20 border border-emerald-100 dark:border-emerald-900 rounded-lg flex items-center justify-between">
-                <div>
-                  <p className="text-xs text-muted-foreground">{t.dashboard.aiHrAccuracy}</p>
-                  <p className="text-xl font-bold text-emerald-600 dark:text-emerald-400">94.8% Agreement</p>
+              <div className="p-4 bg-muted/30 border border-border rounded-xl space-y-2">
+                <div className="flex justify-between items-center text-xs">
+                  <span className="font-bold text-foreground">{t.dashboard.aiHrAccuracy}</span>
+                  <span className="font-bold text-emerald-600 dark:text-emerald-400">94.8%</span>
                 </div>
-                <div className="w-10 h-10 rounded-full bg-emerald-500/10 text-emerald-500 flex items-center justify-center font-bold text-xs">
-                  ✓ High
+                <div className="w-full bg-muted rounded-full h-2 overflow-hidden">
+                  <div className="bg-emerald-600 h-full rounded-full" style={{ width: '94.8%' }}></div>
                 </div>
               </div>
 
               {/* Avg Screening Speed */}
-              <div className="p-3 bg-violet-50/50 dark:bg-violet-950/20 border border-violet-100 dark:border-violet-900 rounded-lg flex items-center justify-between">
+              <div className="p-4 bg-muted/30 border border-border rounded-xl flex items-center justify-between">
                 <div>
-                  <p className="text-xs text-muted-foreground">{t.dashboard.avgProcessingSpeed}</p>
-                  <p className="text-xl font-bold text-violet-600 dark:text-violet-400">&lt; 2.5 Detik / CV</p>
+                  <p className="text-xs font-bold text-foreground">{t.dashboard.avgProcessingSpeed}</p>
+                  <p className="text-xs text-muted-foreground">&lt; 2.5 Detik per Berkas CV</p>
                 </div>
-                <div className="w-10 h-10 rounded-full bg-violet-500/10 text-violet-500 flex items-center justify-center font-bold text-xs">
-                  ⚡ Fast
-                </div>
+                <span className="px-2.5 py-1 bg-violet-100 text-violet-900 dark:bg-violet-950/70 dark:text-violet-300 font-bold text-xs rounded-lg border border-violet-300 dark:border-violet-700">
+                  ⚡ Super Fast
+                </span>
               </div>
             </div>
           </div>
