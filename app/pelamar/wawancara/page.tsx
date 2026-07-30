@@ -89,7 +89,6 @@ export default function WawancaraVideoPage() {
           </Link>
           <div>
             <h1 className="text-lg sm:text-xl font-bold text-[#1b7b9e] dark:text-cyan-400">
-            <h1 className="text-lg sm:text-xl font-bold text-[#1b7b9e] dark:text-cyan-400">
               {t.pelamar.wawancara.title}
             </h1>
             <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400">

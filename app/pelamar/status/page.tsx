@@ -590,7 +590,7 @@ export default function StatusValidasiPage() {
                               onClick={() => setActiveVideoModalJob(app)}
                               className="px-4 py-1.5 rounded-full bg-[#2596be] hover:bg-[#1D7FA1] text-white font-bold transition-colors shadow-2xs cursor-pointer"
                             >
-                              {t.pelamar.status.videoScoreDetails} ({app.videoScore}%)
+                              {t.pelamar.status.videoAnalysisDetails} ({app.videoScore}%)
                             </button>
                           )}
                         </div>
