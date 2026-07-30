@@ -1,0 +1,665 @@
+'use client';
+
+import React, { useState } from 'react';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { 
+  Building2, 
+  Lock, 
+  Mail, 
+  AlertCircle, 
+  ArrowRight, 
+  ShieldCheck, 
+  CheckCircle2, 
+  FileText, 
+  Upload, 
+  User, 
+  Phone, 
+  Briefcase, 
+  MapPin, 
+  Clock,
+  Sparkles,
+  HelpCircle,
+  FileCheck
+} from 'lucide-react';
+
+export default function CompanyRegistrationFlow() {
+  const router = useRouter();
+
+  // Multi-step state: 1 (Email & Pass), 2 (OTP), 3 (Legalitas Form), 4 (Pending)
+  const [step, setStep] = useState<number>(1);
+
+  // Step 1: Account & Email
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [errorStep1, setErrorStep1] = useState('');
+
+  // Step 2: OTP
+  const [otpCode, setOtpCode] = useState(['', '', '', '', '', '']);
+  const [errorStep2, setErrorStep2] = useState('');
+
+  // Step 3: Legal Data - Perusahaan
+  const [companyName, setCompanyName] = useState('');
+  const [nibNpwpNumber, setNibNpwpNumber] = useState('');
+  const [nibFile, setNibFile] = useState<File | null>(null);
+  const [companyAddress, setCompanyAddress] = useState('');
+
+  // Step 3: Legal Data - Perwakilan HR
+  const [hrFullName, setHrFullName] = useState('');
+  const [whatsappNumber, setWhatsappNumber] = useState('');
+  const [hrPosition, setHrPosition] = useState('');
+  const [idCardFile, setIdCardFile] = useState<File | null>(null);
+  const [errorStep3, setErrorStep3] = useState('');
+
+  const [isLoading, setIsLoading] = useState(false);
+
+  // List of blocked free email domains
+  const freeEmailDomains = [
+    'gmail.com', 'yahoo.com', 'yahoo.co.id', 'ymail.com', 
+    'hotmail.com', 'outlook.com', 'live.com', 'icloud.com',
+    'aol.com', 'zoho.com', 'protonmail.com'
+  ];
+
+  // Validate Step 1
+  const handleStep1Submit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email || !email.includes('@')) {
+      setErrorStep1('Harap masukkan alamat email perusahaan yang valid.');
+      return;
+    }
+
+    const domain = email.split('@')[1]?.toLowerCase();
+    if (freeEmailDomains.includes(domain)) {
+      setErrorStep1('Pendaftaran Ditolak: Anda menggunakan email pribadi (Gmail/Yahoo). Harap gunakan email domain perusahaan resmi (contoh: hrd@tokopedia.com, recruitment@bankmandiri.co.id).');
+      return;
+    }
+
+    if (!password || password.length < 6) {
+      setErrorStep1('Kata sandi minimal 6 karakter.');
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      setErrorStep1('Konfirmasi kata sandi tidak cocok dengan kata sandi.');
+      return;
+    }
+
+    setErrorStep1('');
+    setIsLoading(true);
+
+    setTimeout(() => {
+      setIsLoading(false);
+      setStep(2);
+    }, 400);
+  };
+
+  // Validate Step 2 (OTP)
+  const handleOtpChange = (index: number, value: string) => {
+    if (value.length > 1) value = value.slice(-1);
+    const newOtp = [...otpCode];
+    newOtp[index] = value;
+    setOtpCode(newOtp);
+
+    // Auto focus next input
+    if (value && index < 5) {
+      const nextInput = document.getElementById(`otp-input-${index + 1}`);
+      if (nextInput) nextInput.focus();
+    }
+  };
+
+  const handleStep2Submit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const enteredOtp = otpCode.join('');
+    if (enteredOtp.length < 6) {
+      setErrorStep2('Harap masukkan 6 digit kode OTP yang telah dikirim ke email perusahaan Anda.');
+      return;
+    }
+
+    setErrorStep2('');
+    setIsLoading(true);
+
+    setTimeout(() => {
+      setIsLoading(false);
+      setStep(3);
+    }, 400);
+  };
+
+  // Validate Step 3 (Legalitas Form)
+  const handleStep3Submit = (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!companyName.trim()) {
+      setErrorStep3('Harap isi Nama Perusahaan Resmi.');
+      return;
+    }
+    if (!nibNpwpNumber.trim() || !/^\d+$/.test(nibNpwpNumber)) {
+      setErrorStep3('Nomor NIB / NPWP wajib berupa angka.');
+      return;
+    }
+    if (!nibFile) {
+      setErrorStep3('Harap unggah bukti dokumen NIB / NPWP Perusahaan (PDF/JPG/PNG).');
+      return;
+    }
+    if (!companyAddress.trim()) {
+      setErrorStep3('Harap isi Alamat Lengkap Perusahaan.');
+      return;
+    }
+
+    if (!hrFullName.trim()) {
+      setErrorStep3('Harap isi Nama Lengkap Pendaftar.');
+      return;
+    }
+    if (!whatsappNumber.trim() || !/^\d+$/.test(whatsappNumber)) {
+      setErrorStep3('Nomor WhatsApp / Telepon Aktif wajib berupa angka.');
+      return;
+    }
+    if (!hrPosition.trim()) {
+      setErrorStep3('Harap isi Jabatan Pendaftar.');
+      return;
+    }
+    if (!idCardFile) {
+      setErrorStep3('Harap unggah foto ID Card Karyawan atau KTP Pendaftar.');
+      return;
+    }
+
+    setErrorStep3('');
+    setIsLoading(true);
+
+    setTimeout(() => {
+      setIsLoading(false);
+      // Save pending registration session details
+      localStorage.setItem('pendingCompanyName', companyName);
+      localStorage.setItem('pendingNibNumber', nibNpwpNumber);
+      localStorage.setItem('pendingHrName', hrFullName);
+      localStorage.setItem('pendingWhatsapp', whatsappNumber);
+      localStorage.setItem('pendingRegistrationStatus', 'PENDING');
+      
+      router.push('/pending-approval');
+    }, 600);
+  };
+
+  return (
+    <div className="min-h-screen bg-[#F4FDFB] text-[#0F766E] flex flex-col justify-between font-sans antialiased">
+      
+      {/* Top Header */}
+      <header className="py-6 px-6 sm:px-12 max-w-[1600px] w-full mx-auto flex items-center justify-between">
+        <Link href="/" className="flex items-center gap-3 group">
+          <div className="w-10 h-10 bg-[#0F766E] text-white rounded-xl flex items-center justify-center font-black text-lg shadow-md group-hover:scale-105 transition-transform">
+            RP
+          </div>
+          <div className="flex flex-col">
+            <span className="font-black text-xl tracking-tight text-[#0F766E] leading-none">
+              AI-Recruit <span className="text-[#0D635C]">Pro</span>
+            </span>
+            <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest mt-0.5">
+              Pendaftaran Perusahaan
+            </span>
+          </div>
+        </Link>
+
+        <Link 
+          href="/login" 
+          className="text-xs sm:text-sm font-bold text-[#0F766E] hover:underline flex items-center gap-1.5"
+        >
+          Sudah Memiliki Akun? Sign In &rarr;
+        </Link>
+      </header>
+
+      {/* Main Wizard Container */}
+      <main className="flex-1 max-w-3xl w-full mx-auto px-4 py-8">
+        
+        {/* Progress Step Header Bar */}
+        <div className="bg-white rounded-3xl p-6 shadow-md border border-[#CCFBF1] mb-8">
+          <div className="grid grid-cols-3 gap-2 text-center relative">
+            
+            {/* Step 1 Indicator */}
+            <div className={`flex flex-col items-center space-y-1.5 z-10 ${step >= 1 ? 'text-[#0F766E]' : 'text-slate-400'}`}>
+              <div className={`w-9 h-9 rounded-full flex items-center justify-center font-black text-xs transition-all ${
+                step >= 1 ? 'bg-[#0F766E] text-white shadow-sm' : 'bg-slate-100 text-slate-400'
+              }`}>
+                1
+              </div>
+              <span className="text-[11px] font-extrabold">Akun &amp; Email</span>
+            </div>
+
+            {/* Step 2 Indicator */}
+            <div className={`flex flex-col items-center space-y-1.5 z-10 ${step >= 2 ? 'text-[#0F766E]' : 'text-slate-400'}`}>
+              <div className={`w-9 h-9 rounded-full flex items-center justify-center font-black text-xs transition-all ${
+                step >= 2 ? 'bg-[#0F766E] text-white shadow-sm' : 'bg-slate-100 text-slate-400'
+              }`}>
+                2
+              </div>
+              <span className="text-[11px] font-extrabold">Verifikasi OTP</span>
+            </div>
+
+            {/* Step 3 Indicator */}
+            <div className={`flex flex-col items-center space-y-1.5 z-10 ${step >= 3 ? 'text-[#0F766E]' : 'text-slate-400'}`}>
+              <div className={`w-9 h-9 rounded-full flex items-center justify-center font-black text-xs transition-all ${
+                step >= 3 ? 'bg-[#0F766E] text-white shadow-sm' : 'bg-slate-100 text-slate-400'
+              }`}>
+                3
+              </div>
+              <span className="text-[11px] font-extrabold">Bukti Legalitas</span>
+            </div>
+
+          </div>
+        </div>
+
+        {/* STEP 1: Registration Form */}
+        {step === 1 && (
+          <div className="bg-white rounded-3xl p-8 sm:p-10 shadow-2xl border border-[#CCFBF1] space-y-7">
+            <div className="space-y-2">
+              <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-[#E6FFFA] text-[#0F766E] text-xs font-extrabold border border-[#99F6E4]">
+                <Building2 size={14} /> Langkah 1 dari 3: Registrasi Akun Perusahaan
+              </div>
+              <h1 className="text-3xl font-black text-[#0F766E]">Buat Akun Perusahaan Baru</h1>
+              <p className="text-xs sm:text-sm text-slate-500">
+                Gunakan email domain perusahaan resmi Anda untuk memulai verifikasi akun HR.
+              </p>
+            </div>
+
+            <form onSubmit={handleStep1Submit} className="space-y-5">
+              
+              {/* Corporate Email */}
+              <div className="space-y-1">
+                <label className="block text-xs font-bold text-slate-700">
+                  Email Perusahaan Resmi <span className="text-red-500">*</span>
+                </label>
+                <div className="relative flex items-center">
+                  <Mail size={18} className="absolute left-4 text-slate-400 pointer-events-none" />
+                  <input
+                    type="email"
+                    value={email}
+                    onChange={(e) => { setEmail(e.target.value); setErrorStep1(''); }}
+                    placeholder="Contoh: hrd@tokopedia.com, recruitment@bankmandiri.co.id"
+                    className="w-full pl-12 pr-4 py-3.5 bg-white border-2 border-slate-300 focus:border-[#0F766E] focus:ring-2 focus:ring-teal-100 rounded-2xl text-sm outline-none transition-all"
+                  />
+                </div>
+                <p className="text-[11px] text-slate-500 pt-0.5">
+                  ⚠️ Email pribadi (Gmail/Yahoo/Outlook) otomatis ditolak oleh sistem.
+                </p>
+              </div>
+
+              {/* Password */}
+              <div className="space-y-1">
+                <label className="block text-xs font-bold text-slate-700">
+                  Kata Sandi <span className="text-red-500">*</span>
+                </label>
+                <div className="relative flex items-center">
+                  <Lock size={18} className="absolute left-4 text-slate-400 pointer-events-none" />
+                  <input
+                    type="password"
+                    value={password}
+                    onChange={(e) => { setPassword(e.target.value); setErrorStep1(''); }}
+                    placeholder="Minimal 6 Karakter"
+                    className="w-full pl-12 pr-4 py-3.5 bg-white border-2 border-slate-300 focus:border-[#0F766E] focus:ring-2 focus:ring-teal-100 rounded-2xl text-sm outline-none transition-all"
+                  />
+                </div>
+              </div>
+
+              {/* Confirm Password */}
+              <div className="space-y-1">
+                <label className="block text-xs font-bold text-slate-700">
+                  Konfirmasi Kata Sandi <span className="text-red-500">*</span>
+                </label>
+                <div className="relative flex items-center">
+                  <Lock size={18} className="absolute left-4 text-slate-400 pointer-events-none" />
+                  <input
+                    type="password"
+                    value={confirmPassword}
+                    onChange={(e) => { setConfirmPassword(e.target.value); setErrorStep1(''); }}
+                    placeholder="Ulangi Kata Sandi"
+                    className="w-full pl-12 pr-4 py-3.5 bg-white border-2 border-slate-300 focus:border-[#0F766E] focus:ring-2 focus:ring-teal-100 rounded-2xl text-sm outline-none transition-all"
+                  />
+                </div>
+              </div>
+
+              {/* Error Message */}
+              {errorStep1 && (
+                <div className="p-4 rounded-2xl bg-red-50 border border-red-200 text-red-700 text-xs font-semibold flex items-start gap-3 leading-relaxed">
+                  <AlertCircle size={20} className="shrink-0 mt-0.5" />
+                  <span>{errorStep1}</span>
+                </div>
+              )}
+
+              {/* Quick Fill Sample Corporate Email Button */}
+              <div className="p-3.5 rounded-2xl bg-[#F4FDFB] border border-[#CCFBF1] flex items-center justify-between gap-3 text-xs">
+                <span className="font-semibold text-slate-600">Bingung format email resmi?</span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setEmail('hrd@tokopedia.com');
+                    setPassword('password123');
+                    setConfirmPassword('password123');
+                    setErrorStep1('');
+                  }}
+                  className="font-extrabold text-[#0F766E] bg-white hover:bg-[#E6FFFA] px-3.5 py-1.5 rounded-full border border-[#99F6E4] shadow-2xs"
+                >
+                  Gunakan hrd@tokopedia.com
+                </button>
+              </div>
+
+              <button
+                type="submit"
+                disabled={isLoading}
+                className="w-full py-4 rounded-full bg-[#0F766E] hover:bg-[#0D635C] text-white font-black text-xs sm:text-sm shadow-md transition-all flex items-center justify-center gap-2"
+              >
+                {isLoading ? (
+                  <span>Mengirim Kode OTP...</span>
+                ) : (
+                  <>
+                    <span>Lanjutkan &amp; Kirim Kode OTP</span>
+                    <ArrowRight size={16} />
+                  </>
+                )}
+              </button>
+
+            </form>
+          </div>
+        )}
+
+        {/* STEP 2: OTP Verification */}
+        {step === 2 && (
+          <div className="bg-white rounded-3xl p-8 sm:p-10 shadow-2xl border border-[#CCFBF1] space-y-7">
+            <div className="space-y-2 text-center">
+              <div className="w-14 h-14 bg-[#E6FFFA] border border-[#99F6E4] rounded-2xl flex items-center justify-center text-[#0F766E] mx-auto">
+                <Mail size={28} />
+              </div>
+              <h2 className="text-2xl font-black text-[#0F766E]">Masukkan Kode OTP Email</h2>
+              <p className="text-xs sm:text-sm text-slate-500 max-w-md mx-auto leading-relaxed">
+                Kami telah mengirimkan 6-digit kode verifikasi OTP ke email perusahaan resmi: <strong className="text-[#0F766E]">{email}</strong>.
+              </p>
+            </div>
+
+            <form onSubmit={handleStep2Submit} className="space-y-6">
+              
+              {/* 6 Digit Inputs */}
+              <div className="flex justify-center items-center gap-2 sm:gap-3">
+                {otpCode.map((digit, idx) => (
+                  <input
+                    key={idx}
+                    id={`otp-input-${idx}`}
+                    type="text"
+                    maxLength={1}
+                    value={digit}
+                    onChange={(e) => handleOtpChange(idx, e.target.value)}
+                    className="w-11 h-13 sm:w-13 sm:h-15 text-center text-xl font-black text-[#0F766E] bg-[#F4FDFB] border-2 border-[#CCFBF1] focus:border-[#0F766E] focus:bg-white rounded-2xl outline-none transition-all"
+                  />
+                ))}
+              </div>
+
+              {errorStep2 && (
+                <div className="p-3.5 rounded-2xl bg-red-50 border border-red-200 text-red-700 text-xs font-semibold text-center">
+                  {errorStep2}
+                </div>
+              )}
+
+              {/* Demo Fill OTP */}
+              <div className="text-center">
+                <button
+                  type="button"
+                  onClick={() => setOtpCode(['1', '2', '3', '4', '5', '6'])}
+                  className="text-xs font-bold text-[#0F766E] hover:underline bg-[#E6FFFA] px-4 py-1.5 rounded-full border border-[#99F6E4]"
+                >
+                  ⚡ Masukkan Kode Demo OTP (123456)
+                </button>
+              </div>
+
+              <div className="flex items-center justify-between gap-4 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setStep(1)}
+                  className="px-6 py-3 rounded-full border border-slate-300 text-slate-700 font-bold text-xs hover:bg-slate-50"
+                >
+                  &larr; Kembali
+                </button>
+
+                <button
+                  type="submit"
+                  disabled={isLoading}
+                  className="flex-1 py-3.5 rounded-full bg-[#0F766E] hover:bg-[#0D635C] text-white font-extrabold text-xs sm:text-sm shadow-md transition-all flex items-center justify-center gap-2"
+                >
+                  {isLoading ? (
+                    <span>Memverifikasi OTP...</span>
+                  ) : (
+                    <>
+                      <span>Verifikasi &amp; Lanjut Form Legalitas</span>
+                      <ArrowRight size={16} />
+                    </>
+                  )}
+                </button>
+              </div>
+
+            </form>
+          </div>
+        )}
+
+        {/* STEP 3: Company Legal Verification Form */}
+        {step === 3 && (
+          <div className="bg-white rounded-3xl p-8 sm:p-10 shadow-2xl border border-[#CCFBF1] space-y-8">
+            <div className="space-y-2 border-b border-slate-100 pb-5">
+              <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-[#E6FFFA] text-[#0F766E] text-xs font-extrabold border border-[#99F6E4]">
+                <FileCheck size={14} /> Langkah 3 dari 3: Verifikasi Bukti Legalitas Perusahaan
+              </div>
+              <h2 className="text-2xl sm:text-3xl font-black text-[#0F766E]">Formulir Dokumen Resmi &amp; Perwakilan HR</h2>
+              <p className="text-xs sm:text-sm text-slate-500">
+                Lengkapi berkas hukum perusahaan untuk ditinjau oleh Administrator Developer AI-Recruit Pro.
+              </p>
+            </div>
+
+            <form onSubmit={handleStep3Submit} className="space-y-8">
+              
+              {/* BAGIAN 1: DATA PERUSAHAAN (SESUAI DOKUMEN RESMI) */}
+              <div className="space-y-5 bg-[#F4FDFB] p-6 rounded-3xl border border-[#CCFBF1]">
+                <div className="flex items-center gap-2 text-sm font-black text-[#0F766E] uppercase tracking-wider border-b border-[#CCFBF1] pb-3">
+                  <Building2 size={18} />
+                  <span>BAGIAN 1: DATA PERUSAHAAN (SESUAI DOKUMEN RESMI)</span>
+                </div>
+
+                {/* Nama Perusahaan */}
+                <div className="space-y-1">
+                  <label className="block text-xs font-bold text-slate-700">
+                    Nama Perusahaan Resmi <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={companyName}
+                    onChange={(e) => setCompanyName(e.target.value)}
+                    placeholder="Contoh: PT Tokopedia Indonesia"
+                    className="w-full px-4 py-3 bg-white border border-slate-300 focus:border-[#0F766E] rounded-2xl text-sm outline-none"
+                  />
+                </div>
+
+                {/* NIB / NPWP Number */}
+                <div className="space-y-1">
+                  <label className="block text-xs font-bold text-slate-700">
+                    Nomor Induk Berusaha (NIB) / NPWP Perusahaan <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={nibNpwpNumber}
+                    onChange={(e) => setNibNpwpNumber(e.target.value.replace(/\D/g, ''))}
+                    placeholder="Input angka NIB/NPWP (misal: 9120101928123)"
+                    className="w-full px-4 py-3 bg-white border border-slate-300 focus:border-[#0F766E] rounded-2xl text-sm outline-none font-mono"
+                  />
+                </div>
+
+                {/* Upload NIB / NPWP Document */}
+                <div className="space-y-1">
+                  <label className="block text-xs font-bold text-slate-700">
+                    Upload Dokumen NIB / NPWP (File Fisik) <span className="text-red-500">*</span>
+                  </label>
+                  <div className="border-2 border-dashed border-[#99F6E4] hover:border-[#0F766E] bg-white p-5 rounded-2xl text-center space-y-2 cursor-pointer relative">
+                    <input
+                      type="file"
+                      accept=".pdf,.jpg,.jpeg,.png"
+                      onChange={(e) => setNibFile(e.target.files?.[0] || null)}
+                      className="absolute inset-0 opacity-0 cursor-pointer"
+                    />
+                    <Upload size={24} className="text-[#0F766E] mx-auto" />
+                    <span className="text-xs font-bold text-[#0F766E] block">
+                      {nibFile ? `File Terpilih: ${nibFile.name}` : 'Klik / Drag & Drop Dokumen NIB / NPWP (PDF, JPG, PNG)'}
+                    </span>
+                    <span className="text-[11px] text-slate-400 block">Maksimal Ukuran File: 5MB</span>
+                  </div>
+                </div>
+
+                {/* Address Textarea */}
+                <div className="space-y-1">
+                  <label className="block text-xs font-bold text-slate-700">
+                    Alamat Lengkap Perusahaan <span className="text-red-500">*</span>
+                  </label>
+                  <textarea
+                    rows={3}
+                    value={companyAddress}
+                    onChange={(e) => setCompanyAddress(e.target.value)}
+                    placeholder="Alamat Kantor Pusat Sesuai Akta Pendirian / NIB..."
+                    className="w-full px-4 py-3 bg-white border border-slate-300 focus:border-[#0F766E] rounded-2xl text-sm outline-none"
+                  />
+                </div>
+
+              </div>
+
+              {/* BAGIAN 2: DATA PERWAKILAN (HRD/REKRUTER) */}
+              <div className="space-y-5 bg-[#F4FDFB] p-6 rounded-3xl border border-[#CCFBF1]">
+                <div className="flex items-center gap-2 text-sm font-black text-[#0F766E] uppercase tracking-wider border-b border-[#CCFBF1] pb-3">
+                  <User size={18} />
+                  <span>BAGIAN 2: DATA PERWAKILAN (HRD / REKRUTER)</span>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {/* Nama HR */}
+                  <div className="space-y-1">
+                    <label className="block text-xs font-bold text-slate-700">
+                      Nama Lengkap Pendaftar <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={hrFullName}
+                      onChange={(e) => setHrFullName(e.target.value)}
+                      placeholder="Nama Lengkap Sesuai ID Card"
+                      className="w-full px-4 py-3 bg-white border border-slate-300 focus:border-[#0F766E] rounded-2xl text-sm outline-none"
+                    />
+                  </div>
+
+                  {/* WhatsApp */}
+                  <div className="space-y-1">
+                    <label className="block text-xs font-bold text-slate-700">
+                      Nomor WhatsApp / Telepon Aktif <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={whatsappNumber}
+                      onChange={(e) => setWhatsappNumber(e.target.value.replace(/\D/g, ''))}
+                      placeholder="081234567890 (Angka Only)"
+                      className="w-full px-4 py-3 bg-white border border-slate-300 focus:border-[#0F766E] rounded-2xl text-sm outline-none font-mono"
+                    />
+                  </div>
+                </div>
+
+                {/* Jabatan */}
+                <div className="space-y-1">
+                  <label className="block text-xs font-bold text-slate-700">
+                    Jabatan Dalam Perusahaan <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={hrPosition}
+                    onChange={(e) => setHrPosition(e.target.value)}
+                    placeholder="Contoh: HR Manager / Talent Acquisition Lead"
+                    className="w-full px-4 py-3 bg-white border border-slate-300 focus:border-[#0F766E] rounded-2xl text-sm outline-none"
+                  />
+                </div>
+
+                {/* Upload ID Card / KTP */}
+                <div className="space-y-1">
+                  <label className="block text-xs font-bold text-slate-700">
+                    Upload ID Card Karyawan / KTP Pendaftar <span className="text-red-500">*</span>
+                  </label>
+                  <div className="border-2 border-dashed border-[#99F6E4] hover:border-[#0F766E] bg-white p-5 rounded-2xl text-center space-y-2 cursor-pointer relative">
+                    <input
+                      type="file"
+                      accept=".jpg,.jpeg,.png"
+                      onChange={(e) => setIdCardFile(e.target.files?.[0] || null)}
+                      className="absolute inset-0 opacity-0 cursor-pointer"
+                    />
+                    <Upload size={24} className="text-[#0F766E] mx-auto" />
+                    <span className="text-xs font-bold text-[#0F766E] block">
+                      {idCardFile ? `File Terpilih: ${idCardFile.name}` : 'Klik / Drag & Drop Foto ID Card Karyawan / KTP (JPG, PNG)'}
+                    </span>
+                    <span className="text-[11px] text-slate-400 block">Untuk memastikan keabsahan perwakilan perusahaan</span>
+                  </div>
+                </div>
+
+              </div>
+
+              {/* Error Message */}
+              {errorStep3 && (
+                <div className="p-4 rounded-2xl bg-red-50 border border-red-200 text-red-700 text-xs font-semibold flex items-start gap-3">
+                  <AlertCircle size={20} className="shrink-0 mt-0.5" />
+                  <span>{errorStep3}</span>
+                </div>
+              )}
+
+              {/* Demo Auto Fill All Fields Button */}
+              <div className="text-center">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setCompanyName('PT Tokopedia Indonesia');
+                    setNibNpwpNumber('9120101928123');
+                    setNibFile(new File(["demo nib content"], "NIB_PT_Tokopedia_Indonesia.pdf", { type: "application/pdf" }));
+                    setCompanyAddress('Tokopedia Tower, Jl. Prof. DR. Satrio No.11, Jakarta Selatan 12940');
+                    setHrFullName('Bambang Setyono');
+                    setWhatsappNumber('081298765432');
+                    setHrPosition('Senior HR Talent Acquisition');
+                    setIdCardFile(new File(["demo idcard"], "ID_Card_HR_Tokopedia.png", { type: "image/png" }));
+                    setErrorStep3('');
+                  }}
+                  className="text-xs font-bold text-[#0F766E] bg-[#E6FFFA] hover:bg-[#CCFBF1] px-4 py-2 rounded-full border border-[#99F6E4]"
+                >
+                  ⚡ Isikan Formulir Demo Lengkap Otomatis (PT Tokopedia Indonesia)
+                </button>
+              </div>
+
+              {/* Submit Buttons */}
+              <div className="flex items-center justify-between gap-4 pt-4 border-t border-slate-100">
+                <button
+                  type="button"
+                  onClick={() => setStep(2)}
+                  className="px-6 py-3.5 rounded-full border border-slate-300 text-slate-700 font-bold text-xs hover:bg-slate-50"
+                >
+                  &larr; Kembali
+                </button>
+
+                <button
+                  type="submit"
+                  disabled={isLoading}
+                  className="flex-1 py-4 rounded-full bg-[#0F766E] hover:bg-[#0D635C] text-white font-black text-xs sm:text-sm shadow-lg transition-all flex items-center justify-center gap-2"
+                >
+                  {isLoading ? (
+                    <span>Mengirimkan Berkas Legalitas...</span>
+                  ) : (
+                    <>
+                      <span>Kirim Data Legalitas &amp; Ajukan Verifikasi</span>
+                      <ArrowRight size={16} />
+                    </>
+                  )}
+                </button>
+              </div>
+
+            </form>
+          </div>
+        )}
+
+      </main>
+
+      {/* Footer */}
+      <footer className="py-6 border-t border-[#CCFBF1] bg-white text-center text-xs text-slate-400 mt-12">
+        &copy; {new Date().getFullYear()} AI-Recruit Pro Corporate Legal Validation System.
+      </footer>
+
+    </div>
+  );
+}
