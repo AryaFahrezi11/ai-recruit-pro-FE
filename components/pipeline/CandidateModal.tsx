@@ -3,19 +3,19 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useTranslation } from '@/hooks/useTranslation';
-import { 
+import {
   X, Play, CheckCircle2, XCircle,
   Check, Lightbulb, FileText, Video, BarChart3,
   Upload, Brain, UserCheck, Scan, Download, ExternalLink,
   Clock, AlertCircle, Sparkles, Briefcase, Mail, Phone, Lock, Archive, GraduationCap, Building2
 } from 'lucide-react';
-import { 
-  Radar, RadarChart, PolarGrid, PolarAngleAxis, ResponsiveContainer 
+import {
+  Radar, RadarChart, PolarGrid, PolarAngleAxis, ResponsiveContainer
 } from 'recharts';
 
 interface CandidateModalProps {
-  candidate: { 
-    name: string; 
+  candidate: {
+    name: string;
     role: string;
     education?: string;
     university?: string;
@@ -58,25 +58,22 @@ function StepIndicator({ currentStage, t }: { currentStage?: string; t: ReturnTy
         return (
           <React.Fragment key={step.key}>
             <div className="flex items-center gap-2">
-              <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-all ${
-                isCompleted 
-                  ? 'bg-emerald-500 text-white' 
-                  : isActive 
-                    ? 'bg-primary text-primary-foreground ring-2 ring-primary/30' 
-                    : 'bg-muted text-muted-foreground'
-              }`}>
+              <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-all ${isCompleted
+                ? 'bg-emerald-500 text-white'
+                : isActive
+                  ? 'bg-primary text-primary-foreground ring-2 ring-primary/30'
+                  : 'bg-muted text-muted-foreground'
+                }`}>
                 {isCompleted ? <Check size={14} /> : step.icon}
               </div>
-              <span className={`text-xs font-medium hidden sm:inline ${
-                isActive ? 'text-primary font-semibold' : isPending ? 'text-muted-foreground opacity-60' : 'text-foreground'
-              }`}>
+              <span className={`text-xs font-medium hidden sm:inline ${isActive ? 'text-primary font-semibold' : isPending ? 'text-muted-foreground opacity-60' : 'text-foreground'
+                }`}>
                 {step.label}
               </span>
             </div>
             {index < steps.length - 1 && (
-              <div className={`flex-1 h-0.5 mx-2 rounded-full transition-all ${
-                isCompleted ? 'bg-emerald-500' : 'bg-muted'
-              }`} />
+              <div className={`flex-1 h-0.5 mx-2 rounded-full transition-all ${isCompleted ? 'bg-emerald-500' : 'bg-muted'
+                }`} />
             )}
           </React.Fragment>
         );
@@ -112,8 +109,8 @@ export function CandidateModal({ candidate, onClose }: CandidateModalProps) {
     setActiveTab(getInitialTab(stage));
   }, [stage]);
 
-  const isVideoUploaded = candidate.videoUploaded !== undefined 
-    ? candidate.videoUploaded 
+  const isVideoUploaded = candidate.videoUploaded !== undefined
+    ? candidate.videoUploaded
     : (candidate.status === 'video_uploaded' || candidate.name.includes('David'));
 
   // Radar Chart data
@@ -158,20 +155,19 @@ export function CandidateModal({ candidate, onClose }: CandidateModalProps) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6">
       {/* Backdrop */}
-      <div 
+      <div
         className="absolute inset-0 bg-background/80 backdrop-blur-sm"
         onClick={onClose}
       />
 
       {/* Modal Container */}
       <div className="relative bg-card text-card-foreground w-full max-w-5xl max-h-[90vh] rounded-xl shadow-2xl border border-border flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200">
-        
+
         {/* Archive Feedback Overlay Banner */}
         {archiveStatus !== 'idle' && (
           <div className="absolute inset-0 z-50 bg-background/95 backdrop-blur-md flex flex-col items-center justify-center p-6 text-center animate-in fade-in zoom-in-95 duration-300">
-            <div className={`w-16 h-16 rounded-full flex items-center justify-center mb-4 ${
-              archiveStatus === 'hired' ? 'bg-emerald-500/10 text-emerald-500' : 'bg-rose-500/10 text-rose-500'
-            }`}>
+            <div className={`w-16 h-16 rounded-full flex items-center justify-center mb-4 ${archiveStatus === 'hired' ? 'bg-emerald-500/10 text-emerald-500' : 'bg-rose-500/10 text-rose-500'
+              }`}>
               {archiveStatus === 'hired' ? <CheckCircle2 size={36} /> : <XCircle size={36} />}
             </div>
             <h3 className="text-xl font-bold text-foreground mb-1">
@@ -198,7 +194,7 @@ export function CandidateModal({ candidate, onClose }: CandidateModalProps) {
 
               if (!isAccessible) {
                 return (
-                  <div 
+                  <div
                     key={tab.id}
                     className="flex items-center gap-1.5 px-3 py-2 text-xs font-medium text-muted-foreground/40 cursor-not-allowed opacity-50 select-none whitespace-nowrap"
                     title={t.modal.tahapBelumDicapai}
@@ -210,14 +206,13 @@ export function CandidateModal({ candidate, onClose }: CandidateModalProps) {
               }
 
               return (
-                <button 
+                <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
-                  className={`flex items-center gap-2 pb-3 -mb-[17px] font-semibold text-xs sm:text-sm transition-colors border-b-2 whitespace-nowrap ${
-                    activeTab === tab.id 
-                      ? 'border-primary text-primary' 
-                      : 'border-transparent text-muted-foreground hover:text-foreground'
-                  }`}
+                  className={`flex items-center gap-2 pb-3 -mb-[17px] font-semibold text-xs sm:text-sm transition-colors border-b-2 whitespace-nowrap ${activeTab === tab.id
+                    ? 'border-primary text-primary'
+                    : 'border-transparent text-muted-foreground hover:text-foreground'
+                    }`}
                 >
                   {tab.icon}
                   {tab.label}
@@ -226,7 +221,7 @@ export function CandidateModal({ candidate, onClose }: CandidateModalProps) {
             })}
           </div>
 
-          <button 
+          <button
             onClick={onClose}
             className="p-1 rounded-md text-muted-foreground hover:bg-muted hover:text-foreground transition-colors ml-4"
           >
@@ -236,11 +231,11 @@ export function CandidateModal({ candidate, onClose }: CandidateModalProps) {
 
         {/* Modal Content Body */}
         <div className="overflow-y-auto flex-1 p-6 custom-scrollbar">
-          
+
           {/* ==================== TAB 1: UPLOAD CV (Tahap 1) ==================== */}
           {activeTab === 'upload' && (
             <div className="space-y-6 animate-in fade-in duration-300">
-              
+
               {/* Candidate Info Header */}
               <div className="bg-card p-6 rounded-xl border border-border shadow-sm flex flex-col sm:flex-row justify-between gap-4 items-start">
                 <div className="flex gap-4 items-center">
@@ -338,22 +333,20 @@ export function CandidateModal({ candidate, onClose }: CandidateModalProps) {
 
               {/* Main Score Card */}
               <div className="bg-card p-6 rounded-xl border border-border shadow-sm flex flex-col sm:flex-row items-center gap-6">
-                <div className={`w-28 h-28 rounded-full flex flex-col items-center justify-center shrink-0 shadow-lg ${
-                  (candidate.cvScore || 87) >= 80 
-                    ? 'bg-emerald-500 shadow-emerald-500/20 text-white' 
-                    : 'bg-rose-500 shadow-rose-500/20 text-white'
-                }`}>
+                <div className={`w-28 h-28 rounded-full flex flex-col items-center justify-center shrink-0 shadow-lg ${(candidate.cvScore || 87) >= 80
+                  ? 'bg-emerald-500 shadow-emerald-500/20 text-white'
+                  : 'bg-rose-500 shadow-rose-500/20 text-white'
+                  }`}>
                   <span className="text-3xl font-bold">{candidate.cvScore || 87}%</span>
                   <span className="text-[10px] uppercase tracking-wider font-semibold opacity-90">Score</span>
                 </div>
 
                 <div className="flex-1 text-center sm:text-left space-y-2">
                   <div className="flex items-center gap-2 justify-center sm:justify-start">
-                    <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold ${
-                      (candidate.cvScore || 87) >= 80 
-                        ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800'
-                        : 'bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-800'
-                    }`}>
+                    <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold ${(candidate.cvScore || 87) >= 80
+                      ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800'
+                      : 'bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-800'
+                      }`}>
                       {(candidate.cvScore || 87) >= 80 ? <CheckCircle2 size={14} /> : <XCircle size={14} />}
                       {(candidate.cvScore || 87) >= 80 ? t.modal.lolosAmbang : t.modal.gagalAmbang}
                     </span>
@@ -375,7 +368,7 @@ export function CandidateModal({ candidate, onClose }: CandidateModalProps) {
                   <span className="text-primary">{candidate.cvScore || 87}% Match</span>
                 </div>
                 <div className="w-full bg-muted rounded-full h-3 overflow-hidden">
-                  <div 
+                  <div
                     className={`h-full rounded-full transition-all duration-700 ${(candidate.cvScore || 87) >= 80 ? 'bg-emerald-500' : 'bg-rose-500'}`}
                     style={{ width: `${candidate.cvScore || 87}%` }}
                   ></div>
@@ -431,7 +424,7 @@ export function CandidateModal({ candidate, onClose }: CandidateModalProps) {
           {/* ==================== TAB 3: VIRTUAL INTERVIEW (Tahap 3) ==================== */}
           {activeTab === 'interview_status' && stageIndex >= 2 && (
             <div className="space-y-6 animate-in fade-in duration-300">
-              
+
               <div className="bg-card p-6 rounded-xl border border-border shadow-sm">
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
                   <div>
@@ -525,7 +518,7 @@ export function CandidateModal({ candidate, onClose }: CandidateModalProps) {
               </div>
 
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                
+
                 {/* 5 Video Parameters */}
                 <div className="bg-card p-5 rounded-xl border border-border shadow-sm space-y-4">
                   <h3 className="text-sm font-bold text-foreground flex items-center gap-2">
@@ -541,7 +534,7 @@ export function CandidateModal({ candidate, onClose }: CandidateModalProps) {
                           <span className="font-bold text-primary">{param.value}%</span>
                         </div>
                         <div className="w-full bg-muted rounded-full h-2 overflow-hidden">
-                          <div 
+                          <div
                             className={`h-full rounded-full transition-all duration-700 ${param.color}`}
                             style={{ width: `${param.value}%` }}
                           ></div>
@@ -599,7 +592,7 @@ export function CandidateModal({ candidate, onClose }: CandidateModalProps) {
           {/* ==================== TAB 5: HUMAN VALIDATION (Tahap 5 - ALL COMBINED & DECISION) ==================== */}
           {activeTab === 'full_validation' && stageIndex >= 4 && (
             <div className="space-y-6 animate-in fade-in duration-300">
-              
+
               <div>
                 <h2 className="text-xl font-bold mb-1 flex items-center gap-2">
                   <UserCheck size={22} className="text-primary" />
@@ -642,7 +635,7 @@ export function CandidateModal({ candidate, onClose }: CandidateModalProps) {
 
               {/* Combined Grid: Video + Radar + Sliders */}
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                
+
                 {/* Left Side: Video Preview & Radar */}
                 <div className="space-y-4">
                   <div className="p-4 bg-card rounded-xl border border-border shadow-sm space-y-3">
@@ -668,7 +661,7 @@ export function CandidateModal({ candidate, onClose }: CandidateModalProps) {
                         <RadarChart cx="50%" cy="50%" outerRadius="60%" data={radarData}>
                           <PolarGrid stroke="currentColor" className="text-border" />
                           <PolarAngleAxis dataKey="subject" tick={{ fill: 'currentColor', fontSize: 9 }} className="text-muted-foreground" />
-                          <Radar name="Candidate" dataKey="A" stroke="#0f766e" fill="#0f766e" fillOpacity={0.3} />
+                          <Radar name="Candidate" dataKey="A" stroke="#1b7b9e" fill="#1b7b9e" fillOpacity={0.3} />
                         </RadarChart>
                       </ResponsiveContainer>
                     </div>
@@ -697,10 +690,10 @@ export function CandidateModal({ candidate, onClose }: CandidateModalProps) {
                             <span>{item.label}</span>
                             <span className="font-bold text-primary">{item.score} / 10</span>
                           </div>
-                          <input 
-                            type="range" 
-                            min="0" 
-                            max="10" 
+                          <input
+                            type="range"
+                            min="0"
+                            max="10"
                             defaultValue={item.score}
                             className="w-full h-1.5 bg-muted rounded-lg appearance-none cursor-pointer accent-primary"
                           />
@@ -713,7 +706,7 @@ export function CandidateModal({ candidate, onClose }: CandidateModalProps) {
                       <label className="block text-xs font-semibold text-foreground mb-1.5">
                         {t.modal.catatanHR}
                       </label>
-                      <textarea 
+                      <textarea
                         className="w-full p-3 bg-muted/30 border border-border rounded-lg text-xs resize-none h-20 focus:outline-none focus:border-primary transition-all"
                         placeholder={t.modal.masukkanCatatan}
                       ></textarea>
@@ -723,14 +716,14 @@ export function CandidateModal({ candidate, onClose }: CandidateModalProps) {
                   {/* Decision Buttons (Triggers Archive Transfer) */}
                   <div className="space-y-2 pt-2">
                     <div className="flex gap-2">
-                      <button 
+                      <button
                         onClick={() => handleDecision('hired')}
                         className="flex-1 py-2.5 bg-emerald-500 hover:bg-emerald-600 text-white font-semibold rounded-lg text-xs transition-colors flex items-center justify-center gap-1.5 shadow-sm active:scale-95"
                       >
                         <CheckCircle2 size={16} />
                         {t.modal.terima}
                       </button>
-                      <button 
+                      <button
                         onClick={() => handleDecision('rejected')}
                         className="flex-1 py-2.5 bg-rose-500 hover:bg-rose-600 text-white font-semibold rounded-lg text-xs transition-colors flex items-center justify-center gap-1.5 shadow-sm active:scale-95"
                       >

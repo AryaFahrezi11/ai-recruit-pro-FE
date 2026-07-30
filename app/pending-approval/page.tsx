@@ -2,15 +2,15 @@
 
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { 
-  Clock, 
-  ShieldCheck, 
-  AlertCircle, 
-  Building2, 
-  User, 
-  CheckCircle2, 
-  Mail, 
-  Phone, 
+import {
+  Clock,
+  ShieldCheck,
+  AlertCircle,
+  Building2,
+  User,
+  CheckCircle2,
+  Mail,
+  Phone,
   ArrowLeft,
   MessageSquare,
   HelpCircle,
@@ -38,17 +38,17 @@ export default function PendingApprovalPage() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-[#F4FDFB] text-[#0F766E] flex flex-col justify-between font-sans antialiased">
-      
+    <div className="min-h-screen bg-[#F0F8FB] text-[#1b7b9e] flex flex-col justify-between font-sans antialiased">
+
       {/* Top Header */}
       <header className="py-6 px-6 sm:px-12 max-w-[1600px] w-full mx-auto flex items-center justify-between">
         <Link href="/" className="flex items-center gap-3 group">
-          <div className="w-10 h-10 bg-[#0F766E] text-white rounded-xl flex items-center justify-center font-black text-lg shadow-md group-hover:scale-105 transition-transform">
+          <div className="w-10 h-10 bg-[#1b7b9e] text-white rounded-xl flex items-center justify-center font-black text-lg shadow-md group-hover:scale-105 transition-transform">
             RP
           </div>
           <div className="flex flex-col">
-            <span className="font-black text-xl tracking-tight text-[#0F766E] leading-none">
-              AI-Recruit <span className="text-[#0D635C]">Pro</span>
+            <span className="font-black text-xl tracking-tight text-[#0c2b3d] leading-none">
+              AI-Recruit <span className="text-[#1D7FA1]">Pro</span>
             </span>
             <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest mt-0.5">
               Portal Perusahaan
@@ -56,7 +56,7 @@ export default function PendingApprovalPage() {
           </div>
         </Link>
 
-        <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-[#E6FFFA] text-[#0F766E] text-xs font-bold border border-[#99F6E4]">
+        <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-[#E0F1F7] text-[#1b7b9e] text-xs font-bold border border-[#B8E1ED]">
           <span className="w-2.5 h-2.5 rounded-full bg-amber-500 animate-pulse"></span>
           Status Akun: PENDING APPROVAL
         </div>
@@ -64,10 +64,10 @@ export default function PendingApprovalPage() {
 
       {/* Main Container */}
       <main className="flex-1 max-w-3xl w-full mx-auto px-4 py-8 flex items-center justify-center">
-        <div className="bg-white rounded-3xl p-8 sm:p-12 shadow-2xl border border-[#CCFBF1] space-y-8 text-center relative overflow-hidden">
-          
+        <div className="bg-white rounded-3xl p-8 sm:p-12 shadow-2xl border border-[#C2E5EF] space-y-8 text-center relative overflow-hidden">
+
           {/* Animated Clock Icon */}
-          <div className="w-20 h-20 bg-[#E6FFFA] border-2 border-[#99F6E4] rounded-3xl flex items-center justify-center text-[#0F766E] mx-auto shadow-sm relative">
+          <div className="w-20 h-20 bg-[#E0F1F7] border-2 border-[#B8E1ED] rounded-3xl flex items-center justify-center text-[#1b7b9e] mx-auto shadow-sm relative">
             <Clock size={40} className="animate-spin" style={{ animationDuration: '8s' }} />
             <div className="absolute -top-1 -right-1 w-6 h-6 bg-amber-500 text-white rounded-full flex items-center justify-center font-black text-[10px] shadow-sm">
               !
@@ -80,7 +80,7 @@ export default function PendingApprovalPage() {
               Verification In Progress • ID: #REG-89123
             </span>
 
-            <h1 className="text-2xl sm:text-4xl font-black text-[#0F766E] leading-tight">
+            <h1 className="text-2xl sm:text-4xl font-black text-[#1b7b9e] leading-tight">
               Pendaftaran Berhasil Dikirim &amp; Dalam Peninjauan Admin
             </h1>
 
@@ -90,7 +90,7 @@ export default function PendingApprovalPage() {
           </div>
 
           {/* Time Estimate Banner */}
-          <div className="p-4 rounded-2xl bg-[#F4FDFB] border border-[#CCFBF1] flex items-center justify-center gap-3 text-xs sm:text-sm font-bold text-[#0F766E]">
+          <div className="p-4 rounded-2xl bg-[#F0F8FB] border border-[#C2E5EF] flex items-center justify-center gap-3 text-xs sm:text-sm font-bold text-[#1b7b9e]">
             <ShieldCheck size={20} className="shrink-0" />
             <span>Estimasi Waktu Persetujuan: Maksimal 1 x 24 Jam Kerja</span>
           </div>
@@ -98,7 +98,7 @@ export default function PendingApprovalPage() {
           {/* Submitted Data Summary Box */}
           <div className="bg-slate-50 p-6 rounded-3xl border border-slate-200 space-y-4 text-left">
             <div className="flex items-center justify-between border-b border-slate-200 pb-3">
-              <span className="font-extrabold text-xs text-[#0F766E] uppercase tracking-wider flex items-center gap-2">
+              <span className="font-extrabold text-xs text-[#1b7b9e] uppercase tracking-wider flex items-center gap-2">
                 <FileCheck2 size={16} /> Rincian Berkas Legalitas Yang Dikirim
               </span>
               <span className="text-[11px] font-bold text-amber-600 bg-amber-100 px-2.5 py-0.5 rounded-md">
@@ -142,7 +142,7 @@ export default function PendingApprovalPage() {
 
             <button
               onClick={() => alert('Customer Support Administrator AI-Recruit Pro dapat dihubungi melalui WhatsApp Admin: 0812-9900-8800 (Jam Kerja: 08.00 - 17.00 WIB)')}
-              className="w-full sm:w-auto px-8 py-3.5 rounded-full bg-[#0F766E] hover:bg-[#0D635C] text-white font-extrabold text-xs sm:text-sm shadow-md transition-all inline-flex items-center justify-center gap-2"
+              className="w-full sm:w-auto px-8 py-3.5 rounded-full bg-[#1b7b9e] hover:bg-[#1D7FA1] text-white font-extrabold text-xs sm:text-sm shadow-md transition-all inline-flex items-center justify-center gap-2"
             >
               <MessageSquare size={16} />
               Hubungi Support Admin Developer
@@ -153,7 +153,7 @@ export default function PendingApprovalPage() {
       </main>
 
       {/* Footer */}
-      <footer className="py-6 border-t border-[#CCFBF1] bg-white text-center text-xs text-slate-400">
+      <footer className="py-6 border-t border-[#C2E5EF] bg-white text-center text-xs text-slate-400">
         &copy; {new Date().getFullYear()} AI-Recruit Pro Account Approval Engine. All Rights Reserved.
       </footer>
 

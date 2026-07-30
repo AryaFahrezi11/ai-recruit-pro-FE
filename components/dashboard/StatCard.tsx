@@ -29,30 +29,30 @@ export function StatCard({
 
       <div className="flex justify-between items-start mb-4 relative z-10">
         <h3 className="text-[11px] font-bold text-muted-foreground tracking-wider uppercase">{title}</h3>
-        <div className={`p-2.5 rounded-xl ${iconBgColor} ${iconColor} border border-border/50 shrink-0 shadow-2xs`}>
+        <div className={`p-2.5 rounded-xl ${iconBgColor} ${iconColor} shrink-0 shadow-2xs transition-transform group-hover:scale-105`}>
           {icon}
         </div>
       </div>
 
       <div className="mt-auto relative z-10">
-        <div className="text-3xl font-extrabold text-foreground mb-2 tracking-tight">{value}</div>
+        <div className="text-3xl font-black text-foreground mb-2 tracking-tight">{value}</div>
         
         <div className="flex items-center text-xs gap-1.5 flex-wrap">
           {trend === 'up' && (
-            <span className="inline-flex items-center font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-100 dark:bg-emerald-950/60 px-2 py-0.5 rounded-full text-[11px] border border-emerald-300 dark:border-emerald-700">
-              <TrendingUp size={12} className="mr-1" />
+            <span className="inline-flex items-center font-bold text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/60 px-2.5 py-0.5 rounded-full text-[11px] border border-emerald-200/80 dark:border-emerald-800">
+              <TrendingUp size={12} className="mr-1 text-emerald-600 dark:text-emerald-400" />
               {trendValue}
             </span>
           )}
           {trend === 'down' && (
-            <span className="inline-flex items-center font-bold text-rose-600 dark:text-rose-400 bg-rose-100 dark:bg-rose-950/60 px-2 py-0.5 rounded-full text-[11px] border border-rose-300 dark:border-rose-700">
-              <TrendingDown size={12} className="mr-1" />
+            <span className="inline-flex items-center font-bold text-rose-700 dark:text-rose-300 bg-rose-50 dark:bg-rose-950/60 px-2.5 py-0.5 rounded-full text-[11px] border border-rose-200/80 dark:border-rose-800">
+              <TrendingDown size={12} className="mr-1 text-rose-600 dark:text-rose-400" />
               {trendValue}
             </span>
           )}
           {trend === 'neutral' && (
-            <span className="inline-flex items-center font-bold text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-full text-[11px] border border-slate-300 dark:border-slate-700">
-              <Minus size={12} className="mr-1" />
+            <span className="inline-flex items-center font-bold text-slate-700 dark:text-slate-300 bg-slate-100/90 dark:bg-slate-800 px-2.5 py-0.5 rounded-full text-[11px] border border-slate-200 dark:border-slate-700">
+              <Minus size={12} className="mr-1 text-slate-500 dark:text-slate-400" />
               {trendValue}
             </span>
           )}

@@ -3,12 +3,12 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { 
-  UploadCloud, 
-  FileText, 
-  CheckCircle2, 
-  ArrowRight, 
-  RefreshCw, 
+import {
+  UploadCloud,
+  FileText,
+  CheckCircle2,
+  ArrowRight,
+  RefreshCw,
   FileCheck2,
   ChevronLeft,
   Sparkles,
@@ -156,31 +156,31 @@ export default function AtsCvBuilderPage() {
 
   return (
     <div className="max-w-[1600px] w-full mx-auto space-y-8">
-      
+
       {/* Top Header & Breadcrumb */}
       <div className="flex items-center justify-between">
         <Link
           href="/pelamar/dashboard"
-          className="inline-flex items-center gap-2 text-xs sm:text-sm font-bold text-slate-500 hover:text-[#0F766E] transition-colors"
+          className="inline-flex items-center gap-2 text-xs sm:text-sm font-bold text-slate-500 hover:text-[#1b7b9e] transition-colors"
         >
           <ChevronLeft className="w-5 h-5" /> Kembali ke Dashboard Pelamar
         </Link>
 
         <div className="flex items-center gap-2">
-          <span className="w-2.5 h-2.5 rounded-full bg-[#0F766E] animate-pulse"></span>
-          <span className="text-xs sm:text-sm font-bold text-[#0F766E]">Tahap 1: Pembuatan &amp; Pengelolaan CV ATS</span>
+          <span className="w-2.5 h-2.5 rounded-full bg-[#1b7b9e] animate-pulse"></span>
+          <span className="text-xs sm:text-sm font-bold text-[#1b7b9e]">Tahap 1: Pembuatan &amp; Pengelolaan CV ATS</span>
         </div>
       </div>
 
       {/* Main Page Title Banner */}
-      <div className="bg-white p-8 sm:p-10 rounded-3xl border border-[#CCFBF1] shadow-xs space-y-3">
+      <div className="bg-white p-8 sm:p-10 rounded-3xl border border-[#C2E5EF] shadow-xs space-y-3">
         <div className="flex items-center justify-between flex-wrap gap-4">
           <div className="space-y-2">
-            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#E6FFFA] text-[#0F766E] text-xs font-bold border border-[#99F6E4]">
-              <Sparkles className="w-4 h-4 text-[#0F766E]" />
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#E0F1F7] text-[#1b7b9e] text-xs font-bold border border-[#B8E1ED]">
+              <Sparkles className="w-4 h-4 text-[#1b7b9e]" />
               ATS-Friendly CV Generator &amp; Profile Builder
             </div>
-            <h1 className="text-2xl sm:text-4xl font-black text-[#0F766E]">
+            <h1 className="text-2xl sm:text-4xl font-black text-[#1b7b9e]">
               Buat / Unggah CV Standar ATS-Friendly
             </h1>
             <p className="text-slate-500 text-xs sm:text-base leading-relaxed max-w-3xl">
@@ -189,24 +189,22 @@ export default function AtsCvBuilderPage() {
           </div>
 
           {/* Tab Switcher */}
-          <div className="flex items-center gap-2 bg-[#F4FDFB] p-1.5 rounded-full border border-[#CCFBF1]">
+          <div className="flex items-center gap-2 bg-[#F0F8FB] p-1.5 rounded-full border border-[#C2E5EF]">
             <button
               onClick={() => setActiveTab('builder')}
-              className={`px-5 py-2 rounded-full text-xs font-bold transition-all ${
-                activeTab === 'builder'
-                  ? 'bg-[#0F766E] text-white shadow-2xs'
-                  : 'text-slate-600 hover:text-[#0F766E]'
-              }`}
+              className={`px-5 py-2 rounded-full text-xs font-bold transition-all ${activeTab === 'builder'
+                ? 'bg-[#1b7b9e] text-white shadow-2xs'
+                : 'text-slate-600 hover:text-[#1b7b9e]'
+                }`}
             >
               📝 Formulir CV ATS Interaktif
             </button>
             <button
               onClick={() => setActiveTab('upload')}
-              className={`px-5 py-2 rounded-full text-xs font-bold transition-all ${
-                activeTab === 'upload'
-                  ? 'bg-[#0F766E] text-white shadow-2xs'
-                  : 'text-slate-600 hover:text-[#0F766E]'
-              }`}
+              className={`px-5 py-2 rounded-full text-xs font-bold transition-all ${activeTab === 'upload'
+                ? 'bg-[#1b7b9e] text-white shadow-2xs'
+                : 'text-slate-600 hover:text-[#1b7b9e]'
+                }`}
             >
               📤 Unggah File PDF CV
             </button>
@@ -217,19 +215,19 @@ export default function AtsCvBuilderPage() {
       {/* TAB 1: ATS CV BUILDER & LIVE PREVIEW */}
       {activeTab === 'builder' && (
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-          
+
           {/* Left Column: Input Form (7 Cols) */}
-          <div className="lg:col-span-6 bg-white rounded-3xl p-6 sm:p-8 border border-[#CCFBF1] shadow-xs space-y-6">
+          <div className="lg:col-span-6 bg-white rounded-3xl p-6 sm:p-8 border border-[#C2E5EF] shadow-xs space-y-6">
             <div className="border-b border-slate-100 pb-4">
-              <h2 className="text-xl font-black text-[#0F766E]">Biodata &amp; Riwayat Profesional</h2>
+              <h2 className="text-xl font-black text-[#1b7b9e]">Biodata &amp; Riwayat Profesional</h2>
               <span className="text-xs text-slate-400">Setiap perubahan akan otomatis memperbarui tampilan CV ATS di sisi kanan.</span>
             </div>
 
             <form onSubmit={handleSaveAtsCv} className="space-y-6">
-              
+
               {/* Section 1: Data Diri */}
               <div className="space-y-4">
-                <h3 className="text-xs font-black uppercase tracking-wider text-[#0F766E] flex items-center gap-2">
+                <h3 className="text-xs font-black uppercase tracking-wider text-[#1b7b9e] flex items-center gap-2">
                   <User size={16} /> 1. Informasi Kontak Diri
                 </h3>
 
@@ -240,7 +238,7 @@ export default function AtsCvBuilderPage() {
                       type="text"
                       value={fullName}
                       onChange={(e) => setFullName(e.target.value)}
-                      className="w-full px-4 py-2.5 bg-[#F4FDFB] border border-[#CCFBF1] focus:border-[#0F766E] rounded-xl text-xs font-bold outline-none"
+                      className="w-full px-4 py-2.5 bg-[#F0F8FB] border border-[#C2E5EF] focus:border-[#1b7b9e] rounded-xl text-xs font-bold outline-none"
                     />
                   </div>
 
@@ -250,7 +248,7 @@ export default function AtsCvBuilderPage() {
                       type="text"
                       value={jobTitle}
                       onChange={(e) => setJobTitle(e.target.value)}
-                      className="w-full px-4 py-2.5 bg-[#F4FDFB] border border-[#CCFBF1] focus:border-[#0F766E] rounded-xl text-xs font-bold outline-none"
+                      className="w-full px-4 py-2.5 bg-[#F0F8FB] border border-[#C2E5EF] focus:border-[#1b7b9e] rounded-xl text-xs font-bold outline-none"
                     />
                   </div>
                 </div>
@@ -262,7 +260,7 @@ export default function AtsCvBuilderPage() {
                       type="email"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
-                      className="w-full px-3 py-2 bg-[#F4FDFB] border border-[#CCFBF1] focus:border-[#0F766E] rounded-xl text-xs outline-none"
+                      className="w-full px-3 py-2 bg-[#F0F8FB] border border-[#C2E5EF] focus:border-[#1b7b9e] rounded-xl text-xs outline-none"
                     />
                   </div>
                   <div>
@@ -271,7 +269,7 @@ export default function AtsCvBuilderPage() {
                       type="text"
                       value={phone}
                       onChange={(e) => setPhone(e.target.value)}
-                      className="w-full px-3 py-2 bg-[#F4FDFB] border border-[#CCFBF1] focus:border-[#0F766E] rounded-xl text-xs outline-none"
+                      className="w-full px-3 py-2 bg-[#F0F8FB] border border-[#C2E5EF] focus:border-[#1b7b9e] rounded-xl text-xs outline-none"
                     />
                   </div>
                   <div>
@@ -280,7 +278,7 @@ export default function AtsCvBuilderPage() {
                       type="text"
                       value={location}
                       onChange={(e) => setLocation(e.target.value)}
-                      className="w-full px-3 py-2 bg-[#F4FDFB] border border-[#CCFBF1] focus:border-[#0F766E] rounded-xl text-xs outline-none"
+                      className="w-full px-3 py-2 bg-[#F0F8FB] border border-[#C2E5EF] focus:border-[#1b7b9e] rounded-xl text-xs outline-none"
                     />
                   </div>
                 </div>
@@ -288,34 +286,34 @@ export default function AtsCvBuilderPage() {
 
               {/* Section 2: Ringkasan Profesional */}
               <div className="space-y-2">
-                <h3 className="text-xs font-black uppercase tracking-wider text-[#0F766E] flex items-center gap-2">
+                <h3 className="text-xs font-black uppercase tracking-wider text-[#1b7b9e] flex items-center gap-2">
                   <FileText size={16} /> 2. Ringkasan Profesional (Executive Summary)
                 </h3>
                 <textarea
                   rows={3}
                   value={summary}
                   onChange={(e) => setSummary(e.target.value)}
-                  className="w-full px-4 py-3 bg-[#F4FDFB] border border-[#CCFBF1] focus:border-[#0F766E] rounded-xl text-xs outline-none leading-relaxed"
+                  className="w-full px-4 py-3 bg-[#F0F8FB] border border-[#C2E5EF] focus:border-[#1b7b9e] rounded-xl text-xs outline-none leading-relaxed"
                 />
               </div>
 
               {/* Section 3: Pengalaman Kerja */}
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <h3 className="text-xs font-black uppercase tracking-wider text-[#0F766E] flex items-center gap-2">
+                  <h3 className="text-xs font-black uppercase tracking-wider text-[#1b7b9e] flex items-center gap-2">
                     <Briefcase size={16} /> 3. Pengalaman Kerja
                   </h3>
                   <button
                     type="button"
                     onClick={handleAddExperience}
-                    className="px-3.5 py-1.5 rounded-full bg-[#E6FFFA] text-[#0F766E] hover:bg-[#CCFBF1] text-xs font-bold border border-[#99F6E4] flex items-center gap-1.5 transition-all shadow-2xs"
+                    className="px-3.5 py-1.5 rounded-full bg-[#E0F1F7] text-[#1b7b9e] hover:bg-[#C2E5EF] text-xs font-bold border border-[#B8E1ED] flex items-center gap-1.5 transition-all shadow-2xs"
                   >
                     <Plus size={14} /> Tambah Pengalaman
                   </button>
                 </div>
 
                 {experiences.map((exp, idx) => (
-                  <div key={idx} className="p-4 rounded-2xl bg-[#F4FDFB] border border-[#CCFBF1] space-y-3 relative group">
+                  <div key={idx} className="p-4 rounded-2xl bg-[#F0F8FB] border border-[#C2E5EF] space-y-3 relative group">
                     <div className="flex items-center justify-between">
                       <span className="text-[11px] font-bold text-slate-500">Pengalaman #{idx + 1}</span>
                       {experiences.length > 1 && (
@@ -334,24 +332,16 @@ export default function AtsCvBuilderPage() {
                       <input
                         type="text"
                         value={exp.company}
-                        onChange={(e) => {
-                          const updated = [...experiences];
-                          updated[idx].company = e.target.value;
-                          setExperiences(updated);
-                        }}
+                        onChange={(e) => handleExperienceChange(idx, 'company', e.target.value)}
                         placeholder="Nama Perusahaan (misal: PT Tech Nusantara)"
-                        className="px-3.5 py-2 bg-white border border-slate-200 focus:border-[#0F766E] rounded-xl text-xs font-bold outline-none"
+                        className="px-3.5 py-2 bg-white border border-slate-200 focus:border-[#1b7b9e] rounded-xl text-xs font-bold outline-none"
                       />
                       <input
                         type="text"
                         value={exp.role}
-                        onChange={(e) => {
-                          const updated = [...experiences];
-                          updated[idx].role = e.target.value;
-                          setExperiences(updated);
-                        }}
+                        onChange={(e) => handleExperienceChange(idx, 'role', e.target.value)}
                         placeholder="Posisi Jabatan (misal: Senior Frontend Engineer)"
-                        className="px-3.5 py-2 bg-white border border-slate-200 focus:border-[#0F766E] rounded-xl text-xs font-bold outline-none"
+                        className="px-3.5 py-2 bg-white border border-slate-200 focus:border-[#1b7b9e] rounded-xl text-xs font-bold outline-none"
                       />
                     </div>
 
@@ -359,26 +349,18 @@ export default function AtsCvBuilderPage() {
                       <input
                         type="text"
                         value={exp.period}
-                        onChange={(e) => {
-                          const updated = [...experiences];
-                          updated[idx].period = e.target.value;
-                          setExperiences(updated);
-                        }}
+                        onChange={(e) => handleExperienceChange(idx, 'period', e.target.value)}
                         placeholder="Periode Kerja (misal: 2022 - Sekarang)"
-                        className="w-full px-3.5 py-2 bg-white border border-slate-200 focus:border-[#0F766E] rounded-xl text-xs outline-none"
+                        className="w-full px-3.5 py-2 bg-white border border-slate-200 focus:border-[#1b7b9e] rounded-xl text-xs outline-none"
                       />
                     </div>
 
                     <textarea
                       rows={2}
                       value={exp.description}
-                      onChange={(e) => {
-                        const updated = [...experiences];
-                        updated[idx].description = e.target.value;
-                        setExperiences(updated);
-                      }}
+                      onChange={(e) => handleExperienceChange(idx, 'description', e.target.value)}
                       placeholder="Deskripsi pencapaian & tanggung jawab utama..."
-                      className="w-full px-3.5 py-2 bg-white border border-slate-200 focus:border-[#0F766E] rounded-xl text-xs outline-none leading-relaxed"
+                      className="w-full px-3.5 py-2 bg-white border border-slate-200 focus:border-[#1b7b9e] rounded-xl text-xs outline-none leading-relaxed"
                     />
                   </div>
                 ))}
@@ -387,20 +369,20 @@ export default function AtsCvBuilderPage() {
               {/* Section 4: Riwayat Pendidikan */}
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <h3 className="text-xs font-black uppercase tracking-wider text-[#0F766E] flex items-center gap-2">
+                  <h3 className="text-xs font-black uppercase tracking-wider text-[#1b7b9e] flex items-center gap-2">
                     <GraduationCap size={16} /> 4. Riwayat Pendidikan
                   </h3>
                   <button
                     type="button"
                     onClick={handleAddEducation}
-                    className="px-3.5 py-1.5 rounded-full bg-[#E6FFFA] text-[#0F766E] hover:bg-[#CCFBF1] text-xs font-bold border border-[#99F6E4] flex items-center gap-1.5 transition-all shadow-2xs"
+                    className="px-3.5 py-1.5 rounded-full bg-[#E0F1F7] text-[#1b7b9e] hover:bg-[#C2E5EF] text-xs font-bold border border-[#B8E1ED] flex items-center gap-1.5 transition-all shadow-2xs"
                   >
                     <Plus size={14} /> Tambah Pendidikan
                   </button>
                 </div>
 
                 {education.map((edu, idx) => (
-                  <div key={idx} className="p-4 rounded-2xl bg-[#F4FDFB] border border-[#CCFBF1] space-y-3 relative">
+                  <div key={idx} className="p-4 rounded-2xl bg-[#F0F8FB] border border-[#C2E5EF] space-y-3 relative">
                     <div className="flex items-center justify-between">
                       <span className="text-[11px] font-bold text-slate-500">Pendidikan #{idx + 1}</span>
                       {education.length > 1 && (
@@ -419,24 +401,16 @@ export default function AtsCvBuilderPage() {
                       <input
                         type="text"
                         value={edu.school}
-                        onChange={(e) => {
-                          const updated = [...education];
-                          updated[idx].school = e.target.value;
-                          setEducation(updated);
-                        }}
+                        onChange={(e) => handleEducationChange(idx, 'school', e.target.value)}
                         placeholder="Nama Sekolah / Universitas"
-                        className="px-3.5 py-2 bg-white border border-slate-200 focus:border-[#0F766E] rounded-xl text-xs font-bold outline-none"
+                        className="px-3.5 py-2 bg-white border border-slate-200 focus:border-[#1b7b9e] rounded-xl text-xs font-bold outline-none"
                       />
                       <input
                         type="text"
                         value={edu.degree}
-                        onChange={(e) => {
-                          const updated = [...education];
-                          updated[idx].degree = e.target.value;
-                          setEducation(updated);
-                        }}
+                        onChange={(e) => handleEducationChange(idx, 'degree', e.target.value)}
                         placeholder="Gelar / Jurusan (misal: S1 Teknik Informatika)"
-                        className="px-3.5 py-2 bg-white border border-slate-200 focus:border-[#0F766E] rounded-xl text-xs font-bold outline-none"
+                        className="px-3.5 py-2 bg-white border border-slate-200 focus:border-[#1b7b9e] rounded-xl text-xs font-bold outline-none"
                       />
                     </div>
 
@@ -444,24 +418,16 @@ export default function AtsCvBuilderPage() {
                       <input
                         type="text"
                         value={edu.period}
-                        onChange={(e) => {
-                          const updated = [...education];
-                          updated[idx].period = e.target.value;
-                          setEducation(updated);
-                        }}
+                        onChange={(e) => handleEducationChange(idx, 'period', e.target.value)}
                         placeholder="Periode (misal: 2016 - 2020)"
-                        className="px-3.5 py-2 bg-white border border-slate-200 focus:border-[#0F766E] rounded-xl text-xs outline-none"
+                        className="px-3.5 py-2 bg-white border border-slate-200 focus:border-[#1b7b9e] rounded-xl text-xs outline-none"
                       />
                       <input
                         type="text"
                         value={edu.gpa}
-                        onChange={(e) => {
-                          const updated = [...education];
-                          updated[idx].gpa = e.target.value;
-                          setEducation(updated);
-                        }}
+                        onChange={(e) => handleEducationChange(idx, 'gpa', e.target.value)}
                         placeholder="IPK / Nilai Akhir (misal: IPK 3.85 / 4.00)"
-                        className="px-3.5 py-2 bg-white border border-slate-200 focus:border-[#0F766E] rounded-xl text-xs outline-none"
+                        className="px-3.5 py-2 bg-white border border-slate-200 focus:border-[#1b7b9e] rounded-xl text-xs outline-none"
                       />
                     </div>
                   </div>
@@ -470,7 +436,7 @@ export default function AtsCvBuilderPage() {
 
               {/* Section 5: Keahlian Teknis */}
               <div className="space-y-2">
-                <h3 className="text-xs font-black uppercase tracking-wider text-[#0F766E] flex items-center gap-2">
+                <h3 className="text-xs font-black uppercase tracking-wider text-[#1b7b9e] flex items-center gap-2">
                   <Wrench size={16} /> 5. Keahlian Teknis &amp; Tools (Keywords)
                 </h3>
                 <textarea
@@ -478,7 +444,7 @@ export default function AtsCvBuilderPage() {
                   value={skills}
                   onChange={(e) => setSkills(e.target.value)}
                   placeholder="React, Next.js, Node.js, Tailwind..."
-                  className="w-full px-4 py-2.5 bg-[#F4FDFB] border border-[#CCFBF1] focus:border-[#0F766E] rounded-xl text-xs outline-none"
+                  className="w-full px-4 py-2.5 bg-[#F0F8FB] border border-[#C2E5EF] focus:border-[#1b7b9e] rounded-xl text-xs outline-none"
                 />
               </div>
 
@@ -486,7 +452,7 @@ export default function AtsCvBuilderPage() {
               <div className="pt-4 border-t border-slate-100 flex items-center justify-between gap-4">
                 <button
                   type="submit"
-                  className="w-full py-4 rounded-full bg-[#0F766E] hover:bg-[#0D635C] text-white font-extrabold text-xs sm:text-sm shadow-md transition-all flex items-center justify-center gap-2"
+                  className="w-full py-4 rounded-full bg-[#1b7b9e] hover:bg-[#1D7FA1] text-white font-extrabold text-xs sm:text-sm shadow-md transition-all flex items-center justify-center gap-2"
                 >
                   <CheckCircle2 size={18} />
                   Simpan &amp; Perbarui Template CV ATS
@@ -499,13 +465,13 @@ export default function AtsCvBuilderPage() {
           {/* Right Column: Live ATS PDF Preview Box (6 Cols) */}
           <div className="lg:col-span-6 space-y-4">
             <div className="flex items-center justify-between px-2">
-              <span className="text-xs font-black text-[#0F766E] uppercase tracking-wider flex items-center gap-2">
+              <span className="text-xs font-black text-[#1b7b9e] uppercase tracking-wider flex items-center gap-2">
                 <Printer size={16} /> Pratinjau Dokumen ATS-Friendly
               </span>
 
               <button
                 onClick={() => window.print()}
-                className="px-4 py-1.5 rounded-full bg-[#0F766E] text-white text-xs font-bold hover:bg-[#0D635C] transition-colors flex items-center gap-1.5 shadow-2xs"
+                className="px-4 py-1.5 rounded-full bg-[#1b7b9e] text-white text-xs font-bold hover:bg-[#1D7FA1] transition-colors flex items-center gap-1.5 shadow-2xs"
               >
                 <Download size={14} /> Cetak / Export PDF
               </button>
@@ -513,11 +479,11 @@ export default function AtsCvBuilderPage() {
 
             {/* Clean White ATS Template Render Card */}
             <div className="bg-white p-8 sm:p-10 rounded-3xl border border-slate-300 shadow-xl text-slate-800 space-y-6 font-serif">
-              
+
               {/* ATS Header */}
               <div className="border-b-2 border-slate-800 pb-4 space-y-1 text-center font-sans">
                 <h2 className="text-2xl font-black uppercase text-slate-900 tracking-tight">{fullName || 'NAMA LENGKAP'}</h2>
-                <span className="text-sm font-bold text-[#0F766E] block">{jobTitle}</span>
+                <span className="text-sm font-bold text-[#1b7b9e] block">{jobTitle}</span>
                 <div className="text-[11px] text-slate-600 flex items-center justify-center flex-wrap gap-2 pt-1 font-medium">
                   <span>{email}</span> • <span>{phone}</span> • <span>{location}</span> • <span>{linkedin}</span>
                 </div>
@@ -583,18 +549,18 @@ export default function AtsCvBuilderPage() {
 
       {/* TAB 2: PDF FILE UPLOAD */}
       {activeTab === 'upload' && (
-        <div className="bg-white p-8 sm:p-12 rounded-3xl border border-[#CCFBF1] shadow-xs space-y-6">
+        <div className="bg-white p-8 sm:p-12 rounded-3xl border border-[#C2E5EF] shadow-xs space-y-6">
           <div
             onClick={() => handleSimulateUpload()}
-            className="border-2 border-dashed border-slate-300 hover:border-[#0F766E] bg-[#F4FDFB] hover:bg-[#E6FFFA]/50 rounded-3xl p-12 sm:p-16 text-center cursor-pointer transition-all duration-200 group relative overflow-hidden"
+            className="border-2 border-dashed border-slate-300 hover:border-[#1b7b9e] bg-[#F0F8FB] hover:bg-[#E0F1F7]/50 rounded-3xl p-12 sm:p-16 text-center cursor-pointer transition-all duration-200 group relative overflow-hidden"
           >
             <div className="flex flex-col items-center justify-center space-y-5 max-w-lg mx-auto">
-              <div className="w-20 h-20 rounded-3xl bg-[#E6FFFA] border border-[#99F6E4] flex items-center justify-center text-[#0F766E] group-hover:scale-110 transition-transform duration-200 shadow-2xs">
-                <UploadCloud className="w-10 h-10 text-[#0F766E]" />
+              <div className="w-20 h-20 rounded-3xl bg-[#E0F1F7] border border-[#B8E1ED] flex items-center justify-center text-[#1b7b9e] group-hover:scale-110 transition-transform duration-200 shadow-2xs">
+                <UploadCloud className="w-10 h-10 text-[#1b7b9e]" />
               </div>
 
               <div className="space-y-2">
-                <h3 className="text-lg sm:text-xl font-bold text-[#0F766E]">
+                <h3 className="text-lg sm:text-xl font-bold text-[#1b7b9e]">
                   Klik untuk Memilih File CV ATS (PDF)
                 </h3>
                 <p className="text-xs sm:text-sm text-slate-500">
@@ -602,8 +568,8 @@ export default function AtsCvBuilderPage() {
                 </p>
               </div>
 
-              <div className="inline-flex items-center gap-3 px-6 py-3 rounded-full bg-[#0F766E] text-white text-xs sm:text-sm font-bold shadow-xs">
-                <FileText className="w-5 h-5 text-[#E6FFFA]" />
+              <div className="inline-flex items-center gap-3 px-6 py-3 rounded-full bg-[#1b7b9e] text-white text-xs sm:text-sm font-bold shadow-xs">
+                <FileText className="w-5 h-5 text-[#E0F1F7]" />
                 Pilih File CV (PDF)
               </div>
             </div>

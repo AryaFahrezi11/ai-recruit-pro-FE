@@ -7,12 +7,12 @@ import { StatCard } from '@/components/dashboard/StatCard';
 import { PipelineChart } from '@/components/dashboard/PipelineChart';
 import { RecentActivity } from '@/components/dashboard/RecentActivity';
 import { CandidateModal } from '@/components/pipeline/CandidateModal';
-import { 
-  Users, 
-  Calendar, 
-  BrainCircuit, 
-  Clock, 
-  CalendarDays, 
+import {
+  Users,
+  Calendar,
+  BrainCircuit,
+  Clock,
+  CalendarDays,
   Download,
   AlertCircle,
   UserCheck,
@@ -87,7 +87,7 @@ export default function DashboardPage() {
 
   return (
     <div className="max-w-7xl mx-auto space-y-8 pb-16 animate-in fade-in duration-300">
-      
+
       {/* Header Banner */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-border pb-5">
         <div>
@@ -105,7 +105,7 @@ export default function DashboardPage() {
             <CalendarDays size={15} className="text-muted-foreground" />
             {t.dashboard.last30Days}
           </button>
-          <button 
+          <button
             onClick={() => window.print()}
             className="flex items-center gap-2 px-4 py-2 bg-primary hover:bg-primary/90 text-primary-foreground font-bold text-xs rounded-xl transition-all shadow-md shadow-primary/20 active:scale-95 cursor-pointer"
             title="Ekspor Laporan Dasbor ke PDF"
@@ -125,7 +125,7 @@ export default function DashboardPage() {
           icon={<Users size={18} />}
           trend="up"
           trendValue="+24"
-          iconBgColor="bg-blue-100 dark:bg-blue-950/60"
+          iconBgColor="bg-blue-50 dark:bg-blue-950/60 border border-blue-200/80 dark:border-blue-800"
           iconColor="text-blue-600 dark:text-blue-400"
         />
         <StatCard
@@ -135,7 +135,7 @@ export default function DashboardPage() {
           icon={<BrainCircuit size={18} />}
           trend="up"
           trendValue="57%"
-          iconBgColor="bg-emerald-100 dark:bg-emerald-950/60"
+          iconBgColor="bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200/80 dark:border-emerald-800"
           iconColor="text-emerald-600 dark:text-emerald-400"
         />
         <StatCard
@@ -145,7 +145,7 @@ export default function DashboardPage() {
           icon={<Calendar size={18} />}
           trend="neutral"
           trendValue="8"
-          iconBgColor="bg-amber-100 dark:bg-amber-950/60"
+          iconBgColor="bg-amber-50 dark:bg-amber-950/60 border border-amber-200/80 dark:border-amber-800"
           iconColor="text-amber-600 dark:text-amber-400"
         />
         <StatCard
@@ -155,24 +155,24 @@ export default function DashboardPage() {
           icon={<Clock size={18} />}
           trend="down"
           trendValue="-3"
-          iconBgColor="bg-rose-100 dark:bg-rose-950/60"
+          iconBgColor="bg-rose-50 dark:bg-rose-950/60 border border-rose-200/80 dark:border-rose-800"
           iconColor="text-rose-600 dark:text-rose-400"
         />
       </div>
 
       {/* PENDING HR APPROVAL PANEL */}
-      <div className="bg-card p-6 rounded-2xl border border-rose-200 dark:border-rose-900/50 shadow-sm relative overflow-hidden space-y-4">
+      <div className="bg-card p-6 rounded-2xl border border-rose-200/80 dark:border-rose-900/50 shadow-xs relative overflow-hidden space-y-4">
         <div className="absolute top-0 right-0 w-40 h-40 bg-rose-500/5 rounded-full blur-3xl pointer-events-none"></div>
-        
+
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-border pb-4">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-rose-100 dark:bg-rose-950/80 text-rose-600 dark:text-rose-400 flex items-center justify-center font-bold border border-rose-300 dark:border-rose-800 shrink-0">
-              <UserCheck size={18} />
+            <div className="w-10 h-10 rounded-xl bg-rose-50 dark:bg-rose-950/80 text-rose-600 dark:text-rose-400 flex items-center justify-center font-bold border border-rose-200 dark:border-rose-800 shrink-0 shadow-2xs">
+              <UserCheck size={20} />
             </div>
             <div>
               <div className="flex items-center gap-2">
                 <h2 className="font-bold text-base text-foreground">{t.dashboard.pendingApprovalTitle}</h2>
-                <span className="px-2 py-0.5 bg-rose-500 text-white font-bold text-[10px] rounded-full animate-pulse">
+                <span className="px-2.5 py-0.5 bg-rose-100 text-rose-700 dark:bg-rose-950/80 dark:text-rose-300 border border-rose-200 dark:border-rose-800 font-extrabold text-[11px] rounded-full">
                   2 Perlu Validasi
                 </span>
               </div>
@@ -180,8 +180,8 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          <Link 
-            href="/pipeline" 
+          <Link
+            href="/pipeline"
             className="text-xs font-bold text-primary hover:underline flex items-center gap-1 shrink-0"
           >
             Lihat Semua di Pipeline
@@ -194,34 +194,34 @@ export default function DashboardPage() {
           {pendingCandidates.map((c, i) => (
             <div key={i} className="p-4 bg-muted/30 hover:bg-muted/50 rounded-xl border border-border transition-all flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
               <div className="flex items-start gap-3">
-                <div className="w-10 h-10 rounded-full bg-violet-600 text-white font-bold flex items-center justify-center text-sm border border-violet-400 shrink-0 mt-0.5 sm:mt-0 shadow-2xs">
+                <div className="w-10 h-10 rounded-full bg-[#1b7b9e]/15 text-[#1b7b9e] dark:bg-[#1b7b9e]/30 dark:text-cyan-300 font-black flex items-center justify-center text-sm border border-[#1b7b9e]/30 shrink-0 mt-0.5 sm:mt-0 shadow-2xs">
                   {c.name.charAt(0)}
                 </div>
                 <div className="space-y-1">
                   <h4 className="font-bold text-sm text-foreground leading-snug">{c.name}</h4>
                   <p className="text-xs font-semibold text-muted-foreground">{c.role}</p>
-                  
+
                   {c.education && (
-                    <div className="inline-flex items-center gap-1 text-[11px] font-bold text-violet-900 dark:text-violet-300 bg-violet-100/90 dark:bg-violet-950/60 px-2 py-0.5 rounded border border-violet-300 dark:border-violet-700">
-                      <GraduationCap size={12} className="text-violet-700 dark:text-violet-400 shrink-0" />
+                    <div className="inline-flex items-center gap-1 text-[11px] font-bold text-purple-700 dark:text-purple-300 bg-purple-50 dark:bg-purple-950/60 px-2 py-0.5 rounded-md border border-purple-200/80 dark:border-purple-800">
+                      <GraduationCap size={12} className="text-purple-600 dark:text-purple-400 shrink-0" />
                       <span>{c.education}</span>
                     </div>
                   )}
 
                   <div className="flex flex-wrap items-center gap-2 pt-1">
-                    <span className="px-2 py-0.5 bg-emerald-100 text-emerald-950 dark:bg-emerald-950/70 dark:text-emerald-300 font-bold text-[10px] rounded border border-emerald-300 dark:border-emerald-700">
+                    <span className="px-2.5 py-0.5 bg-emerald-50 text-emerald-700 dark:bg-emerald-950/70 dark:text-emerald-300 font-bold text-[11px] rounded-md border border-emerald-200/80 dark:border-emerald-800">
                       CV Match: {c.cvScore}%
                     </span>
-                    <span className="px-2 py-0.5 bg-blue-100 text-blue-950 dark:bg-blue-950/70 dark:text-blue-300 font-bold text-[10px] rounded border border-blue-300 dark:border-blue-700">
+                    <span className="px-2.5 py-0.5 bg-sky-50 text-sky-700 dark:bg-sky-950/70 dark:text-sky-300 font-bold text-[11px] rounded-md border border-sky-200/80 dark:border-sky-800">
                       Video Score: 84.6
                     </span>
                   </div>
                 </div>
               </div>
 
-              <button 
+              <button
                 onClick={() => setSelectedCandidate(c)}
-                className="w-full sm:w-auto px-4 py-2 bg-rose-500 hover:bg-rose-600 text-white font-bold text-xs rounded-xl transition-all shrink-0 flex items-center justify-center gap-1.5 shadow-sm active:scale-95 cursor-pointer"
+                className="w-full sm:w-auto px-4 py-2 bg-primary hover:bg-primary/90 text-primary-foreground font-extrabold text-xs rounded-xl transition-all shrink-0 flex items-center justify-center gap-1.5 shadow-sm active:scale-95 cursor-pointer"
               >
                 <UserCheck size={14} />
                 {t.dashboard.validateNow}
@@ -233,10 +233,10 @@ export default function DashboardPage() {
 
       {/* Main Content Grid (Chart + Jobs & AI Performance) */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        
+
         {/* Left Columns (Chart + Active Jobs) */}
         <div className="lg:col-span-2 space-y-6">
-          
+
           {/* Pipeline Growth Chart */}
           <PipelineChart />
 
@@ -253,8 +253,8 @@ export default function DashboardPage() {
                 </div>
               </div>
 
-              <Link 
-                href="/jobs" 
+              <Link
+                href="/jobs"
                 className="text-xs font-bold text-primary hover:underline flex items-center gap-1 self-end sm:self-auto"
               >
                 {t.dashboard.viewAllJobs}
@@ -285,8 +285,8 @@ export default function DashboardPage() {
                       </p>
                     </div>
 
-                    <Link 
-                      href="/pipeline" 
+                    <Link
+                      href="/pipeline"
                       className="px-3.5 py-1.5 bg-card border border-border hover:bg-muted text-foreground text-xs font-bold rounded-lg transition-colors flex items-center gap-1 shrink-0 shadow-2xs"
                     >
                       Pipeline
@@ -302,7 +302,7 @@ export default function DashboardPage() {
 
         {/* Right Column (AI Metrics & Recent Activity) */}
         <div className="space-y-6">
-          
+
           {/* AI SYSTEM PERFORMANCE METRICS */}
           <div className="bg-card p-6 rounded-2xl border border-border shadow-sm space-y-4">
             <div className="flex items-center gap-2 border-b border-border pb-3">
@@ -339,7 +339,7 @@ export default function DashboardPage() {
                   <p className="text-xs font-bold text-foreground">{t.dashboard.avgProcessingSpeed}</p>
                   <p className="text-xs text-muted-foreground">&lt; 2.5 Detik per Berkas CV</p>
                 </div>
-                <span className="px-2.5 py-1 bg-violet-100 text-violet-900 dark:bg-violet-950/70 dark:text-violet-300 font-bold text-xs rounded-lg border border-violet-300 dark:border-violet-700">
+                <span className="px-2.5 py-1 bg-purple-50 text-purple-700 dark:bg-purple-950/70 dark:text-purple-300 font-extrabold text-xs rounded-lg border border-purple-200/80 dark:border-purple-800">
                   ⚡ Super Fast
                 </span>
               </div>
@@ -355,9 +355,9 @@ export default function DashboardPage() {
 
       {/* Candidate Modal Render for Quick Validation */}
       {selectedCandidate && (
-        <CandidateModal 
-          candidate={selectedCandidate} 
-          onClose={() => setSelectedCandidate(null)} 
+        <CandidateModal
+          candidate={selectedCandidate}
+          onClose={() => setSelectedCandidate(null)}
         />
       )}
 

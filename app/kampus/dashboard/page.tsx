@@ -60,8 +60,8 @@ export default function KampusDashboardPage() {
           icon={<GraduationCap size={20} />}
           trend="up"
           trendValue="+142"
-          iconBgColor="bg-violet-100 dark:bg-violet-950/50"
-          iconColor="text-violet-600 dark:text-violet-400"
+          iconBgColor="bg-purple-50 dark:bg-purple-950/60 border border-purple-200/80 dark:border-purple-800"
+          iconColor="text-purple-600 dark:text-purple-400"
         />
         <StatCard
           title={t.kampus?.employmentRate || 'TINGKAT DITERIMA KERJA'}
@@ -70,8 +70,8 @@ export default function KampusDashboardPage() {
           icon={<Award size={20} />}
           trend="up"
           trendValue="+5.2%"
-          iconBgColor="bg-emerald-100 dark:bg-emerald-950/50"
-          iconColor="text-emerald-700 dark:text-emerald-400"
+          iconBgColor="bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200/80 dark:border-emerald-800"
+          iconColor="text-emerald-600 dark:text-emerald-400"
         />
         <StatCard
           title={t.kampus?.partnerCompanies || 'PERUSAHAAN PEREKRUT'}
@@ -80,8 +80,8 @@ export default function KampusDashboardPage() {
           icon={<Building2 size={20} />}
           trend="up"
           trendValue="+8 Mitra"
-          iconBgColor="bg-blue-100 dark:bg-blue-950/50"
-          iconColor="text-blue-700 dark:text-blue-400"
+          iconBgColor="bg-sky-50 dark:bg-sky-950/60 border border-sky-200/80 dark:border-sky-800"
+          iconColor="text-sky-600 dark:text-sky-400"
         />
         <StatCard
           title={t.kampus?.inPipeline || 'AKTIF DALAM SELEKSI'}
@@ -90,8 +90,8 @@ export default function KampusDashboardPage() {
           icon={<Sparkles size={20} />}
           trend="neutral"
           trendValue="185 Mahasiswa"
-          iconBgColor="bg-amber-100 dark:bg-amber-950/50"
-          iconColor="text-amber-800 dark:text-amber-400"
+          iconBgColor="bg-amber-50 dark:bg-amber-950/60 border border-amber-200/80 dark:border-amber-800"
+          iconColor="text-amber-600 dark:text-amber-400"
         />
       </div>
 

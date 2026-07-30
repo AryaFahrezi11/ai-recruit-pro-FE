@@ -17,7 +17,7 @@ export function ArchiveTable() {
       dateClosed: 'Oct 24, 2023',
       outcome: 'hired',
       initials: 'JD',
-      avatarBg: 'bg-teal-700',
+      avatarBg: 'bg-[#2596be]',
     },
     {
       id: 2,

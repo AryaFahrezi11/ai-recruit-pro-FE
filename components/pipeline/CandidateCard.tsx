@@ -39,7 +39,7 @@ const stageBorderColors: Record<CandidateStage, string> = {
   cv_screening: 'border-l-4 border-l-amber-600 border-y-border border-r-border',
   interview: 'border-l-4 border-l-violet-600 border-y-border border-r-border',
   ai_analysis: 'border-l-4 border-l-cyan-600 border-y-border border-r-border',
-  human_validation: 'border-l-4 border-l-teal-600 border-y-border border-r-border',
+  human_validation: 'border-l-4 border-l-[#2596be] border-y-border border-r-border',
 };
 
 export function CandidateCard({

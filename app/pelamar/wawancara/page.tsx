@@ -3,17 +3,16 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { 
-  Video, 
-  VideoOff, 
-  Mic, 
-  MicOff, 
-  Play, 
-  Square, 
-  Send, 
-  Settings2, 
-  Sparkles, 
-  ChevronLeft, 
+import {
+  Video,
+  VideoOff,
+  Mic,
+  MicOff,
+  Square,
+  Send,
+  Settings2,
+  Sparkles,
+  ChevronLeft,
   ChevronRight,
   Volume2,
   CheckCircle2,
@@ -77,17 +76,17 @@ export default function WawancaraVideoPage() {
   return (
     <div className="max-w-[1600px] w-full mx-auto space-y-6">
       {/* Top Bar Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-5 rounded-3xl border border-[#CCFBF1] shadow-xs">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-5 rounded-3xl border border-[#C2E5EF] shadow-xs">
         <div className="flex items-center gap-4">
           <Link
             href="/pelamar/upload-cv"
-            className="p-2.5 rounded-xl text-slate-500 hover:text-[#0F766E] hover:bg-slate-100 transition-colors"
+            className="p-2.5 rounded-xl text-slate-500 hover:text-[#1b7b9e] hover:bg-slate-100 transition-colors"
             title="Kembali"
           >
             <ChevronLeft className="w-6 h-6" />
           </Link>
           <div>
-            <h1 className="text-lg sm:text-xl font-bold text-[#0F766E]">
+            <h1 className="text-lg sm:text-xl font-bold text-[#1b7b9e]">
               Tahap 2: Wawancara Video Singkat
             </h1>
             <p className="text-xs sm:text-sm text-slate-500">
@@ -97,14 +96,14 @@ export default function WawancaraVideoPage() {
         </div>
 
         <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-[#E6FFFA] border border-[#99F6E4] text-[#0F766E] text-xs sm:text-sm font-bold">
-            <Sparkles className="w-4 h-4 text-[#0F766E]" />
+          <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-[#E0F1F7] border border-[#B8E1ED] text-[#1b7b9e] text-xs sm:text-sm font-bold">
+            <Sparkles className="w-4 h-4 text-[#1b7b9e]" />
             <span>Soal {currentQuestionIndex + 1} dari {questions.length}</span>
           </div>
 
           <button
             onClick={() => setShowDeviceModal(true)}
-            className="inline-flex items-center gap-2 px-5 py-2 rounded-full border border-slate-300 text-xs sm:text-sm font-bold text-slate-700 hover:bg-slate-50 transition-colors"
+            className="inline-flex items-center gap-2 px-5 py-2 rounded-full border border-slate-300 text-xs sm:text-sm font-bold text-slate-700 hover:bg-slate-50 transition-colors cursor-pointer"
           >
             <Settings2 className="w-4 h-4 text-slate-500" />
             Test Perangkat
@@ -114,13 +113,13 @@ export default function WawancaraVideoPage() {
 
       {/* Main Grid: Left WebCam + Friendly Status, Right Side Question Panel */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-        
+
         {/* Left webcam & controls (7 cols) */}
         <div className="lg:col-span-7 flex flex-col space-y-5">
-          
+
           {/* Central Rectangular Video Feed Container */}
           <div className="relative bg-slate-950 rounded-3xl overflow-hidden aspect-video border-2 border-slate-800 shadow-xl flex items-center justify-center group">
-            
+
             {/* Live Camera Stream Preview */}
             {isCameraOn ? (
               <div className="relative w-full h-full bg-gradient-to-t from-slate-900 to-slate-800 flex items-center justify-center">
@@ -171,16 +170,15 @@ export default function WawancaraVideoPage() {
           </div>
 
           {/* Controls Bar Below Camera */}
-          <div className="bg-white p-5 rounded-3xl border border-[#CCFBF1] shadow-xs flex flex-wrap items-center justify-between gap-4">
-            
+          <div className="bg-white p-5 rounded-3xl border border-[#C2E5EF] shadow-xs flex flex-wrap items-center justify-between gap-4">
+
             <div className="flex items-center gap-3">
               <button
                 onClick={() => setIsCameraOn(!isCameraOn)}
-                className={`p-3 rounded-2xl border transition-colors ${
-                  isCameraOn
-                    ? 'bg-slate-100 border-slate-300 text-slate-700 hover:bg-slate-200'
-                    : 'bg-red-50 border-red-200 text-red-600'
-                }`}
+                className={`p-3 rounded-2xl border transition-colors cursor-pointer ${isCameraOn
+                  ? 'bg-slate-100 border-slate-300 text-slate-700 hover:bg-slate-200'
+                  : 'bg-red-50 border-red-200 text-red-600'
+                  }`}
                 title={isCameraOn ? 'Matikan Kamera' : 'Nyalakan Kamera'}
               >
                 {isCameraOn ? <Video className="w-5 h-5" /> : <VideoOff className="w-5 h-5" />}
@@ -188,11 +186,10 @@ export default function WawancaraVideoPage() {
 
               <button
                 onClick={() => setIsMicOn(!isMicOn)}
-                className={`p-3 rounded-2xl border transition-colors ${
-                  isMicOn
-                    ? 'bg-slate-100 border-slate-300 text-slate-700 hover:bg-slate-200'
-                    : 'bg-red-50 border-red-200 text-red-600'
-                }`}
+                className={`p-3 rounded-2xl border transition-colors cursor-pointer ${isMicOn
+                  ? 'bg-slate-100 border-slate-300 text-slate-700 hover:bg-slate-200'
+                  : 'bg-red-50 border-red-200 text-red-600'
+                  }`}
                 title={isMicOn ? 'Mute Mic' : 'Unmute Mic'}
               >
                 {isMicOn ? <Mic className="w-5 h-5" /> : <MicOff className="w-5 h-5" />}
@@ -200,25 +197,26 @@ export default function WawancaraVideoPage() {
 
               <button
                 onClick={() => setShowDeviceModal(true)}
-                className="px-5 py-2.5 rounded-full border border-slate-300 text-xs sm:text-sm font-bold text-slate-700 hover:bg-slate-50 transition-colors hidden sm:block"
+                className="p-3 rounded-2xl border border-slate-300 text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer"
+                title="Pengaturan Perangkat"
               >
-                Test Perangkat
+                <Settings2 className="w-5 h-5" />
               </button>
             </div>
 
-            <div className="flex items-center gap-3 w-full sm:w-auto justify-end">
+            <div className="flex items-center gap-2 w-full sm:w-auto">
               {!isRecording ? (
                 <button
                   onClick={() => setIsRecording(true)}
-                  className="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-6 py-3 rounded-full bg-red-600 hover:bg-red-700 text-white text-xs sm:text-sm font-bold shadow-sm transition-all"
+                  className="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-6 py-3 rounded-full bg-red-600 hover:bg-red-700 text-white text-xs sm:text-sm font-bold shadow-sm transition-all cursor-pointer"
                 >
-                  <Play className="w-4 h-4 fill-white" />
-                  Mulai Rekam
+                  <Video className="w-4 h-4" />
+                  Mulai Rekam Video
                 </button>
               ) : (
                 <button
                   onClick={() => setIsRecording(false)}
-                  className="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-6 py-3 rounded-full bg-slate-800 hover:bg-slate-900 text-white text-xs sm:text-sm font-bold shadow-sm transition-all"
+                  className="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-6 py-3 rounded-full bg-slate-800 hover:bg-slate-900 text-white text-xs sm:text-sm font-bold shadow-sm transition-all cursor-pointer"
                 >
                   <Square className="w-4 h-4 fill-white" />
                   Hentikan Rekam
@@ -227,10 +225,10 @@ export default function WawancaraVideoPage() {
 
               <button
                 onClick={handleFinishAssessment}
-                className="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-7 py-3 rounded-full bg-[#0F766E] hover:bg-[#0D635C] text-white text-xs sm:text-sm font-bold shadow-md transition-all"
+                className="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-7 py-3 rounded-full bg-[#1b7b9e] hover:bg-[#1D7FA1] text-white text-xs sm:text-sm font-bold shadow-md transition-all cursor-pointer"
               >
-                <Send className="w-4 h-4 text-[#E6FFFA]" />
-                Selesai &amp; Kirim
+                <Send className="w-4 h-4 text-[#E0F1F7]" />
+                Selesai & Kirim
               </button>
             </div>
           </div>
@@ -238,31 +236,31 @@ export default function WawancaraVideoPage() {
 
         {/* Right Side Panel: Soft Pastel Teal background showing interview question (5 cols) */}
         <div className="lg:col-span-5 flex flex-col">
-          <div className="bg-[#E6FFFA] border border-[#99F6E4] rounded-3xl p-7 sm:p-9 space-y-6 flex-1 flex flex-col justify-between shadow-xs">
-            
+          <div className="bg-[#E0F1F7] border border-[#B8E1ED] rounded-3xl p-7 sm:p-9 space-y-6 flex-1 flex flex-col justify-between shadow-xs">
+
             <div className="space-y-6">
-              <div className="flex items-center justify-between border-b border-[#99F6E4] pb-4">
-                <span className="text-xs font-extrabold uppercase tracking-wider text-[#0F766E] bg-white/80 px-3.5 py-1.5 rounded-lg border border-[#99F6E4]">
+              <div className="flex items-center justify-between border-b border-[#B8E1ED] pb-4">
+                <span className="text-xs font-extrabold uppercase tracking-wider text-[#1b7b9e] bg-white/80 px-3.5 py-1.5 rounded-lg border border-[#B8E1ED]">
                   {questions[currentQuestionIndex].category}
                 </span>
-                <span className="text-xs sm:text-sm font-bold text-[#0F766E]">
+                <span className="text-xs sm:text-sm font-bold text-[#1b7b9e]">
                   {currentQuestionIndex + 1} / {questions.length}
                 </span>
               </div>
 
               <div className="space-y-3">
-                <h3 className="text-xs font-bold text-[#0F766E] uppercase tracking-wide">
+                <h3 className="text-xs font-bold text-[#1b7b9e] uppercase tracking-wide">
                   Pertanyaan Saat Ini:
                 </h3>
-                <p className="text-base sm:text-xl font-bold text-[#0F766E] leading-relaxed">
+                <p className="text-base sm:text-xl font-bold text-[#1b7b9e] leading-relaxed">
                   "{questions[currentQuestionIndex].question}"
                 </p>
               </div>
 
               {/* Friendly Interview Tip Card */}
-              <div className="p-5 rounded-2xl bg-white/80 border border-[#99F6E4] space-y-2 text-xs sm:text-sm">
-                <div className="flex items-center gap-2 font-bold text-[#0F766E]">
-                  <HelpCircle className="w-5 h-5 text-[#0F766E]" />
+              <div className="p-5 rounded-2xl bg-white/80 border border-[#B8E1ED] space-y-2 text-xs sm:text-sm">
+                <div className="flex items-center gap-2 font-bold text-[#1b7b9e]">
+                  <HelpCircle className="w-5 h-5 text-[#1b7b9e]" />
                   <span>Petunjuk Menjawab</span>
                 </div>
                 <p className="text-slate-600 leading-relaxed text-xs">
@@ -271,12 +269,12 @@ export default function WawancaraVideoPage() {
               </div>
             </div>
 
-            <div className="pt-6 border-t border-[#99F6E4] space-y-4">
+            <div className="pt-6 border-t border-[#B8E1ED] space-y-4">
               <div className="flex items-center justify-between">
                 <button
                   disabled={currentQuestionIndex === 0}
                   onClick={() => setCurrentQuestionIndex((prev) => Math.max(0, prev - 1))}
-                  className="inline-flex items-center gap-1 text-xs sm:text-sm font-bold text-[#0F766E] disabled:opacity-40 disabled:cursor-not-allowed hover:underline"
+                  className="inline-flex items-center gap-1 text-xs sm:text-sm font-bold text-[#1b7b9e] disabled:opacity-40 disabled:cursor-not-allowed hover:underline cursor-pointer"
                 >
                   <ChevronLeft className="w-4 h-4" /> Pertanyaan Sebelumnya
                 </button>
@@ -284,7 +282,7 @@ export default function WawancaraVideoPage() {
                 <button
                   disabled={currentQuestionIndex === questions.length - 1}
                   onClick={() => setCurrentQuestionIndex((prev) => Math.min(questions.length - 1, prev + 1))}
-                  className="inline-flex items-center gap-1 text-xs sm:text-sm font-bold text-[#0F766E] disabled:opacity-40 disabled:cursor-not-allowed hover:underline"
+                  className="inline-flex items-center gap-1 text-xs sm:text-sm font-bold text-[#1b7b9e] disabled:opacity-40 disabled:cursor-not-allowed hover:underline cursor-pointer"
                 >
                   Pertanyaan Selanjutnya <ChevronRight className="w-4 h-4" />
                 </button>
@@ -295,17 +293,14 @@ export default function WawancaraVideoPage() {
                   <button
                     key={q.id}
                     onClick={() => setCurrentQuestionIndex(idx)}
-                    className={`h-2.5 rounded-full transition-all ${
-                      idx === currentQuestionIndex ? 'w-8 bg-[#0F766E]' : 'w-2.5 bg-[#0F766E]/30'
-                    }`}
+                    className={`h-2.5 rounded-full transition-all cursor-pointer ${idx === currentQuestionIndex ? 'w-8 bg-[#1b7b9e]' : 'w-2.5 bg-[#1b7b9e]/30'
+                      }`}
                   />
                 ))}
               </div>
             </div>
-
           </div>
         </div>
-
       </div>
 
       {/* Modal Device Testing */}
@@ -313,45 +308,45 @@ export default function WawancaraVideoPage() {
         <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="bg-white rounded-3xl max-w-lg w-full p-7 space-y-6 shadow-2xl border border-slate-200">
             <div className="flex items-center justify-between border-b border-slate-100 pb-4">
-              <h3 className="font-bold text-[#0F766E] text-lg">Pengujian Perangkat Kamera &amp; Mikrofon</h3>
+              <h3 className="font-bold text-[#1b7b9e] text-lg">Pengujian Perangkat Kamera & Mikrofon</h3>
               <button
                 onClick={() => setShowDeviceModal(false)}
-                className="text-slate-400 hover:text-slate-600 font-bold text-sm"
+                className="text-slate-400 hover:text-slate-600 font-bold text-sm cursor-pointer"
               >
                 ✕
               </button>
             </div>
 
             <div className="space-y-4 text-xs sm:text-sm">
-              <div className="p-4 rounded-2xl bg-[#F4FDFB] border border-[#CCFBF1] space-y-1">
+              <div className="p-4 rounded-2xl bg-[#F0F8FB] border border-[#C2E5EF] space-y-1">
                 <div className="flex justify-between items-center font-bold text-slate-700">
-                  <span className="flex items-center gap-2"><Video className="w-5 h-5 text-[#0F766E]" /> WebCam Feed</span>
+                  <span className="flex items-center gap-2"><Video className="w-5 h-5 text-[#1b7b9e]" /> WebCam Feed</span>
                   <span className="text-emerald-600 flex items-center gap-1.5"><CheckCircle2 className="w-4 h-4" /> Siap Digunakan</span>
                 </div>
                 <p className="text-slate-500 text-xs">Integrated HD Camera (1080p 30fps)</p>
               </div>
 
-              <div className="p-4 rounded-2xl bg-[#F4FDFB] border border-[#CCFBF1] space-y-1">
+              <div className="p-4 rounded-2xl bg-[#F0F8FB] border border-[#C2E5EF] space-y-1">
                 <div className="flex justify-between items-center font-bold text-slate-700">
-                  <span className="flex items-center gap-2"><Mic className="w-5 h-5 text-[#0F766E]" /> Input Mikrofon</span>
+                  <span className="flex items-center gap-2"><Mic className="w-5 h-5 text-[#1b7b9e]" /> Input Mikrofon</span>
                   <span className="text-emerald-600 flex items-center gap-1.5"><CheckCircle2 className="w-4 h-4" /> Suara Jernih</span>
                 </div>
                 <p className="text-slate-500 text-xs">Default Audio Input Device (Sensitivitas Aktif)</p>
               </div>
 
-              <div className="p-4 rounded-2xl bg-[#F4FDFB] border border-[#CCFBF1] space-y-1">
+              <div className="p-4 rounded-2xl bg-[#F0F8FB] border border-[#C2E5EF] space-y-1">
                 <div className="flex justify-between items-center font-bold text-slate-700">
-                  <span className="flex items-center gap-2"><Volume2 className="w-5 h-5 text-[#0F766E]" /> Koneksi Internet</span>
-                  <span className="text-emerald-600 font-bold">Lancar &amp; Stabil</span>
+                  <span className="flex items-center gap-2"><Volume2 className="w-5 h-5 text-[#1b7b9e]" /> Koneksi Internet</span>
+                  <span className="text-emerald-600 font-bold">Lancar & Stabil</span>
                 </div>
               </div>
             </div>
 
             <button
               onClick={() => setShowDeviceModal(false)}
-              className="w-full py-3 rounded-full bg-[#0F766E] hover:bg-[#0D635C] text-white font-bold text-xs sm:text-sm shadow-xs transition-colors"
+              className="w-full py-3 rounded-full bg-[#1b7b9e] hover:bg-[#1D7FA1] text-white font-bold text-xs sm:text-sm shadow-xs transition-colors cursor-pointer"
             >
-              Tutup &amp; Mulai Wawancara
+              Tutup & Mulai Wawancara
             </button>
           </div>
         </div>

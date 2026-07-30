@@ -3,13 +3,13 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { 
-  Building2, 
-  Lock, 
-  Mail, 
-  AlertCircle, 
-  ArrowRight, 
-  ShieldCheck, 
+import {
+  Building2,
+  Lock,
+  Mail,
+  AlertCircle,
+  ArrowRight,
+  ShieldCheck,
   CheckCircle2,
   Sparkles,
   HelpCircle
@@ -24,7 +24,7 @@ export default function CompanyLoginPage() {
 
   // Block free email providers for corporate HR portal
   const freeEmailDomains = [
-    'gmail.com', 'yahoo.com', 'yahoo.co.id', 'ymail.com', 
+    'gmail.com', 'yahoo.com', 'yahoo.co.id', 'ymail.com',
     'hotmail.com', 'outlook.com', 'live.com', 'icloud.com'
   ];
 
@@ -57,17 +57,17 @@ export default function CompanyLoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#F4FDFB] text-[#0F766E] flex flex-col justify-between font-sans antialiased">
-      
+    <div className="min-h-screen bg-[#F0F8FB] text-[#1b7b9e] flex flex-col justify-between font-sans antialiased">
+
       {/* Top Header */}
       <header className="py-6 px-6 sm:px-12 max-w-[1600px] w-full mx-auto flex items-center justify-between">
         <Link href="/" className="flex items-center gap-3 group">
-          <div className="w-10 h-10 bg-[#0F766E] text-white rounded-xl flex items-center justify-center font-black text-lg shadow-md group-hover:scale-105 transition-transform">
+          <div className="w-10 h-10 bg-[#1b7b9e] text-white rounded-xl flex items-center justify-center font-black text-lg shadow-md group-hover:scale-105 transition-transform">
             RP
           </div>
           <div className="flex flex-col">
-            <span className="font-black text-xl tracking-tight text-[#0F766E] leading-none">
-              AI-Recruit <span className="text-[#0D635C]">Pro</span>
+            <span className="font-black text-xl tracking-tight text-[#0c2b3d] leading-none">
+              AI-Recruit <span className="text-[#1D7FA1]">Pro</span>
             </span>
             <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest mt-0.5">
               Portal Perusahaan (HRD)
@@ -75,9 +75,9 @@ export default function CompanyLoginPage() {
           </div>
         </Link>
 
-        <Link 
-          href="/pelamar/login" 
-          className="text-xs sm:text-sm font-bold text-[#0F766E] hover:underline flex items-center gap-1.5"
+        <Link
+          href="/pelamar/login"
+          className="text-xs sm:text-sm font-bold text-[#1b7b9e] hover:underline flex items-center gap-1.5"
         >
           Portal Pelamar Kerja &rarr;
         </Link>
@@ -85,13 +85,13 @@ export default function CompanyLoginPage() {
 
       {/* Main Form Container */}
       <main className="flex-1 flex items-center justify-center px-4 py-8">
-        <div className="w-full max-w-md bg-white rounded-3xl p-8 sm:p-10 shadow-2xl border border-[#CCFBF1] space-y-7 relative">
-          
+        <div className="w-full max-w-md bg-white rounded-3xl p-8 sm:p-10 shadow-2xl border border-[#C2E5EF] space-y-7 relative">
+
           <div className="space-y-2">
-            <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-[#E6FFFA] text-[#0F766E] text-xs font-extrabold border border-[#99F6E4]">
+            <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-[#E0F1F7] text-[#1b7b9e] text-xs font-extrabold border border-[#B8E1ED]">
               <Building2 size={14} /> Khusus Rekruter &amp; HRD Perusahaan
             </div>
-            <h1 className="text-3xl font-black text-[#0F766E]">Masuk Portal Perusahaan</h1>
+            <h1 className="text-3xl font-black text-[#1b7b9e]">Masuk Portal Perusahaan</h1>
             <p className="text-xs sm:text-sm text-slate-500">
               Kelola proses rekrutmen, kandidat PO-FIT, dan evaluasi hasil analisis AI.
             </p>
@@ -99,7 +99,7 @@ export default function CompanyLoginPage() {
 
           {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-4">
-            
+
             {/* Email Input */}
             <div className="space-y-1">
               <label htmlFor="company-email" className="block text-xs font-bold text-slate-700">
@@ -113,9 +113,8 @@ export default function CompanyLoginPage() {
                   value={email}
                   onChange={(e) => { setEmail(e.target.value); setError(''); }}
                   placeholder="hrd@namaperusahaan.com"
-                  className={`w-full pl-12 pr-4 py-3 bg-white border-2 rounded-2xl text-sm outline-none transition-all ${
-                    error ? 'border-red-500 focus:ring-2 focus:ring-red-200' : 'border-slate-300 focus:border-[#0F766E] focus:ring-2 focus:ring-teal-100'
-                  }`}
+                  className={`w-full pl-12 pr-4 py-3 bg-white border-2 rounded-2xl text-sm outline-none transition-all ${error ? 'border-red-500 focus:ring-2 focus:ring-red-200' : 'border-slate-300 focus:border-[#1b7b9e] focus:ring-2 focus:ring-cyan-100'
+                    }`}
                 />
               </div>
               <span className="text-[11px] text-slate-400 block pt-0.5">
@@ -127,7 +126,7 @@ export default function CompanyLoginPage() {
             <div className="space-y-1">
               <div className="flex items-center justify-between text-xs font-bold text-slate-700">
                 <label htmlFor="company-password">Kata Sandi</label>
-                <a href="#forgot" className="text-[#0F766E] hover:underline text-[11px]">Lupa Sandi?</a>
+                <a href="#forgot" className="text-[#1b7b9e] hover:underline text-[11px]">Lupa Sandi?</a>
               </div>
               <div className="relative flex items-center">
                 <Lock size={18} className="absolute left-4 text-slate-400 pointer-events-none" />
@@ -137,7 +136,7 @@ export default function CompanyLoginPage() {
                   value={password}
                   onChange={(e) => { setPassword(e.target.value); setError(''); }}
                   placeholder="••••••••"
-                  className="w-full pl-12 pr-4 py-3 bg-white border-2 border-slate-300 focus:border-[#0F766E] focus:ring-2 focus:ring-teal-100 rounded-2xl text-sm outline-none transition-all"
+                  className="w-full pl-12 pr-4 py-3 bg-white border-2 border-slate-300 focus:border-[#1b7b9e] focus:ring-2 focus:ring-cyan-100 rounded-2xl text-sm outline-none transition-all"
                 />
               </div>
             </div>
@@ -153,7 +152,7 @@ export default function CompanyLoginPage() {
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full py-3.5 rounded-full bg-[#0F766E] hover:bg-[#0D635C] text-white font-extrabold text-xs sm:text-sm shadow-md hover:shadow-lg transition-all duration-200 flex items-center justify-center gap-2"
+              className="w-full py-3.5 rounded-full bg-[#1b7b9e] hover:bg-[#1D7FA1] text-white font-extrabold text-xs sm:text-sm shadow-md hover:shadow-lg transition-all duration-200 flex items-center justify-center gap-2"
             >
               {isLoading ? (
                 <span>Memproses Masuk...</span>
@@ -174,14 +173,14 @@ export default function CompanyLoginPage() {
                 setPassword('password123');
                 setError('');
               }}
-              className="text-xs font-bold text-[#0F766E] bg-[#E6FFFA] hover:bg-[#CCFBF1] px-4 py-2 rounded-full border border-[#99F6E4] transition-colors"
+              className="text-xs font-bold text-[#1b7b9e] bg-[#E0F1F7] hover:bg-[#C2E5EF] px-4 py-2 rounded-full border border-[#B8E1ED] transition-colors"
             >
               ⚡ Isikan Email Demo (hrd@tokopedia.com)
             </button>
 
             <div className="text-xs text-slate-600 font-medium">
               Perusahaan Anda belum terdaftar?{' '}
-              <Link href="/register" className="font-extrabold text-[#0F766E] hover:underline block sm:inline mt-1 sm:mt-0">
+              <Link href="/register" className="font-extrabold text-[#1b7b9e] hover:underline block sm:inline mt-1 sm:mt-0">
                 Daftar &amp; Verifikasi Legalitas &rarr;
               </Link>
             </div>
@@ -191,7 +190,7 @@ export default function CompanyLoginPage() {
       </main>
 
       {/* Footer */}
-      <footer className="py-6 border-t border-[#CCFBF1] bg-white text-center text-xs text-slate-400">
+      <footer className="py-6 border-t border-[#C2E5EF] bg-white text-center text-xs text-slate-400">
         &copy; {new Date().getFullYear()} AI-Recruit Pro Corporate Engine. Verified Business Authentication.
       </footer>
 

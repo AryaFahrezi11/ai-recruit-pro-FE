@@ -39,33 +39,33 @@ export function PipelineChart() {
           </button>
         </div>
       </div>
-      
+
       <div className="w-full h-[280px] sm:h-[320px]">
         <ResponsiveContainer width="100%" height="100%">
           <LineChart data={data} margin={{ top: 5, right: 10, left: -20, bottom: 0 }}>
             <defs>
               <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="#0f766e" stopOpacity={0.1}/>
-                <stop offset="95%" stopColor="#0f766e" stopOpacity={0}/>
+                <stop offset="5%" stopColor="#1b7b9e" stopOpacity={0.1} />
+                <stop offset="95%" stopColor="#1b7b9e" stopOpacity={0} />
               </linearGradient>
             </defs>
             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--color-border)" />
-            <XAxis 
-              dataKey="name" 
-              axisLine={false} 
-              tickLine={false} 
+            <XAxis
+              dataKey="name"
+              axisLine={false}
+              tickLine={false}
               tick={{ fill: 'var(--color-muted-foreground)', fontSize: 12 }}
               dy={10}
             />
-            <YAxis 
-              axisLine={false} 
-              tickLine={false} 
+            <YAxis
+              axisLine={false}
+              tickLine={false}
               tick={{ fill: 'var(--color-muted-foreground)', fontSize: 12 }}
               tickFormatter={(value) => value === 0 ? '0' : `${value / 1000}k`}
             />
-            <Tooltip 
-              contentStyle={{ 
-                backgroundColor: 'var(--color-card)', 
+            <Tooltip
+              contentStyle={{
+                backgroundColor: 'var(--color-card)',
                 borderColor: 'var(--color-border)',
                 color: 'var(--color-card-foreground)'
               }}
@@ -73,9 +73,9 @@ export function PipelineChart() {
             <Line
               type="monotone"
               dataKey="value"
-              stroke="#0f766e"
+              stroke="#1b7b9e"
               strokeWidth={4}
-              dot={{ r: 6, fill: 'var(--color-card)', stroke: '#0f766e', strokeWidth: 3 }}
+              dot={{ r: 6, fill: 'var(--color-card)', stroke: '#1b7b9e', strokeWidth: 3 }}
               activeDot={{ r: 8 }}
             />
           </LineChart>

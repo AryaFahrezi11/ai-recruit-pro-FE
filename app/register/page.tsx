@@ -3,20 +3,20 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { 
-  Building2, 
-  Lock, 
-  Mail, 
-  AlertCircle, 
-  ArrowRight, 
-  ShieldCheck, 
-  CheckCircle2, 
-  FileText, 
-  Upload, 
-  User, 
-  Phone, 
-  Briefcase, 
-  MapPin, 
+import {
+  Building2,
+  Lock,
+  Mail,
+  AlertCircle,
+  ArrowRight,
+  ShieldCheck,
+  CheckCircle2,
+  FileText,
+  Upload,
+  User,
+  Phone,
+  Briefcase,
+  MapPin,
   Clock,
   Sparkles,
   HelpCircle,
@@ -56,7 +56,7 @@ export default function CompanyRegistrationFlow() {
 
   // List of blocked free email domains
   const freeEmailDomains = [
-    'gmail.com', 'yahoo.com', 'yahoo.co.id', 'ymail.com', 
+    'gmail.com', 'yahoo.com', 'yahoo.co.id', 'ymail.com',
     'hotmail.com', 'outlook.com', 'live.com', 'icloud.com',
     'aol.com', 'zoho.com', 'protonmail.com'
   ];
@@ -174,23 +174,23 @@ export default function CompanyRegistrationFlow() {
       localStorage.setItem('pendingHrName', hrFullName);
       localStorage.setItem('pendingWhatsapp', whatsappNumber);
       localStorage.setItem('pendingRegistrationStatus', 'PENDING');
-      
+
       router.push('/pending-approval');
     }, 600);
   };
 
   return (
-    <div className="min-h-screen bg-[#F4FDFB] text-[#0F766E] flex flex-col justify-between font-sans antialiased">
-      
+    <div className="min-h-screen bg-[#F0F8FB] text-[#1b7b9e] flex flex-col justify-between font-sans antialiased">
+
       {/* Top Header */}
       <header className="py-6 px-6 sm:px-12 max-w-[1600px] w-full mx-auto flex items-center justify-between">
         <Link href="/" className="flex items-center gap-3 group">
-          <div className="w-10 h-10 bg-[#0F766E] text-white rounded-xl flex items-center justify-center font-black text-lg shadow-md group-hover:scale-105 transition-transform">
+          <div className="w-10 h-10 bg-[#1b7b9e] text-white rounded-xl flex items-center justify-center font-black text-lg shadow-md group-hover:scale-105 transition-transform">
             RP
           </div>
           <div className="flex flex-col">
-            <span className="font-black text-xl tracking-tight text-[#0F766E] leading-none">
-              AI-Recruit <span className="text-[#0D635C]">Pro</span>
+            <span className="font-black text-xl tracking-tight text-[#0c2b3d] leading-none">
+              AI-Recruit <span className="text-[#1D7FA1]">Pro</span>
             </span>
             <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest mt-0.5">
               Pendaftaran Perusahaan
@@ -198,9 +198,9 @@ export default function CompanyRegistrationFlow() {
           </div>
         </Link>
 
-        <Link 
-          href="/login" 
-          className="text-xs sm:text-sm font-bold text-[#0F766E] hover:underline flex items-center gap-1.5"
+        <Link
+          href="/login"
+          className="text-xs sm:text-sm font-bold text-[#1b7b9e] hover:underline flex items-center gap-1.5"
         >
           Sudah Memiliki Akun? Sign In &rarr;
         </Link>
@@ -208,36 +208,33 @@ export default function CompanyRegistrationFlow() {
 
       {/* Main Wizard Container */}
       <main className="flex-1 max-w-3xl w-full mx-auto px-4 py-8">
-        
+
         {/* Progress Step Header Bar */}
-        <div className="bg-white rounded-3xl p-6 shadow-md border border-[#CCFBF1] mb-8">
+        <div className="bg-white rounded-3xl p-6 shadow-md border border-[#C2E5EF] mb-8">
           <div className="grid grid-cols-3 gap-2 text-center relative">
-            
+
             {/* Step 1 Indicator */}
-            <div className={`flex flex-col items-center space-y-1.5 z-10 ${step >= 1 ? 'text-[#0F766E]' : 'text-slate-400'}`}>
-              <div className={`w-9 h-9 rounded-full flex items-center justify-center font-black text-xs transition-all ${
-                step >= 1 ? 'bg-[#0F766E] text-white shadow-sm' : 'bg-slate-100 text-slate-400'
-              }`}>
+            <div className={`flex flex-col items-center space-y-1.5 z-10 ${step >= 1 ? 'text-[#1b7b9e]' : 'text-slate-400'}`}>
+              <div className={`w-9 h-9 rounded-full flex items-center justify-center font-black text-xs transition-all ${step >= 1 ? 'bg-[#1b7b9e] text-white shadow-sm' : 'bg-slate-100 text-slate-400'
+                }`}>
                 1
               </div>
               <span className="text-[11px] font-extrabold">Akun &amp; Email</span>
             </div>
 
             {/* Step 2 Indicator */}
-            <div className={`flex flex-col items-center space-y-1.5 z-10 ${step >= 2 ? 'text-[#0F766E]' : 'text-slate-400'}`}>
-              <div className={`w-9 h-9 rounded-full flex items-center justify-center font-black text-xs transition-all ${
-                step >= 2 ? 'bg-[#0F766E] text-white shadow-sm' : 'bg-slate-100 text-slate-400'
-              }`}>
+            <div className={`flex flex-col items-center space-y-1.5 z-10 ${step >= 2 ? 'text-[#1b7b9e]' : 'text-slate-400'}`}>
+              <div className={`w-9 h-9 rounded-full flex items-center justify-center font-black text-xs transition-all ${step >= 2 ? 'bg-[#1b7b9e] text-white shadow-sm' : 'bg-slate-100 text-slate-400'
+                }`}>
                 2
               </div>
               <span className="text-[11px] font-extrabold">Verifikasi OTP</span>
             </div>
 
             {/* Step 3 Indicator */}
-            <div className={`flex flex-col items-center space-y-1.5 z-10 ${step >= 3 ? 'text-[#0F766E]' : 'text-slate-400'}`}>
-              <div className={`w-9 h-9 rounded-full flex items-center justify-center font-black text-xs transition-all ${
-                step >= 3 ? 'bg-[#0F766E] text-white shadow-sm' : 'bg-slate-100 text-slate-400'
-              }`}>
+            <div className={`flex flex-col items-center space-y-1.5 z-10 ${step >= 3 ? 'text-[#1b7b9e]' : 'text-slate-400'}`}>
+              <div className={`w-9 h-9 rounded-full flex items-center justify-center font-black text-xs transition-all ${step >= 3 ? 'bg-[#1b7b9e] text-white shadow-sm' : 'bg-slate-100 text-slate-400'
+                }`}>
                 3
               </div>
               <span className="text-[11px] font-extrabold">Bukti Legalitas</span>
@@ -248,19 +245,19 @@ export default function CompanyRegistrationFlow() {
 
         {/* STEP 1: Registration Form */}
         {step === 1 && (
-          <div className="bg-white rounded-3xl p-8 sm:p-10 shadow-2xl border border-[#CCFBF1] space-y-7">
+          <div className="bg-white rounded-3xl p-8 sm:p-10 shadow-2xl border border-[#C2E5EF] space-y-7">
             <div className="space-y-2">
-              <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-[#E6FFFA] text-[#0F766E] text-xs font-extrabold border border-[#99F6E4]">
+              <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-[#E0F1F7] text-[#1b7b9e] text-xs font-extrabold border border-[#B8E1ED]">
                 <Building2 size={14} /> Langkah 1 dari 3: Registrasi Akun Perusahaan
               </div>
-              <h1 className="text-3xl font-black text-[#0F766E]">Buat Akun Perusahaan Baru</h1>
+              <h1 className="text-3xl font-black text-[#1b7b9e]">Buat Akun Perusahaan Baru</h1>
               <p className="text-xs sm:text-sm text-slate-500">
                 Gunakan email domain perusahaan resmi Anda untuk memulai verifikasi akun HR.
               </p>
             </div>
 
             <form onSubmit={handleStep1Submit} className="space-y-5">
-              
+
               {/* Corporate Email */}
               <div className="space-y-1">
                 <label className="block text-xs font-bold text-slate-700">
@@ -273,7 +270,7 @@ export default function CompanyRegistrationFlow() {
                     value={email}
                     onChange={(e) => { setEmail(e.target.value); setErrorStep1(''); }}
                     placeholder="Contoh: hrd@tokopedia.com, recruitment@bankmandiri.co.id"
-                    className="w-full pl-12 pr-4 py-3.5 bg-white border-2 border-slate-300 focus:border-[#0F766E] focus:ring-2 focus:ring-teal-100 rounded-2xl text-sm outline-none transition-all"
+                    className="w-full pl-12 pr-4 py-3.5 bg-white border-2 border-slate-300 focus:border-[#1b7b9e] focus:ring-2 focus:ring-cyan-100 rounded-2xl text-sm outline-none transition-all"
                   />
                 </div>
                 <p className="text-[11px] text-slate-500 pt-0.5">
@@ -293,7 +290,7 @@ export default function CompanyRegistrationFlow() {
                     value={password}
                     onChange={(e) => { setPassword(e.target.value); setErrorStep1(''); }}
                     placeholder="Minimal 6 Karakter"
-                    className="w-full pl-12 pr-4 py-3.5 bg-white border-2 border-slate-300 focus:border-[#0F766E] focus:ring-2 focus:ring-teal-100 rounded-2xl text-sm outline-none transition-all"
+                    className="w-full pl-12 pr-4 py-3.5 bg-white border-2 border-slate-300 focus:border-[#1b7b9e] focus:ring-2 focus:ring-cyan-100 rounded-2xl text-sm outline-none transition-all"
                   />
                 </div>
               </div>
@@ -310,7 +307,7 @@ export default function CompanyRegistrationFlow() {
                     value={confirmPassword}
                     onChange={(e) => { setConfirmPassword(e.target.value); setErrorStep1(''); }}
                     placeholder="Ulangi Kata Sandi"
-                    className="w-full pl-12 pr-4 py-3.5 bg-white border-2 border-slate-300 focus:border-[#0F766E] focus:ring-2 focus:ring-teal-100 rounded-2xl text-sm outline-none transition-all"
+                    className="w-full pl-12 pr-4 py-3.5 bg-white border-2 border-slate-300 focus:border-[#1b7b9e] focus:ring-2 focus:ring-cyan-100 rounded-2xl text-sm outline-none transition-all"
                   />
                 </div>
               </div>
@@ -324,7 +321,7 @@ export default function CompanyRegistrationFlow() {
               )}
 
               {/* Quick Fill Sample Corporate Email Button */}
-              <div className="p-3.5 rounded-2xl bg-[#F4FDFB] border border-[#CCFBF1] flex items-center justify-between gap-3 text-xs">
+              <div className="p-3.5 rounded-2xl bg-[#F0F8FB] border border-[#C2E5EF] flex items-center justify-between gap-3 text-xs">
                 <span className="font-semibold text-slate-600">Bingung format email resmi?</span>
                 <button
                   type="button"
@@ -334,7 +331,7 @@ export default function CompanyRegistrationFlow() {
                     setConfirmPassword('password123');
                     setErrorStep1('');
                   }}
-                  className="font-extrabold text-[#0F766E] bg-white hover:bg-[#E6FFFA] px-3.5 py-1.5 rounded-full border border-[#99F6E4] shadow-2xs"
+                  className="font-extrabold text-[#1b7b9e] bg-white hover:bg-[#E0F1F7] px-3.5 py-1.5 rounded-full border border-[#B8E1ED] shadow-2xs"
                 >
                   Gunakan hrd@tokopedia.com
                 </button>
@@ -343,7 +340,7 @@ export default function CompanyRegistrationFlow() {
               <button
                 type="submit"
                 disabled={isLoading}
-                className="w-full py-4 rounded-full bg-[#0F766E] hover:bg-[#0D635C] text-white font-black text-xs sm:text-sm shadow-md transition-all flex items-center justify-center gap-2"
+                className="w-full py-4 rounded-full bg-[#1b7b9e] hover:bg-[#1D7FA1] text-white font-black text-xs sm:text-sm shadow-md transition-all flex items-center justify-center gap-2"
               >
                 {isLoading ? (
                   <span>Mengirim Kode OTP...</span>
@@ -361,19 +358,19 @@ export default function CompanyRegistrationFlow() {
 
         {/* STEP 2: OTP Verification */}
         {step === 2 && (
-          <div className="bg-white rounded-3xl p-8 sm:p-10 shadow-2xl border border-[#CCFBF1] space-y-7">
+          <div className="bg-white rounded-3xl p-8 sm:p-10 shadow-2xl border border-[#C2E5EF] space-y-7">
             <div className="space-y-2 text-center">
-              <div className="w-14 h-14 bg-[#E6FFFA] border border-[#99F6E4] rounded-2xl flex items-center justify-center text-[#0F766E] mx-auto">
+              <div className="w-14 h-14 bg-[#E0F1F7] border border-[#B8E1ED] rounded-2xl flex items-center justify-center text-[#1b7b9e] mx-auto">
                 <Mail size={28} />
               </div>
-              <h2 className="text-2xl font-black text-[#0F766E]">Masukkan Kode OTP Email</h2>
+              <h2 className="text-2xl font-black text-[#1b7b9e]">Masukkan Kode OTP Email</h2>
               <p className="text-xs sm:text-sm text-slate-500 max-w-md mx-auto leading-relaxed">
-                Kami telah mengirimkan 6-digit kode verifikasi OTP ke email perusahaan resmi: <strong className="text-[#0F766E]">{email}</strong>.
+                Kami telah mengirimkan 6-digit kode verifikasi OTP ke email perusahaan resmi: <strong className="text-[#1b7b9e]">{email}</strong>.
               </p>
             </div>
 
             <form onSubmit={handleStep2Submit} className="space-y-6">
-              
+
               {/* 6 Digit Inputs */}
               <div className="flex justify-center items-center gap-2 sm:gap-3">
                 {otpCode.map((digit, idx) => (
@@ -384,7 +381,7 @@ export default function CompanyRegistrationFlow() {
                     maxLength={1}
                     value={digit}
                     onChange={(e) => handleOtpChange(idx, e.target.value)}
-                    className="w-11 h-13 sm:w-13 sm:h-15 text-center text-xl font-black text-[#0F766E] bg-[#F4FDFB] border-2 border-[#CCFBF1] focus:border-[#0F766E] focus:bg-white rounded-2xl outline-none transition-all"
+                    className="w-11 h-13 sm:w-13 sm:h-15 text-center text-xl font-black text-[#1b7b9e] bg-[#F0F8FB] border-2 border-[#C2E5EF] focus:border-[#1b7b9e] focus:bg-white rounded-2xl outline-none transition-all"
                   />
                 ))}
               </div>
@@ -400,7 +397,7 @@ export default function CompanyRegistrationFlow() {
                 <button
                   type="button"
                   onClick={() => setOtpCode(['1', '2', '3', '4', '5', '6'])}
-                  className="text-xs font-bold text-[#0F766E] hover:underline bg-[#E6FFFA] px-4 py-1.5 rounded-full border border-[#99F6E4]"
+                  className="text-xs font-bold text-[#1b7b9e] hover:underline bg-[#E0F1F7] px-4 py-1.5 rounded-full border border-[#B8E1ED]"
                 >
                   ⚡ Masukkan Kode Demo OTP (123456)
                 </button>
@@ -418,7 +415,7 @@ export default function CompanyRegistrationFlow() {
                 <button
                   type="submit"
                   disabled={isLoading}
-                  className="flex-1 py-3.5 rounded-full bg-[#0F766E] hover:bg-[#0D635C] text-white font-extrabold text-xs sm:text-sm shadow-md transition-all flex items-center justify-center gap-2"
+                  className="flex-1 py-3.5 rounded-full bg-[#1b7b9e] hover:bg-[#1D7FA1] text-white font-extrabold text-xs sm:text-sm shadow-md transition-all flex items-center justify-center gap-2"
                 >
                   {isLoading ? (
                     <span>Memverifikasi OTP...</span>
@@ -437,22 +434,22 @@ export default function CompanyRegistrationFlow() {
 
         {/* STEP 3: Company Legal Verification Form */}
         {step === 3 && (
-          <div className="bg-white rounded-3xl p-8 sm:p-10 shadow-2xl border border-[#CCFBF1] space-y-8">
+          <div className="bg-white rounded-3xl p-8 sm:p-10 shadow-2xl border border-[#C2E5EF] space-y-8">
             <div className="space-y-2 border-b border-slate-100 pb-5">
-              <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-[#E6FFFA] text-[#0F766E] text-xs font-extrabold border border-[#99F6E4]">
+              <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-[#E0F1F7] text-[#1b7b9e] text-xs font-extrabold border border-[#B8E1ED]">
                 <FileCheck size={14} /> Langkah 3 dari 3: Verifikasi Bukti Legalitas Perusahaan
               </div>
-              <h2 className="text-2xl sm:text-3xl font-black text-[#0F766E]">Formulir Dokumen Resmi &amp; Perwakilan HR</h2>
+              <h2 className="text-2xl sm:text-3xl font-black text-[#1b7b9e]">Formulir Dokumen Resmi &amp; Perwakilan HR</h2>
               <p className="text-xs sm:text-sm text-slate-500">
                 Lengkapi berkas hukum perusahaan untuk ditinjau oleh Administrator Developer AI-Recruit Pro.
               </p>
             </div>
 
             <form onSubmit={handleStep3Submit} className="space-y-8">
-              
+
               {/* BAGIAN 1: DATA PERUSAHAAN (SESUAI DOKUMEN RESMI) */}
-              <div className="space-y-5 bg-[#F4FDFB] p-6 rounded-3xl border border-[#CCFBF1]">
-                <div className="flex items-center gap-2 text-sm font-black text-[#0F766E] uppercase tracking-wider border-b border-[#CCFBF1] pb-3">
+              <div className="space-y-5 bg-[#F0F8FB] p-6 rounded-3xl border border-[#C2E5EF]">
+                <div className="flex items-center gap-2 text-sm font-black text-[#1b7b9e] uppercase tracking-wider border-b border-[#C2E5EF] pb-3">
                   <Building2 size={18} />
                   <span>BAGIAN 1: DATA PERUSAHAAN (SESUAI DOKUMEN RESMI)</span>
                 </div>
@@ -467,7 +464,7 @@ export default function CompanyRegistrationFlow() {
                     value={companyName}
                     onChange={(e) => setCompanyName(e.target.value)}
                     placeholder="Contoh: PT Tokopedia Indonesia"
-                    className="w-full px-4 py-3 bg-white border border-slate-300 focus:border-[#0F766E] rounded-2xl text-sm outline-none"
+                    className="w-full px-4 py-3 bg-white border border-slate-300 focus:border-[#1b7b9e] rounded-2xl text-sm outline-none"
                   />
                 </div>
 
@@ -481,7 +478,7 @@ export default function CompanyRegistrationFlow() {
                     value={nibNpwpNumber}
                     onChange={(e) => setNibNpwpNumber(e.target.value.replace(/\D/g, ''))}
                     placeholder="Input angka NIB/NPWP (misal: 9120101928123)"
-                    className="w-full px-4 py-3 bg-white border border-slate-300 focus:border-[#0F766E] rounded-2xl text-sm outline-none font-mono"
+                    className="w-full px-4 py-3 bg-white border border-slate-300 focus:border-[#1b7b9e] rounded-2xl text-sm outline-none font-mono"
                   />
                 </div>
 
@@ -490,15 +487,15 @@ export default function CompanyRegistrationFlow() {
                   <label className="block text-xs font-bold text-slate-700">
                     Upload Dokumen NIB / NPWP (File Fisik) <span className="text-red-500">*</span>
                   </label>
-                  <div className="border-2 border-dashed border-[#99F6E4] hover:border-[#0F766E] bg-white p-5 rounded-2xl text-center space-y-2 cursor-pointer relative">
+                  <div className="border-2 border-dashed border-[#B8E1ED] hover:border-[#1b7b9e] bg-white p-5 rounded-2xl text-center space-y-2 cursor-pointer relative">
                     <input
                       type="file"
                       accept=".pdf,.jpg,.jpeg,.png"
                       onChange={(e) => setNibFile(e.target.files?.[0] || null)}
                       className="absolute inset-0 opacity-0 cursor-pointer"
                     />
-                    <Upload size={24} className="text-[#0F766E] mx-auto" />
-                    <span className="text-xs font-bold text-[#0F766E] block">
+                    <Upload size={24} className="text-[#1b7b9e] mx-auto" />
+                    <span className="text-xs font-bold text-[#1b7b9e] block">
                       {nibFile ? `File Terpilih: ${nibFile.name}` : 'Klik / Drag & Drop Dokumen NIB / NPWP (PDF, JPG, PNG)'}
                     </span>
                     <span className="text-[11px] text-slate-400 block">Maksimal Ukuran File: 5MB</span>
@@ -515,15 +512,15 @@ export default function CompanyRegistrationFlow() {
                     value={companyAddress}
                     onChange={(e) => setCompanyAddress(e.target.value)}
                     placeholder="Alamat Kantor Pusat Sesuai Akta Pendirian / NIB..."
-                    className="w-full px-4 py-3 bg-white border border-slate-300 focus:border-[#0F766E] rounded-2xl text-sm outline-none"
+                    className="w-full px-4 py-3 bg-white border border-slate-300 focus:border-[#1b7b9e] rounded-2xl text-sm outline-none"
                   />
                 </div>
 
               </div>
 
               {/* BAGIAN 2: DATA PERWAKILAN (HRD/REKRUTER) */}
-              <div className="space-y-5 bg-[#F4FDFB] p-6 rounded-3xl border border-[#CCFBF1]">
-                <div className="flex items-center gap-2 text-sm font-black text-[#0F766E] uppercase tracking-wider border-b border-[#CCFBF1] pb-3">
+              <div className="space-y-5 bg-[#F0F8FB] p-6 rounded-3xl border border-[#C2E5EF]">
+                <div className="flex items-center gap-2 text-sm font-black text-[#1b7b9e] uppercase tracking-wider border-b border-[#C2E5EF] pb-3">
                   <User size={18} />
                   <span>BAGIAN 2: DATA PERWAKILAN (HRD / REKRUTER)</span>
                 </div>
@@ -539,7 +536,7 @@ export default function CompanyRegistrationFlow() {
                       value={hrFullName}
                       onChange={(e) => setHrFullName(e.target.value)}
                       placeholder="Nama Lengkap Sesuai ID Card"
-                      className="w-full px-4 py-3 bg-white border border-slate-300 focus:border-[#0F766E] rounded-2xl text-sm outline-none"
+                      className="w-full px-4 py-3 bg-white border border-slate-300 focus:border-[#1b7b9e] rounded-2xl text-sm outline-none"
                     />
                   </div>
 
@@ -553,7 +550,7 @@ export default function CompanyRegistrationFlow() {
                       value={whatsappNumber}
                       onChange={(e) => setWhatsappNumber(e.target.value.replace(/\D/g, ''))}
                       placeholder="081234567890 (Angka Only)"
-                      className="w-full px-4 py-3 bg-white border border-slate-300 focus:border-[#0F766E] rounded-2xl text-sm outline-none font-mono"
+                      className="w-full px-4 py-3 bg-white border border-slate-300 focus:border-[#1b7b9e] rounded-2xl text-sm outline-none font-mono"
                     />
                   </div>
                 </div>
@@ -568,7 +565,7 @@ export default function CompanyRegistrationFlow() {
                     value={hrPosition}
                     onChange={(e) => setHrPosition(e.target.value)}
                     placeholder="Contoh: HR Manager / Talent Acquisition Lead"
-                    className="w-full px-4 py-3 bg-white border border-slate-300 focus:border-[#0F766E] rounded-2xl text-sm outline-none"
+                    className="w-full px-4 py-3 bg-white border border-slate-300 focus:border-[#1b7b9e] rounded-2xl text-sm outline-none"
                   />
                 </div>
 
@@ -577,15 +574,15 @@ export default function CompanyRegistrationFlow() {
                   <label className="block text-xs font-bold text-slate-700">
                     Upload ID Card Karyawan / KTP Pendaftar <span className="text-red-500">*</span>
                   </label>
-                  <div className="border-2 border-dashed border-[#99F6E4] hover:border-[#0F766E] bg-white p-5 rounded-2xl text-center space-y-2 cursor-pointer relative">
+                  <div className="border-2 border-dashed border-[#B8E1ED] hover:border-[#1b7b9e] bg-white p-5 rounded-2xl text-center space-y-2 cursor-pointer relative">
                     <input
                       type="file"
                       accept=".jpg,.jpeg,.png"
                       onChange={(e) => setIdCardFile(e.target.files?.[0] || null)}
                       className="absolute inset-0 opacity-0 cursor-pointer"
                     />
-                    <Upload size={24} className="text-[#0F766E] mx-auto" />
-                    <span className="text-xs font-bold text-[#0F766E] block">
+                    <Upload size={24} className="text-[#1b7b9e] mx-auto" />
+                    <span className="text-xs font-bold text-[#1b7b9e] block">
                       {idCardFile ? `File Terpilih: ${idCardFile.name}` : 'Klik / Drag & Drop Foto ID Card Karyawan / KTP (JPG, PNG)'}
                     </span>
                     <span className="text-[11px] text-slate-400 block">Untuk memastikan keabsahan perwakilan perusahaan</span>
@@ -617,7 +614,7 @@ export default function CompanyRegistrationFlow() {
                     setIdCardFile(new File(["demo idcard"], "ID_Card_HR_Tokopedia.png", { type: "image/png" }));
                     setErrorStep3('');
                   }}
-                  className="text-xs font-bold text-[#0F766E] bg-[#E6FFFA] hover:bg-[#CCFBF1] px-4 py-2 rounded-full border border-[#99F6E4]"
+                  className="text-xs font-bold text-[#1b7b9e] bg-[#E0F1F7] hover:bg-[#C2E5EF] px-4 py-2 rounded-full border border-[#B8E1ED]"
                 >
                   ⚡ Isikan Formulir Demo Lengkap Otomatis (PT Tokopedia Indonesia)
                 </button>
@@ -636,7 +633,7 @@ export default function CompanyRegistrationFlow() {
                 <button
                   type="submit"
                   disabled={isLoading}
-                  className="flex-1 py-4 rounded-full bg-[#0F766E] hover:bg-[#0D635C] text-white font-black text-xs sm:text-sm shadow-lg transition-all flex items-center justify-center gap-2"
+                  className="flex-1 py-4 rounded-full bg-[#1b7b9e] hover:bg-[#1D7FA1] text-white font-black text-xs sm:text-sm shadow-lg transition-all flex items-center justify-center gap-2"
                 >
                   {isLoading ? (
                     <span>Mengirimkan Berkas Legalitas...</span>
@@ -656,7 +653,7 @@ export default function CompanyRegistrationFlow() {
       </main>
 
       {/* Footer */}
-      <footer className="py-6 border-t border-[#CCFBF1] bg-white text-center text-xs text-slate-400 mt-12">
+      <footer className="py-6 border-t border-[#C2E5EF] bg-white text-center text-xs text-slate-400 mt-12">
         &copy; {new Date().getFullYear()} AI-Recruit Pro Corporate Legal Validation System.
       </footer>
 

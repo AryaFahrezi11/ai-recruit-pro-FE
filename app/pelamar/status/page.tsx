@@ -2,26 +2,26 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
-import { 
-  Search, 
-  ChevronDown, 
-  ChevronUp, 
-  Clock, 
-  CheckCircle2, 
-  XCircle, 
-  Building2, 
-  Video, 
-  FileText, 
-  Sparkles, 
-  ArrowLeft, 
-  Eye, 
-  X, 
-  Check, 
-  HelpCircle, 
-  Brain, 
-  Play, 
-  Volume2, 
-  Smile, 
+import {
+  Search,
+  ChevronDown,
+  ChevronUp,
+  Clock,
+  CheckCircle2,
+  XCircle,
+  Building2,
+  Video,
+  FileText,
+  Sparkles,
+  ArrowLeft,
+  Eye,
+  X,
+  Check,
+  HelpCircle,
+  Brain,
+  Play,
+  Volume2,
+  Smile,
   MessageSquare,
   AlertCircle,
   BarChart3,
@@ -202,34 +202,34 @@ export default function StatusValidasiPage() {
 
   // Filtered list
   const filteredApplications = applications.filter(app => {
-    const matchesSearch = app.jobTitle.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                          app.companyName.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesSearch = app.jobTitle.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      app.companyName.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = statusFilter === 'Semua Status' || app.status === statusFilter;
     return matchesSearch && matchesStatus;
   });
 
   return (
     <div className="max-w-[1600px] w-full mx-auto space-y-8">
-      
-      {/* Top Header Breadcrumb */}
+
+      {/* Top Header & Breadcrumb */}
       <div className="flex items-center justify-between">
         <Link
           href="/pelamar/dashboard"
-          className="inline-flex items-center gap-2 text-xs sm:text-sm font-bold text-slate-500 hover:text-[#0F766E] transition-colors"
+          className="inline-flex items-center gap-2 text-xs sm:text-sm font-bold text-slate-500 hover:text-[#1b7b9e] transition-colors"
         >
           <ArrowLeft className="w-5 h-5" /> Kembali ke Dashboard Pelamar
         </Link>
 
-        <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#E6FFFA] border border-[#99F6E4] text-[#0F766E] text-xs sm:text-sm font-bold">
-          <Clock className="w-4 h-4 text-[#0F766E]" />
+        <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#E0F1F7] border border-[#B8E1ED] text-[#1b7b9e] text-xs sm:text-sm font-bold">
+          <Clock className="w-4 h-4 text-[#1b7b9e]" />
           Portal Status Lamaran Candidate Pro
         </span>
       </div>
 
       {/* Main Title & Search Filter Bar (Matching Screenshot UI) */}
-      <div className="bg-white rounded-3xl p-6 sm:p-8 border border-[#CCFBF1] shadow-xs space-y-6">
+      <div className="bg-white rounded-3xl p-6 sm:p-8 border border-[#C2E5EF] shadow-xs space-y-6">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-black text-[#0F766E]">
+          <h1 className="text-2xl sm:text-3xl font-black text-[#1b7b9e]">
             Daftar Riwayat Lamaran
           </h1>
           <p className="text-xs sm:text-sm text-slate-500 mt-1">
@@ -247,14 +247,14 @@ export default function StatusValidasiPage() {
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               placeholder="Temukan Posisi atau Nama Perusahaan..."
-              className="w-full pl-11 pr-4 py-2.5 bg-[#F4FDFB] border border-[#CCFBF1] focus:border-[#0F766E] rounded-2xl text-xs font-bold text-slate-700 outline-none"
+              className="w-full pl-11 pr-4 py-2.5 bg-[#F0F8FB] border border-[#C2E5EF] focus:border-[#1b7b9e] rounded-2xl text-xs font-bold text-slate-700 outline-none"
             />
           </div>
 
           {/* Dropdown 1: Platform */}
           <div className="sm:col-span-3">
             <select
-              className="w-full px-4 py-2.5 bg-[#F4FDFB] border border-[#CCFBF1] focus:border-[#0F766E] rounded-2xl text-xs font-bold text-slate-700 outline-none cursor-pointer"
+              className="w-full px-4 py-2.5 bg-[#F0F8FB] border border-[#C2E5EF] focus:border-[#1b7b9e] rounded-2xl text-xs font-bold text-slate-700 outline-none cursor-pointer"
             >
               <option>Semua Platform</option>
               <option>WEBCAREER</option>
@@ -267,7 +267,7 @@ export default function StatusValidasiPage() {
             <select
               value={stageFilter}
               onChange={(e) => setStageFilter(e.target.value)}
-              className="w-full px-4 py-2.5 bg-[#F4FDFB] border border-[#CCFBF1] focus:border-[#0F766E] rounded-2xl text-xs font-bold text-slate-700 outline-none cursor-pointer"
+              className="w-full px-4 py-2.5 bg-[#F0F8FB] border border-[#C2E5EF] focus:border-[#1b7b9e] rounded-2xl text-xs font-bold text-slate-700 outline-none cursor-pointer"
             >
               <option>Semua Tahapan</option>
               <option>CV Screening</option>
@@ -281,7 +281,7 @@ export default function StatusValidasiPage() {
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
-              className="w-full px-4 py-2.5 bg-[#F4FDFB] border border-[#CCFBF1] focus:border-[#0F766E] rounded-2xl text-xs font-bold text-slate-700 outline-none cursor-pointer"
+              className="w-full px-4 py-2.5 bg-[#F0F8FB] border border-[#C2E5EF] focus:border-[#1b7b9e] rounded-2xl text-xs font-bold text-slate-700 outline-none cursor-pointer"
             >
               <option>Semua Status</option>
               <option>Dalam Proses</option>
@@ -294,7 +294,7 @@ export default function StatusValidasiPage() {
           <div className="sm:col-span-1">
             <button
               type="button"
-              className="w-full py-2.5 bg-[#0F766E] hover:bg-[#0D635C] text-white rounded-2xl font-bold text-xs shadow-xs transition-colors"
+              className="w-full py-2.5 bg-[#2596be] hover:bg-[#1D7FA1] text-white rounded-2xl font-bold text-xs shadow-xs transition-colors cursor-pointer"
             >
               Cari
             </button>
@@ -310,21 +310,21 @@ export default function StatusValidasiPage() {
           return (
             <div
               key={app.id}
-              className="bg-white rounded-3xl border border-[#CCFBF1] shadow-xs overflow-hidden transition-all duration-200"
+              className="bg-white rounded-3xl border border-[#C2E5EF] shadow-xs overflow-hidden transition-all duration-200"
             >
               {/* Card Summary Header */}
               <div className="p-6 sm:p-8 space-y-6">
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-                  
+
                   {/* Left: Logo & Job Title */}
                   <div className="flex items-start gap-4">
                     <img
                       src={app.logo}
                       alt={app.companyName}
-                      className="w-14 h-14 rounded-2xl object-cover border border-[#CCFBF1] shrink-0"
+                      className="w-14 h-14 rounded-2xl object-cover border border-[#C2E5EF] shrink-0"
                     />
                     <div className="space-y-1">
-                      <h2 className="text-lg sm:text-xl font-black text-[#0F766E]">
+                      <h2 className="text-lg sm:text-xl font-black text-[#2596be]">
                         {app.jobTitle}
                       </h2>
                       <span className="text-xs font-bold text-slate-500 block">
@@ -345,14 +345,13 @@ export default function StatusValidasiPage() {
                     </div>
                     <div>
                       <span className="text-slate-400 block font-semibold">Tahap Rekrutmen</span>
-                      <span className="font-bold text-[#0F766E]">{app.tahapRekrutmen}</span>
+                      <span className="font-bold text-[#2596be]">{app.tahapRekrutmen}</span>
                     </div>
                     <div>
                       <span className="text-slate-400 block font-semibold">Status</span>
-                      <span className={`font-extrabold ${
-                        app.status === 'Lolos' ? 'text-emerald-600' :
-                        app.status === 'Dalam Proses' ? 'text-[#0F766E]' : 'text-red-600'
-                      }`}>
+                      <span className={`font-extrabold ${app.status === 'Lolos' ? 'text-emerald-600' :
+                        app.status === 'Dalam Proses' ? 'text-[#2596be]' : 'text-red-600'
+                        }`}>
                         {app.status}
                       </span>
                     </div>
@@ -361,7 +360,7 @@ export default function StatusValidasiPage() {
                   {/* Right Action: Expand/Collapse Button */}
                   <button
                     onClick={() => toggleExpandJob(app.id)}
-                    className="text-xs font-extrabold text-[#0F766E] hover:underline flex items-center gap-1.5 self-start md:self-center"
+                    className="text-xs font-extrabold text-[#2596be] hover:underline flex items-center gap-1.5 self-start md:self-center cursor-pointer"
                   >
                     <span>{isExpanded ? 'Sembunyikan' : 'Tampilkan Detail'}</span>
                     {isExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
@@ -371,12 +370,12 @@ export default function StatusValidasiPage() {
 
                 {/* EXPANDED PIPELINE TRACKER & NOTIFICATION BOX */}
                 {isExpanded && (
-                  <div className="pt-6 border-t border-[#CCFBF1] space-y-8 animate-fadeIn">
-                    
+                  <div className="pt-6 border-t border-[#C2E5EF] space-y-8 animate-fadeIn">
+
                     {/* Interactive 5-Stage Pipeline Stepper */}
                     <div className="space-y-3">
                       <div className="flex items-center justify-between">
-                        <span className="text-xs font-black uppercase tracking-wider text-[#0F766E] flex items-center gap-2">
+                        <span className="text-xs font-black uppercase tracking-wider text-[#2596be] flex items-center gap-2">
                           <BarChart3 size={16} /> Timeline Kemajuan Seleksi:
                         </span>
                         <span className="text-[11px] font-bold text-slate-400 italic">
@@ -401,19 +400,17 @@ export default function StatusValidasiPage() {
                                 if (isClickableCv) setActiveCvModalJob(app);
                                 if (isClickableVideo) setActiveVideoModalJob(app);
                               }}
-                              className={`p-4 rounded-2xl border space-y-2 transition-all relative group cursor-pointer ${
-                                isClickableCv || isClickableVideo ? 'hover:shadow-md hover:scale-[1.02]' : ''
-                              } ${
-                                isFailed ? 'bg-red-50 border-red-200 text-red-700' :
-                                isCurrentStage ? 'bg-[#E6FFFA] border-[#99F6E4] text-[#0F766E] ring-2 ring-[#0F766E]' :
-                                isPassedStage ? 'bg-emerald-50 border-emerald-200 text-emerald-800' :
-                                'bg-slate-50 border-slate-200 text-slate-500'
-                              }`}
+                              className={`p-4 rounded-2xl border space-y-2 transition-all relative group cursor-pointer ${isClickableCv || isClickableVideo ? 'hover:shadow-md hover:scale-[1.02]' : ''
+                                } ${isFailed ? 'bg-red-50 border-red-200 text-red-700' :
+                                  isCurrentStage ? 'bg-[#E0F1F7] border-[#B8E1ED] text-[#2596be] ring-2 ring-[#2596be]' :
+                                    isPassedStage ? 'bg-emerald-50 border-emerald-200 text-emerald-800' :
+                                      'bg-slate-50 border-slate-200 text-slate-500'
+                                }`}
                             >
                               <div className="flex items-center justify-between text-[11px] font-black uppercase tracking-wider">
                                 <span>{stage.name}</span>
                                 {(isClickableCv || isClickableVideo) && (
-                                  <span className="px-2 py-0.5 rounded-full bg-white text-[#0F766E] font-bold text-[10px] border border-[#99F6E4] shadow-2xs">
+                                  <span className="px-2 py-0.5 rounded-full bg-white text-[#2596be] font-bold text-[10px] border border-[#B8E1ED] shadow-2xs">
                                     🔍 Klik Detail
                                   </span>
                                 )}
@@ -422,15 +419,15 @@ export default function StatusValidasiPage() {
                               <div className="flex items-center justify-between text-xs font-bold pt-1">
                                 <span>
                                   {isFailed ? 'Tidak Lolos' :
-                                   isCurrentStage ? 'Dalam Proses AI' :
-                                   isPassedStage ? 'Lolos' : 'Menunggu'}
+                                    isCurrentStage ? 'Dalam Proses AI' :
+                                      isPassedStage ? 'Lolos' : 'Menunggu'}
                                 </span>
                                 {isPassedStage ? (
                                   <CheckCircle2 size={16} className="text-emerald-600" />
                                 ) : isFailed ? (
                                   <XCircle size={16} className="text-red-600" />
                                 ) : (
-                                  <Clock size={16} className="text-[#0F766E]" />
+                                  <Clock size={16} className="text-[#2596be]" />
                                 )}
                               </div>
                             </div>
@@ -440,13 +437,12 @@ export default function StatusValidasiPage() {
                     </div>
 
                     {/* Official Notification Message Box (Matching Screenshot Bottom Container) */}
-                    <div className={`p-6 rounded-3xl border text-xs sm:text-sm space-y-3 leading-relaxed ${
-                      app.status === 'Lowongan Telah Ditutup'
-                        ? 'bg-slate-50 border-slate-200 text-slate-600'
-                        : app.status === 'Lolos'
+                    <div className={`p-6 rounded-3xl border text-xs sm:text-sm space-y-3 leading-relaxed ${app.status === 'Lowongan Telah Ditutup'
+                      ? 'bg-slate-50 border-slate-200 text-slate-600'
+                      : app.status === 'Lolos'
                         ? 'bg-emerald-50 border-emerald-200 text-emerald-900'
-                        : 'bg-[#F4FDFB] border-[#CCFBF1] text-[#0F766E]'
-                    }`}>
+                        : 'bg-[#F0F8FB] border-[#C2E5EF] text-[#2596be]'
+                      }`}>
                       <div className="flex items-center gap-2 font-black text-sm">
                         {app.status === 'Lowongan Telah Ditutup' ? (
                           <>
@@ -455,7 +451,7 @@ export default function StatusValidasiPage() {
                           </>
                         ) : (
                           <>
-                            <CheckCircle2 size={18} className="text-[#0F766E] shrink-0" />
+                            <CheckCircle2 size={18} className="text-[#2596be] shrink-0" />
                             <span>Pemberitahuan Status Progress AI-Recruit Pro</span>
                           </>
                         )}
@@ -470,25 +466,25 @@ export default function StatusValidasiPage() {
                           <span>Belum mendapatkan update informasi?</span>
                           <button
                             onClick={() => alert('Customer Support HR Developer AI-Recruit Pro: support@airecruitpro.com / WhatsApp: 0812-9900-8800')}
-                            className="font-bold text-[#0F766E] hover:underline"
+                            className="font-bold text-[#2596be] hover:underline cursor-pointer"
                           >
                             Hubungi tim perekrut
                           </button>
                           <span>atau kunjungi</span>
-                          <a href="#faq" className="font-bold text-[#0F766E] hover:underline">FAQ</a>
+                          <a href="#faq" className="font-bold text-[#2596be] hover:underline">FAQ</a>
                         </div>
 
                         {/* Direct Button Trigger for Stage 2 & 4 Modal Inspection */}
                         <div className="flex items-center gap-2">
                           <button
                             onClick={() => setActiveCvModalJob(app)}
-                            className="px-4 py-1.5 rounded-full bg-white text-[#0F766E] font-bold border border-[#99F6E4] hover:bg-[#E6FFFA] transition-colors shadow-2xs"
+                            className="px-4 py-1.5 rounded-full bg-white text-[#2596be] font-bold border border-[#B8E1ED] hover:bg-[#E0F1F7] transition-colors shadow-2xs cursor-pointer"
                           >
                             📄 Skor AI CV Screening ({app.cvScore}%)
                           </button>
                           <button
                             onClick={() => setActiveVideoModalJob(app)}
-                            className="px-4 py-1.5 rounded-full bg-[#0F766E] text-white font-bold hover:bg-[#0D635C] transition-colors shadow-2xs"
+                            className="px-4 py-1.5 rounded-full bg-[#2596be] text-white font-bold hover:bg-[#1D7FA1] transition-colors shadow-2xs cursor-pointer"
                           >
                             🎥 Skor AI Video Analysis ({app.videoScore}%)
                           </button>
@@ -509,14 +505,14 @@ export default function StatusValidasiPage() {
       {activeCvModalJob && (
         <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="bg-white rounded-3xl max-w-3xl w-full p-6 sm:p-10 space-y-8 shadow-2xl border border-slate-200 relative max-h-[90vh] overflow-y-auto">
-            
+
             {/* Header */}
             <div className="flex items-start justify-between border-b border-slate-100 pb-4">
               <div>
-                <span className="text-xs font-bold text-[#0F766E] uppercase tracking-wider block">
+                <span className="text-xs font-bold text-[#2596be] uppercase tracking-wider block">
                   Stage 2: CV Analysis Result (PO-FIT System)
                 </span>
-                <h3 className="font-black text-2xl text-[#0F766E]">
+                <h3 className="font-black text-2xl text-[#2596be]">
                   Hasil Skrining AI Kualifikasi CV
                 </h3>
                 <p className="text-xs text-slate-500">
@@ -526,17 +522,16 @@ export default function StatusValidasiPage() {
 
               <button
                 onClick={() => setActiveCvModalJob(null)}
-                className="p-2 text-slate-400 hover:text-slate-600 rounded-full hover:bg-slate-100"
+                className="p-2 text-slate-400 hover:text-slate-600 rounded-full hover:bg-slate-100 cursor-pointer"
               >
                 <X size={24} />
               </button>
             </div>
 
             {/* Score Banner */}
-            <div className="p-6 rounded-3xl bg-[#F4FDFB] border border-[#CCFBF1] flex flex-col sm:flex-row items-center gap-6">
-              <div className={`w-24 h-24 rounded-full flex flex-col items-center justify-center text-white shrink-0 shadow-md ${
-                activeCvModalJob.cvScore >= 80 ? 'bg-[#0F766E]' : 'bg-red-600'
-              }`}>
+            <div className="p-6 rounded-3xl bg-[#F0F8FB] border border-[#C2E5EF] flex flex-col sm:flex-row items-center gap-6">
+              <div className={`w-24 h-24 rounded-full flex flex-col items-center justify-center text-white shrink-0 shadow-md ${activeCvModalJob.cvScore >= 80 ? 'bg-[#2596be]' : 'bg-red-600'
+                }`}>
                 <span className="text-3xl font-black">{activeCvModalJob.cvScore}%</span>
                 <span className="text-[10px] font-bold uppercase tracking-widest text-white/80">SCORE</span>
               </div>
@@ -552,46 +547,46 @@ export default function StatusValidasiPage() {
                   </div>
                 )}
 
-                <h4 className="text-lg font-black text-[#0F766E]">
+                <h4 className="text-lg font-black text-[#2596be]">
                   {activeCvModalJob.cvScore >= 80 ? 'High Alignment with Job Description' : 'Low Alignment with Job Requirements'}
                 </h4>
                 <p className="text-xs text-slate-600">
-                  Algoritma PO-FIT Cosine Similarity: <strong className="text-[#0F766E]">{activeCvModalJob.cvScore}% match</strong>.
+                  Algoritma PO-FIT Cosine Similarity: <strong className="text-[#2596be]">{activeCvModalJob.cvScore}% match</strong>.
                 </p>
               </div>
             </div>
 
             {/* 5 Criteria Breakdown */}
             <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
-              <div className="p-4 rounded-2xl bg-white border border-[#CCFBF1] text-center space-y-1">
+              <div className="p-4 rounded-2xl bg-white border border-[#C2E5EF] text-center space-y-1">
                 <span className="text-[10px] font-extrabold text-slate-500 uppercase block">Format &amp; Structure</span>
-                <span className="text-xl font-black text-[#0F766E]">{activeCvModalJob.cvBreakdown.format}%</span>
+                <span className="text-xl font-black text-[#2596be]">{activeCvModalJob.cvBreakdown.format}%</span>
               </div>
 
-              <div className="p-4 rounded-2xl bg-white border border-[#CCFBF1] text-center space-y-1">
+              <div className="p-4 rounded-2xl bg-white border border-[#C2E5EF] text-center space-y-1">
                 <span className="text-[10px] font-extrabold text-slate-500 uppercase block">Relevant Experience</span>
-                <span className="text-xl font-black text-[#0F766E]">{activeCvModalJob.cvBreakdown.experience}%</span>
+                <span className="text-xl font-black text-[#2596be]">{activeCvModalJob.cvBreakdown.experience}%</span>
               </div>
 
-              <div className="p-4 rounded-2xl bg-white border border-[#CCFBF1] text-center space-y-1">
+              <div className="p-4 rounded-2xl bg-white border border-[#C2E5EF] text-center space-y-1">
                 <span className="text-[10px] font-extrabold text-slate-500 uppercase block">Skills &amp; Certs</span>
-                <span className="text-xl font-black text-[#0F766E]">{activeCvModalJob.cvBreakdown.skills}%</span>
+                <span className="text-xl font-black text-[#2596be]">{activeCvModalJob.cvBreakdown.skills}%</span>
               </div>
 
-              <div className="p-4 rounded-2xl bg-white border border-[#CCFBF1] text-center space-y-1">
+              <div className="p-4 rounded-2xl bg-white border border-[#C2E5EF] text-center space-y-1">
                 <span className="text-[10px] font-extrabold text-slate-500 uppercase block">Achievements &amp; Impact</span>
-                <span className="text-xl font-black text-[#0F766E]">{activeCvModalJob.cvBreakdown.achievements}%</span>
+                <span className="text-xl font-black text-[#2596be]">{activeCvModalJob.cvBreakdown.achievements}%</span>
               </div>
 
-              <div className="p-4 rounded-2xl bg-white border border-[#CCFBF1] text-center space-y-1">
+              <div className="p-4 rounded-2xl bg-white border border-[#C2E5EF] text-center space-y-1">
                 <span className="text-[10px] font-extrabold text-slate-500 uppercase block">Language &amp; Comm</span>
-                <span className="text-xl font-black text-[#0F766E]">{activeCvModalJob.cvBreakdown.language}%</span>
+                <span className="text-xl font-black text-[#2596be]">{activeCvModalJob.cvBreakdown.language}%</span>
               </div>
             </div>
 
             {/* AI Notes */}
-            <div className="p-5 rounded-2xl bg-[#F4FDFB] border border-[#CCFBF1] space-y-3 text-xs sm:text-sm text-slate-700">
-              <span className="font-extrabold text-[#0F766E] flex items-center gap-2">
+            <div className="p-5 rounded-2xl bg-[#F0F8FB] border border-[#C2E5EF] space-y-3 text-xs sm:text-sm text-slate-700">
+              <span className="font-extrabold text-[#2596be] flex items-center gap-2">
                 <Sparkles size={16} /> Catatan Evaluasi PO-FIT AI CV:
               </span>
               <ul className="space-y-2">
@@ -607,7 +602,7 @@ export default function StatusValidasiPage() {
             <div className="pt-4 border-t border-slate-100 flex justify-end">
               <button
                 onClick={() => setActiveCvModalJob(null)}
-                className="px-6 py-2.5 rounded-full bg-[#0F766E] text-white font-bold text-xs"
+                className="px-6 py-2.5 rounded-full bg-[#2596be] hover:bg-[#1D7FA1] text-white font-bold text-xs cursor-pointer"
               >
                 Tutup Scorecard CV
               </button>
@@ -621,14 +616,14 @@ export default function StatusValidasiPage() {
       {activeVideoModalJob && (
         <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="bg-white rounded-3xl max-w-3xl w-full p-6 sm:p-10 space-y-8 shadow-2xl border border-slate-200 relative max-h-[90vh] overflow-y-auto">
-            
+
             {/* Header */}
             <div className="flex items-start justify-between border-b border-slate-100 pb-4">
               <div>
-                <span className="text-xs font-bold text-[#0F766E] uppercase tracking-wider block">
+                <span className="text-xs font-bold text-[#2596be] uppercase tracking-wider block">
                   Stage 4: AI Video Analysis Result (Behavioral &amp; Emotion AI)
                 </span>
-                <h3 className="font-black text-2xl text-[#0F766E]">
+                <h3 className="font-black text-2xl text-[#2596be]">
                   Hasil Evaluasi Per-Kriteria Rekaman Video
                 </h3>
                 <p className="text-xs text-slate-500">
@@ -638,17 +633,16 @@ export default function StatusValidasiPage() {
 
               <button
                 onClick={() => setActiveVideoModalJob(null)}
-                className="p-2 text-slate-400 hover:text-slate-600 rounded-full hover:bg-slate-100"
+                className="p-2 text-slate-400 hover:text-slate-600 rounded-full hover:bg-slate-100 cursor-pointer"
               >
                 <X size={24} />
               </button>
             </div>
 
             {/* Score Banner */}
-            <div className="p-6 rounded-3xl bg-[#F4FDFB] border border-[#CCFBF1] flex flex-col sm:flex-row items-center gap-6">
-              <div className={`w-24 h-24 rounded-full flex flex-col items-center justify-center text-white shrink-0 shadow-md ${
-                activeVideoModalJob.videoScore >= 80 ? 'bg-[#0F766E]' : 'bg-red-600'
-              }`}>
+            <div className="p-6 rounded-3xl bg-[#F0F8FB] border border-[#C2E5EF] flex flex-col sm:flex-row items-center gap-6">
+              <div className={`w-24 h-24 rounded-full flex flex-col items-center justify-center text-white shrink-0 shadow-md ${activeVideoModalJob.videoScore >= 80 ? 'bg-[#2596be]' : 'bg-red-600'
+                }`}>
                 <span className="text-3xl font-black">{activeVideoModalJob.videoScore}%</span>
                 <span className="text-[10px] font-bold uppercase tracking-widest text-white/80">VIDEO SCORE</span>
               </div>
@@ -664,46 +658,46 @@ export default function StatusValidasiPage() {
                   </div>
                 )}
 
-                <h4 className="text-lg font-black text-[#0F766E]">
+                <h4 className="text-lg font-black text-[#2596be]">
                   Penyampaian Lisan &amp; Ekspresi Emosi Sangat Terstruktur
                 </h4>
                 <p className="text-xs text-slate-600">
-                  Model AI Speech &amp; Facial Recognition: <strong className="text-[#0F766E]">{activeVideoModalJob.videoScore}% nilai komposit</strong>.
+                  Model AI Speech &amp; Facial Recognition: <strong className="text-[#2596be]">{activeVideoModalJob.videoScore}% nilai komposit</strong>.
                 </p>
               </div>
             </div>
 
             {/* 5 Video Criteria Breakdown Grid */}
             <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
-              <div className="p-4 rounded-2xl bg-white border border-[#CCFBF1] text-center space-y-1">
+              <div className="p-4 rounded-2xl bg-white border border-[#C2E5EF] text-center space-y-1">
                 <span className="text-[10px] font-extrabold text-slate-500 uppercase block">Fluency &amp; Comm</span>
-                <span className="text-xl font-black text-[#0F766E]">{activeVideoModalJob.videoBreakdown.fluency}%</span>
+                <span className="text-xl font-black text-[#2596be]">{activeVideoModalJob.videoBreakdown.fluency}%</span>
               </div>
 
-              <div className="p-4 rounded-2xl bg-white border border-[#CCFBF1] text-center space-y-1">
+              <div className="p-4 rounded-2xl bg-white border border-[#C2E5EF] text-center space-y-1">
                 <span className="text-[10px] font-extrabold text-slate-500 uppercase block">Confidence &amp; Posture</span>
-                <span className="text-xl font-black text-[#0F766E]">{activeVideoModalJob.videoBreakdown.confidence}%</span>
+                <span className="text-xl font-black text-[#2596be]">{activeVideoModalJob.videoBreakdown.confidence}%</span>
               </div>
 
-              <div className="p-4 rounded-2xl bg-white border border-[#CCFBF1] text-center space-y-1">
+              <div className="p-4 rounded-2xl bg-white border border-[#C2E5EF] text-center space-y-1">
                 <span className="text-[10px] font-extrabold text-slate-500 uppercase block">Keyword Relevance</span>
-                <span className="text-xl font-black text-[#0F766E]">{activeVideoModalJob.videoBreakdown.keywords}%</span>
+                <span className="text-xl font-black text-[#2596be]">{activeVideoModalJob.videoBreakdown.keywords}%</span>
               </div>
 
-              <div className="p-4 rounded-2xl bg-white border border-[#CCFBF1] text-center space-y-1">
+              <div className="p-4 rounded-2xl bg-white border border-[#C2E5EF] text-center space-y-1">
                 <span className="text-[10px] font-extrabold text-slate-500 uppercase block">Emotion &amp; Pitch Stability</span>
-                <span className="text-xl font-black text-[#0F766E]">{activeVideoModalJob.videoBreakdown.emotion}%</span>
+                <span className="text-xl font-black text-[#2596be]">{activeVideoModalJob.videoBreakdown.emotion}%</span>
               </div>
 
-              <div className="p-4 rounded-2xl bg-white border border-[#CCFBF1] text-center space-y-1">
+              <div className="p-4 rounded-2xl bg-white border border-[#C2E5EF] text-center space-y-1">
                 <span className="text-[10px] font-extrabold text-slate-500 uppercase block">Problem Solving Logic</span>
-                <span className="text-xl font-black text-[#0F766E]">{activeVideoModalJob.videoBreakdown.logic}%</span>
+                <span className="text-xl font-black text-[#2596be]">{activeVideoModalJob.videoBreakdown.logic}%</span>
               </div>
             </div>
 
             {/* AI Notes */}
-            <div className="p-5 rounded-2xl bg-[#F4FDFB] border border-[#CCFBF1] space-y-3 text-xs sm:text-sm text-slate-700">
-              <span className="font-extrabold text-[#0F766E] flex items-center gap-2">
+            <div className="p-5 rounded-2xl bg-[#F0F8FB] border border-[#C2E5EF] space-y-3 text-xs sm:text-sm text-slate-700">
+              <span className="font-extrabold text-[#2596be] flex items-center gap-2">
                 <Bot size={16} /> Catatan Evaluasi AI Video Analysis:
               </span>
               <ul className="space-y-2">
@@ -719,7 +713,7 @@ export default function StatusValidasiPage() {
             <div className="pt-4 border-t border-slate-100 flex justify-end">
               <button
                 onClick={() => setActiveVideoModalJob(null)}
-                className="px-6 py-2.5 rounded-full bg-[#0F766E] text-white font-bold text-xs"
+                className="px-6 py-2.5 rounded-full bg-[#2596be] hover:bg-[#1D7FA1] text-white font-bold text-xs cursor-pointer"
               >
                 Tutup Scorecard Video AI
               </button>
