@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { useTranslation } from '@/hooks/useTranslation';
 import {
   Bookmark,
   BookmarkCheck,
@@ -44,6 +45,7 @@ interface SavedJob {
 
 export default function SavedJobsPage() {
   const router = useRouter();
+  const { t } = useTranslation();
   const [searchQuery, setSearchQuery] = useState('');
   const [policyFilter, setPolicyFilter] = useState('Semua');
 
@@ -213,10 +215,10 @@ export default function SavedJobsPage() {
             <span>Lowongan Impian Anda</span>
           </div>
           <h1 className="text-2xl sm:text-4xl font-black tracking-tight">
-            Lowongan Kerja Tersimpan
+            {t.pelamar.tersimpan.title}
           </h1>
           <p className="text-white/80 text-xs sm:text-sm max-w-2xl leading-relaxed">
-            Daftar posisi kerja yang telah Anda tandai. Anda dapat meninjau rincian kualifikasi dan melamar kapan saja secara praktis menggunakan 1-Klik CV ATS PO-FIT.
+            {t.pelamar.tersimpan.subtitle}
           </p>
         </div>
 
@@ -279,7 +281,7 @@ export default function SavedJobsPage() {
           </div>
           <div className="space-y-1">
             <h3 className="text-xl font-black text-slate-800 dark:text-white">
-              Belum Ada Lowongan Kerja Yang Disimpan
+              {t.pelamar.tersimpan.noSavedJobs}
             </h3>
             <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 max-w-md mx-auto leading-relaxed">
               Jelajahi berbagai posisi lowongan kerja terbaik di halaman Cari Lowongan dan simpan lowongan favorit Anda.
@@ -289,7 +291,7 @@ export default function SavedJobsPage() {
             href="/pelamar/dashboard"
             className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-[#2596be] hover:bg-[#1D7FA1] text-white font-extrabold text-xs shadow-md transition-all cursor-pointer"
           >
-            <span>Cari Lowongan Kerja Sekarang</span>
+            <span>{t.pelamar.tersimpan.startSearching}</span>
             <ArrowRight className="w-4 h-4" />
           </Link>
         </div>
@@ -362,7 +364,7 @@ export default function SavedJobsPage() {
                         <Sparkles size={14} /> Kecocokan PO-FIT AI
                       </span>
                       <span className="px-2 py-0.5 rounded-full bg-white dark:bg-slate-900 border border-[#B8E1ED] text-[11px]">
-                        {job.matchScore}% Match
+                        {job.matchScore}% Kecocokan
                       </span>
                     </div>
                     <p className="text-[11px] text-slate-600 dark:text-slate-400 font-normal line-clamp-2">
@@ -394,7 +396,7 @@ export default function SavedJobsPage() {
                       className="w-full py-3 rounded-2xl bg-[#2596be] hover:bg-[#1D7FA1] text-white font-extrabold text-xs shadow-sm hover:shadow-md transition-all cursor-pointer flex items-center justify-center gap-2"
                     >
                       <Send size={15} />
-                      <span>Lamar Sekarang Dgn CV ATS</span>
+                      <span>{t.pelamar.tersimpan.applyNow}</span>
                     </button>
                   )}
                 </div>
@@ -468,7 +470,7 @@ export default function SavedJobsPage() {
                 }}
                 className="px-4 py-2.5 rounded-full border border-red-200 text-red-600 font-bold text-xs hover:bg-red-50 cursor-pointer"
               >
-                Hapus Dari Simpanan
+                {t.pelamar.tersimpan.remove}
               </button>
 
               <button
@@ -479,7 +481,7 @@ export default function SavedJobsPage() {
                 className="px-6 py-2.5 rounded-full bg-[#2596be] hover:bg-[#1D7FA1] text-white font-bold text-xs shadow-sm cursor-pointer flex items-center gap-2"
               >
                 <Send size={15} />
-                <span>Lamar Sekarang</span>
+                <span>{t.pelamar.tersimpan.applyNow}</span>
               </button>
             </div>
 

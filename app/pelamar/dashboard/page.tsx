@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useMemo, Suspense } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { useTranslation } from '@/hooks/useTranslation';
 import {
   Search,
   MapPin,
@@ -62,6 +63,7 @@ interface Company {
 function DashboardContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { t } = useTranslation();
   const initialView = searchParams.get('view') || 'recommended';
 
   const [activeTab, setActiveTab] = useState<'recommended' | 'companies' | 'saved'>(
@@ -278,6 +280,137 @@ function DashboardContent() {
         'Minimal 2 tahun pengalaman UI/UX & Frontend Design.',
         'Portofolio web desain aktif dapat ditunjukkan.'
       ]
+    },
+    {
+      id: 106,
+      title: 'Staff Accounting',
+      company: 'PT Maju Sejahtera Abadi',
+      logo: 'https://images.unsplash.com/photo-1554224155-6726b3ff858f?w=120&auto=format&fit=crop&q=80',
+      location: 'Jakarta Selatan, DKI Jakarta',
+      education: 'Minimal D3/S1 Akuntansi',
+      workPolicy: 'Full time • Kerja dari kantor (WFO)',
+      salary: 'Rp 5.000.000 - Rp 7.000.000',
+      postedAgo: 'Terakhir diperbarui 1 hari yang lalu',
+      isPromoted: false,
+      matchScore: 88,
+      reason: 'Kemampuan analisis data keuangan & ketelitian Anda sesuai dengan kebutuhan posisi.',
+      descriptionBullets: [
+        'Membuat laporan keuangan bulanan dan tahunan perusahaan.',
+        'Melakukan rekonsiliasi bank dan pencatatan jurnal transaksi.',
+        'Mengelola faktur pajak, PPN, dan PPh sesuai regulasi.'
+      ],
+      placementInfo: 'Untuk lokasi di Kuningan, Jakarta Selatan',
+      criteriaBullets: [
+        'Pendidikan minimal D3/S1 Akuntansi atau Keuangan.',
+        'Menguasai software akuntansi (Accurate, Jurnal, atau SAP).',
+        'Teliti, jujur, dan mampu bekerja di bawah tekanan deadline.'
+      ]
+    },
+    {
+      id: 107,
+      title: 'Digital Marketing Specialist',
+      company: 'PT Kreasi Digital Nusantara',
+      logo: 'https://images.unsplash.com/photo-1552664730-d307ca884978?w=120&auto=format&fit=crop&q=80',
+      location: 'Bandung, Jawa Barat',
+      education: 'Minimal S1 Marketing/Komunikasi',
+      workPolicy: 'Full time • Hybrid',
+      salary: 'Rp 6.000.000 - Rp 9.000.000',
+      postedAgo: 'Terakhir diperbarui 4 jam yang lalu',
+      isPromoted: true,
+      matchScore: 89,
+      reason: 'Pengalaman campaign digital & analitik media sosial Anda sangat relevan.',
+      descriptionBullets: [
+        'Merancang dan mengeksekusi strategi digital marketing multi-channel.',
+        'Mengelola campaign Google Ads, Meta Ads, dan TikTok Ads.',
+        'Menganalisis performa campaign menggunakan Google Analytics & Data Studio.',
+        'Membuat konten marketing yang engaging untuk berbagai platform.'
+      ],
+      placementInfo: 'Untuk lokasi di Dago, Bandung',
+      criteriaBullets: [
+        'Pengalaman minimal 1 tahun di bidang Digital Marketing.',
+        'Menguasai Google Ads, Facebook Ads Manager, dan tools SEO.',
+        'Kreatif, data-driven, dan up-to-date dengan tren digital.'
+      ]
+    },
+    {
+      id: 108,
+      title: 'Customer Service Representative',
+      company: 'PT Tokopedia Care',
+      logo: 'https://images.unsplash.com/photo-1556745757-8d76bdb6984b?w=120&auto=format&fit=crop&q=80',
+      location: 'Jakarta Pusat, DKI Jakarta',
+      education: 'Minimal SMA/SMK/Sederajat',
+      workPolicy: 'Kontrak • Kerja dari kantor (WFO)',
+      salary: 'Rp 4.500.000 - Rp 5.500.000',
+      postedAgo: 'Terakhir diperbarui 6 jam yang lalu',
+      isPromoted: false,
+      matchScore: 90,
+      reason: 'Kemampuan komunikasi & problem solving Anda cocok untuk posisi ini.',
+      descriptionBullets: [
+        'Menangani pertanyaan dan keluhan pelanggan via chat, email, dan telepon.',
+        'Memberikan solusi yang tepat dan cepat sesuai SOP perusahaan.',
+        'Melakukan follow-up terhadap tiket komplain yang belum terselesaikan.'
+      ],
+      placementInfo: 'Untuk lokasi di Menteng, Jakarta Pusat',
+      criteriaBullets: [
+        'Pendidikan minimal SMA/SMK Sederajat.',
+        'Memiliki kemampuan komunikasi yang baik dan sabar.',
+        'Bersedia bekerja shift dan di hari libur nasional.',
+        'Pengalaman di bidang customer service menjadi nilai plus.'
+      ]
+    },
+    {
+      id: 109,
+      title: 'Backend Engineer (Node.js)',
+      company: 'PT Solusi Teknologi Indonesia',
+      logo: 'https://images.unsplash.com/photo-1519389950473-47ba0277781c?w=120&auto=format&fit=crop&q=80',
+      location: 'Surabaya, Jawa Timur',
+      education: 'Minimal S1 Teknik Informatika',
+      workPolicy: 'Full time • Remote (WFH)',
+      salary: 'Rp 10.000.000 - Rp 15.000.000',
+      postedAgo: 'Terakhir diperbarui 12 jam yang lalu',
+      isPromoted: true,
+      matchScore: 93,
+      reason: 'Skill Node.js & pengalaman arsitektur microservices Anda sangat sesuai.',
+      descriptionBullets: [
+        'Mengembangkan dan maintain RESTful API & GraphQL services.',
+        'Merancang arsitektur microservices yang scalable dan reliable.',
+        'Optimasi database query dan implementasi caching strategy.',
+        'Menulis unit test dan integration test untuk memastikan kualitas kode.'
+      ],
+      placementInfo: 'Remote (Seluruh Indonesia)',
+      criteriaBullets: [
+        'Pengalaman minimal 3 tahun sebagai Backend Developer.',
+        'Menguasai Node.js, TypeScript, PostgreSQL, dan Redis.',
+        'Familiar dengan Docker, Kubernetes, dan CI/CD pipeline.',
+        'Mampu bekerja secara mandiri dan dalam tim remote.'
+      ]
+    },
+    {
+      id: 110,
+      title: 'HRD & Recruitment Staff',
+      company: 'PT Global Talent Solutions',
+      logo: 'https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?w=120&auto=format&fit=crop&q=80',
+      location: 'Tangerang, Banten',
+      education: 'Minimal S1 Psikologi/Manajemen',
+      workPolicy: 'Full time • Kerja dari kantor (WFO)',
+      salary: 'Rp 5.500.000 - Rp 8.000.000',
+      postedAgo: 'Terakhir diperbarui 2 hari yang lalu',
+      isPromoted: false,
+      matchScore: 86,
+      reason: 'Latar belakang manajemen SDM & keterampilan komunikasi Anda relevan.',
+      descriptionBullets: [
+        'Mengelola proses rekrutmen end-to-end dari sourcing hingga onboarding.',
+        'Melakukan screening CV, interview awal, dan psikotes kandidat.',
+        'Menyusun laporan rekrutmen bulanan dan analisis turnover karyawan.',
+        'Mengelola database kandidat dan sistem HRIS perusahaan.'
+      ],
+      placementInfo: 'Untuk lokasi di BSD City, Tangerang Selatan',
+      criteriaBullets: [
+        'Pendidikan S1 Psikologi, Manajemen SDM, atau Hukum.',
+        'Pengalaman minimal 1 tahun di bidang HR/Recruitment.',
+        'Menguasai teknik interview berbasis kompetensi.',
+        'Mampu menggunakan platform job portal dan LinkedIn Recruiter.'
+      ]
     }
   ];
 
@@ -339,7 +472,7 @@ function DashboardContent() {
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Cari nama pekerjaan/perusahaan..."
+              placeholder={t.pelamar.dashboard.searchPlaceholder}
               className="w-full pl-12 pr-4 py-3.5 bg-white text-slate-800 rounded-2xl text-sm font-semibold placeholder:text-slate-400 outline-none focus:ring-2 focus:ring-[#2596be] shadow-inner"
             />
           </div>
@@ -351,7 +484,7 @@ function DashboardContent() {
               type="text"
               value={locationQuery}
               onChange={(e) => setLocationQuery(e.target.value)}
-              placeholder="Semua Lokasi (misal: Jakarta, Depok, Remote)"
+              placeholder={t.pelamar.dashboard.locationPlaceholder}
               className="w-full pl-12 pr-4 py-3.5 bg-white text-slate-800 rounded-2xl text-sm font-semibold placeholder:text-slate-400 outline-none focus:ring-2 focus:ring-[#2596be] shadow-inner"
             />
           </div>
@@ -363,7 +496,7 @@ function DashboardContent() {
               className="w-full py-3.5 bg-[#2596be] hover:bg-[#1D7FA1] text-white rounded-2xl font-black text-sm shadow-md hover:shadow-lg transition-all cursor-pointer flex items-center justify-center gap-2 border border-white/20"
             >
               <Search className="w-5 h-5" />
-              <span>Cari</span>
+              <span>{t.pelamar.dashboard.searchButton}</span>
             </button>
           </div>
         </form>
@@ -487,11 +620,11 @@ function DashboardContent() {
             <div className="flex items-center justify-between px-1">
               <div>
                 <h2 className="text-lg font-black text-slate-800 dark:text-white flex items-center gap-1.5">
-                  <span>Info Loker Terbaru</span>
+                  <span>{t.pelamar.dashboard.title}</span>
                   <Info className="w-4 h-4 text-slate-400" />
                 </h2>
                 <p className="text-xs text-slate-500 font-semibold">
-                  Menampilkan {filteredJobs.length} Lowongan.
+                  {filteredJobs.length} {t.pelamar.dashboard.jobMatchesFound}
                 </p>
               </div>
 
@@ -507,7 +640,7 @@ function DashboardContent() {
                 <div className="bg-white dark:bg-slate-900 rounded-3xl p-8 text-center border border-slate-200 dark:border-slate-800 space-y-3">
                   <Briefcase className="w-10 h-10 text-slate-400 mx-auto" />
                   <p className="text-xs font-bold text-slate-600 dark:text-slate-300">
-                    Tidak ditemukan lowongan sesuai filter
+                    {t.pelamar.dashboard.requirements}
                   </p>
                   <button
                     onClick={() => { setSearchQuery(''); setLocationQuery(''); setEducationFilter('Semua'); setWorkPolicyFilter('Semua'); }}
@@ -615,12 +748,12 @@ function DashboardContent() {
           </div>
 
           {/* RIGHT COLUMN: DYNAMIC JOB DETAIL PANE (~62% Width / 7 Cols) */}
-          <div className="lg:col-span-7 sticky top-24">
+          <div className="lg:col-span-7 sticky top-28 h-[calc(100vh-130px)] flex flex-col">
             {selectedJob && (
-              <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-md p-6 sm:p-8 space-y-6 max-h-[85vh] overflow-y-auto">
+              <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-md flex flex-col overflow-hidden h-full">
                 
-                {/* Detail Header */}
-                <div className="space-y-4 border-b border-slate-100 dark:border-slate-800 pb-6">
+                {/* Detail Header — FIXED / Non-scrolling */}
+                <div className="shrink-0 p-6 sm:p-8 pb-4 space-y-4 border-b border-slate-100 dark:border-slate-800">
                   <div className="flex items-start gap-4">
                     <img
                       src={selectedJob.logo}
@@ -676,7 +809,7 @@ function DashboardContent() {
                   <div className="flex flex-wrap items-center gap-3 pt-2">
                     {appliedJobs.includes(selectedJob.id) ? (
                       <span className="px-6 py-3 rounded-2xl bg-emerald-100 text-emerald-800 font-black text-xs sm:text-sm border border-emerald-300 flex items-center gap-2">
-                        <CheckCircle2 size={16} /> Lamaran &amp; CV Terkirim
+                        <CheckCircle2 size={16} /> {t.pelamar.dashboard.jobSaved}
                       </span>
                     ) : (
                       <button
@@ -684,7 +817,7 @@ function DashboardContent() {
                         className="px-7 py-3 rounded-2xl bg-[#2596be] hover:bg-[#1D7FA1] text-white font-black text-xs sm:text-sm shadow-md hover:shadow-lg transition-all cursor-pointer flex items-center gap-2"
                       >
                         <Send size={16} />
-                        <span>Lamar via PO-FIT AI</span>
+                        <span>{t.pelamar.dashboard.applyNow}</span>
                       </button>
                     )}
 
@@ -712,41 +845,44 @@ function DashboardContent() {
                   </div>
                 </div>
 
-                {/* Deskripsi Pekerjaan */}
-                <div className="space-y-3 text-xs sm:text-sm text-slate-700 dark:text-slate-300 leading-relaxed">
-                  <h3 className="font-extrabold text-sm text-slate-900 dark:text-white uppercase tracking-wider">
-                    Deskripsi Pekerjaan
-                  </h3>
-                  <p className="font-bold text-slate-800 dark:text-slate-200">
-                    Dicari {selectedJob.title} dengan jobdesc:
-                  </p>
-                  <ul className="space-y-1.5 list-disc pl-5">
-                    {selectedJob.descriptionBullets.map((bullet, idx) => (
-                      <li key={idx}>{bullet}</li>
-                    ))}
-                  </ul>
-                </div>
+                {/* Scrollable Description Content */}
+                <div className="flex-1 overflow-y-auto p-6 sm:p-8 pt-6 space-y-6">
+                  {/* Deskripsi Pekerjaan */}
+                  <div className="space-y-3 text-xs sm:text-sm text-slate-700 dark:text-slate-300 leading-relaxed">
+                    <h3 className="font-extrabold text-sm text-slate-900 dark:text-white uppercase tracking-wider">
+                      {t.pelamar.dashboard.aboutRole}
+                    </h3>
+                    <p className="font-bold text-slate-800 dark:text-slate-200">
+                      Dicari {selectedJob.title} dengan jobdesc:
+                    </p>
+                    <ul className="space-y-1.5 list-disc pl-5">
+                      {selectedJob.descriptionBullets.map((bullet, idx) => (
+                        <li key={idx}>{bullet}</li>
+                      ))}
+                    </ul>
+                  </div>
 
-                {/* Penempatan */}
-                <div className="space-y-2 text-xs sm:text-sm text-slate-700 dark:text-slate-300">
-                  <h3 className="font-extrabold text-sm text-slate-900 dark:text-white uppercase tracking-wider">
-                    Penempatan :
-                  </h3>
-                  <p className="font-medium text-slate-600 dark:text-slate-400">
-                    {selectedJob.placementInfo}
-                  </p>
-                </div>
+                  {/* Penempatan */}
+                  <div className="space-y-2 text-xs sm:text-sm text-slate-700 dark:text-slate-300">
+                    <h3 className="font-extrabold text-sm text-slate-900 dark:text-white uppercase tracking-wider">
+                      {t.pelamar.dashboard.responsibilities}
+                    </h3>
+                    <p className="font-medium text-slate-600 dark:text-slate-400">
+                      {selectedJob.placementInfo}
+                    </p>
+                  </div>
 
-                {/* Kriteria / Kualifikasi */}
-                <div className="space-y-3 text-xs sm:text-sm text-slate-700 dark:text-slate-300">
-                  <h3 className="font-extrabold text-sm text-slate-900 dark:text-white uppercase tracking-wider">
-                    KRITERIA / KUALIFIKASI :
-                  </h3>
-                  <ul className="space-y-1.5 list-disc pl-5 font-semibold text-slate-700 dark:text-slate-300">
-                    {selectedJob.criteriaBullets.map((crit, idx) => (
-                      <li key={idx}>{crit}</li>
-                    ))}
-                  </ul>
+                  {/* Kriteria / Kualifikasi */}
+                  <div className="space-y-3 text-xs sm:text-sm text-slate-700 dark:text-slate-300">
+                    <h3 className="font-extrabold text-sm text-slate-900 dark:text-white uppercase tracking-wider">
+                      {t.pelamar.dashboard.requirements}
+                    </h3>
+                    <ul className="space-y-1.5 list-disc pl-5 font-semibold text-slate-700 dark:text-slate-300">
+                      {selectedJob.criteriaBullets.map((crit, idx) => (
+                        <li key={idx}>{crit}</li>
+                      ))}
+                    </ul>
+                  </div>
                 </div>
 
               </div>

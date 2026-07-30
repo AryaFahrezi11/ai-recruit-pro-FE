@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
+import { useTranslation } from '@/hooks/useTranslation';
 import {
   Search,
   ChevronDown,
@@ -62,6 +63,7 @@ interface ApplicationItem {
 }
 
 export default function StatusValidasiPage() {
+  const { t } = useTranslation();
   const [searchTerm, setSearchTerm] = useState('');
   const [stageFilter, setStageFilter] = useState('Semua Tahapan');
   const [statusFilter, setStatusFilter] = useState('Semua Status');
@@ -298,11 +300,9 @@ export default function StatusValidasiPage() {
       {/* Main Title & Search Filter Bar */}
       <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-8 border border-[#C2E5EF] dark:border-slate-800 shadow-xs space-y-6">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-black text-[#2596be] dark:text-cyan-400">
-            Daftar Riwayat Lamaran
-          </h1>
-          <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1">
-            Pantau status perkembangan 5 contoh skenario lamaran kerja secara transparan dengan analisis kecerdasan buatan PO-FIT AI.
+          <h1 className="text-xl sm:text-2xl font-black text-[#1b7b9e] dark:text-cyan-400">{t.pelamar.status.title}</h1>
+          <p className="text-xs sm:text-sm font-semibold text-slate-500 dark:text-slate-400">
+            {t.pelamar.status.subtitle}
           </p>
         </div>
 
@@ -315,7 +315,7 @@ export default function StatusValidasiPage() {
               type="text"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder="Temukan Posisi atau Nama Perusahaan..."
+              placeholder={t.pelamar.status.searchPlaceholder}
               className="w-full pl-11 pr-4 py-2.5 bg-[#F0F8FB] dark:bg-slate-800 border border-[#C2E5EF] dark:border-slate-700 focus:border-[#2596be] rounded-2xl text-xs font-bold text-slate-700 dark:text-slate-200 outline-none"
             />
           </div>
@@ -325,7 +325,7 @@ export default function StatusValidasiPage() {
             <select
               className="w-full px-4 py-2.5 bg-[#F0F8FB] dark:bg-slate-800 border border-[#C2E5EF] dark:border-slate-700 focus:border-[#2596be] rounded-2xl text-xs font-bold text-slate-700 dark:text-slate-200 outline-none cursor-pointer"
             >
-              <option>Semua Platform</option>
+              <option>{t.pelamar.status.allPlatform}</option>
               <option>WEBCAREER</option>
               <option>JOBFAIR VIRTUAL</option>
             </select>
@@ -338,7 +338,7 @@ export default function StatusValidasiPage() {
               onChange={(e) => setStageFilter(e.target.value)}
               className="w-full px-4 py-2.5 bg-[#F0F8FB] dark:bg-slate-800 border border-[#C2E5EF] dark:border-slate-700 focus:border-[#2596be] rounded-2xl text-xs font-bold text-slate-700 dark:text-slate-200 outline-none cursor-pointer"
             >
-              <option>Semua Tahapan</option>
+              <option>{t.pelamar.status.allStages}</option>
               <option>CV Screening</option>
               <option>AI Video Analysis</option>
               <option>Human Validation</option>
@@ -352,10 +352,10 @@ export default function StatusValidasiPage() {
               onChange={(e) => setStatusFilter(e.target.value)}
               className="w-full px-4 py-2.5 bg-[#F0F8FB] dark:bg-slate-800 border border-[#C2E5EF] dark:border-slate-700 focus:border-[#2596be] rounded-2xl text-xs font-bold text-slate-700 dark:text-slate-200 outline-none cursor-pointer"
             >
-              <option>Semua Status</option>
-              <option>Dalam Proses</option>
-              <option>Lolos</option>
-              <option>Tidak Lolos</option>
+              <option>{t.pelamar.status.allStatus}</option>
+              <option>{t.pelamar.status.inProgress}</option>
+              <option>{t.pelamar.status.passed}</option>
+              <option>{t.pelamar.status.failed}</option>
             </select>
           </div>
 
@@ -365,7 +365,7 @@ export default function StatusValidasiPage() {
               type="button"
               className="w-full py-2.5 bg-[#2596be] hover:bg-[#1D7FA1] text-white rounded-2xl font-bold text-xs shadow-xs transition-colors cursor-pointer"
             >
-              Cari
+              {t.pelamar.status.searchButton}
             </button>
           </div>
         </div>
@@ -405,19 +405,19 @@ export default function StatusValidasiPage() {
                   {/* Middle Details Grid */}
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-xs">
                     <div>
-                      <span className="text-slate-400 block font-semibold">Tanggal Lamar</span>
+                      <span className="text-slate-400 block font-semibold">{t.pelamar.status.applyDate}</span>
                       <span className="font-bold text-slate-700 dark:text-slate-200">{app.applyDate}</span>
                     </div>
                     <div>
-                      <span className="text-slate-400 block font-semibold">Kegiatan</span>
+                      <span className="text-slate-400 block font-semibold">{t.pelamar.status.activity}</span>
                       <span className="font-bold text-slate-700 dark:text-slate-200">{app.kegiatan}</span>
                     </div>
                     <div>
-                      <span className="text-slate-400 block font-semibold">Tahap Rekrutmen</span>
+                      <span className="text-slate-400 block font-semibold">{t.pelamar.status.recruitmentStage}</span>
                       <span className="font-bold text-[#2596be] dark:text-cyan-400">{app.tahapRekrutmen}</span>
                     </div>
                     <div>
-                      <span className="text-slate-400 block font-semibold">Status</span>
+                      <span className="text-slate-400 block font-semibold">{t.pelamar.status.statusLabel}</span>
                       <span className={`font-extrabold px-3 py-1 rounded-full text-xs inline-block ${
                         app.status === 'Lolos'
                           ? 'bg-emerald-100 text-emerald-800 border border-emerald-300'
@@ -435,7 +435,7 @@ export default function StatusValidasiPage() {
                     onClick={() => toggleExpandJob(app.id)}
                     className="text-xs font-extrabold text-[#2596be] hover:underline flex items-center gap-1.5 self-start md:self-center cursor-pointer"
                   >
-                    <span>{isExpanded ? 'Sembunyikan' : 'Tampilkan Detail'}</span>
+                    <span>{isExpanded ? t.pelamar.status.hideDetails : t.pelamar.status.showDetails}</span>
                     {isExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
                   </button>
 
@@ -449,10 +449,10 @@ export default function StatusValidasiPage() {
                     <div className="space-y-3">
                       <div className="flex items-center justify-between">
                         <span className="text-xs font-black uppercase tracking-wider text-[#2596be] dark:text-cyan-400 flex items-center gap-2">
-                          <BarChart3 size={16} /> Timeline Kemajuan Seleksi:
+                          <BarChart3 size={16} /> {t.pelamar.status.pipelineTitle}
                         </span>
                         <span className="text-[11px] font-bold text-slate-400 italic">
-                          💡 Klik <strong>Stage 2 (CV Screening)</strong> atau <strong>Stage 4 (AI Video)</strong> untuk melihat rincian skor AI.
+                          {t.pelamar.status.pipelineHint}
                         </span>
                       </div>
 
@@ -486,10 +486,10 @@ export default function StatusValidasiPage() {
                               }`}
                             >
                               <div className="flex items-center justify-between text-[11px] font-black uppercase tracking-wider">
-                                <span>{stage.name}</span>
+                                <span>{t.pelamar.status.viewDetails}</span>
                                 {(isClickableCv || isClickableVideo) && (
                                   <span className="px-2 py-0.5 rounded-full bg-white dark:bg-slate-800 text-[#2596be] dark:text-cyan-400 font-bold text-[10px] border border-[#B8E1ED] shadow-2xs">
-                                    🔍 Klik Detail
+                                    {t.pelamar.status.clickDetail}
                                   </span>
                                 )}
                               </div>
@@ -497,12 +497,12 @@ export default function StatusValidasiPage() {
                               <div className="flex items-center justify-between text-xs font-bold pt-1">
                                 <span>
                                   {isFailed
-                                    ? 'Tidak Lolos'
+                                    ? t.pelamar.status.failed
                                     : isCurrentStage
-                                    ? app.status === 'Dalam Proses' ? 'Dalam Proses' : 'Aktif'
+                                    ? app.status === 'Dalam Proses' ? t.pelamar.status.inProgress : t.pelamar.status.active
                                     : isPassedStage
-                                    ? 'Lolos'
-                                    : 'Menunggu'}
+                                    ? t.pelamar.status.passed
+                                    : t.pelamar.status.waiting}
                                 </span>
                                 {isPassedStage ? (
                                   <CheckCircle2 size={16} className="text-emerald-600" />
@@ -530,17 +530,17 @@ export default function StatusValidasiPage() {
                         {app.status === 'Tidak Lolos' || app.status === 'Lowongan Telah Ditutup' ? (
                           <>
                             <XCircle size={18} className="text-red-600 shrink-0" />
-                            <span>Pemberitahuan Status Seleksi (Hasil Evaluasi)</span>
+                            <span>{t.pelamar.status.resultLabel}</span>
                           </>
                         ) : app.status === 'Lolos' ? (
                           <>
                             <CheckCircle2 size={18} className="text-emerald-600 shrink-0" />
-                            <span>Pemberitahuan Kelulusan Seleksi (HIRED)</span>
+                            <span>{t.pelamar.status.hiredLabel}</span>
                           </>
                         ) : (
                           <>
                             <CheckCircle2 size={18} className="text-[#2596be] shrink-0" />
-                            <span>Pemberitahuan Status Progress AI-Recruit Pro</span>
+                            <span>{t.pelamar.status.progressLabel}</span>
                           </>
                         )}
                       </div>
@@ -557,7 +557,7 @@ export default function StatusValidasiPage() {
                             className="inline-flex items-center gap-2.5 px-6 py-3 rounded-full bg-[#2596be] hover:bg-[#1D7FA1] text-white font-black text-xs sm:text-sm shadow-md hover:shadow-lg transition-all animate-bounce cursor-pointer"
                           >
                             <Video size={18} className="text-cyan-200" />
-                            <span>Mulai Wawancara Video AI Sekarang</span>
+                            <span>{t.pelamar.status.startInterview}</span>
                             <ArrowRight size={16} />
                           </Link>
                         </div>
@@ -565,12 +565,12 @@ export default function StatusValidasiPage() {
 
                       <div className="pt-3 border-t border-slate-200/60 dark:border-slate-700/60 flex flex-wrap items-center justify-between gap-3 text-xs">
                         <div className="flex items-center gap-2 text-slate-500 dark:text-slate-400 font-medium">
-                          <span>Belum mendapatkan update informasi?</span>
+                          <span>{t.pelamar.status.noUpdate}</span>
                           <button
                             onClick={() => alert('Customer Support HR Developer AI-Recruit Pro: support@airecruitpro.com / WhatsApp: 0812-9900-8800')}
                             className="font-bold text-[#2596be] dark:text-cyan-400 hover:underline cursor-pointer"
                           >
-                            Hubungi tim perekrut
+                            {t.pelamar.status.contactSupport}
                           </button>
                         </div>
 
@@ -581,7 +581,7 @@ export default function StatusValidasiPage() {
                               onClick={() => setActiveCvModalJob(app)}
                               className="px-4 py-1.5 rounded-full bg-white dark:bg-slate-800 text-[#2596be] dark:text-cyan-400 font-bold border border-[#B8E1ED] dark:border-slate-700 hover:bg-[#E0F1F7] transition-colors shadow-2xs cursor-pointer"
                             >
-                              📄 Skor AI CV ({app.cvScore}%)
+                              {t.pelamar.status.cvScoreDetails} ({app.cvScore}%)
                             </button>
                           )}
 
@@ -590,7 +590,7 @@ export default function StatusValidasiPage() {
                               onClick={() => setActiveVideoModalJob(app)}
                               className="px-4 py-1.5 rounded-full bg-[#2596be] hover:bg-[#1D7FA1] text-white font-bold transition-colors shadow-2xs cursor-pointer"
                             >
-                              🎥 Skor AI Video ({app.videoScore}%)
+                              {t.pelamar.status.videoScoreDetails} ({app.videoScore}%)
                             </button>
                           )}
                         </div>
@@ -615,10 +615,10 @@ export default function StatusValidasiPage() {
             <div className="flex items-start justify-between border-b border-slate-100 dark:border-slate-800 pb-4">
               <div>
                 <span className="text-xs font-bold text-[#2596be] dark:text-cyan-400 uppercase tracking-wider block">
-                  Stage 2: CV Analysis Result (PO-FIT System)
+                  {t.pelamar.status.cvAnalysisTitle}
                 </span>
                 <h3 className="font-black text-2xl text-[#2596be] dark:text-cyan-400">
-                  Hasil Skrining AI Kualifikasi CV
+                  {t.pelamar.status.cvResultTitle}
                 </h3>
                 <p className="text-xs text-slate-500 dark:text-slate-400">
                   {activeCvModalJob.jobTitle} — {activeCvModalJob.companyName}
@@ -644,19 +644,19 @@ export default function StatusValidasiPage() {
               <div className="space-y-2 text-center sm:text-left">
                 {activeCvModalJob.cvScore >= 80 ? (
                   <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-emerald-100 text-emerald-800 text-xs font-extrabold border border-emerald-300">
-                    <CheckCircle2 size={16} /> PASSES THRESHOLD (Score &ge; 80%)
+                    <CheckCircle2 size={16} /> {t.pelamar.status.passedThreshold}
                   </div>
                 ) : (
                   <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-red-100 text-red-800 text-xs font-extrabold border border-red-300">
-                    <XCircle size={16} /> BELUM MEMENUHI THRESHOLD (Score &lt; 80%)
+                    <XCircle size={16} /> {t.pelamar.status.failedThreshold}
                   </div>
                 )}
 
                 <h4 className="text-lg font-black text-[#2596be] dark:text-cyan-400">
-                  {activeCvModalJob.cvScore >= 80 ? 'High Alignment with Job Description' : 'Low Alignment with Job Requirements'}
+                  {activeCvModalJob.cvScore >= 80 ? t.pelamar.status.highMatch : t.pelamar.status.lowMatch}
                 </h4>
                 <p className="text-xs text-slate-600 dark:text-slate-300">
-                  Algoritma PO-FIT Cosine Similarity: <strong className="text-[#2596be] dark:text-cyan-400">{activeCvModalJob.cvScore}% match</strong>.
+                  {t.pelamar.status.algoInfo}: <strong className="text-[#2596be] dark:text-cyan-400">{activeCvModalJob.cvScore}% match</strong>.
                 </p>
               </div>
             </div>
@@ -664,27 +664,27 @@ export default function StatusValidasiPage() {
             {/* 5 Criteria Breakdown */}
             <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
               <div className="p-4 rounded-2xl bg-white dark:bg-slate-800 border border-[#C2E5EF] dark:border-slate-700 text-center space-y-1">
-                <span className="text-[10px] font-extrabold text-slate-500 uppercase block">Format &amp; Structure</span>
+                <span className="text-[10px] font-extrabold text-slate-500 uppercase block">{t.pelamar.status.format}</span>
                 <span className="text-xl font-black text-[#2596be] dark:text-cyan-400">{activeCvModalJob.cvBreakdown.format}%</span>
               </div>
 
               <div className="p-4 rounded-2xl bg-white dark:bg-slate-800 border border-[#C2E5EF] dark:border-slate-700 text-center space-y-1">
-                <span className="text-[10px] font-extrabold text-slate-500 uppercase block">Relevant Experience</span>
+                <span className="text-[10px] font-extrabold text-slate-500 uppercase block">{t.pelamar.status.experience}</span>
                 <span className="text-xl font-black text-[#2596be] dark:text-cyan-400">{activeCvModalJob.cvBreakdown.experience}%</span>
               </div>
 
               <div className="p-4 rounded-2xl bg-white dark:bg-slate-800 border border-[#C2E5EF] dark:border-slate-700 text-center space-y-1">
-                <span className="text-[10px] font-extrabold text-slate-500 uppercase block">Skills &amp; Certs</span>
+                <span className="text-[10px] font-extrabold text-slate-500 uppercase block">{t.pelamar.status.skills}</span>
                 <span className="text-xl font-black text-[#2596be] dark:text-cyan-400">{activeCvModalJob.cvBreakdown.skills}%</span>
               </div>
 
               <div className="p-4 rounded-2xl bg-white dark:bg-slate-800 border border-[#C2E5EF] dark:border-slate-700 text-center space-y-1">
-                <span className="text-[10px] font-extrabold text-slate-500 uppercase block">Achievements &amp; Impact</span>
+                <span className="text-[10px] font-extrabold text-slate-500 uppercase block">{t.pelamar.status.achievements}</span>
                 <span className="text-xl font-black text-[#2596be] dark:text-cyan-400">{activeCvModalJob.cvBreakdown.achievements}%</span>
               </div>
 
               <div className="p-4 rounded-2xl bg-white dark:bg-slate-800 border border-[#C2E5EF] dark:border-slate-700 text-center space-y-1">
-                <span className="text-[10px] font-extrabold text-slate-500 uppercase block">Language &amp; Comm</span>
+                <span className="text-[10px] font-extrabold text-slate-500 uppercase block">{t.pelamar.status.language}</span>
                 <span className="text-xl font-black text-[#2596be] dark:text-cyan-400">{activeCvModalJob.cvBreakdown.language}%</span>
               </div>
             </div>
@@ -692,7 +692,7 @@ export default function StatusValidasiPage() {
             {/* AI Notes */}
             <div className="p-5 rounded-2xl bg-[#F0F8FB] dark:bg-slate-800/80 border border-[#C2E5EF] dark:border-slate-700 space-y-3 text-xs sm:text-sm text-slate-700 dark:text-slate-300">
               <span className="font-extrabold text-[#2596be] dark:text-cyan-400 flex items-center gap-2">
-                <Sparkles size={16} /> Catatan Evaluasi PO-FIT AI CV:
+                <Sparkles size={16} /> {t.pelamar.status.cvNotes}
               </span>
               <ul className="space-y-2">
                 {activeCvModalJob.cvBreakdown.notes.map((note, idx) => (
@@ -709,7 +709,7 @@ export default function StatusValidasiPage() {
                 onClick={() => setActiveCvModalJob(null)}
                 className="px-6 py-2.5 rounded-full bg-[#2596be] hover:bg-[#1D7FA1] text-white font-bold text-xs cursor-pointer"
               >
-                Tutup Scorecard CV
+                {t.pelamar.status.backToList}
               </button>
             </div>
 
@@ -726,10 +726,10 @@ export default function StatusValidasiPage() {
             <div className="flex items-start justify-between border-b border-slate-100 dark:border-slate-800 pb-4">
               <div>
                 <span className="text-xs font-bold text-[#2596be] dark:text-cyan-400 uppercase tracking-wider block">
-                  Stage 4: AI Video Analysis Result (Behavioral &amp; Emotion AI)
+                  {t.pelamar.status.videoAnalysisTitle}
                 </span>
                 <h3 className="font-black text-2xl text-[#2596be] dark:text-cyan-400">
-                  Hasil Evaluasi Per-Kriteria Rekaman Video
+                  {t.pelamar.status.videoResultTitle}
                 </h3>
                 <p className="text-xs text-slate-500 dark:text-slate-400">
                   {activeVideoModalJob.jobTitle} — {activeVideoModalJob.companyName}
@@ -755,19 +755,19 @@ export default function StatusValidasiPage() {
               <div className="space-y-2 text-center sm:text-left">
                 {activeVideoModalJob.videoScore >= 80 ? (
                   <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-emerald-100 text-emerald-800 text-xs font-extrabold border border-emerald-300">
-                    <CheckCircle2 size={16} /> PASSES VIDEO THRESHOLD (Score &ge; 80%)
+                    <CheckCircle2 size={16} /> {t.pelamar.status.passedThresholdVideo}
                   </div>
                 ) : (
                   <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-red-100 text-red-800 text-xs font-extrabold border border-red-300">
-                    <XCircle size={16} /> BELUM MEMENUHI THRESHOLD (Score &lt; 80%)
+                    <XCircle size={16} /> {t.pelamar.status.failedThresholdVideo}
                   </div>
                 )}
 
                 <h4 className="text-lg font-black text-[#2596be] dark:text-cyan-400">
-                  {activeVideoModalJob.videoScore >= 80 ? 'Penyampaian Lisan & Ekspresi Emosi Sangat Terstruktur' : 'Hasil Evaluasi Video Belum Memenuhi Threshold'}
+                  {activeVideoModalJob.videoScore >= 80 ? t.pelamar.status.highMatchVideo : t.pelamar.status.lowMatchVideo}
                 </h4>
                 <p className="text-xs text-slate-600 dark:text-slate-300">
-                  Model AI Speech &amp; Facial Recognition: <strong className="text-[#2596be] dark:text-cyan-400">{activeVideoModalJob.videoScore}% nilai komposit</strong>.
+                  {t.pelamar.status.algoInfoVideo}: <strong className="text-[#2596be] dark:text-cyan-400">{activeVideoModalJob.videoScore}% nilai komposit</strong>.
                 </p>
               </div>
             </div>
@@ -820,7 +820,7 @@ export default function StatusValidasiPage() {
                 onClick={() => setActiveVideoModalJob(null)}
                 className="px-6 py-2.5 rounded-full bg-[#2596be] hover:bg-[#1D7FA1] text-white font-bold text-xs cursor-pointer"
               >
-                Tutup Scorecard Video AI
+                {t.pelamar.status.backToList}
               </button>
             </div>
 

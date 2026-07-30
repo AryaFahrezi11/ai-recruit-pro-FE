@@ -4,6 +4,7 @@ import React, { useEffect, useState, useRef } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useAppStore } from '@/lib/store/useAppStore';
+import { useTranslation } from '@/hooks/useTranslation';
 import {
   Search,
   Building2,
@@ -30,6 +31,7 @@ export default function PelamarPerfectLayout({
   const pathname = usePathname();
   const router = useRouter();
   const { theme, toggleTheme, language, setLanguage } = useAppStore();
+  const { t } = useTranslation();
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -71,9 +73,9 @@ export default function PelamarPerfectLayout({
   };
 
   const navItems = [
-    { name: language === 'en' ? 'Find Jobs' : 'Cari lowongan', href: '/pelamar/dashboard', icon: Search },
-    { name: language === 'en' ? 'Companies' : 'Perusahaan', href: '/pelamar/dashboard?view=companies', icon: Building2 },
-    { name: language === 'en' ? 'Career Resources' : 'Sumber daya karir', href: '/pelamar/upload-cv', icon: BookOpen },
+    { name: t.pelamar.nav.findJobs, href: '/pelamar/dashboard', icon: Search },
+    { name: t.pelamar.nav.companies, href: '/pelamar/dashboard?view=companies', icon: Building2 },
+    { name: t.pelamar.nav.careerResources, href: '/pelamar/upload-cv', icon: BookOpen },
   ];
 
   // If on login/register pages, render children without candidate layout navbar
@@ -103,7 +105,7 @@ export default function PelamarPerfectLayout({
                   AI-Recruit <span className="text-[#2596be]">Pro</span>
                 </span>
                 <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mt-0.5">
-                  Candidate Portal
+                  {t.pelamar.header.portalName}
                 </span>
               </div>
             </Link>
@@ -111,7 +113,7 @@ export default function PelamarPerfectLayout({
             {/* Navigation Tabs */}
             <nav className="hidden lg:flex items-center gap-1">
               {navItems.map((item) => {
-                const isActive = pathname === item.href || (item.href.includes('view=') && typeof window !== 'undefined' && window.location.search.includes('view=companies') && item.name.includes('Perusahaan'));
+                const isActive = pathname === item.href || (item.href.includes('view=') && typeof window !== 'undefined' && window.location.search.includes('view=companies') && item.href.includes('view=companies'));
                 return (
                   <Link
                     key={item.name}
@@ -139,7 +141,7 @@ export default function PelamarPerfectLayout({
               title="Ganti Bahasa"
             >
               <Globe size={15} className="text-[#2596be]" />
-              <span>Bahasa ({language.toUpperCase()})</span>
+              <span>{t.pelamar.header.language} ({language.toUpperCase()})</span>
             </button>
 
             {/* Toggle Theme Dark/Light Mode */}
@@ -157,7 +159,7 @@ export default function PelamarPerfectLayout({
               className="hidden md:inline-flex items-center gap-1.5 text-xs font-bold text-[#2596be] dark:text-cyan-400 hover:underline px-3 py-1.5 rounded-full hover:bg-cyan-50 dark:hover:bg-slate-800 transition-colors"
             >
               <Building2 size={15} />
-              <span>Untuk perusahaan</span>
+              <span>{t.pelamar.header.forEmployers}</span>
             </Link>
 
             <div className="h-6 w-[1px] bg-slate-200 dark:bg-slate-800 hidden sm:block"></div>
@@ -188,7 +190,7 @@ export default function PelamarPerfectLayout({
                     className="flex items-center gap-3 px-4 py-2.5 rounded-2xl text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-[#F0F8FB] dark:hover:bg-slate-800 hover:text-[#2596be] transition-colors"
                   >
                     <User size={16} className="text-[#2596be]" />
-                    <span>Lihat profil &amp; Kelola CV</span>
+                    <span>{t.pelamar.profile.manageProfile}</span>
                   </Link>
 
                   <Link
@@ -197,7 +199,7 @@ export default function PelamarPerfectLayout({
                     className="flex items-center gap-3 px-4 py-2.5 rounded-2xl text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-[#F0F8FB] dark:hover:bg-slate-800 hover:text-[#2596be] transition-colors"
                   >
                     <Bookmark size={16} className="text-[#2596be]" />
-                    <span>Lowongan tersimpan</span>
+                    <span>{t.pelamar.profile.savedJobs}</span>
                   </Link>
 
                   <Link
@@ -206,7 +208,7 @@ export default function PelamarPerfectLayout({
                     className="flex items-center gap-3 px-4 py-2.5 rounded-2xl text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-[#F0F8FB] dark:hover:bg-slate-800 hover:text-[#2596be] transition-colors"
                   >
                     <ClockCheck size={16} className="text-[#2596be]" />
-                    <span>Riwayat lamaran</span>
+                    <span>{t.pelamar.profile.applicationHistory}</span>
                   </Link>
 
                   <div className="border-t border-slate-100 dark:border-slate-800 pt-1"></div>
@@ -216,7 +218,7 @@ export default function PelamarPerfectLayout({
                     className="w-full flex items-center gap-3 px-4 py-2.5 rounded-2xl text-xs font-bold text-red-600 hover:bg-red-50 dark:hover:bg-red-950/40 transition-colors cursor-pointer"
                   >
                     <LogOut size={16} />
-                    <span>Keluar (Logout)</span>
+                    <span>{t.pelamar.profile.logout}</span>
                   </button>
                 </div>
               )}
@@ -262,7 +264,7 @@ export default function PelamarPerfectLayout({
           <div className="flex items-center gap-4">
             <span className="inline-flex items-center gap-2 bg-[#F0F8FB] dark:bg-slate-800 text-[#2596be] dark:text-cyan-400 px-4 py-1.5 rounded-full font-bold text-xs border border-[#C2E5EF] dark:border-slate-700">
               <span className="w-2 h-2 rounded-full bg-[#2596be] animate-pulse"></span>
-              System Active &amp; Secure
+              {t.pelamar.footer.systemActive}
             </span>
           </div>
         </div>
