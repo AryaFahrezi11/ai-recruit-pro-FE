@@ -116,26 +116,7 @@ export function CandidateCard({
       </div>
 
       {/* Role */}
-      <p className="text-xs font-medium text-muted-foreground mb-2">{role}</p>
-
-      {/* Education & University Origin Badge */}
-      {(education || university) && (
-        <div className="flex flex-col gap-1 mb-3">
-          {education && (
-            <div className="flex items-center gap-1.5 text-[10px] font-bold text-violet-900 dark:text-violet-300 bg-violet-100/90 dark:bg-violet-950/60 px-2.5 py-1 rounded-md border border-violet-300 dark:border-violet-700 w-fit shadow-2xs">
-              <GraduationCap size={13} className="text-violet-700 dark:text-violet-400 shrink-0" />
-              <span>{education}</span>
-            </div>
-          )}
-
-          {university && (
-            <div className="flex items-center gap-1.5 text-[10px] font-bold text-slate-800 dark:text-slate-200 bg-slate-100 dark:bg-slate-800 px-2.5 py-1 rounded-md border border-slate-300 dark:border-slate-700 w-fit shadow-2xs">
-              <Building2 size={12} className="text-slate-600 dark:text-slate-400 shrink-0" />
-              <span>{university}</span>
-            </div>
-          )}
-        </div>
-      )}
+      <p className="text-xs font-medium text-muted-foreground mb-3">{role}</p>
 
       {/* CV Score indicator (for cv_screening stage) */}
       {cvScore !== undefined && (

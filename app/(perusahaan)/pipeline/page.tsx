@@ -64,8 +64,6 @@ export default function PipelinePage() {
             <CandidateCard 
               name="Rina Permata"
               role="Frontend Developer"
-              education="S1 Sistem Informasi (IPK 3.91)"
-              university="Universitas Indonesia"
               stage="upload_cv"
               timeInfo={`${t.pipeline.uploadedAgo} 1h ago`}
               onClick={() => setSelectedCandidate({ name: "Rina Permata", role: "Frontend Developer", stage: "upload_cv", education: "S1 Sistem Informasi (IPK 3.91)", university: "Universitas Indonesia" })}
@@ -73,8 +71,6 @@ export default function PipelinePage() {
             <CandidateCard 
               name="Budi Santoso"
               role="Backend Engineer"
-              education="S1 Teknik Informatika (IPK 3.75)"
-              university="Institut Teknologi Bandung"
               stage="upload_cv"
               timeInfo={`${t.pipeline.uploadedAgo} 3h ago`}
               onClick={() => setSelectedCandidate({ name: "Budi Santoso", role: "Backend Engineer", stage: "upload_cv", education: "S1 Teknik Informatika (IPK 3.75)", university: "Institut Teknologi Bandung" })}
@@ -82,8 +78,6 @@ export default function PipelinePage() {
             <CandidateCard 
               name="Dewi Lestari"
               role="UI/UX Designer"
-              education="S1 DKV (IPK 3.80)"
-              university="Universitas Gadjah Mada"
               stage="upload_cv"
               timeInfo={`${t.pipeline.uploadedAgo} 5h ago`}
               onClick={() => setSelectedCandidate({ name: "Dewi Lestari", role: "UI/UX Designer", stage: "upload_cv", education: "S1 DKV (IPK 3.80)", university: "Universitas Gadjah Mada" })}
@@ -95,8 +89,6 @@ export default function PipelinePage() {
             <CandidateCard 
               name="Alex Mercer"
               role="React Developer @ TechCorp"
-              education="S1 Teknik Komputer (IPK 3.65)"
-              university="Universitas Indonesia"
               stage="cv_screening"
               status="processing"
               cvScore={92}
@@ -106,8 +98,6 @@ export default function PipelinePage() {
             <CandidateCard 
               name="Sarah Chen"
               role="UI Engineer @ StartupX"
-              education="S1 Computer Science (IPK 3.88)"
-              university="Universitas Bina Nusantara"
               stage="cv_screening"
               status="pending"
               cvScore={88}
@@ -121,8 +111,6 @@ export default function PipelinePage() {
             <CandidateCard 
               name="David Kim"
               role="Sr. Frontend @ MegaWeb"
-              education="S1 Teknik Informatika (IPK 3.85)"
-              university="Universitas Indonesia"
               stage="interview"
               status="video_uploaded"
               cvScore={95}
@@ -133,8 +121,6 @@ export default function PipelinePage() {
             <CandidateCard 
               name="Anisa Rahmawati"
               role="React Developer"
-              education="S1 Informatika (IPK 3.70)"
-              university="Universitas Telkom"
               stage="interview"
               status="awaiting_video"
               cvScore={84}
@@ -149,8 +135,6 @@ export default function PipelinePage() {
             <CandidateCard 
               name="David Kim"
               role="Sr. Frontend @ MegaWeb"
-              education="S1 Teknik Informatika (IPK 3.85)"
-              university="Universitas Indonesia"
               stage="ai_analysis"
               status="processing"
               videoScores={{ ability: 85, intelligent: 92, personality: 78, attitude: 88, emotionalIntelligence: 80 }}
@@ -168,8 +152,6 @@ export default function PipelinePage() {
             <CandidateCard 
               name="David Kim"
               role="Sr. Frontend @ MegaWeb"
-              education="S1 Teknik Informatika (IPK 3.85)"
-              university="Universitas Indonesia"
               stage="human_validation"
               status="needs_approval"
               videoScores={{ ability: 85, intelligent: 92, personality: 78, attitude: 88, emotionalIntelligence: 80 }}
@@ -183,8 +165,6 @@ export default function PipelinePage() {
             <CandidateCard 
               name="Siti Nurhaliza"
               role="Angular Developer"
-              education="S1 Sistem Informasi (IPK 3.78)"
-              university="Universitas Padjadjaran"
               stage="human_validation"
               status="needs_approval"
               videoScores={{ ability: 80, intelligent: 85, personality: 90, attitude: 82, emotionalIntelligence: 88 }}

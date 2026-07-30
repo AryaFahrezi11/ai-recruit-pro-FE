@@ -68,20 +68,16 @@ export default function PerusahaanLayout({
         {/* Top Navbar for actions (Search, Theme, Language, User profile) */}
         <header className="h-16 border-b border-border flex items-center justify-between px-4 sm:px-6 shrink-0 bg-card/50 backdrop-blur-sm z-10 transition-colors duration-300 relative">
           
-          <div className="flex items-center flex-1 max-w-xl gap-3">
+          <div className="flex items-center gap-3">
             <button 
               onClick={toggleMobileSidebar}
               className="md:hidden p-2 -ml-2 rounded-md hover:bg-muted text-muted-foreground transition-colors"
             >
               <Menu size={20} />
             </button>
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={18} />
-              <input 
-                type="text" 
-                placeholder={t.pipeline?.search || 'Search candidates...'}
-                className="w-full pl-10 pr-4 py-2 bg-muted/50 border border-transparent focus:border-primary focus:bg-background rounded-lg text-sm transition-colors outline-none"
-              />
+            <div className="flex items-center gap-2">
+              <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
+              <span className="text-xs font-bold text-foreground">Portal Rekrutmen Perusahaan</span>
             </div>
           </div>
 
