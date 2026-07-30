@@ -101,6 +101,22 @@ export default function AtsCvBuilderPage() {
     setExperiences(experiences.filter((_, idx) => idx !== index));
   };
 
+  // Handler for changing dynamic Experience fields
+  const handleExperienceChange = (index: number, field: string, value: string) => {
+    const updated = experiences.map((exp, idx) =>
+      idx === index ? { ...exp, [field]: value } : exp
+    );
+    setExperiences(updated);
+  };
+
+  // Handler for changing dynamic Education fields
+  const handleEducationChange = (index: number, field: string, value: string) => {
+    const updated = education.map((edu, idx) =>
+      idx === index ? { ...edu, [field]: value } : edu
+    );
+    setEducation(updated);
+  };
+
   // Handler for adding dynamic Education
   const handleAddEducation = () => {
     setEducation([

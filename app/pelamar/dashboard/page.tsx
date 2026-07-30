@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, Suspense } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import {
@@ -59,7 +59,7 @@ interface Company {
   description: string;
 }
 
-export default function KitaLulusStyleCandidatePage() {
+function DashboardContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const initialView = searchParams.get('view') || 'recommended';
@@ -757,5 +757,13 @@ export default function KitaLulusStyleCandidatePage() {
       )}
 
     </div>
+  );
+}
+
+export default function KitaLulusStyleCandidatePage() {
+  return (
+    <Suspense fallback={<div className="flex items-center justify-center min-h-screen"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#1b7b9e]"></div></div>}>
+      <DashboardContent />
+    </Suspense>
   );
 }
