@@ -18,31 +18,31 @@
 }
 
 :root {
-  --background: #f8fafc; /* very light slate/gray */
-  --foreground: #0f172a; /* slate 900 */
+  --background: #f8fafc; /* Slate 50 */
+  --foreground: #0f172a; /* Slate 900 - Crisp and clear text */
   --card: #ffffff;
   --card-foreground: #0f172a;
-  --sidebar: #f1f5f9; /* slate 100 */
+  --sidebar: #f1f5f9; /* Slate 100 */
   --sidebar-foreground: #334155;
-  --primary: #0f766e; /* teal 700 matching the logo/button */
+  --primary: #0f766e; /* Teal 700 - Restored primary color */
   --primary-foreground: #ffffff;
   --muted: #e2e8f0;
-  --muted-foreground: #64748b;
-  --border: #e2e8f0;
+  --muted-foreground: #475569; /* Slate 600 - High legibility */
+  --border: #cbd5e1; /* Slate 300 - Crisp defined borders */
 }
 
 .dark {
-  --background: #020617; /* slate 950 */
+  --background: #020617; /* Slate 950 */
   --foreground: #f8fafc;
-  --card: #0f172a; /* slate 900 */
+  --card: #0f172a; /* Slate 900 */
   --card-foreground: #f8fafc;
   --sidebar: #0f172a;
   --sidebar-foreground: #cbd5e1;
-  --primary: #0d9488; /* teal 600 */
+  --primary: #0d9488; /* Teal 600 */
   --primary-foreground: #ffffff;
   --muted: #1e293b;
   --muted-foreground: #94a3b8;
-  --border: #1e293b;
+  --border: #334155;
 }
 
 body {
@@ -50,4 +50,21 @@ body {
   color: var(--foreground);
   font-family: var(--font-sans), Arial, Helvetica, sans-serif;
   transition: background-color 0.3s ease, color 0.3s ease;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Custom Scrollbar Styling */
+.custom-scrollbar::-webkit-scrollbar {
+  height: 6px;
+  width: 6px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 9999px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: var(--muted-foreground);
 }

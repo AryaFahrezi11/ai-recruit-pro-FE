@@ -27,7 +27,7 @@ export function PipelineChart() {
   const { t } = useTranslation();
 
   return (
-    <div className="bg-card text-card-foreground p-6 rounded-xl border border-border shadow-sm h-full flex flex-col transition-colors duration-300">
+    <div className="bg-card text-card-foreground p-6 rounded-2xl border border-border shadow-sm flex flex-col transition-colors duration-300 w-full">
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-lg font-bold">{t.dashboard.pipelineGrowth}</h2>
         <div className="flex gap-2">
@@ -40,7 +40,7 @@ export function PipelineChart() {
         </div>
       </div>
       
-      <div className="flex-1 w-full min-h-[300px]">
+      <div className="w-full h-[280px] sm:h-[320px]">
         <ResponsiveContainer width="100%" height="100%">
           <LineChart data={data} margin={{ top: 5, right: 10, left: -20, bottom: 0 }}>
             <defs>

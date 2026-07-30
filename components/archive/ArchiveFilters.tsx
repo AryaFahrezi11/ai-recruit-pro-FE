@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { useTranslation } from '@/hooks/useTranslation';
-import { ChevronDown, Calendar as CalendarIcon, Download } from 'lucide-react';
+import { ChevronDown, Calendar as CalendarIcon, Download, Search } from 'lucide-react';
 
 export function ArchiveFilters() {
   const { t } = useTranslation();
@@ -10,15 +10,25 @@ export function ArchiveFilters() {
   return (
     <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-card p-4 rounded-t-xl border border-border border-b-0">
       
-      <div className="flex flex-wrap items-center gap-3">
+      <div className="flex flex-wrap items-center gap-3 flex-1 w-full sm:w-auto">
+        {/* Candidate Search Input */}
+        <div className="relative min-w-[240px] flex-1 sm:flex-initial">
+          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+          <input 
+            type="text" 
+            placeholder="Cari kandidat di arsip (nama, posisi, kampus)..."
+            className="w-full pl-9 pr-4 py-2 bg-background border border-border rounded-lg text-xs font-medium text-foreground outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all"
+          />
+        </div>
+
         {/* Department Dropdown */}
-        <button className="flex items-center justify-between min-w-[160px] px-3 py-2 bg-background border border-border rounded-lg text-sm text-foreground hover:bg-muted transition-colors">
+        <button className="flex items-center justify-between min-w-[150px] px-3 py-2 bg-background border border-border rounded-lg text-xs text-foreground hover:bg-muted transition-colors font-medium">
           <span>{t.archive?.allDepartments}</span>
           <ChevronDown size={14} className="text-muted-foreground ml-2" />
         </button>
 
         {/* Outcome Dropdown */}
-        <button className="flex items-center justify-between min-w-[120px] px-3 py-2 bg-background border border-border rounded-lg text-sm text-foreground hover:bg-muted transition-colors">
+        <button className="flex items-center justify-between min-w-[120px] px-3 py-2 bg-background border border-border rounded-lg text-xs text-foreground hover:bg-muted transition-colors font-medium">
           <span>{t.archive?.outcome}</span>
           <ChevronDown size={14} className="text-muted-foreground ml-2" />
         </button>
@@ -28,15 +38,19 @@ export function ArchiveFilters() {
           <input 
             type="text" 
             placeholder="mm/dd/yyyy"
-            className="w-[140px] px-3 py-2 pr-9 bg-background border border-border rounded-lg text-sm text-foreground outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all"
+            className="w-[130px] px-3 py-2 pr-9 bg-background border border-border rounded-lg text-xs font-medium text-foreground outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all"
           />
           <CalendarIcon size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
         </div>
       </div>
 
-      <button className="flex items-center gap-2 px-4 py-2 bg-card border border-border rounded-lg text-sm font-medium text-foreground hover:bg-muted transition-colors shadow-sm shrink-0">
+      <button 
+        onClick={() => window.print()}
+        className="flex items-center gap-2 px-4 py-2 bg-card border border-border rounded-lg text-sm font-semibold text-foreground hover:bg-muted transition-colors shadow-2xs shrink-0 cursor-pointer"
+        title="Ekspor Data Laporan Arsip ke PDF"
+      >
         <Download size={16} className="text-muted-foreground" />
-        {t.archive?.exportData}
+        {t.archive?.exportData} (PDF)
       </button>
 
     </div>
