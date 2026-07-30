@@ -1,16 +1,25 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
+import { useAppStore } from '@/lib/store/useAppStore';
 import {
-  LayoutDashboard,
-  FileUp,
-  Video,
+  Search,
+  Building2,
+  Globe,
+  Sun,
+  Moon,
+  User,
+  Bookmark,
   ClockCheck,
-  Bell,
-  HelpCircle,
-  LogOut
+  LogOut,
+  ChevronDown,
+  FileText,
+  Briefcase,
+  Sparkles,
+  BookOpen,
+  CheckCircle2
 } from 'lucide-react';
 
 export default function PelamarPerfectLayout({
@@ -20,7 +29,10 @@ export default function PelamarPerfectLayout({
 }) {
   const pathname = usePathname();
   const router = useRouter();
+  const { theme, toggleTheme, language, setLanguage } = useAppStore();
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     // Exclude public authentication pages from route guard
@@ -41,16 +53,27 @@ export default function PelamarPerfectLayout({
     }
   }, [pathname, router]);
 
+  // Handle clicking outside profile dropdown to close
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsProfileOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
   const handleLogout = () => {
     localStorage.removeItem('isPelamarLoggedIn');
+    setIsProfileOpen(false);
     router.push('/pelamar/login');
   };
 
   const navItems = [
-    { name: 'Dashboard', href: '/pelamar/dashboard', icon: LayoutDashboard },
-    { name: '1. Upload CV', href: '/pelamar/upload-cv', icon: FileUp },
-    { name: '2. Wawancara Video', href: '/pelamar/wawancara', icon: Video },
-    { name: '3. Status Validasi', href: '/pelamar/status', icon: ClockCheck },
+    { name: language === 'en' ? 'Find Jobs' : 'Cari lowongan', href: '/pelamar/dashboard', icon: Search },
+    { name: language === 'en' ? 'Companies' : 'Perusahaan', href: '/pelamar/dashboard?view=companies', icon: Building2 },
+    { name: language === 'en' ? 'Career Resources' : 'Sumber daya karir', href: '/pelamar/upload-cv', icon: BookOpen },
   ];
 
   // If on login/register pages, render children without candidate layout navbar
@@ -64,100 +87,159 @@ export default function PelamarPerfectLayout({
   }
 
   return (
-    <div className="min-h-screen bg-[#F0F8FB] text-[#1b7b9e] flex flex-col font-sans antialiased">
-      {/* Top Navbar - Perfect Harmony (Height: 80px / h-20) */}
-      <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-[#C2E5EF] shadow-2xs">
-        <div className="max-w-[1600px] mx-auto px-6 sm:px-10 lg:px-16 h-20 flex items-center justify-between">
+    <div className="min-h-screen bg-[#F8FAFC] dark:bg-slate-950 text-slate-800 dark:text-slate-100 flex flex-col font-sans antialiased">
+      {/* Top Navbar - JobStreet Inspired Header */}
+      <header className="sticky top-0 z-50 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 shadow-2xs">
+        <div className="max-w-[1600px] mx-auto px-4 sm:px-8 lg:px-12 h-20 flex items-center justify-between">
 
-          {/* Brand Logo & Subtle Tag */}
-          <div className="flex items-center gap-4">
+          {/* Left Side: Brand & Main Navigation Links */}
+          <div className="flex items-center gap-8">
             <Link href="/pelamar/dashboard" className="flex items-center gap-3 group">
-              <div className="w-10 h-10 rounded-xl bg-[#1b7b9e] flex items-center justify-center text-white font-black text-xl shadow-sm group-hover:scale-105 transition-transform duration-200">
+              <div className="w-10 h-10 rounded-xl bg-[#2596be] flex items-center justify-center text-white font-black text-xl shadow-sm group-hover:scale-105 transition-transform duration-200">
                 RP
               </div>
               <div className="flex flex-col">
-                <span className="font-extrabold text-xl sm:text-2xl tracking-tight text-[#0c2b3d] leading-none">
-                  AI-Recruit <span className="text-[#1D7FA1]">Pro</span>
+                <span className="font-extrabold text-xl sm:text-2xl tracking-tight text-[#0c2b3d] dark:text-white leading-none">
+                  AI-Recruit <span className="text-[#2596be]">Pro</span>
                 </span>
-                <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mt-1">
-                  Candidate Hub
+                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mt-0.5">
+                  Candidate Portal
                 </span>
               </div>
             </Link>
+
+            {/* Navigation Tabs */}
+            <nav className="hidden lg:flex items-center gap-1">
+              {navItems.map((item) => {
+                const isActive = pathname === item.href || (item.href.includes('view=') && typeof window !== 'undefined' && window.location.search.includes('view=companies') && item.name.includes('Perusahaan'));
+                return (
+                  <Link
+                    key={item.name}
+                    href={item.href}
+                    className={`px-4 py-2 rounded-xl text-sm font-bold transition-all relative ${
+                      isActive
+                        ? 'text-[#2596be] dark:text-cyan-400 font-extrabold after:content-[""] after:absolute after:bottom-[-20px] after:left-0 after:right-0 after:h-0.5 after:bg-[#2596be]'
+                        : 'text-slate-600 dark:text-slate-300 hover:text-[#2596be] dark:hover:text-cyan-400 hover:bg-slate-100 dark:hover:bg-slate-800'
+                    }`}
+                  >
+                    {item.name}
+                  </Link>
+                );
+              })}
+            </nav>
           </div>
 
-          {/* Clean Nav Pill Links */}
-          <nav className="hidden md:flex items-center gap-2 bg-[#F0F8FB] p-1.5 rounded-full border border-[#C2E5EF]">
-            {navItems.map((item) => {
-              const Icon = item.icon;
-              const isActive = pathname === item.href;
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className={`flex items-center gap-2 px-5 py-2 rounded-full text-xs sm:text-sm font-bold transition-all duration-150 ${isActive
-                    ? 'bg-[#1b7b9e] text-white shadow-2xs'
-                    : 'text-slate-600 hover:text-[#1b7b9e] hover:bg-white'
-                    }`}
-                >
-                  <Icon className={`w-4 h-4 ${isActive ? 'text-[#E0F1F7]' : 'text-slate-400'}`} />
-                  {item.name}
-                </Link>
-              );
-            })}
-          </nav>
+          {/* Right Controls: Language, Theme, Profile Avatar Dropdown, For Employers */}
+          <div className="flex items-center gap-3 sm:gap-4">
 
-          {/* Right Header Controls */}
-          <div className="flex items-center gap-3">
+            {/* Toggle Language Dropdown */}
             <button
-              className="p-2.5 rounded-xl text-slate-500 hover:text-[#1b7b9e] hover:bg-[#E0F1F7] transition-colors relative"
-              title="Notifikasi"
+              onClick={() => setLanguage(language === 'en' ? 'id' : 'en')}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors shadow-2xs cursor-pointer"
+              title="Ganti Bahasa"
             >
-              <Bell className="w-5 h-5" />
-              <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-[#1b7b9e]"></span>
+              <Globe size={15} className="text-[#2596be]" />
+              <span>Bahasa ({language.toUpperCase()})</span>
             </button>
 
-            <div className="h-6 w-[1px] bg-slate-200 hidden sm:block"></div>
+            {/* Toggle Theme Dark/Light Mode */}
+            <button
+              onClick={toggleTheme}
+              className="w-9 h-9 rounded-full flex items-center justify-center border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-[#2596be] dark:text-cyan-400 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors shadow-2xs cursor-pointer"
+              title="Ubah Tema (Gelap/Terang)"
+            >
+              {theme === 'dark' ? <Sun size={17} /> : <Moon size={17} />}
+            </button>
 
-            {/* Profile Avatar & Logout */}
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-[#1b7b9e] border-2 border-[#C2E5EF] text-white flex items-center justify-center font-bold text-sm shadow-sm overflow-hidden">
-                <img
-                  src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80"
-                  alt="Candidate Avatar"
-                  className="w-full h-full object-cover"
-                />
-              </div>
-              <div className="hidden lg:flex flex-col text-left">
-                <span className="text-xs sm:text-sm font-bold text-[#1b7b9e] leading-snug">Budi Pratama</span>
-                <span className="text-xs text-slate-500 font-medium">Candidate #APL-8921</span>
-              </div>
+            {/* Link Untuk Perusahaan */}
+            <Link
+              href="/login"
+              className="hidden md:inline-flex items-center gap-1.5 text-xs font-bold text-[#2596be] dark:text-cyan-400 hover:underline px-3 py-1.5 rounded-full hover:bg-cyan-50 dark:hover:bg-slate-800 transition-colors"
+            >
+              <Building2 size={15} />
+              <span>Untuk perusahaan</span>
+            </Link>
 
+            <div className="h-6 w-[1px] bg-slate-200 dark:bg-slate-800 hidden sm:block"></div>
+
+            {/* Profile Avatar with Dropdown */}
+            <div className="relative" ref={dropdownRef}>
               <button
-                onClick={handleLogout}
-                className="p-2 rounded-xl text-slate-400 hover:text-red-600 hover:bg-red-50 transition-colors"
-                title="Keluar (Logout)"
+                onClick={() => setIsProfileOpen(!isProfileOpen)}
+                className="flex items-center gap-2 p-1 rounded-full border-2 border-[#2596be]/30 hover:border-[#2596be] bg-white dark:bg-slate-800 transition-all cursor-pointer shadow-xs group"
               >
-                <LogOut className="w-4 h-4" />
+                <div className="w-8 h-8 rounded-full bg-[#2596be] text-white flex items-center justify-center font-black text-sm shadow-inner">
+                  A
+                </div>
+                <ChevronDown size={15} className={`text-slate-500 transition-transform duration-200 ${isProfileOpen ? 'rotate-180' : ''}`} />
               </button>
+
+              {/* Profile Dropdown Menu */}
+              {isProfileOpen && (
+                <div className="absolute right-0 mt-3 w-64 bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 p-3 space-y-1.5 z-50 animate-in fade-in slide-in-from-top-2">
+                  <div className="px-4 py-3 border-b border-slate-100 dark:border-slate-800 space-y-0.5">
+                    <p className="text-xs font-black text-[#2596be] dark:text-cyan-400">Budi Pratama</p>
+                    <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate">budi.pratama@gmail.com</p>
+                  </div>
+
+                  <Link
+                    href="/pelamar/upload-cv"
+                    onClick={() => setIsProfileOpen(false)}
+                    className="flex items-center gap-3 px-4 py-2.5 rounded-2xl text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-[#F0F8FB] dark:hover:bg-slate-800 hover:text-[#2596be] transition-colors"
+                  >
+                    <User size={16} className="text-[#2596be]" />
+                    <span>Lihat profil &amp; Kelola CV</span>
+                  </Link>
+
+                  <Link
+                    href="/pelamar/tersimpan"
+                    onClick={() => setIsProfileOpen(false)}
+                    className="flex items-center gap-3 px-4 py-2.5 rounded-2xl text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-[#F0F8FB] dark:hover:bg-slate-800 hover:text-[#2596be] transition-colors"
+                  >
+                    <Bookmark size={16} className="text-[#2596be]" />
+                    <span>Lowongan tersimpan</span>
+                  </Link>
+
+                  <Link
+                    href="/pelamar/status"
+                    onClick={() => setIsProfileOpen(false)}
+                    className="flex items-center gap-3 px-4 py-2.5 rounded-2xl text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-[#F0F8FB] dark:hover:bg-slate-800 hover:text-[#2596be] transition-colors"
+                  >
+                    <ClockCheck size={16} className="text-[#2596be]" />
+                    <span>Riwayat lamaran</span>
+                  </Link>
+
+                  <div className="border-t border-slate-100 dark:border-slate-800 pt-1"></div>
+
+                  <button
+                    onClick={handleLogout}
+                    className="w-full flex items-center gap-3 px-4 py-2.5 rounded-2xl text-xs font-bold text-red-600 hover:bg-red-50 dark:hover:bg-red-950/40 transition-colors cursor-pointer"
+                  >
+                    <LogOut size={16} />
+                    <span>Keluar (Logout)</span>
+                  </button>
+                </div>
+              )}
             </div>
+
           </div>
 
         </div>
 
-        {/* Mobile Navigation bar */}
-        <div className="md:hidden flex items-center justify-around bg-white border-t border-[#C2E5EF] py-2 px-2 overflow-x-auto">
+        {/* Mobile Navigation Bar Links */}
+        <div className="lg:hidden flex items-center justify-around bg-slate-50 dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 py-2 px-2 overflow-x-auto">
           {navItems.map((item) => {
             const Icon = item.icon;
             const isActive = pathname === item.href;
             return (
               <Link
-                key={item.href}
+                key={item.name}
                 href={item.href}
-                className={`flex flex-col items-center gap-1 px-3 py-1 rounded-lg text-[10px] font-semibold whitespace-nowrap ${isActive ? 'text-[#1b7b9e]' : 'text-slate-400'
-                  }`}
+                className={`flex flex-col items-center gap-1 px-3 py-1.5 rounded-xl text-[11px] font-bold whitespace-nowrap ${
+                  isActive ? 'text-[#2596be] bg-white dark:bg-slate-800 shadow-2xs' : 'text-slate-500 dark:text-slate-400'
+                }`}
               >
-                <Icon className={`w-4 h-4 ${isActive ? 'text-[#1b7b9e]' : 'text-slate-400'}`} />
+                <Icon size={16} />
                 {item.name}
               </Link>
             );
@@ -166,20 +248,20 @@ export default function PelamarPerfectLayout({
       </header>
 
       {/* Main Content Area */}
-      <main className="flex-1 max-w-[1600px] w-full mx-auto px-6 sm:px-10 lg:px-16 py-8 sm:py-10">
+      <main className="flex-1 max-w-[1600px] w-full mx-auto px-4 sm:px-8 lg:px-12 py-6 sm:py-8">
         {children}
       </main>
 
       {/* Footer */}
-      <footer className="bg-white border-t border-[#C2E5EF] py-8 mt-12">
-        <div className="max-w-[1600px] mx-auto px-6 sm:px-10 lg:px-16 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs sm:text-sm text-slate-500">
+      <footer className="bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 py-8 mt-12">
+        <div className="max-w-[1600px] mx-auto px-4 sm:px-8 lg:px-12 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs sm:text-sm text-slate-500 dark:text-slate-400">
           <div className="flex items-center gap-2">
-            <span className="font-extrabold text-[#1b7b9e]">AI-Recruit Pro</span>
+            <span className="font-extrabold text-[#2596be]">AI-Recruit Pro</span>
             <span>&copy; {new Date().getFullYear()} PO-FIT Recruitment Engine</span>
           </div>
-          <div className="flex items-center gap-4 text-slate-500">
-            <span className="inline-flex items-center gap-2 bg-[#E0F1F7] text-[#1b7b9e] px-4 py-1.5 rounded-full font-bold text-xs border border-[#B8E1ED]">
-              <span className="w-2 h-2 rounded-full bg-[#1b7b9e]"></span>
+          <div className="flex items-center gap-4">
+            <span className="inline-flex items-center gap-2 bg-[#F0F8FB] dark:bg-slate-800 text-[#2596be] dark:text-cyan-400 px-4 py-1.5 rounded-full font-bold text-xs border border-[#C2E5EF] dark:border-slate-700">
+              <span className="w-2 h-2 rounded-full bg-[#2596be] animate-pulse"></span>
               System Active &amp; Secure
             </span>
           </div>
