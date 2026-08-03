@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { useTranslation } from '@/hooks/useTranslation';
 import {
   Video,
   VideoOff,
@@ -22,6 +23,7 @@ import {
 
 export default function WawancaraVideoPage() {
   const router = useRouter();
+  const { t } = useTranslation();
 
   const [isCameraOn, setIsCameraOn] = useState(true);
   const [isMicOn, setIsMicOn] = useState(true);
@@ -76,37 +78,37 @@ export default function WawancaraVideoPage() {
   return (
     <div className="max-w-[1600px] w-full mx-auto space-y-6">
       {/* Top Bar Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-5 rounded-3xl border border-[#C2E5EF] shadow-xs">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white dark:bg-slate-900 p-5 rounded-3xl border border-[#C2E5EF] dark:border-slate-800 shadow-xs">
         <div className="flex items-center gap-4">
           <Link
             href="/pelamar/upload-cv"
-            className="p-2.5 rounded-xl text-slate-500 hover:text-[#1b7b9e] hover:bg-slate-100 transition-colors"
+            className="p-2.5 rounded-xl text-slate-500 dark:text-slate-400 hover:text-[#1b7b9e] dark:hover:text-cyan-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
             title="Kembali"
           >
             <ChevronLeft className="w-6 h-6" />
           </Link>
           <div>
-            <h1 className="text-lg sm:text-xl font-bold text-[#1b7b9e]">
-              Tahap 2: Wawancara Video Singkat
+            <h1 className="text-lg sm:text-xl font-bold text-[#1b7b9e] dark:text-cyan-400">
+              {t.pelamar.wawancara.title}
             </h1>
-            <p className="text-xs sm:text-sm text-slate-500">
-              Jawab pertanyaan secara lisan melalui perekaman video singkat
+            <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400">
+              {t.pelamar.wawancara.subtitle}
             </p>
           </div>
         </div>
 
         <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-[#E0F1F7] border border-[#B8E1ED] text-[#1b7b9e] text-xs sm:text-sm font-bold">
-            <Sparkles className="w-4 h-4 text-[#1b7b9e]" />
-            <span>Soal {currentQuestionIndex + 1} dari {questions.length}</span>
+          <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-[#E0F1F7] dark:bg-slate-800 border border-[#B8E1ED] dark:border-slate-700 text-[#1b7b9e] dark:text-cyan-400 text-xs sm:text-sm font-bold">
+            <Sparkles className="w-4 h-4 text-[#1b7b9e] dark:text-cyan-400" />
+            <span>{t.pelamar.wawancara.questionPrefix} {currentQuestionIndex + 1} {t.pelamar.wawancara.from} {questions.length}</span>
           </div>
 
           <button
             onClick={() => setShowDeviceModal(true)}
-            className="inline-flex items-center gap-2 px-5 py-2 rounded-full border border-slate-300 text-xs sm:text-sm font-bold text-slate-700 hover:bg-slate-50 transition-colors cursor-pointer"
+            className="inline-flex items-center gap-2 px-5 py-2 rounded-full border border-slate-300 dark:border-slate-700 text-xs sm:text-sm font-bold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors cursor-pointer"
           >
-            <Settings2 className="w-4 h-4 text-slate-500" />
-            Test Perangkat
+            <Settings2 className="w-4 h-4 text-slate-500 dark:text-slate-400" />
+            {t.pelamar.wawancara.testDevice}
           </button>
         </div>
       </div>
@@ -129,14 +131,14 @@ export default function WawancaraVideoPage() {
                     <span className="absolute bottom-1 right-1 w-5 h-5 rounded-full bg-emerald-500 border-2 border-slate-900"></span>
                   </div>
                   <span className="text-xs sm:text-sm font-semibold text-slate-300 bg-slate-900/80 px-4 py-1.5 rounded-full border border-slate-700">
-                    Kamera Siap (Budi Pratama)
+                    {t.pelamar.wawancara.cameraReady} (Budi Pratama)
                   </span>
                 </div>
               </div>
             ) : (
               <div className="flex flex-col items-center justify-center space-y-2 text-slate-500">
                 <VideoOff className="w-14 h-14" />
-                <span className="text-sm font-medium">Kamera Dinonaktifkan</span>
+                <span className="text-sm font-medium">{t.pelamar.wawancara.cameraOff}</span>
               </div>
             )}
 
@@ -145,12 +147,12 @@ export default function WawancaraVideoPage() {
               {isRecording ? (
                 <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-red-600/90 text-white text-xs sm:text-sm font-bold backdrop-blur-md animate-pulse shadow-md">
                   <span className="w-3 h-3 rounded-full bg-white"></span>
-                  <span>MEREKAM {formatTime(recordingSeconds)}</span>
+                  <span>{t.pelamar.wawancara.recording} {formatTime(recordingSeconds)}</span>
                 </div>
               ) : (
                 <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-slate-900/80 text-slate-300 text-xs sm:text-sm font-bold border border-slate-700/80 backdrop-blur-md">
                   <span className="w-2.5 h-2.5 rounded-full bg-emerald-400"></span>
-                  <span>SIAP MEREKAM</span>
+                  <span>{t.pelamar.wawancara.readyToRecord}</span>
                 </div>
               )}
             </div>
@@ -159,25 +161,25 @@ export default function WawancaraVideoPage() {
             <div className="absolute top-5 right-5 z-20 flex flex-col gap-2 items-end">
               <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-slate-900/85 border border-slate-700/80 text-white text-xs font-semibold backdrop-blur-md shadow-sm">
                 <Mic className="w-4 h-4 text-cyan-300" />
-                <span>Mikrofon: <strong className="text-cyan-300">Jernih &amp; Aktif</strong></span>
+                <span>Mikrofon: <strong className="text-cyan-300">{t.pelamar.wawancara.micClear}</strong></span>
               </div>
 
               <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-slate-900/85 border border-slate-700/80 text-white text-xs font-semibold backdrop-blur-md shadow-sm">
                 <Video className="w-4 h-4 text-emerald-400" />
-                <span>Kamera: <strong className="text-emerald-300">Terkalibrasi</strong></span>
+                <span>Kamera: <strong className="text-emerald-300">{t.pelamar.wawancara.cameraCalibrated}</strong></span>
               </div>
             </div>
           </div>
 
           {/* Controls Bar Below Camera */}
-          <div className="bg-white p-5 rounded-3xl border border-[#C2E5EF] shadow-xs flex flex-wrap items-center justify-between gap-4">
+          <div className="bg-white dark:bg-slate-900 p-5 rounded-3xl border border-[#C2E5EF] dark:border-slate-800 shadow-xs flex flex-wrap items-center justify-between gap-4">
 
             <div className="flex items-center gap-3">
               <button
                 onClick={() => setIsCameraOn(!isCameraOn)}
                 className={`p-3 rounded-2xl border transition-colors cursor-pointer ${isCameraOn
-                  ? 'bg-slate-100 border-slate-300 text-slate-700 hover:bg-slate-200'
-                  : 'bg-red-50 border-red-200 text-red-600'
+                  ? 'bg-slate-100 dark:bg-slate-800 border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
+                  : 'bg-red-50 dark:bg-red-950/40 border-red-200 dark:border-red-900 text-red-600 dark:text-red-400'
                   }`}
                 title={isCameraOn ? 'Matikan Kamera' : 'Nyalakan Kamera'}
               >
@@ -187,8 +189,8 @@ export default function WawancaraVideoPage() {
               <button
                 onClick={() => setIsMicOn(!isMicOn)}
                 className={`p-3 rounded-2xl border transition-colors cursor-pointer ${isMicOn
-                  ? 'bg-slate-100 border-slate-300 text-slate-700 hover:bg-slate-200'
-                  : 'bg-red-50 border-red-200 text-red-600'
+                  ? 'bg-slate-100 dark:bg-slate-800 border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
+                  : 'bg-red-50 dark:bg-red-950/40 border-red-200 dark:border-red-900 text-red-600 dark:text-red-400'
                   }`}
                 title={isMicOn ? 'Mute Mic' : 'Unmute Mic'}
               >
@@ -197,7 +199,7 @@ export default function WawancaraVideoPage() {
 
               <button
                 onClick={() => setShowDeviceModal(true)}
-                className="p-3 rounded-2xl border border-slate-300 text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer"
+                className="p-3 rounded-2xl border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
                 title="Pengaturan Perangkat"
               >
                 <Settings2 className="w-5 h-5" />
@@ -211,7 +213,7 @@ export default function WawancaraVideoPage() {
                   className="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-6 py-3 rounded-full bg-red-600 hover:bg-red-700 text-white text-xs sm:text-sm font-bold shadow-sm transition-all cursor-pointer"
                 >
                   <Video className="w-4 h-4" />
-                  Mulai Rekam Video
+                  {t.pelamar.wawancara.startRecording}
                 </button>
               ) : (
                 <button
@@ -219,7 +221,7 @@ export default function WawancaraVideoPage() {
                   className="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-6 py-3 rounded-full bg-slate-800 hover:bg-slate-900 text-white text-xs sm:text-sm font-bold shadow-sm transition-all cursor-pointer"
                 >
                   <Square className="w-4 h-4 fill-white" />
-                  Hentikan Rekam
+                  {t.pelamar.wawancara.stopRecording}
                 </button>
               )}
 
@@ -228,7 +230,7 @@ export default function WawancaraVideoPage() {
                 className="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-7 py-3 rounded-full bg-[#1b7b9e] hover:bg-[#1D7FA1] text-white text-xs sm:text-sm font-bold shadow-md transition-all cursor-pointer"
               >
                 <Send className="w-4 h-4 text-[#E0F1F7]" />
-                Selesai & Kirim
+                {t.pelamar.wawancara.finishSubmit}
               </button>
             </div>
           </div>
@@ -236,55 +238,55 @@ export default function WawancaraVideoPage() {
 
         {/* Right Side Panel: Soft Pastel Teal background showing interview question (5 cols) */}
         <div className="lg:col-span-5 flex flex-col">
-          <div className="bg-[#E0F1F7] border border-[#B8E1ED] rounded-3xl p-7 sm:p-9 space-y-6 flex-1 flex flex-col justify-between shadow-xs">
+          <div className="bg-[#E0F1F7] dark:bg-slate-900 border border-[#B8E1ED] dark:border-slate-800 rounded-3xl p-7 sm:p-9 space-y-6 flex-1 flex flex-col justify-between shadow-xs">
 
             <div className="space-y-6">
-              <div className="flex items-center justify-between border-b border-[#B8E1ED] pb-4">
-                <span className="text-xs font-extrabold uppercase tracking-wider text-[#1b7b9e] bg-white/80 px-3.5 py-1.5 rounded-lg border border-[#B8E1ED]">
+              <div className="flex items-center justify-between border-b border-[#B8E1ED] dark:border-slate-800 pb-4">
+                <span className="text-xs font-extrabold uppercase tracking-wider text-[#1b7b9e] dark:text-cyan-400 bg-white/80 dark:bg-slate-800 px-3.5 py-1.5 rounded-lg border border-[#B8E1ED] dark:border-slate-700">
                   {questions[currentQuestionIndex].category}
                 </span>
-                <span className="text-xs sm:text-sm font-bold text-[#1b7b9e]">
+                <span className="text-xs sm:text-sm font-bold text-[#1b7b9e] dark:text-cyan-400">
                   {currentQuestionIndex + 1} / {questions.length}
                 </span>
               </div>
 
               <div className="space-y-3">
-                <h3 className="text-xs font-bold text-[#1b7b9e] uppercase tracking-wide">
-                  Pertanyaan Saat Ini:
+                <h3 className="text-xs font-bold text-[#1b7b9e] dark:text-cyan-400 uppercase tracking-wide">
+                  {t.pelamar.wawancara.currentQuestion}
                 </h3>
-                <p className="text-base sm:text-xl font-bold text-[#1b7b9e] leading-relaxed">
+                <p className="text-base sm:text-xl font-bold text-[#1b7b9e] dark:text-white leading-relaxed">
                   "{questions[currentQuestionIndex].question}"
                 </p>
               </div>
 
               {/* Friendly Interview Tip Card */}
-              <div className="p-5 rounded-2xl bg-white/80 border border-[#B8E1ED] space-y-2 text-xs sm:text-sm">
-                <div className="flex items-center gap-2 font-bold text-[#1b7b9e]">
-                  <HelpCircle className="w-5 h-5 text-[#1b7b9e]" />
-                  <span>Petunjuk Menjawab</span>
+              <div className="p-5 rounded-2xl bg-white/80 dark:bg-slate-800 border border-[#B8E1ED] dark:border-slate-700 space-y-2 text-xs sm:text-sm">
+                <div className="flex items-center gap-2 font-bold text-[#1b7b9e] dark:text-cyan-400">
+                  <HelpCircle className="w-5 h-5 text-[#1b7b9e] dark:text-cyan-400" />
+                  <span>{t.pelamar.wawancara.interviewTip}</span>
                 </div>
-                <p className="text-slate-600 leading-relaxed text-xs">
+                <p className="text-slate-600 dark:text-slate-300 leading-relaxed text-xs">
                   {questions[currentQuestionIndex].tip}
                 </p>
               </div>
             </div>
 
-            <div className="pt-6 border-t border-[#B8E1ED] space-y-4">
+            <div className="pt-6 border-t border-[#B8E1ED] dark:border-slate-800 space-y-4">
               <div className="flex items-center justify-between">
                 <button
                   disabled={currentQuestionIndex === 0}
                   onClick={() => setCurrentQuestionIndex((prev) => Math.max(0, prev - 1))}
-                  className="inline-flex items-center gap-1 text-xs sm:text-sm font-bold text-[#1b7b9e] disabled:opacity-40 disabled:cursor-not-allowed hover:underline cursor-pointer"
+                  className="inline-flex items-center gap-1 text-xs sm:text-sm font-bold text-[#1b7b9e] dark:text-cyan-400 disabled:opacity-40 disabled:cursor-not-allowed hover:underline cursor-pointer"
                 >
-                  <ChevronLeft className="w-4 h-4" /> Pertanyaan Sebelumnya
+                  <ChevronLeft className="w-4 h-4" /> {t.pelamar.wawancara.prevQuestion}
                 </button>
 
                 <button
                   disabled={currentQuestionIndex === questions.length - 1}
                   onClick={() => setCurrentQuestionIndex((prev) => Math.min(questions.length - 1, prev + 1))}
-                  className="inline-flex items-center gap-1 text-xs sm:text-sm font-bold text-[#1b7b9e] disabled:opacity-40 disabled:cursor-not-allowed hover:underline cursor-pointer"
+                  className="inline-flex items-center gap-1 text-xs sm:text-sm font-bold text-[#1b7b9e] dark:text-cyan-400 disabled:opacity-40 disabled:cursor-not-allowed hover:underline cursor-pointer"
                 >
-                  Pertanyaan Selanjutnya <ChevronRight className="w-4 h-4" />
+                  {t.pelamar.wawancara.nextQuestion} <ChevronRight className="w-4 h-4" />
                 </button>
               </div>
 
@@ -293,7 +295,7 @@ export default function WawancaraVideoPage() {
                   <button
                     key={q.id}
                     onClick={() => setCurrentQuestionIndex(idx)}
-                    className={`h-2.5 rounded-full transition-all cursor-pointer ${idx === currentQuestionIndex ? 'w-8 bg-[#1b7b9e]' : 'w-2.5 bg-[#1b7b9e]/30'
+                    className={`h-2.5 rounded-full transition-all cursor-pointer ${idx === currentQuestionIndex ? 'w-8 bg-[#1b7b9e] dark:bg-cyan-400' : 'w-2.5 bg-[#1b7b9e]/30 dark:bg-cyan-400/30'
                       }`}
                   />
                 ))}
@@ -306,38 +308,38 @@ export default function WawancaraVideoPage() {
       {/* Modal Device Testing */}
       {showDeviceModal && (
         <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl max-w-lg w-full p-7 space-y-6 shadow-2xl border border-slate-200">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-4">
-              <h3 className="font-bold text-[#1b7b9e] text-lg">Pengujian Perangkat Kamera & Mikrofon</h3>
+          <div className="bg-white dark:bg-slate-900 rounded-3xl max-w-lg w-full p-7 space-y-6 shadow-2xl border border-slate-200 dark:border-slate-800">
+            <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-4">
+              <h3 className="font-bold text-[#1b7b9e] dark:text-cyan-400 text-lg">{t.pelamar.wawancara.deviceCheckTitle}</h3>
               <button
                 onClick={() => setShowDeviceModal(false)}
-                className="text-slate-400 hover:text-slate-600 font-bold text-sm cursor-pointer"
+                className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 font-bold text-sm cursor-pointer"
               >
                 ✕
               </button>
             </div>
 
             <div className="space-y-4 text-xs sm:text-sm">
-              <div className="p-4 rounded-2xl bg-[#F0F8FB] border border-[#C2E5EF] space-y-1">
-                <div className="flex justify-between items-center font-bold text-slate-700">
-                  <span className="flex items-center gap-2"><Video className="w-5 h-5 text-[#1b7b9e]" /> WebCam Feed</span>
-                  <span className="text-emerald-600 flex items-center gap-1.5"><CheckCircle2 className="w-4 h-4" /> Siap Digunakan</span>
+              <div className="p-4 rounded-2xl bg-[#F0F8FB] dark:bg-slate-800 border border-[#C2E5EF] dark:border-slate-700 space-y-1">
+                <div className="flex justify-between items-center font-bold text-slate-700 dark:text-slate-300">
+                  <span className="flex items-center gap-2"><Video className="w-5 h-5 text-[#1b7b9e] dark:text-cyan-400" /> {t.pelamar.wawancara.webcamFeed}</span>
+                  <span className="text-emerald-600 flex items-center gap-1.5"><CheckCircle2 className="w-4 h-4" /> {t.pelamar.wawancara.readyToUse}</span>
                 </div>
-                <p className="text-slate-500 text-xs">Integrated HD Camera (1080p 30fps)</p>
+                <p className="text-slate-500 dark:text-slate-400 text-xs">Integrated HD Camera (1080p 30fps)</p>
               </div>
 
-              <div className="p-4 rounded-2xl bg-[#F0F8FB] border border-[#C2E5EF] space-y-1">
-                <div className="flex justify-between items-center font-bold text-slate-700">
-                  <span className="flex items-center gap-2"><Mic className="w-5 h-5 text-[#1b7b9e]" /> Input Mikrofon</span>
-                  <span className="text-emerald-600 flex items-center gap-1.5"><CheckCircle2 className="w-4 h-4" /> Suara Jernih</span>
+              <div className="p-4 rounded-2xl bg-[#F0F8FB] dark:bg-slate-800 border border-[#C2E5EF] dark:border-slate-700 space-y-1">
+                <div className="flex justify-between items-center font-bold text-slate-700 dark:text-slate-300">
+                  <span className="flex items-center gap-2"><Mic className="w-5 h-5 text-[#1b7b9e] dark:text-cyan-400" /> {t.pelamar.wawancara.micInput}</span>
+                  <span className="text-emerald-600 flex items-center gap-1.5"><CheckCircle2 className="w-4 h-4" /> {t.pelamar.wawancara.clearVoice}</span>
                 </div>
-                <p className="text-slate-500 text-xs">Default Audio Input Device (Sensitivitas Aktif)</p>
+                <p className="text-slate-500 dark:text-slate-400 text-xs">Default Audio Input Device (Sensitivitas Aktif)</p>
               </div>
 
-              <div className="p-4 rounded-2xl bg-[#F0F8FB] border border-[#C2E5EF] space-y-1">
-                <div className="flex justify-between items-center font-bold text-slate-700">
-                  <span className="flex items-center gap-2"><Volume2 className="w-5 h-5 text-[#1b7b9e]" /> Koneksi Internet</span>
-                  <span className="text-emerald-600 font-bold">Lancar & Stabil</span>
+              <div className="p-4 rounded-2xl bg-[#F0F8FB] dark:bg-slate-800 border border-[#C2E5EF] dark:border-slate-700 space-y-1">
+                <div className="flex justify-between items-center font-bold text-slate-700 dark:text-slate-300">
+                  <span className="flex items-center gap-2"><Volume2 className="w-5 h-5 text-[#1b7b9e] dark:text-cyan-400" /> {t.pelamar.wawancara.internetConnection}</span>
+                  <span className="text-emerald-600 font-bold">{t.pelamar.wawancara.stable}</span>
                 </div>
               </div>
             </div>
@@ -346,7 +348,7 @@ export default function WawancaraVideoPage() {
               onClick={() => setShowDeviceModal(false)}
               className="w-full py-3 rounded-full bg-[#1b7b9e] hover:bg-[#1D7FA1] text-white font-bold text-xs sm:text-sm shadow-xs transition-colors cursor-pointer"
             >
-              Tutup & Mulai Wawancara
+              {t.pelamar.wawancara.closeAndStart}
             </button>
           </div>
         </div>
