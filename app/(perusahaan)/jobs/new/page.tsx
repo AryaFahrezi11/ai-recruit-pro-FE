@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useTranslation } from '@/hooks/useTranslation';
@@ -12,7 +12,7 @@ import {
 import { useAppStore } from '@/lib/store/useAppStore';
 import { fetchAuth } from '@/lib/api/auth';
 
-export default function CreateJobPage() {
+function CreateJobForm() {
   const { t } = useTranslation();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -873,5 +873,13 @@ export default function CreateJobPage() {
       )}
 
     </div>
+  );
+}
+
+export default function CreateJobPage() {
+  return (
+    <Suspense fallback={<div className="p-12 text-center text-muted-foreground animate-pulse text-xs">Memuat data form...</div>}>
+      <CreateJobForm />
+    </Suspense>
   );
 }
