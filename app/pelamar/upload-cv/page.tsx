@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { toast } from 'react-hot-toast';
 import { useRouter } from 'next/navigation';
 import { useTranslation } from '@/hooks/useTranslation';
 import {
@@ -159,7 +160,7 @@ export default function AtsCvBuilderPage() {
     localStorage.setItem('candidateCvCreated', 'true');
     setIsSaved(true);
 
-    alert('✅ CV ATS-Friendly Anda berhasil dibuat & disimpan ke profil!');
+    toast.success('CV ATS-Friendly Anda berhasil dibuat & disimpan ke profil!');
   };
 
   const handleSimulateUpload = (fileName = 'CV_Budi_Pratama_ATS.pdf') => {

@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { toast } from 'react-hot-toast';
 import { usePathname } from 'next/navigation';
 import { useAppStore } from '@/lib/store/useAppStore';
 import { useTranslation } from '@/hooks/useTranslation';
@@ -284,7 +285,7 @@ export default function KampusLayout({
                       <button 
                         onClick={() => {
                           setShowProfileMenu(false);
-                          alert('Simulasi Logout Kampus berhasil.');
+                          toast.success('Simulasi Logout Kampus berhasil.');
                         }}
                         className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-colors"
                       >

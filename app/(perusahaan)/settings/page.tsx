@@ -1,25 +1,31 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useTranslation } from '@/hooks/useTranslation';
+import { fetchAuth } from '@/lib/api/auth';
+import { useAppStore } from '@/lib/store/useAppStore';
 import { 
-  Building2, Sliders, Mail, Users, Save, CheckCircle2, 
-  Sparkles, Bot, ShieldCheck, Globe, Upload, Lock, Check
+  Building2, Sliders, Mail, Save, CheckCircle2, 
+  Sparkles, Bot, Upload
 } from 'lucide-react';
 
 export default function SettingsPage() {
   const { t } = useTranslation();
-  const [activeTab, setActiveTab] = useState<'profile' | 'ai_rules' | 'email' | 'team'>('profile');
+  const [activeTab, setActiveTab] = useState<'profile' | 'ai_rules' | 'email'>('profile');
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
 
   // Form States - Profile
-  const [companyName, setCompanyName] = useState('RecruitPro Tech Solutions');
-  const [industry, setIndustry] = useState('Technology & Information System');
+  const [companyName, setCompanyName] = useState('');
+  const [industry, setIndustry] = useState('');
   const [companySize, setCompanySize] = useState('100 - 500 Employees');
-  const [website, setWebsite] = useState('https://recruitpro.ai');
-  const [companyDesc, setCompanyDesc] = useState(
-    'Perusahaan teknologi terkemuka yang berfokus pada pengembangan sistem manajemen talenta cerdas dan rekrutmen berbasis AI.'
-  );
+  const [website, setWebsite] = useState('');
+  const [companyDesc, setCompanyDesc] = useState('');
+  const [logoUrl, setLogoUrl] = useState('');
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  
+  const token = useAppStore(state => state.token);
 
   // Form States - AI Rules
   const [defaultThreshold, setDefaultThreshold] = useState(80);
@@ -35,22 +41,133 @@ export default function SettingsPage() {
     emotionalIntelligence: 20,
   });
 
-  // Team Access State
-  const [teamMembers, setTeamMembers] = useState([
-    { name: 'Arya Fahrezi', email: 'arya.hr@company.com', role: 'Super Admin HR', avatar: 'AF' },
-    { name: 'Budi Rahardjo', email: 'budi.recruiter@company.com', role: 'HR Evaluator', avatar: 'BR' },
-    { name: 'Siti Aminah', email: 'siti.ta@company.com', role: 'Talent Acquisition Specialist', avatar: 'SA' },
-  ]);
+  // Form States - Email
+  const [emailInvSubject, setEmailInvSubject] = useState('');
+  const [emailInvBody, setEmailInvBody] = useState('');
+  const [emailHireSubject, setEmailHireSubject] = useState('');
+
+  const loadSettings = async () => {
+    setIsLoading(true);
+    try {
+      const res = await fetchAuth('/api/perusahaan/settings', { method: 'GET' });
+      if (res.ok) {
+        const data = await res.json();
+        
+        // Profile
+        setCompanyName(data.profile.nama_perusahaan || '');
+        setIndustry(data.profile.industri || '');
+        setCompanySize(data.profile.ukuran || '100 - 500 Employees');
+        setWebsite(data.profile.website_url || '');
+        setCompanyDesc(data.profile.deskripsi || '');
+        setLogoUrl(data.profile.logo_url || '');
+        
+        // AI Settings
+        setDefaultThreshold(data.ai_settings.ai_default_threshold ?? 80);
+        setAutoInviteInterview(data.ai_settings.auto_invite_interview ?? true);
+        setAutoArchiveRejected(data.ai_settings.auto_archive_rejected ?? true);
+        if (data.ai_settings.video_weights_json) {
+          try {
+            setWeights(JSON.parse(data.ai_settings.video_weights_json));
+          } catch (e) {
+            console.error("Failed to parse video weights", e);
+          }
+        }
+
+        // Email Templates
+        setEmailInvSubject(data.email_templates.email_invitation_subject || '');
+        setEmailInvBody(data.email_templates.email_invitation_body || '');
+        setEmailHireSubject(data.email_templates.email_hire_subject || '');
+      }
+    } catch (error) {
+      console.error("Gagal memuat pengaturan", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadSettings();
+  }, []);
 
   const showToast = (msg: string) => {
     setToastMessage(msg);
-    setTimeout(() => setToastMessage(null), 2500);
+    setTimeout(() => setToastMessage(null), 3000);
   };
 
-  const handleSave = (e: React.FormEvent) => {
+  const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
-    showToast(t.settings.settingsSaved);
+    setIsSaving(true);
+    try {
+      const payload = {
+        nama_perusahaan: companyName,
+        industri: industry,
+        ukuran: companySize,
+        website_url: website,
+        deskripsi: companyDesc,
+        ai_default_threshold: defaultThreshold,
+        auto_invite_interview: autoInviteInterview,
+        auto_archive_rejected: autoArchiveRejected,
+        video_weights_json: JSON.stringify(weights),
+        email_invitation_subject: emailInvSubject,
+        email_invitation_body: emailInvBody,
+        email_hire_subject: emailHireSubject,
+      };
+
+      const res = await fetchAuth('/api/perusahaan/settings', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+
+      if (res.ok) {
+        showToast(t.settings.settingsSaved);
+      } else {
+        alert("Gagal menyimpan pengaturan.");
+      }
+    } catch (error) {
+      console.error(error);
+      alert("Terjadi kesalahan saat menyimpan.");
+    } finally {
+      setIsSaving(false);
+    }
   };
+
+  const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const formData = new FormData();
+    formData.append('file', file);
+
+    try {
+      const res = await fetch('http://localhost:8000/api/perusahaan/settings/logo', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        },
+        body: formData
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        setLogoUrl(data.logo_url);
+        showToast('Logo berhasil diperbarui');
+      } else {
+        alert("Gagal mengunggah logo.");
+      }
+    } catch (error) {
+      console.error(error);
+      alert("Terjadi kesalahan jaringan saat mengunggah.");
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-6xl mx-auto pb-16 animate-in fade-in duration-300 space-y-8">
@@ -75,13 +192,13 @@ export default function SettingsPage() {
           { id: 'profile', label: t.settings.companyProfileTab, icon: Building2 },
           { id: 'ai_rules', label: t.settings.aiRulesTab, icon: Sliders },
           { id: 'email', label: t.settings.emailTemplatesTab, icon: Mail },
-          { id: 'team', label: t.settings.teamTab, icon: Users },
         ].map((tab) => {
           const Icon = tab.icon;
           const isActive = activeTab === tab.id;
           return (
             <button
               key={tab.id}
+              type="button"
               onClick={() => setActiveTab(tab.id as typeof activeTab)}
               className={`flex items-center gap-2 px-4 py-3 text-xs sm:text-sm font-semibold border-b-2 transition-all whitespace-nowrap -mb-px ${
                 isActive 
@@ -102,13 +219,29 @@ export default function SettingsPage() {
         {activeTab === 'profile' && (
           <div className="bg-card p-6 sm:p-8 rounded-xl border border-border shadow-sm space-y-6 animate-in fade-in duration-200">
             <div className="flex items-center gap-4">
-              <div className="w-20 h-20 rounded-xl bg-primary text-primary-foreground font-bold text-3xl flex items-center justify-center border border-border shadow-inner shrink-0">
-                RP
+              <div className="w-20 h-20 rounded-xl bg-primary text-primary-foreground font-bold text-3xl flex items-center justify-center border border-border shadow-inner shrink-0 overflow-hidden">
+                {logoUrl ? (
+                  /* eslint-disable-next-line @next/next/no-img-element */
+                  <img src={`http://localhost:8000${logoUrl}`} alt="Logo Perusahaan" className="w-full h-full object-cover" />
+                ) : (
+                  companyName ? companyName.charAt(0).toUpperCase() : 'RP'
+                )}
               </div>
               <div>
-                <h3 className="font-bold text-base text-foreground">{companyName}</h3>
+                <h3 className="font-bold text-base text-foreground">{companyName || 'Nama Perusahaan'}</h3>
                 <p className="text-xs text-muted-foreground mt-0.5">Logo Perusahaan (Digunakan pada header portal pelamar)</p>
-                <button type="button" className="mt-2 px-3 py-1.5 bg-muted hover:bg-muted/80 text-foreground text-xs font-semibold rounded-md transition-colors flex items-center gap-1.5">
+                <input 
+                  type="file" 
+                  ref={fileInputRef} 
+                  onChange={handleLogoUpload} 
+                  accept="image/jpeg, image/png, image/webp" 
+                  className="hidden" 
+                />
+                <button 
+                  type="button" 
+                  onClick={() => fileInputRef.current?.click()}
+                  className="mt-2 px-3 py-1.5 bg-muted hover:bg-muted/80 text-foreground text-xs font-semibold rounded-md transition-colors flex items-center gap-1.5"
+                >
                   <Upload size={12} />
                   Ubah Logo
                 </button>
@@ -256,15 +389,15 @@ export default function SettingsPage() {
 
               <div className="grid grid-cols-1 sm:grid-cols-5 gap-3">
                 {[
-                  { key: 'ability', label: 'Ability' },
-                  { key: 'intelligent', label: 'Intelligent' },
-                  { key: 'personality', label: 'Personality' },
-                  { key: 'attitude', label: 'Attitude' },
-                  { key: 'emotionalIntelligence', label: 'Emotional Eq.' },
+                  { key: 'ability', label: 'Ability', value: weights.ability },
+                  { key: 'intelligent', label: 'Intelligent', value: weights.intelligent },
+                  { key: 'personality', label: 'Personality', value: weights.personality },
+                  { key: 'attitude', label: 'Attitude', value: weights.attitude },
+                  { key: 'emotionalIntelligence', label: 'Emotional Eq.', value: weights.emotionalIntelligence },
                 ].map(param => (
                   <div key={param.key} className="p-3 bg-muted/20 border border-border rounded-lg text-center">
                     <p className="text-[11px] font-semibold text-foreground mb-1">{param.label}</p>
-                    <span className="text-lg font-bold text-primary">20%</span>
+                    <span className="text-lg font-bold text-primary">{param.value}%</span>
                   </div>
                 ))}
               </div>
@@ -288,7 +421,8 @@ export default function SettingsPage() {
                 </label>
                 <input 
                   type="text"
-                  defaultValue="[AI Recruit Pro] Undangan Wawancara Video Virtual - {{job_title}}"
+                  value={emailInvSubject}
+                  onChange={e => setEmailInvSubject(e.target.value)}
                   className="w-full px-4 py-2.5 bg-muted/30 border border-border rounded-lg text-xs text-foreground focus:outline-none focus:border-primary"
                 />
               </div>
@@ -299,7 +433,8 @@ export default function SettingsPage() {
                 </label>
                 <textarea 
                   rows={4}
-                  defaultValue="Halo {{candidate_name}}, Selamat! CV Anda telah lolos tahap seleksi awal (PO-FIT). Silakan ikuti tautan berikut untuk merekam wawancara video virtual 5 pertanyaan: {{interview_link}}"
+                  value={emailInvBody}
+                  onChange={e => setEmailInvBody(e.target.value)}
                   className="w-full p-4 bg-muted/30 border border-border rounded-lg text-xs text-foreground focus:outline-none focus:border-primary resize-none"
                 ></textarea>
               </div>
@@ -310,45 +445,11 @@ export default function SettingsPage() {
                 </label>
                 <input 
                   type="text"
-                  defaultValue="[AI Recruit Pro] Selamat! Anda Diterima di {{company_name}}"
+                  value={emailHireSubject}
+                  onChange={e => setEmailHireSubject(e.target.value)}
                   className="w-full px-4 py-2.5 bg-muted/30 border border-border rounded-lg text-xs text-foreground focus:outline-none focus:border-primary"
                 />
               </div>
-            </div>
-          </div>
-        )}
-
-        {/* ==================== TAB 4: HR TEAM ACCESS ==================== */}
-        {activeTab === 'team' && (
-          <div className="bg-card p-6 sm:p-8 rounded-xl border border-border shadow-sm space-y-6 animate-in fade-in duration-200">
-            <div className="flex justify-between items-center">
-              <div>
-                <h3 className="font-bold text-base text-foreground mb-1">Anggota Tim HR</h3>
-                <p className="text-xs text-muted-foreground">Daftar pengguna yang memiliki akses validasi rekrutmen perusahaan.</p>
-              </div>
-              <button type="button" className="px-3.5 py-2 bg-primary text-primary-foreground text-xs font-semibold rounded-lg hover:bg-primary/90 transition-colors">
-                + Tambah Anggota HR
-              </button>
-            </div>
-
-            <div className="space-y-3">
-              {teamMembers.map((member, i) => (
-                <div key={i} className="p-4 bg-muted/30 border border-border rounded-lg flex items-center justify-between gap-4">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-blue-100 dark:bg-blue-950 text-blue-600 dark:text-blue-400 font-bold flex items-center justify-center text-xs">
-                      {member.avatar}
-                    </div>
-                    <div>
-                      <p className="text-xs font-bold text-foreground">{member.name}</p>
-                      <p className="text-[11px] text-muted-foreground">{member.email}</p>
-                    </div>
-                  </div>
-
-                  <span className="px-3 py-1 bg-card border border-border text-xs font-semibold rounded-full text-foreground">
-                    {member.role}
-                  </span>
-                </div>
-              ))}
             </div>
           </div>
         )}
@@ -357,10 +458,11 @@ export default function SettingsPage() {
         <div className="flex justify-end pt-4">
           <button 
             type="submit"
-            className="px-6 py-2.5 bg-primary hover:bg-primary/90 text-primary-foreground font-semibold text-xs rounded-lg transition-colors flex items-center gap-2 shadow-sm active:scale-95"
+            disabled={isSaving}
+            className="px-6 py-2.5 bg-primary hover:bg-primary/90 text-primary-foreground font-semibold text-xs rounded-lg transition-colors flex items-center gap-2 shadow-sm active:scale-95 disabled:opacity-50"
           >
             <Save size={16} />
-            {t.settings.saveSettings}
+            {isSaving ? 'Menyimpan...' : t.settings.saveSettings}
           </button>
         </div>
 

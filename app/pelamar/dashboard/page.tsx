@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useMemo, Suspense } from 'react';
 import Link from 'next/link';
+import { toast } from 'react-hot-toast';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useTranslation } from '@/hooks/useTranslation';
 import {
@@ -429,7 +430,7 @@ function DashboardContent() {
     setAppliedJobs(newApplied);
     localStorage.setItem('appliedJobsList', JSON.stringify(newApplied));
 
-    alert(`🎉 Sukses! CV ATS-Friendly Anda ("${cvDetails?.fullName || 'Budi Pratama'}") telah terkirim ke HR ${companyName} untuk posisi "${title}".`);
+    toast.success(`Sukses! CV ATS-Friendly Anda ("${cvDetails?.fullName || 'Budi Pratama'}") telah terkirim ke HR ${companyName} untuk posisi "${title}".`, { icon: '🎉' });
     router.push('/pelamar/status');
   };
 
@@ -731,7 +732,7 @@ function DashboardContent() {
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
-                              alert(`Link lowongan "${job.title}" telah disalin!`);
+                              toast.success(`Link lowongan "${job.title}" telah disalin!`);
                             }}
                             className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-slate-700 transition-colors"
                             title="Bagikan"
@@ -836,7 +837,7 @@ function DashboardContent() {
 
                     {/* Share */}
                     <button
-                      onClick={() => alert(`Link lowongan "${selectedJob.title}" telah disalin!`)}
+                      onClick={() => toast.success(`Link lowongan "${selectedJob.title}" telah disalin!`)}
                       className="p-3 rounded-2xl border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 transition-colors cursor-pointer"
                       title="Bagikan"
                     >

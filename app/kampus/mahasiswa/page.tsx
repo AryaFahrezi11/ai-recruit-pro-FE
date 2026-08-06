@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import { toast } from 'react-hot-toast';
 import { useTranslation } from '@/hooks/useTranslation';
 import { 
   Users, Search, Filter, GraduationCap, CheckCircle2, XCircle, Clock, 
@@ -460,7 +461,7 @@ export default function KampusMahasiswaPage() {
                   </div>
 
                   <button 
-                    onClick={() => alert(`Mengunduh berkas ${selectedStudent.cvFileName}...`)}
+                    onClick={() => toast.success(`Mengunduh berkas ${selectedStudent.cvFileName}...`)}
                     className="px-3.5 py-1.5 bg-violet-600 hover:bg-violet-700 text-white font-bold text-xs rounded-lg transition-colors flex items-center gap-1.5 shrink-0"
                   >
                     <Download size={14} />

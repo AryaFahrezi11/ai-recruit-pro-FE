@@ -1,80 +1,69 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useTranslation } from '@/hooks/useTranslation';
 import { 
   ArrowLeft, Briefcase, Building2, MapPin, Clock, DollarSign,
   Sparkles, Sliders, FileText, Plus, Trash2, CheckCircle2,
   Calendar, Users, HelpCircle, Save, Send, Layers, Check, Globe, X, Video
 } from 'lucide-react';
+import { useAppStore } from '@/lib/store/useAppStore';
+import { fetchAuth } from '@/lib/api/auth';
 
 export default function CreateJobPage() {
   const { t } = useTranslation();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const editId = searchParams.get('edit');
+  const token = useAppStore(state => state.token);
 
   // Form State
-  const [jobTitle, setJobTitle] = useState('Senior Frontend Developer');
-  const [department, setDepartment] = useState('Engineering');
+  const [jobTitle, setJobTitle] = useState('');
+  const [categoryId, setCategoryId] = useState('');
+  const [categories, setCategories] = useState<{id: string, nama_kategori: string}[]>([]);
   const [employmentType, setEmploymentType] = useState('Full-time');
   const [workMode, setWorkMode] = useState('Hybrid');
-  const [location, setLocation] = useState('Jakarta, Indonesia');
-  const [experienceLevel, setExperienceLevel] = useState('Senior (5+ years)');
+  const [location, setLocation] = useState('');
+  const [experienceLevel, setExperienceLevel] = useState('Entry Level');
+  const [pendidikanMin, setPendidikanMin] = useState('');
   
   // Job Description & AI Keywords
-  const [summary, setSummary] = useState(
-    'Kami mencari Senior Frontend Developer yang berpengalaman dalam membangun aplikasi web modern berskala besar menggunakan React, Next.js, dan TypeScript. Anda akan memimpin tim frontend dalam merancang arsitektur komponen yang modular dan responsif.'
-  );
+  const [summary, setSummary] = useState('');
   
   // Dynamic Lists
-  const [responsibilities, setResponsibilities] = useState<string[]>([
-    'Merancang dan merawat arsitektur frontend web aplikasi berskala besar.',
-    'Berkolaborasi dengan tim UI/UX dan Backend Engineer untuk mengintegrasikan REST API.',
-    'Optimasi performa web apps, load time, dan pengujian aksesibilitas.'
-  ]);
+  const [responsibilities, setResponsibilities] = useState<string[]>([]);
   const [newResp, setNewResp] = useState('');
 
-  const [requirements, setRequirements] = useState<string[]>([
-    'Minimal 4+ tahun pengalaman profesional membangun web app berbasis React & TypeScript.',
-    'Memahami arsitektur Next.js (App Router), SSR, SSG, dan state management (Zustand/Redux).',
-    'Fasih dalam pengujian unit test (Jest / React Testing Library) dan optimasi Web Vitals.'
-  ]);
+  const [requirements, setRequirements] = useState<string[]>([]);
   const [newReq, setNewReq] = useState('');
 
-  const [aiKeywords, setAiKeywords] = useState<string[]>([
-    'React', 'Next.js', 'TypeScript', 'TailwindCSS', 'Zustand', 'REST API', 'Microservices', 'Unit Testing'
-  ]);
+  const [aiKeywords, setAiKeywords] = useState<string[]>([]);
   const [keywordInput, setKeywordInput] = useState('');
 
   // AI Configuration
   const [threshold, setThreshold] = useState<number>(80);
-  const [videoQuestions, setVideoQuestions] = useState<string[]>([
-    'Ceritakan tentang proyek frontend paling kompleks yang pernah Anda kerjakan dan peran utama Anda.',
-    'Bagaimana pendekatan Anda dalam melakukan optimasi performa web application yang lambat?',
-    'Bagaimana cara Anda menyelesaikan konflik atau perbedaan pendapat teknis dalam tim engineer?',
-    'Pengalaman Anda dalam memigrasikan monolith ke arsitektur frontend modular / micro-frontends.',
-    'Apa motivasi utama Anda ingin bergabung dengan tim kami di AI Recruit Pro?'
-  ]);
+  const [videoQuestions, setVideoQuestions] = useState<string[]>([]);
   const [newQuestion, setNewQuestion] = useState('');
 
   // Compensation & Benefits
   const [currency, setCurrency] = useState('IDR');
-  const [salaryMin, setSalaryMin] = useState('18.000.000');
-  const [salaryMax, setSalaryMax] = useState('28.000.000');
-  const [showSalaryPublic, setShowSalaryPublic] = useState(true);
-  const [selectedBenefits, setSelectedBenefits] = useState<string[]>([
-    'Asuransi Kesehatan Private', 'BPJS Kesehatan & Ketenagakerjaan', 'Jam Kerja Fleksibel', 'Remote Work Allowance', 'Laptop & Equipment Office'
-  ]);
+  const [salaryMin, setSalaryMin] = useState('');
+  const [salaryMax, setSalaryMax] = useState('');
+  const [showSalaryPublic, setShowSalaryPublic] = useState(false);
+  const [selectedBenefits, setSelectedBenefits] = useState<string[]>([]);
 
   // Timelines & Publishing
-  const [deadline, setDeadline] = useState('2026-08-31');
-  const [openingsCount, setOpeningsCount] = useState(2);
+  const [deadline, setDeadline] = useState('');
+  const [openingsCount, setOpeningsCount] = useState(1);
   const [visibility, setVisibility] = useState('Public');
 
   // Submit State
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [isLoadingEdit, setIsLoadingEdit] = useState(false);
 
   // Add Item Handlers
   const handleAddResponsibility = () => {
@@ -132,19 +121,137 @@ export default function CreateJobPage() {
     }
   };
 
-  const handlePublish = (e: React.FormEvent) => {
+  const parseJsonArray = (json: string | null): string[] => {
+    if (!json) return [];
+    try {
+      const arr = JSON.parse(json);
+      return Array.isArray(arr) ? arr : [];
+    } catch {
+      return [];
+    }
+  };
+
+  useEffect(() => {
+    // Fetch categories
+    const fetchCategories = async () => {
+      try {
+        const res = await fetch('http://localhost:8000/api/jobs/categories');
+        if (res.ok) {
+          const data = await res.json();
+          setCategories(data);
+          if (!editId && data.length > 0) {
+            setCategoryId(data[0].id);
+          }
+        }
+      } catch (err) {
+        console.error("Gagal memuat kategori", err);
+      }
+    };
+    fetchCategories();
+  }, [editId]);
+
+  // Load existing job data for edit mode
+  useEffect(() => {
+    if (!editId) return;
+    const loadJob = async () => {
+      setIsLoadingEdit(true);
+      try {
+        const res = await fetchAuth(`/api/jobs/${editId}`);
+        if (!res.ok) return;
+        const job = await res.json();
+
+        setJobTitle(job.judul_posisi || '');
+        setCategoryId(job.kategori_id || '');
+        setEmploymentType(job.tipe_pekerjaan || 'Full-time');
+        setWorkMode(job.lokasi_kerja || 'Hybrid');
+        setLocation(job.kota || '');
+        setExperienceLevel(job.experience_level || 'Entry Level');
+        setPendidikanMin(job.pendidikan_min || '');
+        setSummary(job.deskripsi_pekerjaan || '');
+        setResponsibilities(parseJsonArray(job.tanggung_jawab));
+        setRequirements(parseJsonArray(job.kualifikasi));
+        setAiKeywords(parseJsonArray(job.ai_keywords_json));
+        setThreshold(job.cv_threshold || 80);
+        setVideoQuestions(parseJsonArray(job.video_questions_json));
+        setSalaryMin(job.gaji_min ? String(job.gaji_min) : '');
+        setSalaryMax(job.gaji_max ? String(job.gaji_max) : '');
+        setShowSalaryPublic(job.tampilkan_gaji || false);
+        setSelectedBenefits(parseJsonArray(job.benefits_json));
+        setDeadline(job.tanggal_tutup || '');
+        setOpeningsCount(job.openings_count || 1);
+        setVisibility(job.status === 'draft' ? 'Draft' : 'Public');
+      } catch (err) {
+        console.error("Gagal memuat data lowongan untuk diedit", err);
+      } finally {
+        setIsLoadingEdit(false);
+      }
+    };
+    loadJob();
+  }, [editId]);
+
+  const handlePublish = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
 
-    setTimeout(() => {
+    const payload = {
+      judul_posisi: jobTitle,
+      deskripsi_pekerjaan: summary,
+      kategori_id: categoryId,
+      kualifikasi: JSON.stringify(requirements),
+      tanggung_jawab: JSON.stringify(responsibilities),
+      tipe_pekerjaan: employmentType,
+      lokasi_kerja: workMode,
+      kota: location,
+      gaji_min: parseFloat(salaryMin.replace(/[^0-9.-]+/g,"")),
+      gaji_max: parseFloat(salaryMax.replace(/[^0-9.-]+/g,"")),
+      tampilkan_gaji: showSalaryPublic,
+      pengalaman_min_tahun: parseInt(experienceLevel) || 0, // Simplified for now
+      cv_threshold: threshold,
+      interview_threshold: threshold, // Using same threshold for now
+      tanggal_buka: new Date().toISOString().split('T')[0],
+      tanggal_tutup: deadline,
+      department: "Umum", // Or remove entirely if using category_id
+      experience_level: experienceLevel,
+      pendidikan_min: pendidikanMin,
+      benefits_json: JSON.stringify(selectedBenefits),
+      ai_keywords_json: JSON.stringify(aiKeywords),
+      video_questions_json: JSON.stringify(videoQuestions),
+      openings_count: openingsCount,
+      status: visibility === 'Draft' ? 'draft' : 'active'
+    };
+
+    try {
+      const url = editId 
+        ? `http://localhost:8000/api/jobs/${editId}` 
+        : 'http://localhost:8000/api/jobs/';
+      const method = editId ? 'PUT' : 'POST';
+
+      const res = await fetch(url, {
+        method,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(payload)
+      });
+
+      if (res.ok) {
+        setShowSuccessModal(true);
+      } else {
+        const errData = await res.json();
+        setErrorMsg(`Gagal menyimpan loker: ${errData.detail || 'Terjadi kesalahan'}`);
+      }
+    } catch (err) {
+      console.error(err);
+      setErrorMsg("Terjadi kesalahan jaringan saat menyimpan data.");
+    } finally {
       setIsSubmitting(false);
-      setShowSuccessModal(true);
-    }, 1200);
+    }
   };
 
   const handleSuccessClose = () => {
     setShowSuccessModal(false);
-    router.push('/pipeline');
+    router.push('/jobs');
   };
 
   return (
@@ -161,8 +268,12 @@ export default function CreateJobPage() {
             <ArrowLeft size={14} />
             {t.jobs.backToPrevious}
           </button>
-          <h1 className="text-2xl font-bold text-foreground mb-1">{t.jobs.title}</h1>
-          <p className="text-sm text-muted-foreground">{t.jobs.subtitle}</p>
+          <h1 className="text-2xl font-bold text-foreground mb-1">
+            {editId ? 'Edit Lowongan' : t.jobs.title}
+          </h1>
+          <p className="text-sm text-muted-foreground">
+            {editId ? 'Perbarui informasi lowongan Anda.' : t.jobs.subtitle}
+          </p>
         </div>
       </div>
 
@@ -191,23 +302,20 @@ export default function CreateJobPage() {
               />
             </div>
 
-            {/* Department */}
+            {/* Category */}
             <div>
               <label className="block text-xs font-semibold text-foreground mb-2">
-                {t.jobs.department} <span className="text-rose-500">*</span>
+                Kategori Pekerjaan <span className="text-rose-500">*</span>
               </label>
               <select 
-                value={department}
-                onChange={(e) => setDepartment(e.target.value)}
+                value={categoryId}
+                onChange={(e) => setCategoryId(e.target.value)}
                 className="w-full px-4 py-2.5 bg-muted/30 border border-border rounded-lg text-sm text-foreground focus:outline-none focus:border-primary transition-all"
               >
-                <option value="Engineering">Engineering & Technology</option>
-                <option value="Product">Product Management</option>
-                <option value="Design">UI/UX & Design</option>
-                <option value="Marketing">Marketing & Growth</option>
-                <option value="Sales">Sales & Business Development</option>
-                <option value="HR">Human Resources</option>
-                <option value="Finance">Finance & Accounting</option>
+                <option value="" disabled>-- Pilih Kategori --</option>
+                {categories.map(cat => (
+                  <option key={cat.id} value={cat.id}>{cat.nama_kategori}</option>
+                ))}
               </select>
             </div>
 
@@ -248,7 +356,7 @@ export default function CreateJobPage() {
                   type="text"
                   value={location}
                   onChange={(e) => setLocation(e.target.value)}
-                  placeholder="e.g. Jakarta, Indonesia"
+                  placeholder="Misal: Jakarta, Indonesia"
                   className="w-2/3 px-4 py-2.5 bg-muted/30 border border-border rounded-lg text-sm text-foreground focus:outline-none focus:border-primary transition-all"
                 />
               </div>
@@ -270,6 +378,25 @@ export default function CreateJobPage() {
                 <option value="Lead / Manager">Lead / Manager (8+ Tahun)</option>
               </select>
             </div>
+
+            {/* Minimal Pendidikan */}
+            <div>
+              <label className="block text-xs font-semibold text-foreground mb-2">
+                Minimal Pendidikan
+              </label>
+              <select 
+                value={pendidikanMin}
+                onChange={(e) => setPendidikanMin(e.target.value)}
+                className="w-full px-4 py-2.5 bg-muted/30 border border-border rounded-lg text-sm text-foreground focus:outline-none focus:border-primary transition-all"
+              >
+                <option value="" disabled>-- Pilih Pendidikan --</option>
+                <option value="SMA/SMK">SMA / SMK Sederajat</option>
+                <option value="D3">D3 (Diploma)</option>
+                <option value="S1">S1 (Sarjana)</option>
+                <option value="S2">S2 (Magister)</option>
+                <option value="S3">S3 (Doktor)</option>
+              </select>
+            </div>
           </div>
         </div>
 
@@ -280,10 +407,6 @@ export default function CreateJobPage() {
               <FileText size={20} className="text-primary" />
               <h2 className="text-lg font-bold text-foreground">{t.jobs.roleDescription}</h2>
             </div>
-            <span className="px-2.5 py-1 bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 text-xs font-semibold rounded-full border border-amber-200 dark:border-amber-800 flex items-center gap-1">
-              <Sparkles size={12} />
-              AI PO-FIT Enabled
-            </span>
           </div>
 
           {/* Role Summary */}
@@ -328,7 +451,7 @@ export default function CreateJobPage() {
                 type="text"
                 value={newResp}
                 onChange={(e) => setNewResp(e.target.value)}
-                placeholder="Tambah tanggung jawab utama..."
+                placeholder="Misal: Merancang arsitektur frontend web aplikasi berskala besar"
                 className="flex-1 px-4 py-2 bg-muted/30 border border-border rounded-lg text-xs text-foreground focus:outline-none focus:border-primary"
                 onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddResponsibility())}
               />
@@ -370,7 +493,7 @@ export default function CreateJobPage() {
                 type="text"
                 value={newReq}
                 onChange={(e) => setNewReq(e.target.value)}
-                placeholder="Tambah kualifikasi / persyaratan wajib..."
+                placeholder="Misal: Minimal 3 tahun pengalaman di bidang terkait"
                 className="flex-1 px-4 py-2 bg-muted/30 border border-border rounded-lg text-xs text-foreground focus:outline-none focus:border-primary"
                 onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddRequirement())}
               />
@@ -498,7 +621,7 @@ export default function CreateJobPage() {
                   type="text"
                   value={newQuestion}
                   onChange={(e) => setNewQuestion(e.target.value)}
-                  placeholder="Ketik pertanyaan wawancara video baru..."
+                  placeholder="Misal: Ceritakan pengalaman proyek terbesar yang pernah Anda kerjakan"
                   className="flex-1 px-4 py-2 bg-muted/30 border border-border rounded-lg text-xs text-foreground focus:outline-none focus:border-primary"
                   onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddQuestion())}
                 />
@@ -541,6 +664,7 @@ export default function CreateJobPage() {
                   type="text"
                   value={salaryMin}
                   onChange={(e) => setSalaryMin(e.target.value)}
+                  placeholder="Misal: 8.000.000"
                   className="flex-1 px-4 py-2.5 bg-muted/30 border border-border rounded-lg text-sm text-foreground focus:outline-none focus:border-primary"
                 />
               </div>
@@ -555,6 +679,7 @@ export default function CreateJobPage() {
                 type="text"
                 value={salaryMax}
                 onChange={(e) => setSalaryMax(e.target.value)}
+                placeholder="Misal: 15.000.000"
                 className="w-full px-4 py-2.5 bg-muted/30 border border-border rounded-lg text-sm text-foreground focus:outline-none focus:border-primary"
               />
             </div>
@@ -714,13 +839,34 @@ export default function CreateJobPage() {
             </div>
             <h3 className="text-xl font-bold text-foreground">{t.jobs.jobPublishedSuccess}</h3>
             <p className="text-xs text-muted-foreground leading-relaxed">
-              Lowongan <strong>{jobTitle}</strong> ({department}) kini aktif dan siap menerima berkas pelamar dengan aturan seleksi AI (Threshold PO-FIT {threshold}%).
+              Lowongan <strong>{jobTitle}</strong> ({categories.find(c => c.id === categoryId)?.nama_kategori}) kini aktif dan siap menerima berkas pelamar dengan aturan seleksi AI (Threshold PO-FIT {threshold}%).
             </p>
             <button 
               onClick={handleSuccessClose}
               className="w-full py-3 bg-primary text-primary-foreground font-semibold rounded-lg text-xs hover:bg-primary/90 transition-colors mt-4"
             >
               Ke Pipeline Rekrutmen
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Error Modal Overlay */}
+      {errorMsg && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-card text-card-foreground p-8 rounded-xl border border-border max-w-md w-full text-center space-y-4 shadow-2xl animate-in zoom-in-95 duration-200">
+            <div className="w-16 h-16 rounded-full bg-rose-500/10 text-rose-500 flex items-center justify-center mx-auto mb-2">
+              <X size={36} />
+            </div>
+            <h3 className="text-xl font-bold text-foreground">Gagal Menyimpan</h3>
+            <p className="text-xs text-muted-foreground leading-relaxed">
+              {errorMsg}
+            </p>
+            <button 
+              onClick={() => setErrorMsg(null)}
+              className="w-full py-3 bg-rose-600 text-white font-semibold rounded-lg text-xs hover:bg-rose-700 transition-colors mt-4"
+            >
+              Tutup
             </button>
           </div>
         </div>

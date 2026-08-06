@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
+import { toast } from 'react-hot-toast';
 import { useRouter } from 'next/navigation';
 import { useTranslation } from '@/hooks/useTranslation';
 import {
@@ -180,7 +181,7 @@ export default function SavedJobsPage() {
     setAppliedJobs(newApplied);
     localStorage.setItem('appliedJobsList', JSON.stringify(newApplied));
 
-    alert(`🎉 Sukses! CV ATS-Friendly Anda ("${cvDetails?.fullName || 'Budi Pratama'}") telah terkirim ke HR ${companyName} untuk posisi "${title}".`);
+    toast.success(`Sukses! CV ATS-Friendly Anda ("${cvDetails?.fullName || 'Budi Pratama'}") telah terkirim ke HR ${companyName} untuk posisi "${title}".`, { icon: '🎉' });
     router.push('/pelamar/status');
   };
 

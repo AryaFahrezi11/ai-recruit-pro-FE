@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
+import { toast } from 'react-hot-toast';
 import { useTranslation } from '@/hooks/useTranslation';
 import {
   Search,
@@ -567,7 +568,7 @@ export default function StatusValidasiPage() {
                         <div className="flex items-center gap-2 text-slate-500 dark:text-slate-400 font-medium">
                           <span>{t.pelamar.status.noUpdate}</span>
                           <button
-                            onClick={() => alert('Customer Support HR Developer AI-Recruit Pro: support@airecruitpro.com / WhatsApp: 0812-9900-8800')}
+                            onClick={() => toast('Customer Support HR Developer AI-Recruit Pro: support@airecruitpro.com / WhatsApp: 0812-9900-8800', { duration: 5000, icon: '📞' })}
                             className="font-bold text-[#2596be] dark:text-cyan-400 hover:underline cursor-pointer"
                           >
                             {t.pelamar.status.contactSupport}

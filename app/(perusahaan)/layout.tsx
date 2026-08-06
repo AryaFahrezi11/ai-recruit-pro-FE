@@ -2,6 +2,8 @@
 
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { toast } from 'react-hot-toast';
 import { Sidebar } from '@/components/dashboard/Sidebar';
 import { useAppStore } from '@/lib/store/useAppStore';
 import { useTranslation } from '@/hooks/useTranslation';
@@ -15,7 +17,8 @@ export default function PerusahaanLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const { theme, toggleTheme, language, setLanguage, toggleMobileSidebar } = useAppStore();
+  const router = useRouter();
+  const { theme, toggleTheme, language, setLanguage, toggleMobileSidebar, logout } = useAppStore();
   const { t } = useTranslation();
   const [mounted, setMounted] = useState(false);
 
@@ -240,7 +243,9 @@ export default function PerusahaanLayout({
                       <button 
                         onClick={() => {
                           setShowProfileMenu(false);
-                          alert('Simulasi Logout berhasil.');
+                          logout();
+                          toast.success('Berhasil keluar dari akun perusahaan.');
+                          router.push('/login');
                         }}
                         className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-colors"
                       >
