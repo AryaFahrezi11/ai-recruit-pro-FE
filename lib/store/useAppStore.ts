@@ -8,11 +8,16 @@ interface AppState {
   theme: Theme;
   language: Language;
   isMobileSidebarOpen: boolean;
+  token: string | null;
+  user: any | null;
   setTheme: (theme: Theme) => void;
   setLanguage: (lang: Language) => void;
   toggleTheme: () => void;
   toggleMobileSidebar: () => void;
   setMobileSidebar: (isOpen: boolean) => void;
+  setToken: (token: string | null) => void;
+  setUser: (user: any | null) => void;
+  logout: () => void;
 }
 
 export const useAppStore = create<AppState>()(
@@ -21,6 +26,11 @@ export const useAppStore = create<AppState>()(
       theme: 'light',
       language: 'id', // Default to Indonesian
       isMobileSidebarOpen: false,
+      token: null,
+      user: null,
+      setToken: (token) => set({ token }),
+      setUser: (user) => set({ user }),
+      logout: () => set({ token: null, user: null }),
       setMobileSidebar: (isOpen) => set({ isMobileSidebarOpen: isOpen }),
       toggleMobileSidebar: () => set((state) => ({ isMobileSidebarOpen: !state.isMobileSidebarOpen })),
       setTheme: (theme) => {

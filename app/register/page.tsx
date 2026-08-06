@@ -41,6 +41,9 @@ export default function CompanyRegistrationFlow() {
 
   // Step 3: Legal Data - Perusahaan
   const [companyName, setCompanyName] = useState('');
+  const [industri, setIndustri] = useState('');
+  const [ukuran, setUkuran] = useState('');
+  const [websiteUrl, setWebsiteUrl] = useState('');
   const [nibNpwpNumber, setNibNpwpNumber] = useState('');
   const [nibFile, setNibFile] = useState<File | null>(null);
   const [companyAddress, setCompanyAddress] = useState('');
@@ -61,8 +64,7 @@ export default function CompanyRegistrationFlow() {
     'aol.com', 'zoho.com', 'protonmail.com'
   ];
 
-  // Validate Step 1
-  const handleStep1Submit = (e: React.FormEvent) => {
+  const handleStep1Submit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email || !email.includes('@')) {
       setErrorStep1('Harap masukkan alamat email perusahaan yang valid.');
@@ -88,10 +90,32 @@ export default function CompanyRegistrationFlow() {
     setErrorStep1('');
     setIsLoading(true);
 
-    setTimeout(() => {
+    try {
+      const res = await fetch('http://localhost:8000/api/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password, role: 'perusahaan' })
+      });
+      
+      const data = await res.json();
+      
+      if (!res.ok) {
+        const errorMsg = typeof data.detail === 'string' 
+          ? data.detail 
+          : 'Terjadi kesalahan saat registrasi. Pastikan data valid.';
+        setErrorStep1(errorMsg);
+        setIsLoading(false);
+        return;
+      }
+      
+      // Success, move to Step 2
       setIsLoading(false);
       setStep(2);
-    }, 400);
+    } catch (err) {
+      const errorMsg = 'Tidak dapat terhubung ke server. Pastikan backend berjalan.';
+      setErrorStep1(errorMsg);
+      setIsLoading(false);
+    }
   };
 
   // Validate Step 2 (OTP)
@@ -108,7 +132,7 @@ export default function CompanyRegistrationFlow() {
     }
   };
 
-  const handleStep2Submit = (e: React.FormEvent) => {
+  const handleStep2Submit = async (e: React.FormEvent) => {
     e.preventDefault();
     const enteredOtp = otpCode.join('');
     if (enteredOtp.length < 6) {
@@ -119,18 +143,49 @@ export default function CompanyRegistrationFlow() {
     setErrorStep2('');
     setIsLoading(true);
 
-    setTimeout(() => {
+    try {
+      const res = await fetch('http://localhost:8000/api/auth/verify-otp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, otp_code: enteredOtp })
+      });
+      
+      const data = await res.json();
+      
+      if (!res.ok) {
+        const errorMsg = typeof data.detail === 'string' 
+          ? data.detail 
+          : 'Kode OTP tidak valid atau sudah kadaluarsa.';
+        setErrorStep2(errorMsg);
+        setIsLoading(false);
+        return;
+      }
+      
+      // Store token
+      localStorage.setItem('access_token', data.access_token);
       setIsLoading(false);
       setStep(3);
-    }, 400);
+    } catch (err) {
+      const errorMsg = 'Tidak dapat terhubung ke server untuk verifikasi OTP.';
+      setErrorStep2(errorMsg);
+      setIsLoading(false);
+    }
   };
 
   // Validate Step 3 (Legalitas Form)
-  const handleStep3Submit = (e: React.FormEvent) => {
+  const handleStep3Submit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!companyName.trim()) {
       setErrorStep3('Harap isi Nama Perusahaan Resmi.');
+      return;
+    }
+    if (!industri.trim()) {
+      setErrorStep3('Harap pilih Sektor Industri.');
+      return;
+    }
+    if (!ukuran.trim()) {
+      setErrorStep3('Harap pilih Ukuran Perusahaan.');
       return;
     }
     if (!nibNpwpNumber.trim() || !/^\d+$/.test(nibNpwpNumber)) {
@@ -166,7 +221,43 @@ export default function CompanyRegistrationFlow() {
     setErrorStep3('');
     setIsLoading(true);
 
-    setTimeout(() => {
+    try {
+      const token = localStorage.getItem('access_token');
+      const formData = new FormData();
+      formData.append('nama_perusahaan', companyName);
+      formData.append('industri', industri);
+      formData.append('ukuran', ukuran);
+      if (websiteUrl) formData.append('website_url', websiteUrl);
+      formData.append('alamat', companyAddress);
+      formData.append('nib_number', nibNpwpNumber);
+      if (nibFile) formData.append('nib_file', nibFile);
+      
+      formData.append('hr_name', hrFullName);
+      formData.append('hr_whatsapp', whatsappNumber);
+      formData.append('hr_position', hrPosition);
+      if (idCardFile) formData.append('id_card_file', idCardFile);
+
+      const res = await fetch('http://localhost:8000/api/users/profile', {
+        method: 'PUT',
+        headers: { 
+          'Authorization': `Bearer ${token}`
+        },
+        body: formData
+      });
+      
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        let errorMsg = 'Gagal menyimpan data profil perusahaan. Sesi mungkin kadaluarsa.';
+        if (typeof data?.detail === 'string') {
+          errorMsg = data.detail;
+        } else if (Array.isArray(data?.detail)) {
+          errorMsg = 'Validation Error: ' + JSON.stringify(data.detail);
+        }
+        setErrorStep3(errorMsg);
+        setIsLoading(false);
+        return;
+      }
+
       setIsLoading(false);
       // Save pending registration session details
       localStorage.setItem('pendingCompanyName', companyName);
@@ -176,7 +267,11 @@ export default function CompanyRegistrationFlow() {
       localStorage.setItem('pendingRegistrationStatus', 'PENDING');
 
       router.push('/pending-approval');
-    }, 600);
+    } catch (err) {
+      const errorMsg = 'Tidak dapat terhubung ke server.';
+      setErrorStep3(errorMsg);
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -320,22 +415,7 @@ export default function CompanyRegistrationFlow() {
                 </div>
               )}
 
-              {/* Quick Fill Sample Corporate Email Button */}
-              <div className="p-3.5 rounded-2xl bg-[#F0F8FB] border border-[#C2E5EF] flex items-center justify-between gap-3 text-xs">
-                <span className="font-semibold text-slate-600">Bingung format email resmi?</span>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setEmail('hrd@tokopedia.com');
-                    setPassword('password123');
-                    setConfirmPassword('password123');
-                    setErrorStep1('');
-                  }}
-                  className="font-extrabold text-[#1b7b9e] bg-white hover:bg-[#E0F1F7] px-3.5 py-1.5 rounded-full border border-[#B8E1ED] shadow-2xs"
-                >
-                  Gunakan hrd@tokopedia.com
-                </button>
-              </div>
+
 
               <button
                 type="submit"
@@ -392,16 +472,7 @@ export default function CompanyRegistrationFlow() {
                 </div>
               )}
 
-              {/* Demo Fill OTP */}
-              <div className="text-center">
-                <button
-                  type="button"
-                  onClick={() => setOtpCode(['1', '2', '3', '4', '5', '6'])}
-                  className="text-xs font-bold text-[#1b7b9e] hover:underline bg-[#E0F1F7] px-4 py-1.5 rounded-full border border-[#B8E1ED]"
-                >
-                  ⚡ Masukkan Kode Demo OTP (123456)
-                </button>
-              </div>
+
 
               <div className="flex items-center justify-between gap-4 pt-2">
                 <button
@@ -468,6 +539,61 @@ export default function CompanyRegistrationFlow() {
                   />
                 </div>
 
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {/* Sektor Industri */}
+                  <div className="space-y-1">
+                    <label className="block text-xs font-bold text-slate-700">
+                      Sektor Industri <span className="text-red-500">*</span>
+                    </label>
+                    <select
+                      value={industri}
+                      onChange={(e) => setIndustri(e.target.value)}
+                      className="w-full px-4 py-3 bg-white border border-slate-300 focus:border-[#1b7b9e] rounded-2xl text-sm outline-none"
+                    >
+                      <option value="">-- Pilih Sektor --</option>
+                      <option value="Teknologi Informasi">Teknologi Informasi</option>
+                      <option value="Keuangan & Perbankan">Keuangan & Perbankan</option>
+                      <option value="Kesehatan">Kesehatan</option>
+                      <option value="Pendidikan">Pendidikan</option>
+                      <option value="Manufaktur">Manufaktur</option>
+                      <option value="Retail & E-commerce">Retail & E-commerce</option>
+                      <option value="Lainnya">Lainnya</option>
+                    </select>
+                  </div>
+
+                  {/* Ukuran Perusahaan */}
+                  <div className="space-y-1">
+                    <label className="block text-xs font-bold text-slate-700">
+                      Ukuran Perusahaan <span className="text-red-500">*</span>
+                    </label>
+                    <select
+                      value={ukuran}
+                      onChange={(e) => setUkuran(e.target.value)}
+                      className="w-full px-4 py-3 bg-white border border-slate-300 focus:border-[#1b7b9e] rounded-2xl text-sm outline-none"
+                    >
+                      <option value="">-- Pilih Ukuran --</option>
+                      <option value="1-50 Karyawan (Startup/Kecil)">1-50 Karyawan (Startup/Kecil)</option>
+                      <option value="51-200 Karyawan (Menengah)">51-200 Karyawan (Menengah)</option>
+                      <option value="201-1000 Karyawan (Besar)">201-1000 Karyawan (Besar)</option>
+                      <option value="> 1000 Karyawan (Enterprise)">-1000 Karyawan (Enterprise)</option>
+                    </select>
+                  </div>
+                </div>
+
+                {/* Website URL */}
+                <div className="space-y-1">
+                  <label className="block text-xs font-bold text-slate-700">
+                    Website URL
+                  </label>
+                  <input
+                    type="url"
+                    value={websiteUrl}
+                    onChange={(e) => setWebsiteUrl(e.target.value)}
+                    placeholder="https://www.perusahaananda.com"
+                    className="w-full px-4 py-3 bg-white border border-slate-300 focus:border-[#1b7b9e] rounded-2xl text-sm outline-none"
+                  />
+                </div>
+
                 {/* NIB / NPWP Number */}
                 <div className="space-y-1">
                   <label className="block text-xs font-bold text-slate-700">
@@ -492,13 +618,29 @@ export default function CompanyRegistrationFlow() {
                       type="file"
                       accept=".pdf,.jpg,.jpeg,.png"
                       onChange={(e) => setNibFile(e.target.files?.[0] || null)}
-                      className="absolute inset-0 opacity-0 cursor-pointer"
+                      className="absolute inset-0 opacity-0 cursor-pointer z-10"
                     />
-                    <Upload size={24} className="text-[#1b7b9e] mx-auto" />
-                    <span className="text-xs font-bold text-[#1b7b9e] block">
-                      {nibFile ? `File Terpilih: ${nibFile.name}` : 'Klik / Drag & Drop Dokumen NIB / NPWP (PDF, JPG, PNG)'}
-                    </span>
-                    <span className="text-[11px] text-slate-400 block">Maksimal Ukuran File: 5MB</span>
+                    {nibFile ? (
+                      <div className="flex flex-col items-center gap-2">
+                        {nibFile.type.startsWith('image/') ? (
+                          <img src={URL.createObjectURL(nibFile)} alt="Preview NIB" className="max-h-32 object-contain rounded-lg border border-slate-200" />
+                        ) : (
+                          <div className="p-4 bg-slate-100 rounded-lg border border-slate-200 flex flex-col items-center">
+                            <FileText size={32} className="text-[#1b7b9e] mb-1" />
+                            <span className="text-xs font-semibold text-slate-700 truncate max-w-[200px]">{nibFile.name}</span>
+                          </div>
+                        )}
+                        <span className="text-[11px] font-bold text-[#1b7b9e] underline relative z-20 pointer-events-none">Klik untuk ganti file</span>
+                      </div>
+                    ) : (
+                      <>
+                        <Upload size={24} className="text-[#1b7b9e] mx-auto" />
+                        <span className="text-xs font-bold text-[#1b7b9e] block">
+                          Klik / Drag & Drop Dokumen NIB / NPWP (PDF, JPG, PNG)
+                        </span>
+                        <span className="text-[11px] text-slate-400 block">Maksimal Ukuran File: 5MB</span>
+                      </>
+                    )}
                   </div>
                 </div>
 
@@ -579,13 +721,22 @@ export default function CompanyRegistrationFlow() {
                       type="file"
                       accept=".jpg,.jpeg,.png"
                       onChange={(e) => setIdCardFile(e.target.files?.[0] || null)}
-                      className="absolute inset-0 opacity-0 cursor-pointer"
+                      className="absolute inset-0 opacity-0 cursor-pointer z-10"
                     />
-                    <Upload size={24} className="text-[#1b7b9e] mx-auto" />
-                    <span className="text-xs font-bold text-[#1b7b9e] block">
-                      {idCardFile ? `File Terpilih: ${idCardFile.name}` : 'Klik / Drag & Drop Foto ID Card Karyawan / KTP (JPG, PNG)'}
-                    </span>
-                    <span className="text-[11px] text-slate-400 block">Untuk memastikan keabsahan perwakilan perusahaan</span>
+                    {idCardFile ? (
+                      <div className="flex flex-col items-center gap-2">
+                        <img src={URL.createObjectURL(idCardFile)} alt="Preview ID Card" className="max-h-32 object-contain rounded-lg border border-slate-200" />
+                        <span className="text-[11px] font-bold text-[#1b7b9e] underline relative z-20 pointer-events-none">Klik untuk ganti file</span>
+                      </div>
+                    ) : (
+                      <>
+                        <Upload size={24} className="text-[#1b7b9e] mx-auto" />
+                        <span className="text-xs font-bold text-[#1b7b9e] block">
+                          Klik / Drag & Drop Foto ID Card Karyawan / KTP (JPG, PNG)
+                        </span>
+                        <span className="text-[11px] text-slate-400 block">Untuk memastikan keabsahan perwakilan perusahaan</span>
+                      </>
+                    )}
                   </div>
                 </div>
 
@@ -599,26 +750,7 @@ export default function CompanyRegistrationFlow() {
                 </div>
               )}
 
-              {/* Demo Auto Fill All Fields Button */}
-              <div className="text-center">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setCompanyName('PT Tokopedia Indonesia');
-                    setNibNpwpNumber('9120101928123');
-                    setNibFile(new File(["demo nib content"], "NIB_PT_Tokopedia_Indonesia.pdf", { type: "application/pdf" }));
-                    setCompanyAddress('Tokopedia Tower, Jl. Prof. DR. Satrio No.11, Jakarta Selatan 12940');
-                    setHrFullName('Bambang Setyono');
-                    setWhatsappNumber('081298765432');
-                    setHrPosition('Senior HR Talent Acquisition');
-                    setIdCardFile(new File(["demo idcard"], "ID_Card_HR_Tokopedia.png", { type: "image/png" }));
-                    setErrorStep3('');
-                  }}
-                  className="text-xs font-bold text-[#1b7b9e] bg-[#E0F1F7] hover:bg-[#C2E5EF] px-4 py-2 rounded-full border border-[#B8E1ED]"
-                >
-                  ⚡ Isikan Formulir Demo Lengkap Otomatis (PT Tokopedia Indonesia)
-                </button>
-              </div>
+
 
               {/* Submit Buttons */}
               <div className="flex items-center justify-between gap-4 pt-4 border-t border-slate-100">

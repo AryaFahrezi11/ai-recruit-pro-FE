@@ -3,6 +3,9 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { useAppStore } from '@/lib/store/useAppStore';
+import { loginUser } from '@/lib/api/auth';
+import { toast } from 'react-hot-toast';
 import {
   Building2,
   Lock,
@@ -22,13 +25,16 @@ export default function CompanyLoginPage() {
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
+  const setToken = useAppStore((state) => state.setToken);
+  const setUser = useAppStore((state) => state.setUser);
+
   // Block free email providers for corporate HR portal
   const freeEmailDomains = [
     'gmail.com', 'yahoo.com', 'yahoo.co.id', 'ymail.com',
     'hotmail.com', 'outlook.com', 'live.com', 'icloud.com'
   ];
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email || !email.includes('@')) {
       setError('Masukkan alamat email perusahaan yang valid.');
@@ -49,11 +55,30 @@ export default function CompanyLoginPage() {
     setError('');
     setIsLoading(true);
 
-    setTimeout(() => {
-      setIsLoading(false);
-      localStorage.setItem('isPerusahaanLoggedIn', 'true');
+    try {
+      const response = await loginUser(email, password);
+      
+      // Strict role check
+      if (response.user.role !== 'perusahaan') {
+        setError('Akses ditolak. Akun Anda bukan akun perusahaan.');
+        setIsLoading(false);
+        return;
+      }
+      
+      setToken(response.access_token);
+      setUser(response.user);
+      toast.success('Login Perusahaan Berhasil');
+      
+      // Jika Anda menggunakan app/(perusahaan)/dashboard atau app/dashboard
       router.push('/dashboard');
-    }, 400);
+    } catch (err: any) {
+      const errorMsg = err.message === 'Failed to fetch' 
+        ? 'Tidak dapat terhubung ke server. Periksa koneksi internet Anda.' 
+        : (err.message || 'Gagal login. Periksa kembali email dan kata sandi.');
+      setError(errorMsg);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -165,19 +190,7 @@ export default function CompanyLoginPage() {
             </button>
           </form>
 
-          {/* Quick Demo Fill Button */}
-          <div className="pt-2 border-t border-slate-100 text-center space-y-3">
-            <button
-              onClick={() => {
-                setEmail('hrd@tokopedia.com');
-                setPassword('password123');
-                setError('');
-              }}
-              className="text-xs font-bold text-[#1b7b9e] bg-[#E0F1F7] hover:bg-[#C2E5EF] px-4 py-2 rounded-full border border-[#B8E1ED] transition-colors"
-            >
-              ⚡ Isikan Email Demo (hrd@tokopedia.com)
-            </button>
-
+          <div className="pt-4 border-t border-slate-100 text-center space-y-3">
             <div className="text-xs text-slate-600 font-medium">
               Perusahaan Anda belum terdaftar?{' '}
               <Link href="/register" className="font-extrabold text-[#1b7b9e] hover:underline block sm:inline mt-1 sm:mt-0">

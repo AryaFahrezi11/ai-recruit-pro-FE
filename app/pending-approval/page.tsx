@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { toast } from 'react-hot-toast';
 import {
   Clock,
   ShieldCheck,
@@ -141,7 +142,7 @@ export default function PendingApprovalPage() {
             </Link>
 
             <button
-              onClick={() => alert('Customer Support Administrator AI-Recruit Pro dapat dihubungi melalui WhatsApp Admin: 0812-9900-8800 (Jam Kerja: 08.00 - 17.00 WIB)')}
+              onClick={() => toast('Customer Support Administrator AI-Recruit Pro dapat dihubungi melalui WhatsApp Admin: 0812-9900-8800 (Jam Kerja: 08.00 - 17.00 WIB)', { duration: 5000, icon: '📞' })}
               className="w-full sm:w-auto px-8 py-3.5 rounded-full bg-[#1b7b9e] hover:bg-[#1D7FA1] text-white font-extrabold text-xs sm:text-sm shadow-md transition-all inline-flex items-center justify-center gap-2"
             >
               <MessageSquare size={16} />
