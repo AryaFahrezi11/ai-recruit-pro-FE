@@ -29,8 +29,11 @@ import {
   Check,
   Award,
   Zap,
-  HelpCircle
+  HelpCircle,
+  Users
 } from 'lucide-react';
+import { ApplyJobModal } from '@/components/ApplyJobModal';
+import { api, parseErrorMessage } from '@/lib/api';
 
 interface Job {
   id: number;
@@ -81,16 +84,21 @@ function DashboardContent() {
   const [cvDetails, setCvDetails] = useState<any>(null);
   const [appliedJobs, setAppliedJobs] = useState<number[]>([]);
   const [savedJobIds, setSavedJobIds] = useState<number[]>([101]);
+  const [applyingJobModalData, setApplyingJobModalData] = useState<{ id: number | string; title: string; company: string } | null>(null);
 
   useEffect(() => {
+    const savedEmail = localStorage.getItem('user_email') || 'pelamar@example.com';
+    const derivedName = savedEmail.split('@')[0].replace(/[._-]/g, ' ');
+    const formattedName = derivedName.charAt(0).toUpperCase() + derivedName.slice(1);
+
     const savedCv = localStorage.getItem('candidateCvData');
     if (savedCv) {
       setCvDetails(JSON.parse(savedCv));
     } else {
       setCvDetails({
-        fullName: 'Budi Pratama',
-        jobTitle: 'Senior Frontend Engineer',
-        skills: 'React, Next.js, TypeScript, Tailwind CSS',
+        fullName: formattedName,
+        jobTitle: 'Pelamar AI Recruit Pro',
+        skills: 'Frontend, Software Engineering, Problem Solving',
         updatedAt: 'Hari ini'
       });
     }
@@ -99,6 +107,19 @@ function DashboardContent() {
     if (savedApplied) {
       setAppliedJobs(JSON.parse(savedApplied));
     }
+
+    const fetchBackendSavedJobs = async () => {
+      try {
+        const res = await api.get('/saved-jobs/');
+        if (Array.isArray(res) && res.length > 0) {
+          const ids = res.map((item: any) => item.id);
+          setSavedJobIds((prev) => Array.from(new Set([...prev, ...ids])));
+        }
+      } catch (err) {
+        console.error('Failed to fetch backend saved jobs:', err);
+      }
+    };
+    fetchBackendSavedJobs();
   }, []);
 
   useEffect(() => {
@@ -415,22 +436,36 @@ function DashboardContent() {
   ];
 
   // Save Job Toggle
-  const toggleSaveJob = (jobId: number) => {
+  const toggleSaveJob = async (jobId: any) => {
+    let newSaved: any[];
     if (savedJobIds.includes(jobId)) {
-      setSavedJobIds(savedJobIds.filter((id) => id !== jobId));
+      newSaved = savedJobIds.filter((id) => id !== jobId);
+      setSavedJobIds(newSaved);
+      localStorage.setItem('candidateSavedJobsList', JSON.stringify(newSaved));
+      try {
+        await api.delete(`/saved-jobs/${jobId}`);
+      } catch (err) {
+        console.error('Failed to unsave job:', err);
+      }
     } else {
-      setSavedJobIds([...savedJobIds, jobId]);
+      newSaved = Array.from(new Set([...savedJobIds, jobId]));
+      setSavedJobIds(newSaved);
+      localStorage.setItem('candidateSavedJobsList', JSON.stringify(newSaved));
+      try {
+        await api.post(`/saved-jobs/${jobId}`);
+      } catch (err) {
+        console.error('Failed to save job:', err);
+      }
     }
   };
 
   // Direct Apply Handler
-  const handleApplyWithCv = (jobId: number, companyName: string, title: string) => {
-    const newApplied = [...appliedJobs, jobId];
-    setAppliedJobs(newApplied);
-    localStorage.setItem('appliedJobsList', JSON.stringify(newApplied));
-
-    alert(`🎉 Sukses! CV ATS-Friendly Anda ("${cvDetails?.fullName || 'Budi Pratama'}") telah terkirim ke HR ${companyName} untuk posisi "${title}".`);
-    router.push('/pelamar/status');
+  const handleApplyWithCv = (jobId: number | string, companyName: string, title: string) => {
+    setApplyingJobModalData({
+      id: jobId,
+      title: title,
+      company: companyName,
+    });
   };
 
   // Filter Jobs List
@@ -890,6 +925,17 @@ function DashboardContent() {
           </div>
 
         </div>
+      )}
+
+      {/* Apply Job Modal */}
+      {applyingJobModalData && (
+        <ApplyJobModal
+          job={applyingJobModalData}
+          onClose={() => setApplyingJobModalData(null)}
+          onSuccess={() => {
+            router.push('/pelamar/status');
+          }}
+        />
       )}
 
     </div>

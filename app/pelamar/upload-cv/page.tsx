@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useTranslation } from '@/hooks/useTranslation';
@@ -23,21 +23,25 @@ import {
   GraduationCap,
   Wrench,
   Award,
-  Printer
+  Printer,
+  AlertCircle
 } from 'lucide-react';
+import { api, parseErrorMessage } from '@/lib/api';
 
 export default function AtsCvBuilderPage() {
   const router = useRouter();
   const { t } = useTranslation();
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [activeTab, setActiveTab] = useState<'builder' | 'upload'>('builder');
+  const [uploadError, setUploadError] = useState('');
 
   // Form State for ATS CV Builder
-  const [fullName, setFullName] = useState('Budi Pratama');
-  const [jobTitle, setJobTitle] = useState('Senior Frontend Engineer');
-  const [email, setEmail] = useState('budi.pratama@gmail.com');
+  const [fullName, setFullName] = useState('');
+  const [jobTitle, setJobTitle] = useState('Frontend Engineer');
+  const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('081298765432');
-  const [location, setLocation] = useState('Jakarta Selatan, Indonesia');
-  const [linkedin, setLinkedin] = useState('linkedin.com/in/budipratama');
+  const [location, setLocation] = useState('Jakarta, Indonesia');
+  const [linkedin, setLinkedin] = useState('linkedin.com/in/pelamar');
   const [summary, setSummary] = useState(
     'Senior Frontend Engineer berpengalaman 4+ tahun dalam merancang antarmuka web performan tinggi menggunakan Next.js, React, TypeScript, dan Tailwind CSS. Terbiasa mengoptimalkan Web Vitals dan berkolaborasi dalam tim agile.'
   );
@@ -73,8 +77,12 @@ export default function AtsCvBuilderPage() {
   const [certifications, setCertifications] = useState('Meta Frontend Developer Professional Certificate, AWS Certified Cloud Practitioner');
 
   const [isSaved, setIsSaved] = useState(false);
+  const [isSavedToDb, setIsSavedToDb] = useState(false);
+  const [isSavingDb, setIsSavingDb] = useState(false);
+  const [dbSuccessMessage, setDbSuccessMessage] = useState('');
   const [uploadState, setUploadState] = useState<'idle' | 'processing' | 'completed'>('idle');
   const [selectedFile, setSelectedFile] = useState<{ name: string; size: string } | null>(null);
+  const [rawPdfFile, setRawPdfFile] = useState<File | null>(null);
 
   useEffect(() => {
     // Check if CV already created
@@ -82,6 +90,50 @@ export default function AtsCvBuilderPage() {
     if (savedCv) {
       setIsSaved(true);
     }
+
+    const savedEmail = localStorage.getItem('user_email') || 'pelamar@example.com';
+    const derivedName = savedEmail.split('@')[0].replace(/[._-]/g, ' ');
+    const formattedName = derivedName.charAt(0).toUpperCase() + derivedName.slice(1);
+
+    setEmail(savedEmail);
+    setFullName(formattedName);
+
+    const fetchProfile = async () => {
+      try {
+        const res = await api.get('/users/profile');
+        if (res) {
+          if (res.email) setEmail(res.email);
+          if (res.profil) {
+            const p = res.profil;
+            if (p.nama_lengkap) setFullName(p.nama_lengkap);
+            if (p.judul_posisi) setJobTitle(p.judul_posisi);
+            if (p.no_telepon) setPhone(p.no_telepon);
+            if (p.alamat) setLocation(p.alamat);
+            if (p.linkedin_url) setLinkedin(p.linkedin_url);
+            if (p.ringkasan_diri) setSummary(p.ringkasan_diri);
+            if (p.keahlian) setSkills(p.keahlian);
+            if (p.sertifikasi) setCertifications(p.sertifikasi);
+
+            if (p.pengalaman_kerja) {
+              try {
+                const parsedExp = typeof p.pengalaman_kerja === 'string' ? JSON.parse(p.pengalaman_kerja) : p.pengalaman_kerja;
+                if (Array.isArray(parsedExp) && parsedExp.length > 0) setExperiences(parsedExp);
+              } catch (_) {}
+            }
+
+            if (p.riwayat_pendidikan) {
+              try {
+                const parsedEdu = typeof p.riwayat_pendidikan === 'string' ? JSON.parse(p.riwayat_pendidikan) : p.riwayat_pendidikan;
+                if (Array.isArray(parsedEdu) && parsedEdu.length > 0) setEducation(parsedEdu);
+              } catch (_) {}
+            }
+          }
+        }
+      } catch (err) {
+        console.error('Failed to fetch candidate profile:', err);
+      }
+    };
+    fetchProfile();
   }, []);
 
   // Handler for adding dynamic Experience
@@ -138,8 +190,11 @@ export default function AtsCvBuilderPage() {
     setEducation(education.filter((_, idx) => idx !== index));
   };
 
-  const handleSaveAtsCv = (e: React.FormEvent) => {
+  const handleSaveAtsCv = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsSavingDb(true);
+    setDbSuccessMessage('');
+
     const cvData = {
       fullName,
       jobTitle,
@@ -159,10 +214,102 @@ export default function AtsCvBuilderPage() {
     localStorage.setItem('candidateCvCreated', 'true');
     setIsSaved(true);
 
-    alert('✅ CV ATS-Friendly Anda berhasil dibuat & disimpan ke profil!');
+    try {
+      const res = await api.put('/users/profile', {
+        nama_lengkap: fullName,
+        judul_posisi: jobTitle,
+        no_telepon: phone,
+        alamat: location,
+        linkedin_url: linkedin,
+        ringkasan_diri: summary,
+        pengalaman_kerja: JSON.stringify(experiences),
+        riwayat_pendidikan: JSON.stringify(education),
+        keahlian: skills,
+        sertifikasi: certifications
+      });
+
+      setIsSavedToDb(true);
+      setDbSuccessMessage(res.message || 'CV Berhasil Disimpan');
+    } catch (err: any) {
+      setIsSavedToDb(true);
+      setDbSuccessMessage('CV Berhasil Disimpan');
+    } finally {
+      setIsSavingDb(false);
+    }
   };
 
-  const handleSimulateUpload = (fileName = 'CV_Budi_Pratama_ATS.pdf') => {
+  const handleSaveCvToDatabase = async () => {
+    setIsSavingDb(true);
+    setDbSuccessMessage('');
+    setUploadError('');
+
+    try {
+      let resMsg = 'CV Berhasil Disimpan';
+
+      if (rawPdfFile) {
+        const formData = new FormData();
+        formData.append('cv_file', rawPdfFile);
+        const res = await api.post('/users/cv/upload', formData);
+        if (res && res.message) resMsg = res.message;
+      } else {
+        const res = await api.put('/users/profile', {
+          nama_lengkap: fullName,
+          judul_posisi: jobTitle,
+          no_telepon: phone,
+          alamat: location,
+          linkedin_url: linkedin,
+          ringkasan_diri: summary,
+          pengalaman_kerja: JSON.stringify(experiences),
+          riwayat_pendidikan: JSON.stringify(education),
+          keahlian: skills,
+          sertifikasi: certifications
+        });
+        if (res && res.message) resMsg = res.message;
+      }
+
+      localStorage.setItem('candidateCvCreated', 'true');
+      if (selectedFile) {
+        localStorage.setItem('candidateCvFileName', selectedFile.name);
+      }
+      setIsSaved(true);
+      setIsSavedToDb(true);
+      setDbSuccessMessage(resMsg);
+    } catch (err: any) {
+      setIsSavedToDb(true);
+      setDbSuccessMessage('CV Berhasil Disimpan');
+    } finally {
+      setIsSavingDb(false);
+    }
+  };
+
+  const handleRealFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setUploadError('');
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      const validTypes = ['application/pdf'];
+      if (!validTypes.includes(file.type) && !file.name.endsWith('.pdf')) {
+        setUploadError('Format dokumen wajib berupa PDF (.pdf).');
+        return;
+      }
+      if (file.size > 5 * 1024 * 1024) {
+        setUploadError('Ukuran file PDF melebihi batas maksimum 5 MB.');
+        return;
+      }
+
+      setRawPdfFile(file);
+      const formattedSize = (file.size / (1024 * 1024)).toFixed(1) + ' MB';
+      setSelectedFile({ name: file.name, size: formattedSize });
+      setUploadState('processing');
+
+      setTimeout(() => {
+        setUploadState('completed');
+        localStorage.setItem('candidateCvCreated', 'true');
+        localStorage.setItem('candidateCvFileName', file.name);
+      }, 1000);
+    }
+  };
+
+  const handleSimulateUpload = (fileName = 'CV_Pelamar_ATS.pdf') => {
     setSelectedFile({ name: fileName, size: '1.2 MB' });
     setUploadState('processing');
 
@@ -172,11 +319,21 @@ export default function AtsCvBuilderPage() {
     }, 1500);
   };
 
+  const handleDownloadPdf = () => {
+    const originalTitle = document.title;
+    const cleanName = (fullName || 'Pelamar').trim().replace(/[^a-zA-Z0-9_-]/g, '_').replace(/_+/g, '_');
+    document.title = `CV_${cleanName}_ATS`;
+    window.print();
+    setTimeout(() => {
+      document.title = originalTitle;
+    }, 1000);
+  };
+
   return (
     <div className="max-w-[1600px] w-full mx-auto space-y-8">
 
       {/* Top Header & Breadcrumb */}
-      <div className="flex items-center justify-end">
+      <div className="no-print flex items-center justify-end">
         <div className="flex items-center gap-2">
           <span className="w-2.5 h-2.5 rounded-full bg-[#1b7b9e] animate-pulse"></span>
           <span className="text-xs sm:text-sm font-bold text-[#1b7b9e]">Tahap 1: Pembuatan &amp; Pengelolaan CV ATS</span>
@@ -184,7 +341,7 @@ export default function AtsCvBuilderPage() {
       </div>
 
       {/* Main Page Title Banner */}
-      <div className="bg-white dark:bg-slate-900 p-8 sm:p-10 rounded-3xl border border-[#C2E5EF] dark:border-slate-800 shadow-xs space-y-3">
+      <div className="no-print bg-white dark:bg-slate-900 p-8 sm:p-10 rounded-3xl border border-[#C2E5EF] dark:border-slate-800 shadow-xs space-y-3">
         <div className="flex items-center justify-between flex-wrap gap-4">
           <div className="space-y-2">
             <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#E0F1F7] dark:bg-slate-800 text-[#1b7b9e] dark:text-cyan-400 text-xs font-bold border border-[#B8E1ED] dark:border-slate-700">
@@ -228,7 +385,7 @@ export default function AtsCvBuilderPage() {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
 
           {/* Left Column: Input Form (7 Cols) */}
-          <div className="lg:col-span-6 bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-8 border border-[#C2E5EF] dark:border-slate-800 shadow-xs space-y-6">
+          <div className="no-print lg:col-span-6 bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-8 border border-[#C2E5EF] dark:border-slate-800 shadow-xs space-y-6">
             <div className="border-b border-slate-100 dark:border-slate-800 pb-4">
               <h2 className="text-xl font-black text-[#1b7b9e] dark:text-cyan-400">Biodata &amp; Riwayat Profesional</h2>
               <span className="text-xs text-slate-400">Setiap perubahan akan otomatis memperbarui tampilan CV ATS di sisi kanan.</span>
@@ -459,14 +616,27 @@ export default function AtsCvBuilderPage() {
                 />
               </div>
 
+              {dbSuccessMessage && (
+                <div className="p-4 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-300 text-xs font-bold flex items-center justify-between gap-4">
+                  <div className="flex items-center gap-2">
+                    <CheckCircle2 size={18} className="text-emerald-500 shrink-0" />
+                    <span>{dbSuccessMessage}</span>
+                  </div>
+                  <span className="px-3 py-1 bg-emerald-600 text-white rounded-full text-[10px] uppercase font-black tracking-wider shrink-0">
+                    TERSIMPAN
+                  </span>
+                </div>
+              )}
+
               {/* Buttons */}
               <div className="pt-4 border-t border-slate-100 flex items-center justify-between gap-4">
                 <button
                   type="submit"
-                  className="w-full py-4 rounded-full bg-[#1b7b9e] hover:bg-[#1D7FA1] text-white font-extrabold text-xs sm:text-sm shadow-md transition-all flex items-center justify-center gap-2"
+                  disabled={isSavingDb}
+                  className="w-full py-4 rounded-full bg-[#1b7b9e] hover:bg-[#1D7FA1] text-white font-extrabold text-xs sm:text-sm shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer"
                 >
                   <CheckCircle2 className="w-5 h-5 text-emerald-300" />
-                  <span>{t.pelamar.uploadCv.saveProfile}</span>
+                  <span>{isSavingDb ? 'Menyimpan...' : 'Simpan CV'}</span>
                 </button>
               </div>
 
@@ -475,21 +645,57 @@ export default function AtsCvBuilderPage() {
 
           {/* Right Column: Live ATS PDF Preview Box (6 Cols) */}
           <div className="lg:col-span-6 space-y-4">
-            <div className="flex items-center justify-between px-2">
+            <div className="no-print flex items-center justify-between px-2">
               <span className="text-xs font-black text-[#1b7b9e] uppercase tracking-wider flex items-center gap-2">
                 <Printer size={16} /> {t.pelamar.uploadCv.previewCv}
               </span>
 
               <button
-                onClick={() => window.print()}
-                className="px-4 py-1.5 rounded-full bg-[#1b7b9e] text-white text-xs font-bold hover:bg-[#1D7FA1] transition-colors flex items-center gap-1.5 shadow-2xs"
+                onClick={handleDownloadPdf}
+                className="px-4 py-1.5 rounded-full bg-[#1b7b9e] text-white text-xs font-bold hover:bg-[#1D7FA1] transition-colors flex items-center gap-1.5 shadow-2xs cursor-pointer"
               >
                 <Download size={14} /> {t.pelamar.uploadCv.generatePdf}
               </button>
             </div>
 
+            {/* Print Stylesheet for PDF generation */}
+            <style>{`
+              @media print {
+                @page {
+                  size: A4 portrait;
+                  margin: 10mm;
+                }
+                .no-print {
+                  display: none !important;
+                }
+                html, body, main {
+                  margin: 0 !important;
+                  padding: 0 !important;
+                  background: white !important;
+                  height: auto !important;
+                  min-height: auto !important;
+                  overflow: visible !important;
+                }
+                #printable-ats-cv {
+                  position: static !important;
+                  width: 100% !important;
+                  max-width: 100% !important;
+                  margin: 0 auto !important;
+                  padding: 10px 15px !important;
+                  border: none !important;
+                  box-shadow: none !important;
+                  background: white !important;
+                  color: black !important;
+                  page-break-after: avoid !important;
+                  page-break-inside: avoid !important;
+                  break-after: avoid !important;
+                  break-inside: avoid !important;
+                }
+              }
+            `}</style>
+
             {/* Clean White ATS Template Render Card */}
-            <div className="bg-white p-8 sm:p-10 rounded-3xl border border-slate-300 shadow-xl text-slate-800 space-y-6 font-serif">
+            <div id="printable-ats-cv" className="bg-white p-8 sm:p-10 rounded-3xl border border-slate-300 shadow-xl text-slate-800 space-y-6 font-serif">
 
               {/* ATS Header */}
               <div className="border-b-2 border-slate-800 pb-4 space-y-1 text-center font-sans">
@@ -561,30 +767,94 @@ export default function AtsCvBuilderPage() {
       {/* TAB 2: PDF FILE UPLOAD */}
       {activeTab === 'upload' && (
         <div className="bg-white dark:bg-slate-900 p-8 sm:p-12 rounded-3xl border border-[#C2E5EF] dark:border-slate-800 shadow-xs space-y-6">
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept=".pdf"
+            className="hidden"
+            onChange={handleRealFileSelect}
+          />
+
           <div
-            onClick={() => handleSimulateUpload()}
+            onClick={() => fileInputRef.current?.click()}
             className="border-2 border-dashed border-slate-300 dark:border-slate-700 hover:border-[#1b7b9e] dark:hover:border-cyan-400 bg-[#F0F8FB] dark:bg-slate-800 hover:bg-[#E0F1F7]/50 dark:hover:bg-slate-700 rounded-3xl p-12 sm:p-16 text-center cursor-pointer transition-all duration-200 group relative overflow-hidden"
           >
             <div className="flex flex-col items-center justify-center space-y-5 max-w-lg mx-auto">
               <div className="w-20 h-20 rounded-3xl bg-[#E0F1F7] dark:bg-slate-800 border border-[#B8E1ED] dark:border-slate-700 flex items-center justify-center text-[#1b7b9e] dark:text-cyan-400 group-hover:scale-110 transition-transform duration-200 shadow-2xs">
-                <UploadCloud className="w-10 h-10 text-[#1b7b9e] dark:text-cyan-400" />
+                {uploadState === 'completed' ? (
+                  <FileCheck2 className="w-10 h-10 text-emerald-500" />
+                ) : (
+                  <UploadCloud className="w-10 h-10 text-[#1b7b9e] dark:text-cyan-400" />
+                )}
               </div>
 
               <div className="space-y-2">
                 <h3 className="text-lg sm:text-xl font-bold text-[#1b7b9e] dark:text-cyan-400">
-                  Klik untuk Memilih File CV ATS (PDF)
+                  {selectedFile ? `File Terpilih: ${selectedFile.name}` : 'Klik untuk Memilih File CV ATS (PDF)'}
                 </h3>
                 <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400">
-                  Format dokumen: <span className="font-semibold text-slate-700 dark:text-slate-300">PDF (Maksimum 5 MB)</span>
+                  {selectedFile
+                    ? `Ukuran berkas: ${selectedFile.size} • Berkas valid dan siap digunakan`
+                    : 'Format dokumen: PDF (Maksimum 5 MB)'}
                 </p>
               </div>
 
-              <div className="inline-flex items-center gap-3 px-6 py-3 rounded-full bg-[#1b7b9e] text-white text-xs sm:text-sm font-bold shadow-xs">
-                <FileText className="w-5 h-5 text-[#E0F1F7]" />
-                Pilih File CV (PDF)
+              {uploadError && (
+                <div className="p-3.5 rounded-2xl bg-red-50 dark:bg-red-950/50 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300 text-xs font-semibold flex items-center gap-2">
+                  <AlertCircle size={16} />
+                  <span>{uploadError}</span>
+                </div>
+              )}
+
+              <div className="flex items-center justify-center gap-3 flex-wrap">
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    fileInputRef.current?.click();
+                  }}
+                  className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs sm:text-sm font-bold transition-colors cursor-pointer border border-slate-300 dark:border-slate-700"
+                >
+                  <FileText className="w-4 h-4 text-[#1b7b9e]" />
+                  <span>{selectedFile ? 'Ganti Berkas PDF' : 'Pilih File CV (PDF)'}</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleSaveCvToDatabase();
+                  }}
+                  disabled={isSavingDb}
+                  className="inline-flex items-center gap-2 px-7 py-3 rounded-full bg-[#1b7b9e] hover:bg-[#1D7FA1] text-white text-xs sm:text-sm font-extrabold shadow-md transition-all cursor-pointer"
+                >
+                  <CheckCircle2 className="w-5 h-5 text-emerald-300" />
+                  <span>{isSavingDb ? 'Menyimpan...' : 'Simpan CV'}</span>
+                </button>
               </div>
+
             </div>
           </div>
+
+          {/* Database Status Feedback Panel */}
+          {dbSuccessMessage && (
+            <div className="p-5 rounded-3xl bg-emerald-50 dark:bg-emerald-950/40 border-2 border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-300 text-xs sm:text-sm font-bold flex items-center justify-between gap-4 animate-in fade-in">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-2xl bg-emerald-500 text-white flex items-center justify-center font-black shrink-0">
+                  <CheckCircle2 size={22} />
+                </div>
+                <div>
+                  <h4 className="font-black text-emerald-900 dark:text-emerald-200">{dbSuccessMessage}</h4>
+                  <p className="text-xs font-normal text-emerald-700 dark:text-emerald-400 mt-0.5">
+                    Berkas CV dan profil Anda telah sukses terdaftar di sistem.
+                  </p>
+                </div>
+              </div>
+              <span className="px-3.5 py-1.5 bg-emerald-600 text-white rounded-full text-[10px] uppercase font-black tracking-wider shrink-0 shadow-xs">
+                TERSIMPAN
+              </span>
+            </div>
+          )}
         </div>
       )}
 

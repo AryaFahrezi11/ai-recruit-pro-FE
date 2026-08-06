@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useTranslation } from '@/hooks/useTranslation';
 import {
@@ -29,6 +29,7 @@ import {
   Bot,
   ArrowRight
 } from 'lucide-react';
+import { api, parseErrorMessage } from '@/lib/api';
 
 interface ApplicationItem {
   id: number;
@@ -62,205 +63,129 @@ interface ApplicationItem {
   };
 }
 
+const initialMockApplications: ApplicationItem[] = [
+  {
+    id: 5,
+    jobTitle: 'Senior Frontend Engineer (AI Solutions)',
+    companyName: 'PT Tech Inovasi Nusantara',
+    logo: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=120&auto=format&fit=crop&q=80',
+    applyDate: '29/07/2026',
+    kegiatan: 'WEBCAREER',
+    tahapRekrutmen: 'Stage 3: Wawancara Video (Tindakan Diperlukan)',
+    currentStageIndex: 3,
+    status: 'Dalam Proses',
+    hasActionRequired: true,
+    statusMessage: 'CV ATS-Friendly Anda telah LOLOS skrining AI dengan skor 92%! Silakan lakukan perekaman Wawancara Video Singkat (Virtual Interview) untuk melanjutkan proses seleksi ke tahap berikutnya.',
+    cvScore: 92,
+    cvBreakdown: {
+      format: 88,
+      experience: 95,
+      skills: 92,
+      achievements: 85,
+      language: 90,
+      notes: [
+        '3+ tahun pengalaman Frontend Engineer sangat relevan dengan kualifikasi senior.',
+        'Kata kunci Next.js, TypeScript, dan Tailwind CSS cocok 100% dengan Job Description.',
+        'Struktur dokumen ATS-Friendly terbaca sempurna oleh parser OCR AI.'
+      ]
+    },
+    videoScore: 0,
+    videoBreakdown: {
+      fluency: 0,
+      confidence: 0,
+      keywords: 0,
+      emotion: 0,
+      logic: 0,
+      notes: [
+        'Kandidat belum melakukan perekaman Wawancara Video Singkat.'
+      ]
+    }
+  }
+];
+
 export default function StatusValidasiPage() {
   const { t } = useTranslation();
   const [searchTerm, setSearchTerm] = useState('');
   const [stageFilter, setStageFilter] = useState('Semua Tahapan');
   const [statusFilter, setStatusFilter] = useState('Semua Status');
 
-  // Expanded application cards state (default ID 5 & 4 open)
+  // Expanded application cards state
   const [expandedJobIds, setExpandedJobIds] = useState<number[]>([5, 4]);
 
   // Modal States
   const [activeCvModalJob, setActiveCvModalJob] = useState<ApplicationItem | null>(null);
   const [activeVideoModalJob, setActiveVideoModalJob] = useState<ApplicationItem | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
 
-  // 5 Representative Status Scenarios
-  const [applications, setApplications] = useState<ApplicationItem[]>([
-    // 5. PROSES: Disuruh upload virtual interview (Action Required)
-    {
-      id: 5,
-      jobTitle: 'Senior Frontend Engineer (AI Solutions)',
-      companyName: 'PT Tech Inovasi Nusantara',
-      logo: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=120&auto=format&fit=crop&q=80',
-      applyDate: '29/07/2026',
-      kegiatan: 'WEBCAREER',
-      tahapRekrutmen: 'Stage 3: Wawancara Video (Tindakan Diperlukan)',
-      currentStageIndex: 3,
-      status: 'Dalam Proses',
-      hasActionRequired: true,
-      statusMessage: 'CV ATS-Friendly Anda telah LOLOS skrining AI dengan skor 92%! Silakan lakukan perekaman Wawancara Video Singkat (Virtual Interview) untuk melanjutkan proses seleksi ke tahap berikutnya.',
-      cvScore: 92,
-      cvBreakdown: {
-        format: 88,
-        experience: 95,
-        skills: 92,
-        achievements: 85,
-        language: 90,
-        notes: [
-          '3+ tahun pengalaman Frontend Engineer sangat relevan dengan kualifikasi senior.',
-          'Kata kunci Next.js, TypeScript, dan Tailwind CSS cocok 100% dengan Job Description.',
-          'Struktur dokumen ATS-Friendly terbaca sempurna oleh parser OCR AI.'
-        ]
-      },
-      videoScore: 0,
-      videoBreakdown: {
-        fluency: 0,
-        confidence: 0,
-        keywords: 0,
-        emotion: 0,
-        logic: 0,
-        notes: [
-          'Kandidat belum melakukan perekaman Wawancara Video Singkat.'
-        ]
+  // Applications State
+  const [applications, setApplications] = useState<ApplicationItem[]>([]);
+
+  useEffect(() => {
+    const fetchApplications = async () => {
+      try {
+        setIsLoading(true);
+        const res = await api.get('/applications/');
+        const rawList = Array.isArray(res) ? res : res.data || [];
+
+        if (rawList.length > 0) {
+          const mapped: ApplicationItem[] = rawList.map((item: any, idx: number) => {
+            const isLolos = item.status === 'lolos_cv' || item.status === 'Lolos';
+            const cvScore = Math.round(item.skor_kecocokan || item.cv_score || 75);
+
+            return {
+              id: item.id || idx + 1,
+              jobTitle: item.job?.judul_posisi || item.judul_posisi || 'Lowongan Pekerjaan',
+              companyName: item.job?.perusahaan?.nama_perusahaan || item.nama_perusahaan || 'Perusahaan Partner',
+              logo: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=120&auto=format&fit=crop&q=80',
+              applyDate: item.created_at ? new Date(item.created_at).toLocaleDateString('id-ID') : 'Baru saja',
+              kegiatan: 'WEBCAREER',
+              tahapRekrutmen: isLolos ? 'Stage 2: CV PO-FIT Lolos' : 'Stage 2: Evaluasi CV',
+              currentStageIndex: isLolos ? 3 : 2,
+              status: isLolos ? 'Lolos' : 'Dalam Proses',
+              statusMessage: isLolos
+                ? `CV Anda berhasil dianalisis oleh AI dengan skor kecocokan ${cvScore}%. Rekruter akan menghubungi Anda untuk proses wawancara.`
+                : `CV Anda sedang dalam proses peninjauan oleh sistem AI dengan skor kecocokan ${cvScore}%.`,
+              hasActionRequired: isLolos,
+              cvScore: cvScore,
+              cvBreakdown: {
+                format: 85,
+                experience: 80,
+                skills: cvScore,
+                achievements: 75,
+                language: 90,
+                notes: [
+                  `Hasil analisis AI kecocokan kualifikasi: ${cvScore}%`,
+                  'Struktur dokumen PDF/TXT valid dan dapat dibaca parser.'
+                ]
+              },
+              videoScore: 0,
+              videoBreakdown: {
+                fluency: 0,
+                confidence: 0,
+                keywords: 0,
+                emotion: 0,
+                logic: 0,
+                notes: ['Tahap wawancara video belum dimulai.']
+              }
+            };
+          });
+
+          setApplications(mapped);
+          setExpandedJobIds(mapped.map((m) => Number(m.id)));
+        } else {
+          // Fallback mock scenarios if no applications in DB yet
+          setApplications(initialMockApplications);
+        }
+      } catch (err) {
+        console.error('Failed to fetch application status:', err);
+        setApplications(initialMockApplications);
+      } finally {
+        setIsLoading(false);
       }
-    },
-    // 4. Selesai sampai human validation dan diterima tanpa adanya additional interview
-    {
-      id: 4,
-      jobTitle: 'AIF - ADMO - Senior Backend Engineer',
-      companyName: 'PT Astra Digital Mobil',
-      logo: 'https://images.unsplash.com/photo-1560179707-f14e90ef3623?w=120&auto=format&fit=crop&q=80',
-      applyDate: '01/07/2026',
-      kegiatan: 'WEBCAREER',
-      tahapRekrutmen: 'Stage 5: Human Validation (Diterima / Fast-Track)',
-      currentStageIndex: 5,
-      status: 'Lolos',
-      statusMessage: '🎉 Selamat! Anda dinyatakan DITERIMA (HIRED) secara langsung tanpa perlu wawancara tambahan, berdasarkan skor komposit AI PO-FIT Anda yang sangat unggul (96%). Surat Penawaran Kerja (Offering Letter) resmi telah dikirimkan ke email Anda.',
-      cvScore: 96,
-      cvBreakdown: {
-        format: 95,
-        experience: 98,
-        skills: 96,
-        achievements: 94,
-        language: 95,
-        notes: [
-          'Kualifikasi CV & pengalaman arsitektur microservices sangat menonjol.',
-          'Format dokumen ATS 100% terstruktur sempurna.'
-        ]
-      },
-      videoScore: 95,
-      videoBreakdown: {
-        fluency: 96,
-        confidence: 94,
-        keywords: 96,
-        emotion: 92,
-        logic: 95,
-        notes: [
-          'Penyampaian lisan & artikulasi bahasa sangat lugas dan profesional.',
-          'Lolos kriteria penilaian komposit tanpa syarat wawancara fisik tambahan.'
-        ]
-      }
-    },
-    // 3. Tidak lolos tahap human validation (additional interview)
-    {
-      id: 3,
-      jobTitle: 'Senior Fullstack Developer (Node.js & React)',
-      companyName: 'Fintech Utama Indonesia',
-      logo: 'https://images.unsplash.com/photo-1560179707-f14e90ef3623?w=120&auto=format&fit=crop&q=80',
-      applyDate: '10/06/2026',
-      kegiatan: 'WEBCAREER',
-      tahapRekrutmen: 'Stage 5: Human Validation (Wawancara HR)',
-      currentStageIndex: 5,
-      status: 'Tidak Lolos',
-      statusMessage: 'Wawancara tambahan (Human Validation) bersama HR Manager telah selesai dilaksanakan. Terima kasih banyak atas waktu Anda, namun tim HR memutuskan belum dapat melanjutkan berkas Anda ke tahap penawaran kerja (Offering).',
-      cvScore: 88,
-      cvBreakdown: {
-        format: 86,
-        experience: 90,
-        skills: 88,
-        achievements: 85,
-        language: 90,
-        notes: [
-          'CV lolos skrining otomatis dengan kualifikasi teknis yang baik.'
-        ]
-      },
-      videoScore: 85,
-      videoBreakdown: {
-        fluency: 86,
-        confidence: 84,
-        keywords: 88,
-        emotion: 82,
-        logic: 85,
-        notes: [
-          'Skor analisis AI video dalam rentang baik.',
-          'Hasil wawancara tatap muka akhir menentukan alokasi kandidat lain.'
-        ]
-      }
-    },
-    // 2. Tidak lolos tahap interview video
-    {
-      id: 2,
-      jobTitle: 'Data Analyst & BI Specialist',
-      companyName: 'Nusantara Intelligence Corp',
-      logo: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=120&auto=format&fit=crop&q=80',
-      applyDate: '20/06/2026',
-      kegiatan: 'WEBCAREER',
-      tahapRekrutmen: 'Stage 4: AI Video Analysis',
-      currentStageIndex: 4,
-      status: 'Tidak Lolos',
-      statusMessage: 'Maaf, hasil evaluasi AI Video Wawancara Anda memperoleh skor komposit 64% (di bawah ambang batas minimum 80%). Indikator respon lisan & analisis ekspresi emosi belum memenuhi kriteria evaluasi lowongan ini.',
-      cvScore: 86,
-      cvBreakdown: {
-        format: 85,
-        experience: 87,
-        skills: 86,
-        achievements: 84,
-        language: 88,
-        notes: [
-          'Skor CV lolos tahap awal skrining kualifikasi.'
-        ]
-      },
-      videoScore: 64,
-      videoBreakdown: {
-        fluency: 62,
-        confidence: 60,
-        keywords: 68,
-        emotion: 65,
-        logic: 65,
-        notes: [
-          'Skor ketenangan lisan & relevansi kata kunci lisan di bawah threshold 80%.',
-          'Jawaban pertanyaan kepemimpinan terpotong sebelum durasi usai.'
-        ]
-      }
-    },
-    // 1. Tidak lolos tahap CV
-    {
-      id: 1,
-      jobTitle: 'AIF - SERA - QA Automation Engineer',
-      companyName: 'Serasi Autoraya',
-      logo: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=120&auto=format&fit=crop&q=80',
-      applyDate: '15/06/2026',
-      kegiatan: 'WEBCAREER',
-      tahapRekrutmen: 'Stage 2: Skrining CV (PO-FIT)',
-      currentStageIndex: 2,
-      status: 'Tidak Lolos',
-      statusMessage: 'Maaf, hasil analisis CV ATS-Friendly Anda memperoleh skor 68% (di bawah ambang batas minimum 80%). Kualifikasi kata kunci teknis & sertifikasi belum memenuhi kriteria kualifikasi lowongan ini.',
-      cvScore: 68,
-      cvBreakdown: {
-        format: 70,
-        experience: 65,
-        skills: 68,
-        achievements: 60,
-        language: 75,
-        notes: [
-          'Skor kesesuaian kata kunci QA Automation berada di bawah ambang batas (68% < 80%).',
-          'Pengalaman alat pengujian otomatisasi tidak tercantum secara spesifik.'
-        ]
-      },
-      videoScore: 0,
-      videoBreakdown: {
-        fluency: 0,
-        confidence: 0,
-        keywords: 0,
-        emotion: 0,
-        logic: 0,
-        notes: [
-          'Tidak memenuhi syarat untuk tahap wawancara video.'
-        ]
-      }
-    }
-  ]);
+    };
+
+    fetchApplications();
+  }, []);
 
   const pipelineStagesList = [
     { number: 1, name: '1. UPLOAD CV', key: 'cv_upload' },

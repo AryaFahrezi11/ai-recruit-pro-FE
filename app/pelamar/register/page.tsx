@@ -8,29 +8,117 @@ import {
   HelpCircle,
   ArrowRight,
   Building2,
-  Sparkles
+  Sparkles,
+  Mail,
+  Lock,
+  AlertCircle,
+  CheckCircle2,
+  ShieldCheck,
+  KeyRound
 } from 'lucide-react';
+import { api, parseErrorMessage } from '@/lib/api';
 
 export default function PelamarRegisterPage() {
   const router = useRouter();
   const { t } = useTranslation();
+
+  // Wizard state: step 1 (Register form), step 2 (OTP Popup/Screen)
+  const [step, setStep] = useState<number>(1);
+
+  // Form State
   const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState('');
 
-  const handleInstantDirectLogin = () => {
+  // Temporary auth token from backend
+  const [tempToken, setTempToken] = useState('');
+  const [tempUserId, setTempUserId] = useState('');
+
+  // OTP State
+  const [otpCode, setOtpCode] = useState(['', '', '', '', '', '']);
+  const [otpError, setOtpError] = useState('');
+
+  const handleRegisterSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email || !email.includes('@')) {
+      setError('Masukkan alamat email yang valid.');
+      return;
+    }
+    if (!password || password.length < 6) {
+      setError('Kata sandi minimal 6 karakter.');
+      return;
+    }
+
     setIsLoading(true);
-    // Set candidate authentication session flag
-    localStorage.setItem('isPelamarLoggedIn', 'true');
+    setError('');
 
-    setTimeout(() => {
+    try {
+      const res = await api.post('/auth/register', {
+        email,
+        password,
+        role: 'pelamar'
+      });
+
+      if (res.access_token) {
+        setTempToken(res.access_token);
+        setTempUserId(res.user_id || '');
+      }
+
+      // Move to OTP Step
+      setStep(2);
+    } catch (err: any) {
+      setError(parseErrorMessage(err));
+    } finally {
       setIsLoading(false);
-      router.push('/pelamar/dashboard');
-    }, 200);
+    }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleOtpChange = (index: number, value: string) => {
+    if (value.length > 1) value = value.slice(-1);
+    const newOtp = [...otpCode];
+    newOtp[index] = value;
+    setOtpCode(newOtp);
+
+    // Auto focus next input
+    if (value && index < 5) {
+      const nextInput = document.getElementById(`pelamar-otp-${index + 1}`);
+      if (nextInput) nextInput.focus();
+    }
+  };
+
+  const handleVerifyOtp = async (e: React.FormEvent) => {
     e.preventDefault();
-    handleInstantDirectLogin();
+    const enteredOtp = otpCode.join('');
+    if (enteredOtp.length < 6) {
+      setOtpError('Harap masukkan 6 digit kode OTP yang dikirimkan ke email Anda.');
+      return;
+    }
+
+    setOtpError('');
+    setIsLoading(true);
+
+    try {
+      const res = await api.post('/auth/verify-otp', {
+        email,
+        otp_code: enteredOtp
+      });
+
+      if (res.access_token) {
+        localStorage.setItem('access_token', res.access_token);
+        localStorage.setItem('user_role', res.role || 'pelamar');
+        localStorage.setItem('user_id', res.user_id || '');
+      }
+      localStorage.setItem('user_email', email);
+      localStorage.setItem('isPelamarLoggedIn', 'true');
+
+      // Redirect to pelamar dashboard
+      router.push('/pelamar/dashboard');
+    } catch (err: any) {
+      setOtpError(parseErrorMessage(err));
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -61,110 +149,152 @@ export default function PelamarRegisterPage() {
         </Link>
       </header>
 
-      {/* Main Centered Register Card */}
+      {/* Main Container */}
       <main className="flex-1 flex items-center justify-center px-4 py-8">
-        <div className="w-full max-w-md bg-white dark:bg-slate-900 rounded-3xl p-8 sm:p-10 shadow-2xl border border-[#C2E5EF] dark:border-slate-800 space-y-7 relative">
 
-          <div className="space-y-2">
-            <h1 className="text-3xl font-black text-[#1b7b9e] dark:text-cyan-400">{t.pelamar.auth.registerTitle}</h1>
-            <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400">
-              {t.pelamar.auth.registerSubtitle}
-            </p>
+        {/* STEP 1: Registration Form */}
+        {step === 1 && (
+          <div className="w-full max-w-md bg-white dark:bg-slate-900 rounded-3xl p-8 sm:p-10 shadow-2xl border border-[#C2E5EF] dark:border-slate-800 space-y-7 relative animate-in fade-in duration-200">
+            <div className="space-y-2">
+              <span className="px-3 py-1 bg-[#E0F1F7] dark:bg-slate-800 text-[#1b7b9e] dark:text-cyan-400 rounded-full text-[11px] font-extrabold border border-[#B8E1ED] dark:border-slate-700 inline-block">
+                Langkah 1 dari 2: Pendaftaran Akun Pelamar
+              </span>
+              <h1 className="text-3xl font-black text-[#1b7b9e] dark:text-cyan-400">{t.pelamar.auth.registerTitle}</h1>
+              <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400">
+                {t.pelamar.auth.registerSubtitle}
+              </p>
+            </div>
+
+            <form onSubmit={handleRegisterSubmit} className="space-y-4">
+              <div className="space-y-1">
+                <div className="flex items-center justify-between text-xs font-bold text-slate-700 dark:text-slate-300">
+                  <label htmlFor="email">{t.pelamar.auth.emailLabel}</label>
+                  <button type="button" className="text-[#1b7b9e] dark:text-cyan-400 hover:underline flex items-center gap-1">
+                    <HelpCircle size={14} /> Bantuan
+                  </button>
+                </div>
+
+                <div className="relative flex items-center">
+                  <Mail size={18} className="absolute left-4 text-slate-400 pointer-events-none" />
+                  <input
+                    id="email"
+                    type="email"
+                    value={email}
+                    onChange={(e) => { setEmail(e.target.value); setError(''); }}
+                    placeholder="nama@email.com"
+                    className="w-full pl-12 pr-4 py-3 bg-white dark:bg-slate-800 border-2 border-slate-300 dark:border-slate-700 focus:border-[#1b7b9e] dark:focus:border-cyan-400 focus:ring-2 focus:ring-cyan-100 dark:focus:ring-cyan-900 rounded-2xl text-sm outline-none transition-all dark:text-white"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-1">
+                <label htmlFor="password" className="block text-xs font-bold text-slate-700 dark:text-slate-300">
+                  Kata Sandi (Minimal 6 karakter)
+                </label>
+                <div className="relative flex items-center">
+                  <Lock size={18} className="absolute left-4 text-slate-400 pointer-events-none" />
+                  <input
+                    id="password"
+                    type="password"
+                    value={password}
+                    onChange={(e) => { setPassword(e.target.value); setError(''); }}
+                    placeholder="••••••••"
+                    className="w-full pl-12 pr-4 py-3 bg-white dark:bg-slate-800 border-2 border-slate-300 dark:border-slate-700 focus:border-[#1b7b9e] dark:focus:border-cyan-400 focus:ring-2 focus:ring-cyan-100 dark:focus:ring-cyan-900 rounded-2xl text-sm outline-none transition-all dark:text-white"
+                  />
+                </div>
+              </div>
+
+              {error && (
+                <div className="p-3.5 rounded-2xl bg-red-50 dark:bg-red-950/50 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300 text-xs font-semibold flex items-start gap-2">
+                  <AlertCircle size={16} className="shrink-0 mt-0.5" />
+                  <span>{error}</span>
+                </div>
+              )}
+
+              <button
+                type="submit"
+                disabled={isLoading}
+                className="w-full py-3.5 rounded-full bg-[#1b7b9e] hover:bg-[#1D7FA1] text-white font-extrabold text-xs sm:text-sm shadow-md hover:shadow-lg transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer"
+              >
+                <span>{isLoading ? 'Mendaftarkan Akun...' : 'Daftar Sekarang & Kirim OTP'}</span>
+                <ArrowRight size={16} />
+              </button>
+            </form>
+
+            <div className="pt-2 text-center text-xs text-slate-600 dark:text-slate-400 font-medium">
+              {t.pelamar.auth.hasAccount}{' '}
+              <Link href="/pelamar/login" className="font-extrabold text-[#1b7b9e] dark:text-cyan-400 hover:underline">
+                {t.pelamar.auth.loginNow}
+              </Link>
+            </div>
           </div>
+        )}
 
-          {/* Social Auth Options */}
-          <div className="space-y-3">
-            {/* Google */}
-            <button
-              onClick={handleInstantDirectLogin}
-              type="button"
-              className="w-full py-3.5 px-4 rounded-2xl border-2 border-slate-200 dark:border-slate-700 hover:border-[#1b7b9e] dark:hover:border-cyan-400 bg-white dark:bg-slate-800 hover:bg-[#F0F8FB] dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-bold text-xs sm:text-sm transition-all flex items-center justify-center gap-3 shadow-2xs group"
-            >
-              <svg className="w-5 h-5 shrink-0" viewBox="0 0 24 24">
-                <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.665-5.17 3.665-9.17z" />
-                <path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.29v3.15C3.26 21.3 7.31 24 12 24z" />
-                <path fill="#FBBC05" d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.13-1.55.38-2.27V6.58H1.29c-.8 1.6-1.26 3.4-1.26 5.42s.46 3.82 1.26 5.42l3.99-3.15z" />
-                <path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.31 0 3.26 2.7 1.29 6.58l3.99 3.15c.95-2.83 3.6-4.98 6.72-4.98z" />
-              </svg>
-              <span>Lanjutkan dengan Google</span>
-            </button>
+        {/* STEP 2: OTP Verification Popup/Card */}
+        {step === 2 && (
+          <div className="w-full max-w-md bg-white dark:bg-slate-900 rounded-3xl p-8 sm:p-10 shadow-2xl border border-[#C2E5EF] dark:border-slate-800 space-y-7 relative animate-in zoom-in-95 duration-200">
+            <div className="space-y-2 text-center">
+              <div className="w-14 h-14 bg-[#E0F1F7] dark:bg-slate-800 border border-[#B8E1ED] dark:border-slate-700 rounded-2xl flex items-center justify-center text-[#2596be] dark:text-cyan-400 mx-auto">
+                <KeyRound size={28} />
+              </div>
+              <h2 className="text-2xl font-black text-[#1b7b9e] dark:text-cyan-400">Verifikasi Kode OTP Email</h2>
+              <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 max-w-xs mx-auto leading-relaxed">
+                Kode verifikasi OTP 6-digit telah dikirimkan ke alamat email Anda: <strong className="text-[#2596be] dark:text-cyan-400">{email}</strong>.
+              </p>
+            </div>
 
-            {/* Facebook */}
-            <button
-              onClick={handleInstantDirectLogin}
-              type="button"
-              className="w-full py-3.5 px-4 rounded-2xl border-2 border-slate-200 dark:border-slate-700 hover:border-[#1b7b9e] dark:hover:border-cyan-400 bg-white dark:bg-slate-800 hover:bg-[#F0F8FB] dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-bold text-xs sm:text-sm transition-all flex items-center justify-center gap-3 shadow-2xs group"
-            >
-              <svg className="w-5 h-5 text-[#1877F2] fill-current shrink-0" viewBox="0 0 24 24">
-                <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
-              </svg>
-              <span>Lanjutkan dengan Facebook</span>
-            </button>
+            <form onSubmit={handleVerifyOtp} className="space-y-6">
 
-            {/* Apple */}
-            <button
-              onClick={handleInstantDirectLogin}
-              type="button"
-              className="w-full py-3.5 px-4 rounded-2xl border-2 border-slate-200 dark:border-slate-700 hover:border-[#1b7b9e] dark:hover:border-cyan-400 bg-white dark:bg-slate-800 hover:bg-[#F0F8FB] dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-bold text-xs sm:text-sm transition-all flex items-center justify-center gap-3 shadow-2xs group"
-            >
-              <svg className="w-5 h-5 text-black dark:text-white fill-current shrink-0" viewBox="0 0 24 24">
-                <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M15.97 6.32c.67-.82 1.12-1.96.99-3.1-.96.04-2.13.64-2.82 1.45-.62.72-1.16 1.88-1.01 3 .07.01.14.02.21.02 1.05 0 2.14-.55 2.63-1.37z" />
-              </svg>
-              <span>Lanjutkan dengan Apple</span>
-            </button>
-          </div>
+              {/* 6 Digit Inputs */}
+              <div className="flex justify-center items-center gap-2 sm:gap-3">
+                {otpCode.map((digit, idx) => (
+                  <input
+                    key={idx}
+                    id={`pelamar-otp-${idx}`}
+                    type="text"
+                    maxLength={1}
+                    value={digit}
+                    onChange={(e) => handleOtpChange(idx, e.target.value)}
+                    className="w-11 h-13 sm:w-12 sm:h-14 text-center text-xl font-black text-[#1b7b9e] dark:text-cyan-400 bg-[#F0F8FB] dark:bg-slate-800 border-2 border-[#C2E5EF] dark:border-slate-700 focus:border-[#1b7b9e] dark:focus:border-cyan-400 focus:bg-white dark:focus:bg-slate-900 rounded-2xl outline-none transition-all"
+                  />
+                ))}
+              </div>
 
-          {/* Divider */}
-          <div className="relative flex items-center justify-center my-4">
-            <div className="w-full border-t border-slate-200 dark:border-slate-800"></div>
-            <span className="absolute bg-white dark:bg-slate-900 px-4 text-xs font-semibold text-slate-400">atau</span>
-          </div>
+              {otpError && (
+                <div className="p-3.5 rounded-2xl bg-red-50 dark:bg-red-950/50 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300 text-xs font-semibold text-center">
+                  {otpError}
+                </div>
+              )}
 
-          {/* Form */}
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="space-y-1">
-              <div className="flex items-center justify-between text-xs font-bold text-slate-700 dark:text-slate-300">
-                <label htmlFor="email">{t.pelamar.auth.emailLabel}</label>
-                <button type="button" className="text-[#1b7b9e] dark:text-cyan-400 hover:underline flex items-center gap-1">
-                  <HelpCircle size={14} /> Bantuan
+              <div className="flex items-center justify-between gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setStep(1)}
+                  className="px-5 py-3 rounded-full border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 font-bold text-xs hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+                >
+                  &larr; Ubah Email
+                </button>
+
+                <button
+                  type="submit"
+                  disabled={isLoading}
+                  className="flex-1 py-3.5 rounded-full bg-[#1b7b9e] hover:bg-[#1D7FA1] text-white font-extrabold text-xs sm:text-sm shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer"
+                >
+                  {isLoading ? (
+                    <span>Memverifikasi...</span>
+                  ) : (
+                    <>
+                      <span>Verifikasi &amp; Masuk Dashboard</span>
+                      <ArrowRight size={16} />
+                    </>
+                  )}
                 </button>
               </div>
 
-              <input
-                id="email"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="nama@email.com"
-                className="w-full px-4 py-3 bg-white dark:bg-slate-800 border-2 border-slate-300 dark:border-slate-700 focus:border-[#1b7b9e] dark:focus:border-cyan-400 focus:ring-2 focus:ring-cyan-100 dark:focus:ring-cyan-900 rounded-2xl text-sm outline-none transition-all dark:text-white"
-              />
-            </div>
-
-            <button
-              type="submit"
-              disabled={isLoading}
-              className="w-full py-3.5 rounded-full bg-[#1b7b9e] hover:bg-[#1D7FA1] text-white font-extrabold text-xs sm:text-sm shadow-md hover:shadow-lg transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer"
-            >
-              {isLoading ? (
-                <span>Membuat Akun Baru...</span>
-              ) : (
-                <>
-                  <span>{t.pelamar.auth.signUp}</span>
-                  <ArrowRight size={16} />
-                </>
-              )}
-            </button>
-          </form>
-
-          {/* Bottom Switch to Sign in */}
-          <div className="pt-2 text-center text-xs text-slate-600 dark:text-slate-400 font-medium">
-            {t.pelamar.auth.hasAccount}{' '}
-            <Link href="/pelamar/login" className="font-extrabold text-[#1b7b9e] dark:text-cyan-400 hover:underline">
-              {t.pelamar.auth.loginNow}
-            </Link>
+            </form>
           </div>
+        )}
 
-        </div>
       </main>
 
       {/* Simple Footer */}
