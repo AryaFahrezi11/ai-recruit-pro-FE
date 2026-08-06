@@ -1160,8 +1160,8 @@ export const dictionaries = {
         duration: 'Durasi',
         skills: 'Keahlian Utama',
         skillsPlaceholder: 'Misal: React, Node.js, Manajemen Proyek',
-        saveProfile: 'Simpan Profil',
-        generatePdf: 'Buat CV PDF',
+        saveProfile: 'Simpan CV',
+        generatePdf: 'Unduh PDF',
         previewCv: 'Pratinjau CV',
       },
       wawancara: {

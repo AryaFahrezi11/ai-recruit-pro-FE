@@ -25,6 +25,7 @@ import {
   FileText,
   Clock
 } from 'lucide-react';
+import { api } from '@/lib/api';
 
 interface SavedJob {
   id: number;
@@ -71,15 +72,58 @@ export default function SavedJobsPage() {
       descriptionBullets: [
         'Menyusun laporan stok dan status inventaris secara berkala.',
         'Memberi label, menyimpan, dan menata barang di lokasi penyimpanan yang sesuai.',
-        'Memantau ketersediaan barang dan melaporkan jika ada kekurangan atau ketidaksesuaian.',
-        'Membantu dalam proses stock opname dan audit inventaris rutin.'
+        'Memantau ketersediaan barang dan melaporkan jika ada kekurangan atau ketidaksesuaian.'
       ],
       placementInfo: 'Untuk lokasi di Mangga Besar, Jakarta Barat',
       criteriaBullets: [
-        'BERSEDIA DATANG UNTUK TEST LANGSUNG di Mangga Besar, Jakarta Barat.',
         'Pria/Wanita 18 - 25 Tahun, Rapi & Teliti.',
-        'WAJIB BISA MENGGUNAKAN KOMPUTER Rajin (tidak malas), inisiatif tinggi, jujur.',
-        'Bisa bekerja full time - 6 hari dalam 1 minggu jam 08.30 s/d 18.00.'
+        'WAJIB BISA MENGGUNAKAN KOMPUTER Rajin.'
+      ],
+      savedAt: '28 Juli 2026'
+    },
+    {
+      id: 102,
+      title: 'Staff Admin Klinik',
+      company: 'Medika Utama Clinic',
+      logo: 'https://images.unsplash.com/photo-1516549655169-df83a0774514?w=120&auto=format&fit=crop&q=80',
+      location: 'Kota Depok, Jawa Barat',
+      education: 'Minimal SMA/SMK/Sederajat',
+      workPolicy: 'Kontrak • Kerja dari kantor (WFO)',
+      salary: 'Rp 2.400.000 - Rp 2.700.000',
+      postedAgo: 'Terakhir diperbarui 3 hari yang lalu',
+      matchScore: 92,
+      reason: 'Kemampuan komunikasi ramah & administrasi dokumen sesuai standar klinik.',
+      descriptionBullets: [
+        'Mengelola pendaftaran pasien dan jadwal konsultasi dokter.',
+        'Melakukan pencatatan administrasi rekam medis dan klaim asuransi kesehatan.'
+      ],
+      placementInfo: 'Margonda, Depok',
+      criteriaBullets: [
+        'Pendidikan minimal SMA/SMK Sederajat.',
+        'Komunikatif, ramah, dan berpenampilan rapi.'
+      ],
+      savedAt: '28 Juli 2026'
+    },
+    {
+      id: 103,
+      title: 'Call Center',
+      company: 'PT Citra Indojaya Perkasa',
+      logo: 'https://images.unsplash.com/photo-1560179707-f14e90ef3623?w=120&auto=format&fit=crop&q=80',
+      location: 'Jakarta Utara, DKI Jakarta',
+      education: 'Minimal D3/D4',
+      workPolicy: 'Full time • Hybrid',
+      salary: 'Rp 5.729.876 - Rp 7.000.000',
+      postedAgo: 'Terakhir diperbarui 1 hari yang lalu',
+      matchScore: 94,
+      reason: 'Skor komunikasi lisan & pemecahan masalah Anda sangat baik.',
+      descriptionBullets: [
+        'Menerima panggilan masuk (inbound call) dan menangani keluhan pelanggan.',
+        'Eskalasi masalah teknis ke tim terkait.'
+      ],
+      placementInfo: 'Sunter, Jakarta Utara',
+      criteriaBullets: [
+        'Pendidikan D3 / S1 Semua Jurusan.',
+        'Pengalaman customer service 1 tahun.'
       ],
       savedAt: '28 Juli 2026'
     },
@@ -128,11 +172,97 @@ export default function SavedJobsPage() {
         'Portofolio web desain aktif dapat ditunjukkan.'
       ],
       savedAt: '30 Juli 2026'
+    },
+    {
+      id: 106,
+      title: 'Staff Accounting',
+      company: 'PT Maju Sejahtera Abadi',
+      logo: 'https://images.unsplash.com/photo-1554224155-6726b3ff858f?w=120&auto=format&fit=crop&q=80',
+      location: 'Jakarta Selatan, DKI Jakarta',
+      education: 'Minimal D3/S1 Akuntansi',
+      workPolicy: 'Full time • Kerja dari kantor (WFO)',
+      salary: 'Rp 5.000.000 - Rp 7.000.000',
+      postedAgo: 'Terakhir diperbarui 1 hari yang lalu',
+      matchScore: 88,
+      reason: 'Pemahaman laporan keuangan & pencatatan transaksi sangat sesuai.',
+      descriptionBullets: ['Membuat laporan keuangan bulanan dan jurnal umum.'],
+      placementInfo: 'Jakarta Selatan',
+      criteriaBullets: ['Minimal D3/S1 Akuntansi.'],
+      savedAt: '30 Juli 2026'
+    },
+    {
+      id: 107,
+      title: 'Digital Marketing Specialist',
+      company: 'PT Kreasi Digital Nusantara',
+      logo: 'https://images.unsplash.com/photo-1552664730-d307ca884978?w=120&auto=format&fit=crop&q=80',
+      location: 'Bandung, Jawa Barat',
+      education: 'Minimal S1 Marketing/Komunikasi',
+      workPolicy: 'Full time • Hybrid',
+      salary: 'Rp 6.000.000 - Rp 9.000.000',
+      postedAgo: 'Terakhir diperbarui 4 jam yang lalu',
+      matchScore: 89,
+      reason: 'Pengalaman campaign digital & analitik media sosial Anda sangat relevan.',
+      descriptionBullets: ['Mengelola campaign Google Ads, Meta Ads, dan TikTok Ads.'],
+      placementInfo: 'Dago, Bandung',
+      criteriaBullets: ['Pengalaman minimal 1 tahun di bidang Digital Marketing.'],
+      savedAt: '31 Juli 2026'
+    },
+    {
+      id: 108,
+      title: 'Customer Service Representative',
+      company: 'PT Tokopedia Care',
+      logo: 'https://images.unsplash.com/photo-1556745757-8d76bdb6984b?w=120&auto=format&fit=crop&q=80',
+      location: 'Jakarta Pusat, DKI Jakarta',
+      education: 'Minimal SMA/SMK/Sederajat',
+      workPolicy: 'Kontrak • Kerja dari kantor (WFO)',
+      salary: 'Rp 4.500.000 - Rp 5.500.000',
+      postedAgo: 'Terakhir diperbarui 6 jam yang lalu',
+      matchScore: 90,
+      reason: 'Layanan pelanggan & empati komunikasi sesuai profil.',
+      descriptionBullets: ['Melayani pertanyaan dan kendala pengguna Tokopedia.'],
+      placementInfo: 'Menteng, Jakarta Pusat',
+      criteriaBullets: ['Pendidikan minimal SMA/SMK Sederajat.'],
+      savedAt: '01 Agustus 2026'
+    },
+    {
+      id: 109,
+      title: 'Backend Engineer (Node.js)',
+      company: 'PT Solusi Teknologi Indonesia',
+      logo: 'https://images.unsplash.com/photo-1519389950473-47ba0277781c?w=120&auto=format&fit=crop&q=80',
+      location: 'Surabaya, Jawa Timur',
+      education: 'Minimal S1 Teknik Informatika',
+      workPolicy: 'Full time • Remote (WFH)',
+      salary: 'Rp 10.000.000 - Rp 15.000.000',
+      postedAgo: 'Terakhir diperbarui 12 jam yang lalu',
+      matchScore: 93,
+      reason: 'Skill Node.js & pengalaman arsitektur microservices Anda sangat sesuai.',
+      descriptionBullets: ['Mengembangkan dan maintain RESTful API & GraphQL services.'],
+      placementInfo: 'Remote (Seluruh Indonesia)',
+      criteriaBullets: ['Pengalaman minimal 3 tahun sebagai Backend Developer.'],
+      savedAt: '02 Agustus 2026'
+    },
+    {
+      id: 110,
+      title: 'HRD & Recruitment Staff',
+      company: 'PT Global Talent Solutions',
+      logo: 'https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?w=120&auto=format&fit=crop&q=80',
+      location: 'Tangerang, Banten',
+      education: 'Minimal S1 Psikologi/Manajemen',
+      workPolicy: 'Full time • Kerja dari kantor (WFO)',
+      salary: 'Rp 5.500.000 - Rp 8.000.000',
+      postedAgo: 'Terakhir diperbarui 2 hari yang lalu',
+      matchScore: 86,
+      reason: 'Latar belakang manajemen SDM & keterampilan komunikasi Anda relevan.',
+      descriptionBullets: ['Mengelola proses rekrutmen end-to-end dari sourcing hingga onboarding.'],
+      placementInfo: 'BSD City, Tangerang Selatan',
+      criteriaBullets: ['Pendidikan S1 Psikologi atau Manajemen SDM.'],
+      savedAt: '03 Agustus 2026'
     }
   ];
 
   // Saved Jobs ID list state
-  const [savedJobIds, setSavedJobIds] = useState<number[]>([101, 104, 105]);
+  const [savedJobIds, setSavedJobIds] = useState<any[]>([101, 104, 105]);
+  const [apiSavedJobs, setApiSavedJobs] = useState<any[]>([]);
 
   useEffect(() => {
     // Load candidate CV data
@@ -158,50 +288,104 @@ export default function SavedJobsPage() {
     } else {
       localStorage.setItem('candidateSavedJobsList', JSON.stringify([101, 104, 105]));
     }
+
+    // Fetch from Backend API
+    const fetchBackendSavedJobs = async () => {
+      try {
+        const res = await api.get('/saved-jobs/');
+        if (Array.isArray(res) && res.length > 0) {
+          setApiSavedJobs(res);
+          const backendIds = res.map((item: any) => item.id);
+          setSavedJobIds((prev) => Array.from(new Set([...prev, ...backendIds])));
+        }
+      } catch (err) {
+        console.error('Failed to fetch backend saved jobs:', err);
+      }
+    };
+    fetchBackendSavedJobs();
   }, []);
 
   // Remove saved job
-  const handleRemoveSaved = (jobId: number) => {
-    const newSaved = savedJobIds.filter((id) => id !== jobId);
+  const handleRemoveSaved = async (jobId: any) => {
+    const newSaved = savedJobIds.filter((id) => String(id) !== String(jobId));
     setSavedJobIds(newSaved);
+    setApiSavedJobs((prev) => prev.filter((item) => String(item.id) !== String(jobId)));
     localStorage.setItem('candidateSavedJobsList', JSON.stringify(newSaved));
+
+    try {
+      await api.delete(`/saved-jobs/${jobId}`);
+    } catch (err) {
+      console.error('Failed to remove saved job from backend:', err);
+    }
   };
 
   // Clear all saved jobs
-  const handleClearAllSaved = () => {
+  const handleClearAllSaved = async () => {
     if (confirm('Apakah Anda yakin ingin menghapus semua lowongan tersimpan?')) {
+      savedJobIds.forEach(async (id) => {
+        try {
+          await api.delete(`/saved-jobs/${id}`);
+        } catch (_) {}
+      });
       setSavedJobIds([]);
+      setApiSavedJobs([]);
       localStorage.setItem('candidateSavedJobsList', JSON.stringify([]));
     }
   };
 
   // Direct Apply Handler
-  const handleApplyWithCv = (jobId: number, companyName: string, title: string) => {
+  const handleApplyWithCv = (jobId: any, companyName: string, title: string) => {
     const newApplied = [...appliedJobs, jobId];
     setAppliedJobs(newApplied);
     localStorage.setItem('appliedJobsList', JSON.stringify(newApplied));
 
-    toast.success(`Sukses! CV ATS-Friendly Anda ("${cvDetails?.fullName || 'Budi Pratama'}") telah terkirim ke HR ${companyName} untuk posisi "${title}".`, { icon: '🎉' });
+    alert(`🎉 Sukses! CV ATS-Friendly Anda ("${cvDetails?.fullName || 'Pelamar'}") telah terkirim ke HR ${companyName} untuk posisi "${title}".`);
     router.push('/pelamar/status');
   };
 
   // Filter saved jobs list
   const visibleSavedJobs = useMemo(() => {
-    return initialMasterJobs.filter((job) => {
-      if (!savedJobIds.includes(job.id)) return false;
+    const savedIdsSet = new Set(savedJobIds.map((id) => String(id)));
 
+    apiSavedJobs.forEach((item) => {
+      if (item.id) savedIdsSet.add(String(item.id));
+      if (item.job_id) savedIdsSet.add(String(item.job_id));
+      if (item.saved_id) savedIdsSet.add(String(item.saved_id));
+    });
+
+    const resultList: SavedJob[] = [];
+
+    savedIdsSet.forEach((idStr) => {
+      const master = initialMasterJobs.find((m) => String(m.id) === idStr);
+      const apiItem = apiSavedJobs.find((a) => String(a.id) === idStr || String(a.job_id) === idStr);
+
+      if (master) {
+        resultList.push({
+          ...master,
+          savedAt: apiItem?.savedAt || master.savedAt || 'Terbaru'
+        });
+      } else if (apiItem && apiItem.title && apiItem.company) {
+        resultList.push(apiItem);
+      }
+    });
+
+    return resultList.filter((job) => {
       const matchesQuery =
         !searchQuery ||
         job.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
         job.company.toLowerCase().includes(searchQuery.toLowerCase()) ||
         job.location.toLowerCase().includes(searchQuery.toLowerCase());
 
+      const policyLower = job.workPolicy ? job.workPolicy.toLowerCase() : '';
+      const filterLower = policyFilter.toLowerCase();
       const matchesPolicy =
-        policyFilter === 'Semua' || job.workPolicy.toLowerCase().includes(policyFilter.toLowerCase());
+        policyFilter === 'Semua' ||
+        policyLower.includes(filterLower) ||
+        (policyFilter === 'Remote' && (policyLower.includes('wfh') || policyLower.includes('remote')));
 
       return matchesQuery && matchesPolicy;
     });
-  }, [initialMasterJobs, savedJobIds, searchQuery, policyFilter]);
+  }, [initialMasterJobs, apiSavedJobs, savedJobIds, searchQuery, policyFilter]);
 
   return (
     <div className="space-y-8 max-w-[1600px] mx-auto">

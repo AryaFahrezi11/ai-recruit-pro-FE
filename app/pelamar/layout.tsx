@@ -22,6 +22,7 @@ import {
   BookOpen,
   CheckCircle2
 } from 'lucide-react';
+import { api } from '@/lib/api';
 
 export default function PelamarPerfectLayout({
   children,
@@ -34,6 +35,10 @@ export default function PelamarPerfectLayout({
   const { t } = useTranslation();
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [userProfile, setUserProfile] = useState<{ email: string; name: string }>({
+    email: 'pelamar@example.com',
+    name: 'Pelamar AI'
+  });
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -52,6 +57,27 @@ export default function PelamarPerfectLayout({
       router.push('/pelamar/login');
     } else {
       setIsAuthenticated(true);
+
+      // Load profile info dynamically
+      const savedEmail = localStorage.getItem('user_email');
+      if (savedEmail) {
+        const derivedName = savedEmail.split('@')[0].replace(/[._-]/g, ' ');
+        const formattedName = derivedName.charAt(0).toUpperCase() + derivedName.slice(1);
+        setUserProfile({ email: savedEmail, name: formattedName });
+      }
+
+      // Fetch from API
+      api
+        .get('/users/profile')
+        .then((res) => {
+          if (res) {
+            const email = res.email || savedEmail || 'pelamar@example.com';
+            const name = res.profil?.nama_lengkap || res.email?.split('@')[0] || 'Pelamar AI';
+            setUserProfile({ email, name });
+            localStorage.setItem('user_email', email);
+          }
+        })
+        .catch((err) => console.error('Failed to fetch profile in layout:', err));
     }
   }, [pathname, router]);
 
@@ -91,7 +117,7 @@ export default function PelamarPerfectLayout({
   return (
     <div className="min-h-screen bg-[#F8FAFC] dark:bg-slate-950 text-slate-800 dark:text-slate-100 flex flex-col font-sans antialiased">
       {/* Top Navbar - JobStreet Inspired Header */}
-      <header className="sticky top-0 z-50 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 shadow-2xs">
+      <header className="no-print sticky top-0 z-50 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 shadow-2xs">
         <div className="max-w-[1600px] mx-auto px-4 sm:px-8 lg:px-12 h-20 flex items-center justify-between">
 
           {/* Left Side: Brand & Main Navigation Links */}
@@ -171,7 +197,7 @@ export default function PelamarPerfectLayout({
                 className="flex items-center gap-2 p-1 rounded-full border-2 border-[#2596be]/30 hover:border-[#2596be] bg-white dark:bg-slate-800 transition-all cursor-pointer shadow-xs group"
               >
                 <div className="w-8 h-8 rounded-full bg-[#2596be] text-white flex items-center justify-center font-black text-sm shadow-inner">
-                  A
+                  {userProfile.name ? userProfile.name.charAt(0).toUpperCase() : 'P'}
                 </div>
                 <ChevronDown size={15} className={`text-slate-500 transition-transform duration-200 ${isProfileOpen ? 'rotate-180' : ''}`} />
               </button>
@@ -180,8 +206,8 @@ export default function PelamarPerfectLayout({
               {isProfileOpen && (
                 <div className="absolute right-0 mt-3 w-64 bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 p-3 space-y-1.5 z-50 animate-in fade-in slide-in-from-top-2">
                   <div className="px-4 py-3 border-b border-slate-100 dark:border-slate-800 space-y-0.5">
-                    <p className="text-xs font-black text-[#2596be] dark:text-cyan-400">Budi Pratama</p>
-                    <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate">budi.pratama@gmail.com</p>
+                    <p className="text-xs font-black text-[#2596be] dark:text-cyan-400">{userProfile.name}</p>
+                    <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate">{userProfile.email}</p>
                   </div>
 
                   <Link
@@ -255,7 +281,7 @@ export default function PelamarPerfectLayout({
       </main>
 
       {/* Footer */}
-      <footer className="bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 py-8 mt-12">
+      <footer className="no-print bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 py-8 mt-12">
         <div className="max-w-[1600px] mx-auto px-4 sm:px-8 lg:px-12 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs sm:text-sm text-slate-500 dark:text-slate-400">
           <div className="flex items-center gap-2">
             <span className="font-extrabold text-[#2596be]">AI-Recruit Pro</span>
