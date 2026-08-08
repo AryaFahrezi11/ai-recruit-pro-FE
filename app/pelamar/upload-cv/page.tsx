@@ -42,7 +42,7 @@ export default function AtsCvBuilderPage() {
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('081298765432');
   const [location, setLocation] = useState('Jakarta, Indonesia');
-  const [linkedin, setLinkedin] = useState('linkedin.com/in/pelamar');
+  const [socialLinks, setSocialLinks] = useState([{ platform: 'LinkedIn', url: 'linkedin.com/in/pelamar' }]);
   const [summary, setSummary] = useState(
     'Senior Frontend Engineer berpengalaman 4+ tahun dalam merancang antarmuka web performan tinggi menggunakan Next.js, React, TypeScript, dan Tailwind CSS. Terbiasa mengoptimalkan Web Vitals dan berkolaborasi dalam tim agile.'
   );
@@ -110,7 +110,15 @@ export default function AtsCvBuilderPage() {
             if (p.judul_posisi) setJobTitle(p.judul_posisi);
             if (p.no_telepon) setPhone(p.no_telepon);
             if (p.alamat) setLocation(p.alamat);
-            if (p.linkedin_url) setLinkedin(p.linkedin_url);
+            if (p.linkedin_url) {
+              try {
+                const parsed = JSON.parse(p.linkedin_url);
+                if (Array.isArray(parsed)) setSocialLinks(parsed);
+                else setSocialLinks([{ platform: 'LinkedIn', url: p.linkedin_url }]);
+              } catch (_) {
+                setSocialLinks([{ platform: 'LinkedIn', url: p.linkedin_url }]);
+              }
+            }
             if (p.ringkasan_diri) setSummary(p.ringkasan_diri);
             if (p.keahlian) setSkills(p.keahlian);
             if (p.sertifikasi) setCertifications(p.sertifikasi);
@@ -136,6 +144,23 @@ export default function AtsCvBuilderPage() {
     };
     fetchProfile();
   }, []);
+
+  // Handler for Social Links
+  const handleAddSocialLink = () => {
+    setSocialLinks([...socialLinks, { platform: '', url: '' }]);
+  };
+
+  const handleRemoveSocialLink = (index: number) => {
+    if (socialLinks.length <= 1) return;
+    setSocialLinks(socialLinks.filter((_, idx) => idx !== index));
+  };
+
+  const handleSocialLinkChange = (index: number, field: string, value: string) => {
+    const updated = socialLinks.map((link, idx) =>
+      idx === index ? { ...link, [field]: value } : link
+    );
+    setSocialLinks(updated);
+  };
 
   // Handler for adding dynamic Experience
   const handleAddExperience = () => {
@@ -202,7 +227,7 @@ export default function AtsCvBuilderPage() {
       email,
       phone,
       location,
-      linkedin,
+      socialLinks,
       summary,
       experiences,
       education,
@@ -221,7 +246,7 @@ export default function AtsCvBuilderPage() {
         judul_posisi: jobTitle,
         no_telepon: phone,
         alamat: location,
-        linkedin_url: linkedin,
+        linkedin_url: JSON.stringify(socialLinks),
         ringkasan_diri: summary,
         pengalaman_kerja: JSON.stringify(experiences),
         riwayat_pendidikan: JSON.stringify(education),
@@ -258,7 +283,7 @@ export default function AtsCvBuilderPage() {
           judul_posisi: jobTitle,
           no_telepon: phone,
           alamat: location,
-          linkedin_url: linkedin,
+          linkedin_url: JSON.stringify(socialLinks),
           ringkasan_diri: summary,
           pengalaman_kerja: JSON.stringify(experiences),
           riwayat_pendidikan: JSON.stringify(education),
@@ -451,6 +476,47 @@ export default function AtsCvBuilderPage() {
                     />
                   </div>
                 </div>
+
+                {/* Social Links List */}
+                <div className="space-y-3 mt-4 pt-4 border-t border-slate-100 dark:border-slate-800">
+                  <div className="flex items-center justify-between">
+                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-300">Tautan / Media Sosial</label>
+                    <button
+                      type="button"
+                      onClick={handleAddSocialLink}
+                      className="text-[#1b7b9e] dark:text-cyan-400 hover:underline text-[11px] font-bold flex items-center gap-1"
+                    >
+                      <Plus size={12} /> Tambah Tautan
+                    </button>
+                  </div>
+                  {socialLinks.map((link, idx) => (
+                    <div key={idx} className="flex items-center gap-2">
+                      <input
+                        type="text"
+                        value={link.platform}
+                        onChange={(e) => handleSocialLinkChange(idx, 'platform', e.target.value)}
+                        placeholder="Platform (LinkedIn, dll)"
+                        className="w-1/3 px-3 py-2 bg-[#F0F8FB] dark:bg-slate-800 border border-[#C2E5EF] dark:border-slate-700 focus:border-[#1b7b9e] dark:focus:border-cyan-400 rounded-xl text-xs outline-none dark:text-white"
+                      />
+                      <input
+                        type="text"
+                        value={link.url}
+                        onChange={(e) => handleSocialLinkChange(idx, 'url', e.target.value)}
+                        placeholder="URL (misal: linkedin.com/in/pelamar)"
+                        className="w-2/3 px-3 py-2 bg-[#F0F8FB] dark:bg-slate-800 border border-[#C2E5EF] dark:border-slate-700 focus:border-[#1b7b9e] dark:focus:border-cyan-400 rounded-xl text-xs outline-none dark:text-white"
+                      />
+                      {socialLinks.length > 1 && (
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveSocialLink(idx)}
+                          className="p-2 text-slate-400 hover:text-red-500 transition-colors"
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                </div>
               </div>
 
               {/* Section 2: Ringkasan Profesional */}
@@ -603,18 +669,33 @@ export default function AtsCvBuilderPage() {
                 ))}
               </div>
 
-              {/* Section 5: Keahlian Teknis */}
+              {/* Section 5: Keahlian Teknis & Sertifikasi */}
               <div className="space-y-2">
                 <h3 className="text-xs font-black uppercase tracking-wider text-[#1b7b9e] dark:text-cyan-400 flex items-center gap-2">
-                  <Wrench size={16} /> 4. {t.pelamar.uploadCv.skills}
+                  <Wrench size={16} /> 4. {t.pelamar.uploadCv.skills} &amp; Sertifikat
                 </h3>
-                <textarea
-                  rows={2}
-                  value={skills}
-                  onChange={(e) => setSkills(e.target.value)}
-                  placeholder={t.pelamar.uploadCv.skillsPlaceholder}
-                  className="w-full px-4 py-2.5 bg-[#F0F8FB] dark:bg-slate-800 border border-[#C2E5EF] dark:border-slate-700 focus:border-[#1b7b9e] dark:focus:border-cyan-400 rounded-xl text-xs outline-none dark:text-white"
-                />
+                <div className="space-y-3">
+                  <div>
+                    <label className="block text-[11px] font-bold text-slate-500 dark:text-slate-400 mb-1">Keahlian Utama</label>
+                    <textarea
+                      rows={2}
+                      value={skills}
+                      onChange={(e) => setSkills(e.target.value)}
+                      placeholder={t.pelamar.uploadCv.skillsPlaceholder}
+                      className="w-full px-4 py-2.5 bg-[#F0F8FB] dark:bg-slate-800 border border-[#C2E5EF] dark:border-slate-700 focus:border-[#1b7b9e] dark:focus:border-cyan-400 rounded-xl text-xs outline-none dark:text-white"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[11px] font-bold text-slate-500 dark:text-slate-400 mb-1">Daftar Sertifikat (pisahkan dengan koma)</label>
+                    <textarea
+                      rows={2}
+                      value={certifications}
+                      onChange={(e) => setCertifications(e.target.value)}
+                      placeholder="AWS Certified Cloud Practitioner, Google Data Analytics..."
+                      className="w-full px-4 py-2.5 bg-[#F0F8FB] dark:bg-slate-800 border border-[#C2E5EF] dark:border-slate-700 focus:border-[#1b7b9e] dark:focus:border-cyan-400 rounded-xl text-xs outline-none dark:text-white"
+                    />
+                  </div>
+                </div>
               </div>
 
               {dbSuccessMessage && (
@@ -703,7 +784,14 @@ export default function AtsCvBuilderPage() {
                 <h2 className="text-2xl font-black uppercase text-slate-900 tracking-tight">{fullName || 'NAMA LENGKAP'}</h2>
                 <span className="text-sm font-bold text-[#1b7b9e] block">{jobTitle}</span>
                 <div className="text-[11px] text-slate-600 flex items-center justify-center flex-wrap gap-2 pt-1 font-medium">
-                  <span>{email}</span> • <span>{phone}</span> • <span>{location}</span> • <span>{linkedin}</span>
+                  <span>{email}</span> • <span>{phone}</span> • <span>{location}</span>
+                  {socialLinks.length > 0 && socialLinks.map((link, idx) => (
+                    <React.Fragment key={idx}>
+                      {link.url && (
+                        <> • <span>{link.url}</span></>
+                      )}
+                    </React.Fragment>
+                  ))}
                 </div>
               </div>
 

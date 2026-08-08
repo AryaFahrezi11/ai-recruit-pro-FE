@@ -4,6 +4,7 @@ import React, { useState, useMemo, useEffect } from 'react';
 import Link from 'next/link';
 import { useAppStore } from '@/lib/store/useAppStore';
 import { useTranslation } from '@/hooks/useTranslation';
+import { getBaseUrl } from '@/lib/api';
 import {
   Search,
   MapPin,
@@ -43,7 +44,7 @@ import {
 } from 'lucide-react';
 
 interface Job {
-  id: number;
+  id: number | string;
   title: string;
   company: string;
   logo: string;
@@ -52,18 +53,16 @@ interface Job {
   salary: string;
   category: string;
   experienceLevel: string;
+  educationLevel: string;
   benefits: string[];
   tags: string[];
-  matchEstimate: string;
-  matchPercentage: number;
   postedAgo: string;
-  estimatedTimeMinutes: number;
-  isFeatured: boolean;
+  publishDate: string;
+  isNew: boolean;
+  applicationDeadline?: string | null;
   description: string;
   requirements: string[];
-  skillsScore: number;
-  eqScore: number;
-  cultureScore: number;
+  openingsCount: number;
 }
 
 export default function PerfectlyNeatLandingPage() {
@@ -95,7 +94,7 @@ export default function PerfectlyNeatLandingPage() {
     matched82: '92% Cocok',
     biasFree: 'Bebas Dari Bias Seleksi',
     biasFreeDesc: 'Lamaran Anda dinilai murni berdasarkan kompetensi teknis dan potensi profesional.',
-    topEmployersTitle: 'Perusahaan Terkemuka Yang Merekrut Dengan PO-FIT AI',
+    topEmployersTitle: 'Perusahaan Populer',
     activePartners: '500+ Mitra Aktif',
     pillarsTag: 'Keunggulan PO-FIT AI Engine',
     pillarsTitle: 'Metodologi Rekrutmen Masa Depan',
@@ -139,7 +138,91 @@ export default function PerfectlyNeatLandingPage() {
 
   useEffect(() => {
     setMounted(true);
+    fetchRealData();
   }, []);
+
+  const [realJobs, setRealJobs] = useState<Job[]>([]);
+  const [realCompanies, setRealCompanies] = useState<any[]>([]);
+
+  const fetchRealData = async () => {
+    try {
+      const baseUrl = getBaseUrl();
+      // Fetch Jobs
+      const resJobs = await fetch(`${baseUrl}/jobs/`);
+      if (resJobs.ok) {
+        const jobsData = await resJobs.json();
+        // Map to Job interface
+        const mappedJobs = jobsData.data.map((j: any) => ({
+          id: j.id, // using numeric ID isn't quite right since it's UUID, but frontend uses number in Job interface. We'll change Job interface ID to number | string
+          title: j.judul_posisi,
+          company: j.perusahaan?.nama_perusahaan || 'Perusahaan',
+          logo: (j.perusahaan?.logo_url && j.perusahaan.logo_url !== '') 
+                ? (j.perusahaan.logo_url.startsWith('http') ? j.perusahaan.logo_url : `http://${typeof window !== 'undefined' ? window.location.hostname : '127.0.0.1'}:8000${j.perusahaan.logo_url}`)
+                : 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=120&auto=format&fit=crop&q=80',
+          location: j.kota || 'Remote',
+          workType: (() => {
+            const type = j.tipe_pekerjaan ? j.tipe_pekerjaan.split('_').map((w: string) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ') : 'Full Time';
+            const loc = j.lokasi_kerja === 'remote' ? 'Remote' : j.lokasi_kerja === 'hybrid' ? 'Hybrid' : 'On-site';
+            return `${type} (${loc})`;
+          })(),
+          salary: (j.tampilkan_gaji && j.gaji_min && j.gaji_max) ? `Rp ${(j.gaji_min/1000000).toFixed(0)} Jt - Rp ${(j.gaji_max/1000000).toFixed(0)} Jt` : 'Gaji Dirahasiakan',
+          category: j.kategori?.nama_kategori || 'Teknologi Informasi',
+          experienceLevel: (() => {
+            const el = j.experience_level;
+            if (el === 'Entry Level') return 'Entry Level (0 - 1 Tahun)';
+            if (el === 'Mid Level') return 'Mid Level (2 - 4 Tahun)';
+            if (el === 'Senior Level') return 'Senior Level (5+ Tahun)';
+            if (el === 'Lead / Manager') return 'Lead / Manager (8+ Tahun)';
+            return el || (j.pengalaman_min_tahun > 3 ? 'Senior Level (5+ Tahun)' : 'Mid Level (2 - 4 Tahun)');
+          })(),
+          educationLevel: j.pendidikan_min || '-',
+          benefits: (() => { try { return j.benefits_json ? JSON.parse(j.benefits_json) : []; } catch(e){ return []; } })(),
+          tags: [j.tipe_pekerjaan, j.lokasi_kerja === 'remote' ? 'Remote' : j.lokasi_kerja === 'hybrid' ? 'Hybrid' : 'On-site'].filter(Boolean),
+          postedAgo: (() => {
+            const created = j.tanggal_buka ? new Date(j.tanggal_buka) : new Date();
+            const diffDays = Math.ceil(Math.abs(Date.now() - created.getTime()) / (1000 * 60 * 60 * 24));
+            return diffDays <= 1 ? 'Hari ini' : `${diffDays} hari yang lalu`;
+          })(),
+          publishDate: (() => {
+            if (!j.tanggal_buka) return '-';
+            const date = new Date(j.tanggal_buka);
+            return date.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
+          })(),
+          applicationDeadline: (() => {
+            if (!j.tanggal_tutup) return null;
+            const date = new Date(j.tanggal_tutup);
+            return date.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
+          })(),
+          isNew: (() => {
+            const created = j.tanggal_buka ? new Date(j.tanggal_buka) : new Date();
+            const diffDays = Math.ceil(Math.abs(Date.now() - created.getTime()) / (1000 * 60 * 60 * 24));
+            return diffDays <= 7;
+          })(),
+          openingsCount: j.openings_count || 1,
+          description: j.deskripsi_pekerjaan || '',
+          requirements: (() => { try { return j.kualifikasi ? JSON.parse(j.kualifikasi) : []; } catch(e){ return j.kualifikasi ? j.kualifikasi.split('\n').filter((k: string) => k.trim()) : []; } })(),
+        }));
+        setRealJobs(mappedJobs);
+      }
+      
+      // Fetch Companies
+      const resComp = await fetch(`${baseUrl}/perusahaan/verified`);
+      if (resComp.ok) {
+        const compData = await resComp.json();
+        const mappedComp = compData.map((c: any) => ({
+          name: c.nama_perusahaan,
+          logo: (c.logo_url && c.logo_url !== '') 
+                ? (c.logo_url.startsWith('http') ? c.logo_url : `http://${typeof window !== 'undefined' ? window.location.hostname : '127.0.0.1'}:8000${c.logo_url}`)
+                : 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=120&auto=format&fit=crop&q=80',
+          jobsCount: c.jobs_count || 0,
+          rating: c.rating || 5.0
+        }));
+        setRealCompanies(mappedComp);
+      }
+    } catch (err) {
+      console.error("Gagal memuat data dari server:", err);
+    }
+  };
 
   // Synchronize document element class for dark mode
   useEffect(() => {
@@ -157,12 +240,11 @@ export default function PerfectlyNeatLandingPage() {
   const [selectedCategory, setSelectedCategory] = useState('Semua');
   const [selectedWorkType, setSelectedWorkType] = useState('Semua');
   const [selectedExpLevel, setSelectedExpLevel] = useState('Semua');
-  const [savedJobs, setSavedJobs] = useState<number[]>([]);
-  const [activeJobModal, setActiveJobModal] = useState<Job | null>(null);
-  const [previewJobId, setPreviewJobId] = useState<number>(1);
+  const [savedJobs, setSavedJobs] = useState<(number | string)[]>([]);
+  const [previewJobId, setPreviewJobId] = useState<number | string>(1);
   const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(0);
 
-  const toggleSaveJob = (id: number) => {
+  const toggleSaveJob = (id: number | string) => {
     setSavedJobs(prev =>
       prev.includes(id) ? prev.filter(item => item !== id) : [...prev, id]
     );
@@ -178,14 +260,7 @@ export default function PerfectlyNeatLandingPage() {
     { name: language === 'en' ? 'Finance & HR' : 'Keuangan & HR', count: language === 'en' ? '1,510 Openings' : '1.510 Lowongan', icon: ShieldCheck, skills: 'Talent Ops, Compensation' },
   ];
 
-  // Top Employers
-  const topEmployers = [
-    { name: 'PT Tech Inovasi Nusantara', logo: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=120&auto=format&fit=crop&q=80', jobsCount: 14, rating: 4.9 },
-    { name: 'Nusantara Intelligence', logo: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=120&auto=format&fit=crop&q=80', jobsCount: 9, rating: 4.8 },
-    { name: 'Global Digital Solusindo', logo: 'https://images.unsplash.com/photo-1572021335469-31706a17aaef?w=120&auto=format&fit=crop&q=80', jobsCount: 18, rating: 5.0 },
-    { name: 'Fintech Utama Indonesia', logo: 'https://images.unsplash.com/photo-1560179707-f14e90ef3623?w=120&auto=format&fit=crop&q=80', jobsCount: 11, rating: 4.7 },
-  ];
-
+  // Top Employers (Now dynamically fetched from DB)
   // Candidate Success Stories
   const successStories = [
     {
@@ -222,151 +297,18 @@ export default function PerfectlyNeatLandingPage() {
     }
   ];
 
-  // All Mock Jobs
-  const allJobs: Job[] = [
-    {
-      id: 1,
-      title: 'Senior Frontend Engineer (React & Next.js)',
-      company: 'PT Tech Inovasi Nusantara',
-      logo: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=120&auto=format&fit=crop&q=80',
-      location: 'Jakarta (Hybrid)',
-      workType: 'Hybrid',
-      experienceLevel: 'Senior Level',
-      salary: 'Rp 18.000.000 - Rp 25.000.000',
-      category: language === 'en' ? 'Information Technology' : 'Teknologi Informasi',
-      benefits: language === 'en' ? ['Health Insurance (BPJS & Private)', 'Flexible Work Hours', 'Laptops Provided'] : ['Asuransi Kesehatan (BPJS & Swasta)', 'Jam Kerja Fleksibel', 'Tunjangan Laptop'],
-      tags: ['React', 'Next.js', 'TypeScript', 'Tailwind CSS'],
-      matchEstimate: '94% AI Match',
-      matchPercentage: 94,
-      postedAgo: language === 'en' ? '2 hours ago' : '2 jam yang lalu',
-      estimatedTimeMinutes: 5,
-      isFeatured: true,
-      description: language === 'en' ? 'Build responsive web apps with Next.js and TypeScript.' : 'Mengembangkan aplikasi web performa tinggi menggunakan Next.js App Router dan TypeScript.',
-      requirements: language === 'en' ? ['3+ years React/Next.js experience', 'Strong TypeScript skills'] : ['Pengalaman 3+ Tahun React/Next.js', 'Keahlian TypeScript & State Management', 'Portofolio Web Responsif'],
-      skillsScore: 94,
-      eqScore: 90,
-      cultureScore: 92
-    },
-    {
-      id: 2,
-      title: 'AI & Data Science Specialist',
-      company: 'Nusantara Intelligence',
-      logo: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=120&auto=format&fit=crop&q=80',
-      location: 'Remote',
-      workType: 'Remote',
-      experienceLevel: 'Mid Level',
-      salary: 'Rp 15.000.000 - Rp 22.000.000',
-      category: 'AI & Data Science',
-      benefits: language === 'en' ? ['100% Remote Work', 'Learning & Conference Budget'] : ['100% Remote Work', 'Tunjangan Belajar & Konferensi'],
-      tags: ['Python', 'PyTorch', 'LLM', 'Vector DB'],
-      matchEstimate: '91% AI Match',
-      matchPercentage: 91,
-      postedAgo: language === 'en' ? 'Yesterday' : 'Kemarin',
-      estimatedTimeMinutes: 6,
-      isFeatured: true,
-      description: language === 'en' ? 'Deploy Machine Learning models and vector databases.' : 'Membuat dan mengimplementasikan model Machine Learning serta pengolahan data teks NLP.',
-      requirements: language === 'en' ? ['Python & PyTorch proficiency', 'NLP & Vector Search experience'] : ['Penguasaan Python & PyTorch', 'Pengalaman NLP & Vector Search', 'Pemahaman LLM Fine-Tuning'],
-      skillsScore: 92,
-      eqScore: 88,
-      cultureScore: 90
-    },
-    {
-      id: 3,
-      title: 'Product Manager (B2B SaaS Platform)',
-      company: 'Global Digital Solusindo',
-      logo: 'https://images.unsplash.com/photo-1572021335469-31706a17aaef?w=120&auto=format&fit=crop&q=80',
-      location: 'Jakarta (On-site)',
-      workType: 'On-site',
-      experienceLevel: 'Senior Level',
-      salary: 'Rp 20.000.000 - Rp 30.000.000',
-      category: language === 'en' ? 'Product Management' : 'Manajemen Produk',
-      benefits: language === 'en' ? ['Stock Options / ESOP', 'Annual Performance Bonus'] : ['Stock Options / ESOP', 'Bonus Kinerja Tahunan'],
-      tags: ['Product Roadmap', 'Agile', 'Scrum', 'Analytics'],
-      matchEstimate: '88% AI Match',
-      matchPercentage: 88,
-      postedAgo: language === 'en' ? '3 days ago' : '3 hari yang lalu',
-      estimatedTimeMinutes: 5,
-      isFeatured: false,
-      description: language === 'en' ? 'Lead SaaS product strategy and roadmap execution.' : 'Memimpin strategi pengembangan produk B2B SaaS dari tahap konseptual hingga peluncuran.',
-      requirements: language === 'en' ? ['Proven B2B SaaS experience', 'Agile & Scrum mastery'] : ['Pengalaman Sebagai Product Manager B2B', 'Keahlian Analisis Metrik SaaS', 'Kepemimpinan Tim Lintas Fungsi'],
-      skillsScore: 90,
-      eqScore: 86,
-      cultureScore: 88
-    },
-    {
-      id: 4,
-      title: 'Growth Marketing & Performance Lead',
-      company: 'Fintech Utama Indonesia',
-      logo: 'https://images.unsplash.com/photo-1560179707-f14e90ef3623?w=120&auto=format&fit=crop&q=80',
-      location: 'Jakarta (Hybrid)',
-      workType: 'Hybrid',
-      experienceLevel: 'Mid Level',
-      salary: 'Rp 12.000.000 - Rp 18.000.000',
-      category: language === 'en' ? 'Marketing & Growth' : 'Pemasaran & Growth',
-      benefits: language === 'en' ? ['Gym Membership', 'Monthly Allowance'] : ['Gym Membership', 'Tunjangan Transportasi'],
-      tags: ['Performance Ads', 'Google Ads', 'SEO', 'Funnel Analytics'],
-      matchEstimate: '92% AI Match',
-      matchPercentage: 92,
-      postedAgo: language === 'en' ? 'Just now' : 'Baru saja',
-      estimatedTimeMinutes: 4,
-      isFeatured: false,
-      description: language === 'en' ? 'Drive digital marketing campaigns and growth analytics.' : 'Mengoptimalkan kampanye iklan digital dan analisis akuisisi pengguna untuk lini produk Fintech.',
-      requirements: language === 'en' ? ['Proven Meta & Google Ads track record', 'Data analytics expertise'] : ['Rekam Jejak Meta & Google Ads Terbukti', 'Kemampuan Analisis Cohort & LTV', 'Pengalaman Industri Fintech/SaaS'],
-      skillsScore: 93,
-      eqScore: 89,
-      cultureScore: 91
-    },
-    {
-      id: 5,
-      title: 'UI/UX & Design System Specialist',
-      company: 'Creative Studio Asia',
-      logo: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=120&auto=format&fit=crop&q=80',
-      location: 'Bandung (Hybrid)',
-      workType: 'Hybrid',
-      experienceLevel: 'Mid Level',
-      salary: 'Rp 10.000.000 - Rp 16.000.000',
-      category: language === 'en' ? 'Design & Creative' : 'Desain & Kreatif',
-      benefits: language === 'en' ? ['Free Figma Workshops', 'Friday Free Lunch'] : ['Workshops Figma gratis', 'Makan siang Jumat'],
-      tags: ['Figma', 'Design Tokens', 'Prototyping'],
-      matchEstimate: '89% AI Match',
-      matchPercentage: 89,
-      postedAgo: language === 'en' ? '5 days ago' : '5 hari yang lalu',
-      estimatedTimeMinutes: 4,
-      isFeatured: false,
-      description: language === 'en' ? 'Design Design Tokens and modern UI components.' : 'Merancang Design Token dan komponen UI modern yang konsisten di seluruh produk web.',
-      requirements: language === 'en' ? ['Proven Figma portfolio', 'Micro-interactions experience'] : ['Portofolio Figma Terbukti', 'Pemahaman Micro-interactions', 'Pengalaman Design Systems'],
-      skillsScore: 91,
-      eqScore: 87,
-      cultureScore: 89
-    },
-    {
-      id: 6,
-      title: 'DevOps & Cloud Infrastructure Engineer',
-      company: 'CloudTech Infrastructure',
-      logo: 'https://images.unsplash.com/photo-1519389950473-47ba0277781c?w=120&auto=format&fit=crop&q=80',
-      location: 'Remote',
-      workType: 'Remote',
-      experienceLevel: 'Senior Level',
-      salary: 'Rp 16.000.000 - Rp 24.000.000',
-      category: language === 'en' ? 'Information Technology' : 'Teknologi Informasi',
-      benefits: language === 'en' ? ['Internet & Electricity Stipend', 'AWS Certification Vouchers'] : ['Tunjangan Internet & Listrik', 'AWS Exam Voucher'],
-      tags: ['AWS', 'Docker', 'Kubernetes'],
-      matchEstimate: '86% AI Match',
-      matchPercentage: 86,
-      postedAgo: language === 'en' ? '1 week ago' : 'Seminggu yang lalu',
-      estimatedTimeMinutes: 5,
-      isFeatured: false,
-      description: language === 'en' ? 'Manage Kubernetes clusters and high-performance CI/CD pipelines.' : 'Mengelola klaster Kubernetes dan pipeline CI/CD berkinerja tinggi.',
-      requirements: language === 'en' ? ['AWS Certification', 'Kubernetes & Helm expertise'] : ['Sertifikasi AWS Cloud', 'Keahlian Kubernetes & Helm', 'Automation Infrastructure as Code (Terraform)'],
-      skillsScore: 88,
-      eqScore: 84,
-      cultureScore: 86
-    },
-  ];
+  // Real Jobs (Fetched from DB)
+  const combinedJobs = useMemo(() => {
+    return realJobs;
+  }, [realJobs, language]);
+  
+  const combinedCompanies = useMemo(() => {
+    return realCompanies.slice(0, 8); // maximum 8 companies
+  }, [realCompanies]);
 
   // Filter jobs
   const filteredJobs = useMemo(() => {
-    return allJobs.filter((job) => {
+    return combinedJobs.filter((job) => {
       const matchKey = keyword === '' ||
         job.title.toLowerCase().includes(keyword.toLowerCase()) ||
         job.company.toLowerCase().includes(keyword.toLowerCase()) ||
@@ -382,11 +324,11 @@ export default function PerfectlyNeatLandingPage() {
 
       return matchKey && matchLoc && matchCat && matchWork && matchExp;
     });
-  }, [keyword, location, selectedCategory, selectedWorkType, selectedExpLevel, language]);
+  }, [keyword, location, selectedCategory, selectedWorkType, selectedExpLevel, language, combinedJobs]);
 
   const selectedPreviewJob = useMemo(() => {
-    return allJobs.find(j => j.id === previewJobId) || allJobs[0];
-  }, [previewJobId, language]);
+    return combinedJobs.find(j => j.id === previewJobId) || combinedJobs[0];
+  }, [previewJobId, language, combinedJobs]);
 
   return (
     <div className="min-h-screen bg-[#F0F8FB] dark:bg-slate-950 text-[#1b7b9e] dark:text-slate-100 font-sans antialiased flex flex-col selection:bg-[#1b7b9e] selection:text-white transition-colors duration-300">
@@ -648,12 +590,12 @@ export default function PerfectlyNeatLandingPage() {
       <section className="bg-white dark:bg-slate-900 border-b border-[#C2E5EF] dark:border-slate-800 py-10 transition-colors">
         <div className="max-w-[1600px] mx-auto px-6 sm:px-10 lg:px-16 space-y-5">
           <div className="flex items-center justify-between text-xs sm:text-sm text-slate-400 font-bold uppercase tracking-wider">
-            <span>Perusahaan Terkemuka Yang Merekrut Dengan PO-FIT AI</span>
+            <span>Perusahaan Populer</span>
             <span className="hidden sm:inline">500+ Mitra Aktif</span>
           </div>
 
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-            {topEmployers.map((emp, idx) => (
+            {combinedCompanies.map((emp, idx) => (
               <div key={idx} className="p-4 rounded-2xl border border-[#C2E5EF] dark:border-slate-800 bg-[#F0F8FB] dark:bg-slate-800/80 flex items-center justify-between hover:border-[#1b7b9e] dark:hover:border-cyan-500 transition-colors">
                 <div className="flex items-center gap-3 overflow-hidden">
                   <img src={emp.logo} alt={emp.name} className="w-10 h-10 rounded-xl object-cover border border-slate-200 dark:border-slate-700 shrink-0" />
@@ -662,10 +604,7 @@ export default function PerfectlyNeatLandingPage() {
                     <span className="text-xs font-semibold text-[#1D7FA1] dark:text-cyan-400">{emp.jobsCount} Lowongan</span>
                   </div>
                 </div>
-                <div className="flex items-center gap-1 text-xs font-bold text-amber-500 shrink-0">
-                  <Star size={14} className="fill-amber-400 text-amber-400" />
-                  <span>{emp.rating}</span>
-                </div>
+
               </div>
             ))}
           </div>
@@ -868,7 +807,14 @@ export default function PerfectlyNeatLandingPage() {
                             className="w-14 h-14 rounded-2xl object-cover border border-[#C2E5EF] dark:border-slate-700 shadow-2xs group-hover:scale-105 transition-transform"
                           />
                           <div>
-                            <span className="text-xs font-bold text-slate-500 dark:text-slate-400 block truncate">{job.company}</span>
+                            <div className="flex items-center gap-2">
+                              <span className="text-xs font-bold text-slate-500 dark:text-slate-400 block truncate">{job.company}</span>
+                              {job.isNew && (
+                                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 dark:bg-amber-900/50 dark:text-amber-400 border border-amber-200 dark:border-amber-800">
+                                  Loker Terbaru
+                                </span>
+                              )}
+                            </div>
                             <h3 className="font-bold text-lg text-[#1b7b9e] dark:text-cyan-400 group-hover:text-[#1D7FA1] dark:group-hover:text-cyan-300 transition-colors line-clamp-1">
                               {job.title}
                             </h3>
@@ -885,23 +831,19 @@ export default function PerfectlyNeatLandingPage() {
                         </button>
                       </div>
 
-                      {/* AI Match Badge */}
+                      {/* Kuota Lowongan Badge */}
                       <div className="flex items-center justify-between flex-wrap gap-2">
                         <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-[#E0F1F7] dark:bg-slate-800 border border-[#B8E1ED] dark:border-slate-700 text-[#1b7b9e] dark:text-cyan-300 text-xs font-extrabold">
-                          <Sparkles size={15} className="text-[#1b7b9e] dark:text-cyan-400" />
-                          <span>{job.matchEstimate}</span>
+                          <Users size={15} className="text-[#1b7b9e] dark:text-cyan-400" />
+                          <span>Kuota: {job.openingsCount} Posisi</span>
                         </div>
-
-                        <span className="text-xs font-bold text-slate-400 flex items-center gap-1">
-                          <Clock size={14} /> {language === 'en' ? 'Estimated Screening:' : 'Estimasi Waktu Seleksi:'} {job.estimatedTimeMinutes} {language === 'en' ? 'Mins' : 'Menit'}
-                        </span>
                       </div>
 
                       {/* Location & Salary */}
                       <div className="space-y-1.5 text-xs sm:text-sm text-slate-600 dark:text-slate-300">
                         <div className="flex items-center gap-2">
                           <MapPin size={16} className="text-slate-400 shrink-0" />
-                          <span>{job.location} • <strong className="text-slate-700 dark:text-slate-200">{job.workType}</strong> ({job.experienceLevel})</span>
+                          <span>{job.location} • <strong className="text-slate-700 dark:text-slate-200">{job.workType}</strong> ({job.experienceLevel} • {job.educationLevel})</span>
                         </div>
                         <div className="flex items-center gap-2">
                           <DollarSign size={16} className="text-slate-400 shrink-0" />
@@ -922,15 +864,15 @@ export default function PerfectlyNeatLandingPage() {
 
                     {/* Bottom CTA */}
                     <div className="pt-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between gap-2 text-xs sm:text-sm">
-                      <span className="text-slate-400 font-medium">{job.postedAgo}</span>
+                      <span className="text-slate-400 font-medium">Diterbitkan: {job.publishDate} <span className="text-slate-300 mx-1">•</span> {job.postedAgo}</span>
 
                       <div className="flex items-center gap-3">
-                        <button
-                          onClick={(e) => { e.stopPropagation(); setActiveJobModal(job); }}
-                          className="px-4 py-2 rounded-full border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 font-bold hover:bg-slate-50 dark:hover:bg-slate-800 text-xs cursor-pointer"
+                        <Link
+                          href="/pelamar/login"
+                          className="px-4 py-2 rounded-full border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 font-bold hover:bg-slate-50 dark:hover:bg-slate-800 text-xs text-center inline-block"
                         >
                           {language === 'en' ? 'View Details' : 'Lihat Detail'}
-                        </button>
+                        </Link>
                         <Link
                           href="/pelamar/login"
                           className="inline-flex items-center gap-2 px-5 py-2 rounded-full bg-[#1b7b9e] hover:bg-[#1D7FA1] text-white font-bold text-xs shadow-xs"
@@ -960,83 +902,68 @@ export default function PerfectlyNeatLandingPage() {
           <div className="lg:col-span-5">
             <div className="sticky top-24 bg-white dark:bg-slate-900 rounded-3xl p-7 border border-[#C2E5EF] dark:border-slate-800 shadow-xl space-y-6">
 
-              <div className="flex items-start gap-4 border-b border-slate-100 dark:border-slate-800 pb-4">
-                <img
-                  src={selectedPreviewJob.logo}
-                  alt={selectedPreviewJob.company}
-                  className="w-16 h-16 rounded-2xl object-cover border border-[#C2E5EF] dark:border-slate-700"
-                />
-                <div className="space-y-1">
-                  <span className="text-xs font-bold text-[#1b7b9e] dark:text-cyan-400 block">{selectedPreviewJob.company}</span>
-                  <h3 className="font-bold text-xl text-[#1b7b9e] dark:text-cyan-300 leading-snug">{selectedPreviewJob.title}</h3>
-                  <div className="flex items-center gap-2 text-xs sm:text-sm text-slate-500 font-medium">
-                    <span>{selectedPreviewJob.location}</span>
-                    <span>•</span>
-                    <span className="text-[#1b7b9e] dark:text-cyan-400 font-semibold">{selectedPreviewJob.salary}</span>
+              {selectedPreviewJob ? (
+                <>
+                  <div className="flex items-start gap-4 border-b border-slate-100 dark:border-slate-800 pb-4">
+                    <img
+                      src={selectedPreviewJob.logo}
+                      alt={selectedPreviewJob.company}
+                      className="w-16 h-16 rounded-2xl object-cover border border-[#C2E5EF] dark:border-slate-700"
+                    />
+                    <div className="space-y-1">
+                      <span className="text-xs font-bold text-[#1b7b9e] dark:text-cyan-400 block">{selectedPreviewJob.company}</span>
+                      <h3 className="font-bold text-xl text-[#1b7b9e] dark:text-cyan-300 leading-snug">{selectedPreviewJob.title}</h3>
+                      <div className="flex flex-wrap items-center gap-2 text-xs sm:text-sm text-slate-500 font-medium">
+                        <span>{selectedPreviewJob.location}</span>
+                        <span>•</span>
+                        <span className="text-slate-700 dark:text-slate-200 font-bold">{selectedPreviewJob.workType}</span>
+                        <span>•</span>
+                        <span className="text-[#1b7b9e] dark:text-cyan-400 font-semibold">{selectedPreviewJob.salary}</span>
+                        <span>•</span>
+                        <span>{selectedPreviewJob.experienceLevel}</span>
+                        <span>•</span>
+                        <span>Min. {selectedPreviewJob.educationLevel}</span>
+                        {selectedPreviewJob.applicationDeadline && (
+                          <>
+                            <span>•</span>
+                            <span className="text-amber-600 dark:text-amber-500 font-bold">Batas Pendaftaran: {selectedPreviewJob.applicationDeadline}</span>
+                          </>
+                        )}
+                      </div>
+                    </div>
                   </div>
+
+                  {/* Requirements */}
+                  <div className="space-y-4 text-xs sm:text-sm text-slate-600 dark:text-slate-300">
+                    <div>
+                      <h4 className="font-bold text-[#1b7b9e] dark:text-cyan-400 text-sm mb-1">{lang.roleDescription}</h4>
+                      <p className="leading-relaxed">{selectedPreviewJob.description}</p>
+                    </div>
+
+                    <div>
+                      <h4 className="font-bold text-[#1b7b9e] dark:text-cyan-400 text-sm mb-1">{lang.keyQualifications}</h4>
+                      <ul className="list-disc list-inside space-y-1.5">
+                        {selectedPreviewJob.requirements?.map((req: string, idx: number) => (
+                          <li key={idx}>{req}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  </div>
+
+                  {/* Action Button */}
+                  <Link
+                    href="/pelamar/login"
+                    className="w-full py-4 rounded-full bg-[#1b7b9e] hover:bg-[#1D7FA1] text-white font-extrabold text-xs sm:text-sm shadow-md transition-all flex items-center justify-center gap-2"
+                  >
+                    {lang.startPoFitSelection}
+                  </Link>
+                </>
+              ) : (
+                <div className="text-center py-12 text-slate-400 dark:text-slate-500">
+                  <Briefcase size={48} className="mx-auto mb-4 opacity-30" />
+                  <p className="font-medium text-sm">Belum ada lowongan untuk ditampilkan</p>
                 </div>
-              </div>
-
-              {/* Score Details */}
-              <div className="bg-[#F0F8FB] dark:bg-slate-800/80 p-5 rounded-2xl border border-[#C2E5EF] dark:border-slate-700 space-y-4">
-                <div className="flex items-center justify-between font-bold text-xs sm:text-sm text-[#1b7b9e] dark:text-cyan-400">
-                  <span className="flex items-center gap-2"><Sparkles size={18} className="text-[#1b7b9e] dark:text-cyan-400" /> {lang.estimatedScoreTitle}</span>
-                  <span className="text-sm text-[#1b7b9e] dark:text-cyan-300 bg-white dark:bg-slate-900 px-3.5 py-1 rounded-full shadow-2xs border border-[#B8E1ED] dark:border-slate-700">
-                    {selectedPreviewJob.matchEstimate}
-                  </span>
-                </div>
-
-                <div className="space-y-3 text-xs sm:text-sm">
-                  <div className="flex justify-between text-slate-600 dark:text-slate-300 font-semibold">
-                    <span>{lang.skillAlignment}</span>
-                    <span>{selectedPreviewJob.skillsScore}%</span>
-                  </div>
-                  <div className="w-full h-2 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
-                    <div className="h-full bg-[#1b7b9e] rounded-full" style={{ width: `${selectedPreviewJob.skillsScore}%` }}></div>
-                  </div>
-
-                  <div className="flex justify-between text-slate-600 dark:text-slate-300 font-semibold">
-                    <span>{lang.commVideoResponse}</span>
-                    <span>{selectedPreviewJob.eqScore}%</span>
-                  </div>
-                  <div className="w-full h-2 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
-                    <div className="h-full bg-[#1D7FA1] rounded-full" style={{ width: `${selectedPreviewJob.eqScore}%` }}></div>
-                  </div>
-
-                  <div className="flex justify-between text-slate-600 dark:text-slate-300 font-semibold">
-                    <span>{lang.cultureFitMatch}</span>
-                    <span>{selectedPreviewJob.cultureScore}%</span>
-                  </div>
-                  <div className="w-full h-2 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
-                    <div className="h-full bg-[#1b7b9e] rounded-full" style={{ width: `${selectedPreviewJob.cultureScore}%` }}></div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Requirements */}
-              <div className="space-y-4 text-xs sm:text-sm text-slate-600 dark:text-slate-300">
-                <div>
-                  <h4 className="font-bold text-[#1b7b9e] dark:text-cyan-400 text-sm mb-1">{lang.roleDescription}</h4>
-                  <p className="leading-relaxed">{selectedPreviewJob.description}</p>
-                </div>
-
-                <div>
-                  <h4 className="font-bold text-[#1b7b9e] dark:text-cyan-400 text-sm mb-1">{lang.keyQualifications}</h4>
-                  <ul className="list-disc list-inside space-y-1.5">
-                    {selectedPreviewJob.requirements.map((req, idx) => (
-                      <li key={idx}>{req}</li>
-                    ))}
-                  </ul>
-                </div>
-              </div>
-
-              {/* Action Button */}
-              <Link
-                href="/pelamar/login"
-                className="w-full py-4 rounded-full bg-[#1b7b9e] hover:bg-[#1D7FA1] text-white font-extrabold text-xs sm:text-sm shadow-md transition-all flex items-center justify-center gap-2"
-              >
-                {lang.startPoFitSelection}
-              </Link>
+              )}
 
             </div>
           </div>
@@ -1177,75 +1104,6 @@ export default function PerfectlyNeatLandingPage() {
           </div>
         </div>
       </footer>
-
-      {/* Modal Job Details */}
-      {activeJobModal && (
-        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-slate-900 rounded-3xl max-w-xl w-full p-6 sm:p-8 space-y-6 shadow-2xl border border-slate-200 dark:border-slate-800">
-
-            <div className="flex items-start justify-between border-b border-slate-100 dark:border-slate-800 pb-4">
-              <div className="flex items-center gap-4">
-                <img
-                  src={activeJobModal.logo}
-                  alt={activeJobModal.company}
-                  className="w-14 h-14 rounded-2xl object-cover border border-[#C2E5EF] dark:border-slate-700"
-                />
-                <div>
-                  <span className="text-xs font-bold text-slate-500 dark:text-slate-400 block">{activeJobModal.company}</span>
-                  <h3 className="font-bold text-xl text-[#1b7b9e] dark:text-cyan-300">{activeJobModal.title}</h3>
-                </div>
-              </div>
-              <button
-                onClick={() => setActiveJobModal(null)}
-                className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 font-bold text-sm cursor-pointer"
-              >
-                <X size={22} />
-              </button>
-            </div>
-
-            <div className="space-y-4 text-xs sm:text-sm text-slate-600 dark:text-slate-300">
-              <div className="flex items-center justify-between bg-[#E0F1F7] dark:bg-slate-800 p-4 rounded-2xl border border-[#B8E1ED] dark:border-slate-700">
-                <span className="font-bold text-[#1b7b9e] dark:text-cyan-300">{lang.jobDetailsModalTitle}</span>
-                <span className="font-extrabold text-[#1b7b9e] dark:text-cyan-300 bg-white dark:bg-slate-900 px-4 py-1 rounded-full shadow-2xs">
-                  {activeJobModal.matchEstimate}
-                </span>
-              </div>
-
-              <div className="space-y-1">
-                <h4 className="font-bold text-[#1b7b9e] dark:text-cyan-400 text-sm">{lang.roleDescription}</h4>
-                <p className="leading-relaxed">{activeJobModal.description}</p>
-              </div>
-
-              <div className="space-y-1">
-                <h4 className="font-bold text-[#1b7b9e] dark:text-cyan-400 text-sm">{lang.keyQualifications}</h4>
-                <ul className="list-disc list-inside space-y-1.5 text-slate-600 dark:text-slate-300">
-                  {activeJobModal.requirements.map((req, idx) => (
-                    <li key={idx}>{req}</li>
-                  ))}
-                </ul>
-              </div>
-            </div>
-
-            <div className="pt-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between gap-3">
-              <button
-                onClick={() => setActiveJobModal(null)}
-                className="px-5 py-2.5 rounded-full border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 font-bold text-xs hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer"
-              >
-                {lang.closeModal}
-              </button>
-
-              <Link
-                href="/pelamar/login"
-                className="inline-flex items-center gap-2 px-6 py-2.5 rounded-full bg-[#1b7b9e] hover:bg-[#1D7FA1] text-white font-bold text-xs shadow-xs"
-              >
-                {lang.applicantPortal}
-                <ArrowRight size={15} className="text-[#E0F1F7]" />
-              </Link>
-            </div>
-
-          </div>
-        </div>
-      )}
 
     </div>
   );

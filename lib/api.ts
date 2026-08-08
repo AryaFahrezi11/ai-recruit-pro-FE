@@ -1,4 +1,12 @@
-const BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api';
+export const getBaseUrl = () => {
+  if (process.env.NEXT_PUBLIC_API_URL) return process.env.NEXT_PUBLIC_API_URL;
+  if (typeof window !== 'undefined') {
+    return `http://${window.location.hostname}:8000/api`;
+  }
+  return 'http://127.0.0.1:8000/api';
+};
+
+const BASE_URL = getBaseUrl();
 
 export interface ApiErrorResponse {
   detail?: string | Array<{ msg: string; loc: string[] }>;

@@ -37,8 +37,6 @@ interface SavedJob {
   workPolicy: string;
   salary: string;
   postedAgo: string;
-  matchScore: number;
-  reason: string;
   descriptionBullets: string[];
   placementInfo: string;
   criteriaBullets: string[];
@@ -55,214 +53,10 @@ export default function SavedJobsPage() {
   const [appliedJobs, setAppliedJobs] = useState<number[]>([]);
   const [activeJobModal, setActiveJobModal] = useState<SavedJob | null>(null);
 
-  // Default dataset of all available candidate jobs
-  const initialMasterJobs: SavedJob[] = [
-    {
-      id: 101,
-      title: 'Admin Stocking (Mangga Besar)',
-      company: 'Mint Patisserie',
-      logo: 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=120&auto=format&fit=crop&q=80',
-      location: 'Jakarta Barat, DKI Jakarta',
-      education: 'Minimal SMA/SMK/Sederajat',
-      workPolicy: 'Kontrak • Kerja dari kantor (WFO)',
-      salary: 'Rp 2.000.000 - Rp 2.500.000',
-      postedAgo: 'Terakhir diperbarui 2 hari yang lalu',
-      matchScore: 95,
-      reason: 'Keteletihan data stok & kemampuan komputasi dasar di CV Anda sangat relevan.',
-      descriptionBullets: [
-        'Menyusun laporan stok dan status inventaris secara berkala.',
-        'Memberi label, menyimpan, dan menata barang di lokasi penyimpanan yang sesuai.',
-        'Memantau ketersediaan barang dan melaporkan jika ada kekurangan atau ketidaksesuaian.'
-      ],
-      placementInfo: 'Untuk lokasi di Mangga Besar, Jakarta Barat',
-      criteriaBullets: [
-        'Pria/Wanita 18 - 25 Tahun, Rapi & Teliti.',
-        'WAJIB BISA MENGGUNAKAN KOMPUTER Rajin.'
-      ],
-      savedAt: '28 Juli 2026'
-    },
-    {
-      id: 102,
-      title: 'Staff Admin Klinik',
-      company: 'Medika Utama Clinic',
-      logo: 'https://images.unsplash.com/photo-1516549655169-df83a0774514?w=120&auto=format&fit=crop&q=80',
-      location: 'Kota Depok, Jawa Barat',
-      education: 'Minimal SMA/SMK/Sederajat',
-      workPolicy: 'Kontrak • Kerja dari kantor (WFO)',
-      salary: 'Rp 2.400.000 - Rp 2.700.000',
-      postedAgo: 'Terakhir diperbarui 3 hari yang lalu',
-      matchScore: 92,
-      reason: 'Kemampuan komunikasi ramah & administrasi dokumen sesuai standar klinik.',
-      descriptionBullets: [
-        'Mengelola pendaftaran pasien dan jadwal konsultasi dokter.',
-        'Melakukan pencatatan administrasi rekam medis dan klaim asuransi kesehatan.'
-      ],
-      placementInfo: 'Margonda, Depok',
-      criteriaBullets: [
-        'Pendidikan minimal SMA/SMK Sederajat.',
-        'Komunikatif, ramah, dan berpenampilan rapi.'
-      ],
-      savedAt: '28 Juli 2026'
-    },
-    {
-      id: 103,
-      title: 'Call Center',
-      company: 'PT Citra Indojaya Perkasa',
-      logo: 'https://images.unsplash.com/photo-1560179707-f14e90ef3623?w=120&auto=format&fit=crop&q=80',
-      location: 'Jakarta Utara, DKI Jakarta',
-      education: 'Minimal D3/D4',
-      workPolicy: 'Full time • Hybrid',
-      salary: 'Rp 5.729.876 - Rp 7.000.000',
-      postedAgo: 'Terakhir diperbarui 1 hari yang lalu',
-      matchScore: 94,
-      reason: 'Skor komunikasi lisan & pemecahan masalah Anda sangat baik.',
-      descriptionBullets: [
-        'Menerima panggilan masuk (inbound call) dan menangani keluhan pelanggan.',
-        'Eskalasi masalah teknis ke tim terkait.'
-      ],
-      placementInfo: 'Sunter, Jakarta Utara',
-      criteriaBullets: [
-        'Pendidikan D3 / S1 Semua Jurusan.',
-        'Pengalaman customer service 1 tahun.'
-      ],
-      savedAt: '28 Juli 2026'
-    },
-    {
-      id: 104,
-      title: 'IT Application Developer',
-      company: 'PT Supra Boga Lestari Tbk',
-      logo: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=120&auto=format&fit=crop&q=80',
-      location: 'Jakarta Barat, DKI Jakarta',
-      education: 'Minimal D3/S1 Informatika',
-      workPolicy: 'Full time • Hybrid',
-      salary: 'Rp 8.000.000 - Rp 12.000.000',
-      postedAgo: 'Terakhir diperbarui 17 jam yang lalu',
-      matchScore: 96,
-      reason: 'Pengalaman Next.js & React pada CV ATS Anda mempunyai keselarasan 96%.',
-      descriptionBullets: [
-        'Mengembangkan platform e-commerce & aplikasi manajemen stok ritel.',
-        'Integrasi RESTful API & arsitektur Frontend modern berbasis React/Next.js.'
-      ],
-      placementInfo: 'Kedoya, Jakarta Barat',
-      criteriaBullets: [
-        'Pengalaman minimal 2 tahun sebagai Frontend / Fullstack Developer.',
-        'Menguasai TypeScript, React, Next.js, dan REST API.'
-      ],
-      savedAt: '29 Juli 2026'
-    },
-    {
-      id: 105,
-      title: 'Front-End Web Designer (Remote – Indonesia)',
-      company: 'Wanderus Technologies',
-      logo: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=120&auto=format&fit=crop&q=80',
-      location: 'Bali (Jarak jauh)',
-      education: 'Minimal D3/S1',
-      workPolicy: 'Full time • Remote (WFH)',
-      salary: 'Rp 7.000.000 - Rp 10.000.000',
-      postedAgo: 'Terakhir diperbarui 5 hari yang lalu',
-      matchScore: 91,
-      reason: 'Portofolio UI/UX Design & komponen React pas dengan kebutuhan tim global.',
-      descriptionBullets: [
-        'Merancang antarmuka pengguna Web SaaS yang intuitif dan responsif.',
-        'Menerjemahkan desain Figma ke dalam komponen React / Tailwind CSS.'
-      ],
-      placementInfo: 'Remote (Kerja Dari Mana Saja)',
-      criteriaBullets: [
-        'Minimal 2 tahun pengalaman UI/UX & Frontend Design.',
-        'Portofolio web desain aktif dapat ditunjukkan.'
-      ],
-      savedAt: '30 Juli 2026'
-    },
-    {
-      id: 106,
-      title: 'Staff Accounting',
-      company: 'PT Maju Sejahtera Abadi',
-      logo: 'https://images.unsplash.com/photo-1554224155-6726b3ff858f?w=120&auto=format&fit=crop&q=80',
-      location: 'Jakarta Selatan, DKI Jakarta',
-      education: 'Minimal D3/S1 Akuntansi',
-      workPolicy: 'Full time • Kerja dari kantor (WFO)',
-      salary: 'Rp 5.000.000 - Rp 7.000.000',
-      postedAgo: 'Terakhir diperbarui 1 hari yang lalu',
-      matchScore: 88,
-      reason: 'Pemahaman laporan keuangan & pencatatan transaksi sangat sesuai.',
-      descriptionBullets: ['Membuat laporan keuangan bulanan dan jurnal umum.'],
-      placementInfo: 'Jakarta Selatan',
-      criteriaBullets: ['Minimal D3/S1 Akuntansi.'],
-      savedAt: '30 Juli 2026'
-    },
-    {
-      id: 107,
-      title: 'Digital Marketing Specialist',
-      company: 'PT Kreasi Digital Nusantara',
-      logo: 'https://images.unsplash.com/photo-1552664730-d307ca884978?w=120&auto=format&fit=crop&q=80',
-      location: 'Bandung, Jawa Barat',
-      education: 'Minimal S1 Marketing/Komunikasi',
-      workPolicy: 'Full time • Hybrid',
-      salary: 'Rp 6.000.000 - Rp 9.000.000',
-      postedAgo: 'Terakhir diperbarui 4 jam yang lalu',
-      matchScore: 89,
-      reason: 'Pengalaman campaign digital & analitik media sosial Anda sangat relevan.',
-      descriptionBullets: ['Mengelola campaign Google Ads, Meta Ads, dan TikTok Ads.'],
-      placementInfo: 'Dago, Bandung',
-      criteriaBullets: ['Pengalaman minimal 1 tahun di bidang Digital Marketing.'],
-      savedAt: '31 Juli 2026'
-    },
-    {
-      id: 108,
-      title: 'Customer Service Representative',
-      company: 'PT Tokopedia Care',
-      logo: 'https://images.unsplash.com/photo-1556745757-8d76bdb6984b?w=120&auto=format&fit=crop&q=80',
-      location: 'Jakarta Pusat, DKI Jakarta',
-      education: 'Minimal SMA/SMK/Sederajat',
-      workPolicy: 'Kontrak • Kerja dari kantor (WFO)',
-      salary: 'Rp 4.500.000 - Rp 5.500.000',
-      postedAgo: 'Terakhir diperbarui 6 jam yang lalu',
-      matchScore: 90,
-      reason: 'Layanan pelanggan & empati komunikasi sesuai profil.',
-      descriptionBullets: ['Melayani pertanyaan dan kendala pengguna Tokopedia.'],
-      placementInfo: 'Menteng, Jakarta Pusat',
-      criteriaBullets: ['Pendidikan minimal SMA/SMK Sederajat.'],
-      savedAt: '01 Agustus 2026'
-    },
-    {
-      id: 109,
-      title: 'Backend Engineer (Node.js)',
-      company: 'PT Solusi Teknologi Indonesia',
-      logo: 'https://images.unsplash.com/photo-1519389950473-47ba0277781c?w=120&auto=format&fit=crop&q=80',
-      location: 'Surabaya, Jawa Timur',
-      education: 'Minimal S1 Teknik Informatika',
-      workPolicy: 'Full time • Remote (WFH)',
-      salary: 'Rp 10.000.000 - Rp 15.000.000',
-      postedAgo: 'Terakhir diperbarui 12 jam yang lalu',
-      matchScore: 93,
-      reason: 'Skill Node.js & pengalaman arsitektur microservices Anda sangat sesuai.',
-      descriptionBullets: ['Mengembangkan dan maintain RESTful API & GraphQL services.'],
-      placementInfo: 'Remote (Seluruh Indonesia)',
-      criteriaBullets: ['Pengalaman minimal 3 tahun sebagai Backend Developer.'],
-      savedAt: '02 Agustus 2026'
-    },
-    {
-      id: 110,
-      title: 'HRD & Recruitment Staff',
-      company: 'PT Global Talent Solutions',
-      logo: 'https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?w=120&auto=format&fit=crop&q=80',
-      location: 'Tangerang, Banten',
-      education: 'Minimal S1 Psikologi/Manajemen',
-      workPolicy: 'Full time • Kerja dari kantor (WFO)',
-      salary: 'Rp 5.500.000 - Rp 8.000.000',
-      postedAgo: 'Terakhir diperbarui 2 hari yang lalu',
-      matchScore: 86,
-      reason: 'Latar belakang manajemen SDM & keterampilan komunikasi Anda relevan.',
-      descriptionBullets: ['Mengelola proses rekrutmen end-to-end dari sourcing hingga onboarding.'],
-      placementInfo: 'BSD City, Tangerang Selatan',
-      criteriaBullets: ['Pendidikan S1 Psikologi atau Manajemen SDM.'],
-      savedAt: '03 Agustus 2026'
-    }
-  ];
+  const [masterJobs, setMasterJobs] = useState<SavedJob[]>([]);
 
   // Saved Jobs ID list state
-  const [savedJobIds, setSavedJobIds] = useState<any[]>([101, 104, 105]);
-  const [apiSavedJobs, setApiSavedJobs] = useState<any[]>([]);
+  const [savedJobIds, setSavedJobIds] = useState<any[]>([]);
 
   useEffect(() => {
     // Load candidate CV data
@@ -285,50 +79,65 @@ export default function SavedJobsPage() {
       } catch (e) {
         console.error(e);
       }
-    } else {
-      localStorage.setItem('candidateSavedJobsList', JSON.stringify([101, 104, 105]));
     }
 
-    // Fetch from Backend API
-    const fetchBackendSavedJobs = async () => {
+    // Fetch real jobs to populate masterJobs
+    const fetchRealData = async () => {
       try {
-        const res = await api.get('/saved-jobs/');
-        if (Array.isArray(res) && res.length > 0) {
-          setApiSavedJobs(res);
-          const backendIds = res.map((item: any) => item.id);
-          setSavedJobIds((prev) => Array.from(new Set([...prev, ...backendIds])));
+        const resJobs = await api.get('/jobs/');
+        
+        if (resJobs && Array.isArray(resJobs.data)) {
+          const safeParseArray = (val: any) => {
+            if (!val) return [];
+            if (Array.isArray(val)) return val;
+            try { return JSON.parse(val); } catch { return [val]; }
+          };
+
+          const mapped = resJobs.data.map((j: any) => ({
+            id: j.id,
+            title: j.judul_posisi,
+            company: j.perusahaan?.nama_perusahaan || 'Perusahaan',
+            logo: (j.perusahaan?.logo_url && j.perusahaan.logo_url !== '') 
+                  ? (j.perusahaan.logo_url.startsWith('http') ? j.perusahaan.logo_url : `http://${typeof window !== 'undefined' ? window.location.hostname : '127.0.0.1'}:8000${j.perusahaan.logo_url}`)
+                  : 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=120&auto=format&fit=crop&q=80',
+            location: j.kota || 'Remote',
+            education: j.pendidikan_min || safeParseArray(j.kualifikasi)[0] || 'Terbuka untuk umum',
+            workPolicy: (() => {
+              const type = j.tipe_pekerjaan ? j.tipe_pekerjaan.split('_').map((w: any) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ') : 'Full Time';
+              const loc = j.lokasi_kerja === 'remote' ? 'Remote' : j.lokasi_kerja === 'hybrid' ? 'Hybrid' : 'On-site';
+              return `${type} (${loc})`;
+            })(),
+            salary: (j.tampilkan_gaji && j.gaji_min && j.gaji_max) ? `Rp ${(j.gaji_min/1000000).toFixed(0)} Jt - Rp ${(j.gaji_max/1000000).toFixed(0)} Jt` : 'Gaji Dirahasiakan',
+            postedAgo: (() => {
+              const created = j.tanggal_buka ? new Date(j.tanggal_buka) : new Date();
+              const diffDays = Math.ceil(Math.abs(Date.now() - created.getTime()) / (1000 * 60 * 60 * 24));
+              return diffDays <= 1 ? 'Hari ini' : `${diffDays} hari yang lalu`;
+            })(),
+            descriptionBullets: safeParseArray(j.deskripsi_pekerjaan),
+            placementInfo: j.lokasi_kerja === 'remote' ? 'Remote' : j.lokasi_kerja === 'hybrid' ? 'Hybrid' : 'On-site',
+            criteriaBullets: safeParseArray(j.kualifikasi),
+            savedAt: j.tanggal_buka ? new Date(j.tanggal_buka).toLocaleDateString('id-ID') : 'Terbaru'
+          }));
+          setMasterJobs(mapped);
         }
       } catch (err) {
-        console.error('Failed to fetch backend saved jobs:', err);
+        console.error('Failed to fetch master jobs:', err);
       }
     };
-    fetchBackendSavedJobs();
+    fetchRealData();
   }, []);
 
   // Remove saved job
   const handleRemoveSaved = async (jobId: any) => {
     const newSaved = savedJobIds.filter((id) => String(id) !== String(jobId));
     setSavedJobIds(newSaved);
-    setApiSavedJobs((prev) => prev.filter((item) => String(item.id) !== String(jobId)));
     localStorage.setItem('candidateSavedJobsList', JSON.stringify(newSaved));
-
-    try {
-      await api.delete(`/saved-jobs/${jobId}`);
-    } catch (err) {
-      console.error('Failed to remove saved job from backend:', err);
-    }
   };
 
   // Clear all saved jobs
   const handleClearAllSaved = async () => {
     if (confirm('Apakah Anda yakin ingin menghapus semua lowongan tersimpan?')) {
-      savedJobIds.forEach(async (id) => {
-        try {
-          await api.delete(`/saved-jobs/${id}`);
-        } catch (_) {}
-      });
       setSavedJobIds([]);
-      setApiSavedJobs([]);
       localStorage.setItem('candidateSavedJobsList', JSON.stringify([]));
     }
   };
@@ -347,25 +156,13 @@ export default function SavedJobsPage() {
   const visibleSavedJobs = useMemo(() => {
     const savedIdsSet = new Set(savedJobIds.map((id) => String(id)));
 
-    apiSavedJobs.forEach((item) => {
-      if (item.id) savedIdsSet.add(String(item.id));
-      if (item.job_id) savedIdsSet.add(String(item.job_id));
-      if (item.saved_id) savedIdsSet.add(String(item.saved_id));
-    });
-
     const resultList: SavedJob[] = [];
 
     savedIdsSet.forEach((idStr) => {
-      const master = initialMasterJobs.find((m) => String(m.id) === idStr);
-      const apiItem = apiSavedJobs.find((a) => String(a.id) === idStr || String(a.job_id) === idStr);
+      const master = masterJobs.find((m) => String(m.id) === idStr);
 
       if (master) {
-        resultList.push({
-          ...master,
-          savedAt: apiItem?.savedAt || master.savedAt || 'Terbaru'
-        });
-      } else if (apiItem && apiItem.title && apiItem.company) {
-        resultList.push(apiItem);
+        resultList.push(master);
       }
     });
 
@@ -385,7 +182,7 @@ export default function SavedJobsPage() {
 
       return matchesQuery && matchesPolicy;
     });
-  }, [initialMasterJobs, apiSavedJobs, savedJobIds, searchQuery, policyFilter]);
+  }, [masterJobs, savedJobIds, searchQuery, policyFilter]);
 
   return (
     <div className="space-y-8 max-w-[1600px] mx-auto">
@@ -409,7 +206,7 @@ export default function SavedJobsPage() {
 
         {/* Counter Badge */}
         <div className="bg-white/10 backdrop-blur-md border border-white/20 p-5 rounded-3xl shrink-0 text-center space-y-1 self-start md:self-center">
-          <span className="text-3xl font-black text-white">{savedJobIds.length}</span>
+          <span className="text-3xl font-black text-white">{visibleSavedJobs.length}</span>
           <span className="block text-xs font-bold text-cyan-200">Total Lowongan Tersimpan</span>
         </div>
       </div>
@@ -443,7 +240,7 @@ export default function SavedJobsPage() {
               <option value="Hybrid">Hybrid</option>
             </select>
 
-            {savedJobIds.length > 0 && (
+            {visibleSavedJobs.length > 0 && (
               <button
                 onClick={handleClearAllSaved}
                 className="px-4 py-2.5 rounded-2xl border border-red-200 text-red-600 hover:bg-red-50 dark:hover:bg-red-950/40 font-bold text-xs transition-colors cursor-pointer flex items-center gap-1.5 shrink-0"
@@ -542,20 +339,7 @@ export default function SavedJobsPage() {
                     </div>
                   </div>
 
-                  {/* PO-FIT AI Match Banner */}
-                  <div className="p-3 rounded-2xl bg-[#F0F8FB] dark:bg-slate-800/80 border border-[#C2E5EF] dark:border-slate-700 text-xs text-[#2596be] dark:text-cyan-300 space-y-1">
-                    <div className="flex items-center justify-between font-extrabold">
-                      <span className="flex items-center gap-1.5">
-                        <Sparkles size={14} /> Kecocokan PO-FIT AI
-                      </span>
-                      <span className="px-2 py-0.5 rounded-full bg-white dark:bg-slate-900 border border-[#B8E1ED] text-[11px]">
-                        {job.matchScore}% Kecocokan
-                      </span>
-                    </div>
-                    <p className="text-[11px] text-slate-600 dark:text-slate-400 font-normal line-clamp-2">
-                      {job.reason}
-                    </p>
-                  </div>
+                  {/* PO-FIT AI Match Banner Removed */}
                 </div>
 
                 {/* Card Actions */}

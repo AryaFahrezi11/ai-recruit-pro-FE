@@ -5,13 +5,12 @@ import { useTranslation } from '@/hooks/useTranslation';
 import { fetchAuth } from '@/lib/api/auth';
 import { useAppStore } from '@/lib/store/useAppStore';
 import { 
-  Building2, Sliders, Mail, Save, CheckCircle2, 
-  Sparkles, Bot, Upload
+  Building2, Mail, Save, CheckCircle2, Upload
 } from 'lucide-react';
 
 export default function SettingsPage() {
   const { t } = useTranslation();
-  const [activeTab, setActiveTab] = useState<'profile' | 'ai_rules' | 'email'>('profile');
+  const [activeTab, setActiveTab] = useState<'profile' | 'email'>('profile');
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
@@ -23,28 +22,25 @@ export default function SettingsPage() {
   const [website, setWebsite] = useState('');
   const [companyDesc, setCompanyDesc] = useState('');
   const [logoUrl, setLogoUrl] = useState('');
+  const [alamat, setAlamat] = useState('');
+  const [kota, setKota] = useState('');
+  const [provinsi, setProvinsi] = useState('');
+  const [noTelepon, setNoTelepon] = useState('');
+  const [tahunBerdiri, setTahunBerdiri] = useState<number | ''>('');
+  const [hrName, setHrName] = useState('');
+  const [hrWhatsapp, setHrWhatsapp] = useState('');
+  const [hrPosition, setHrPosition] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
   
   const token = useAppStore(state => state.token);
-
-  // Form States - AI Rules
-  const [defaultThreshold, setDefaultThreshold] = useState(80);
-  const [autoInviteInterview, setAutoInviteInterview] = useState(true);
-  const [autoArchiveRejected, setAutoArchiveRejected] = useState(true);
-  
-  // Video Weights
-  const [weights, setWeights] = useState({
-    ability: 20,
-    intelligent: 20,
-    personality: 20,
-    attitude: 20,
-    emotionalIntelligence: 20,
-  });
 
   // Form States - Email
   const [emailInvSubject, setEmailInvSubject] = useState('');
   const [emailInvBody, setEmailInvBody] = useState('');
   const [emailHireSubject, setEmailHireSubject] = useState('');
+  const [emailHireBody, setEmailHireBody] = useState('');
+  const [emailRejectSubject, setEmailRejectSubject] = useState('');
+  const [emailRejectBody, setEmailRejectBody] = useState('');
 
   const loadSettings = async () => {
     setIsLoading(true);
@@ -60,23 +56,22 @@ export default function SettingsPage() {
         setWebsite(data.profile.website_url || '');
         setCompanyDesc(data.profile.deskripsi || '');
         setLogoUrl(data.profile.logo_url || '');
-        
-        // AI Settings
-        setDefaultThreshold(data.ai_settings.ai_default_threshold ?? 80);
-        setAutoInviteInterview(data.ai_settings.auto_invite_interview ?? true);
-        setAutoArchiveRejected(data.ai_settings.auto_archive_rejected ?? true);
-        if (data.ai_settings.video_weights_json) {
-          try {
-            setWeights(JSON.parse(data.ai_settings.video_weights_json));
-          } catch (e) {
-            console.error("Failed to parse video weights", e);
-          }
-        }
+        setAlamat(data.profile.alamat || '');
+        setKota(data.profile.kota || '');
+        setProvinsi(data.profile.provinsi || '');
+        setNoTelepon(data.profile.no_telepon || '');
+        setTahunBerdiri(data.profile.tahun_berdiri || '');
+        setHrName(data.profile.hr_name || '');
+        setHrWhatsapp(data.profile.hr_whatsapp || '');
+        setHrPosition(data.profile.hr_position || '');
 
         // Email Templates
         setEmailInvSubject(data.email_templates.email_invitation_subject || '');
         setEmailInvBody(data.email_templates.email_invitation_body || '');
         setEmailHireSubject(data.email_templates.email_hire_subject || '');
+        setEmailHireBody(data.email_templates.email_hire_body || '');
+        setEmailRejectSubject(data.email_templates.email_reject_subject || '');
+        setEmailRejectBody(data.email_templates.email_reject_body || '');
       }
     } catch (error) {
       console.error("Gagal memuat pengaturan", error);
@@ -104,13 +99,20 @@ export default function SettingsPage() {
         ukuran: companySize,
         website_url: website,
         deskripsi: companyDesc,
-        ai_default_threshold: defaultThreshold,
-        auto_invite_interview: autoInviteInterview,
-        auto_archive_rejected: autoArchiveRejected,
-        video_weights_json: JSON.stringify(weights),
+        alamat,
+        kota,
+        provinsi,
+        no_telepon: noTelepon,
+        tahun_berdiri: tahunBerdiri === '' ? null : tahunBerdiri,
+        hr_name: hrName,
+        hr_whatsapp: hrWhatsapp,
+        hr_position: hrPosition,
         email_invitation_subject: emailInvSubject,
         email_invitation_body: emailInvBody,
         email_hire_subject: emailHireSubject,
+        email_hire_body: emailHireBody,
+        email_reject_subject: emailRejectSubject,
+        email_reject_body: emailRejectBody,
       };
 
       const res = await fetchAuth('/api/perusahaan/settings', {
@@ -190,7 +192,6 @@ export default function SettingsPage() {
       <div className="flex border-b border-border gap-2 overflow-x-auto custom-scrollbar">
         {[
           { id: 'profile', label: t.settings.companyProfileTab, icon: Building2 },
-          { id: 'ai_rules', label: t.settings.aiRulesTab, icon: Sliders },
           { id: 'email', label: t.settings.emailTemplatesTab, icon: Mail },
         ].map((tab) => {
           const Icon = tab.icon;
@@ -217,7 +218,7 @@ export default function SettingsPage() {
         
         {/* ==================== TAB 1: COMPANY PROFILE ==================== */}
         {activeTab === 'profile' && (
-          <div className="bg-card p-6 sm:p-8 rounded-xl border border-border shadow-sm space-y-6 animate-in fade-in duration-200">
+          <div className="bg-card p-6 sm:p-8 rounded-xl border border-border shadow-sm space-y-8 animate-in fade-in duration-200">
             <div className="flex items-center gap-4">
               <div className="w-20 h-20 rounded-xl bg-primary text-primary-foreground font-bold text-3xl flex items-center justify-center border border-border shadow-inner shrink-0 overflow-hidden">
                 {logoUrl ? (
@@ -248,7 +249,12 @@ export default function SettingsPage() {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2 border-t border-border">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-6 border-t border-border">
+              
+              <div className="col-span-1 md:col-span-2">
+                <h4 className="text-sm font-bold text-foreground mb-4">Informasi Utama</h4>
+              </div>
+
               <div>
                 <label className="block text-xs font-semibold text-foreground mb-2">Nama Perusahaan</label>
                 <input 
@@ -293,7 +299,27 @@ export default function SettingsPage() {
                 />
               </div>
 
-              <div className="col-span-2">
+              <div>
+                <label className="block text-xs font-semibold text-foreground mb-2">Nomor Telepon / Kantor</label>
+                <input 
+                  type="text"
+                  value={noTelepon}
+                  onChange={(e) => setNoTelepon(e.target.value)}
+                  className="w-full px-4 py-2.5 bg-muted/30 border border-border rounded-lg text-xs text-foreground focus:outline-none focus:border-primary"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-foreground mb-2">Tahun Berdiri</label>
+                <input 
+                  type="number"
+                  value={tahunBerdiri}
+                  onChange={(e) => setTahunBerdiri(e.target.value ? Number(e.target.value) : '')}
+                  className="w-full px-4 py-2.5 bg-muted/30 border border-border rounded-lg text-xs text-foreground focus:outline-none focus:border-primary"
+                />
+              </div>
+
+              <div className="col-span-1 md:col-span-2">
                 <label className="block text-xs font-semibold text-foreground mb-2">Deskripsi Perusahaan</label>
                 <textarea 
                   rows={3}
@@ -302,154 +328,160 @@ export default function SettingsPage() {
                   className="w-full p-4 bg-muted/30 border border-border rounded-lg text-xs text-foreground focus:outline-none focus:border-primary resize-none"
                 ></textarea>
               </div>
-            </div>
-          </div>
-        )}
 
-        {/* ==================== TAB 2: AI AUTOMATION RULES ==================== */}
-        {activeTab === 'ai_rules' && (
-          <div className="bg-card p-6 sm:p-8 rounded-xl border border-border shadow-sm space-y-8 animate-in fade-in duration-200">
-            
-            {/* Default Threshold */}
-            <div className="p-5 bg-muted/20 border border-border rounded-xl space-y-3">
-              <div className="flex justify-between items-center">
-                <div>
-                  <h3 className="text-sm font-bold text-foreground flex items-center gap-2">
-                    <Sparkles size={16} className="text-amber-500" />
-                    Ambang Batas Default CV Cosine Similarity (PO-FIT)
-                  </h3>
-                  <p className="text-xs text-muted-foreground mt-0.5">
-                    Ambang batas minimal standar yang akan otomatis diterapkan saat membuat lowongan pekerjaan baru.
-                  </p>
-                </div>
-                <span className="text-2xl font-bold text-primary">{defaultThreshold}%</span>
-              </div>
-              <input 
-                type="range"
-                min="50"
-                max="95"
-                step="5"
-                value={defaultThreshold}
-                onChange={(e) => setDefaultThreshold(Number(e.target.value))}
-                className="w-full h-2 bg-muted rounded-lg appearance-none cursor-pointer accent-primary"
-              />
-              <div className="flex justify-between text-[10px] text-muted-foreground font-mono">
-                <span>50% (Longgar)</span>
-                <span className="font-bold text-emerald-600 dark:text-emerald-400">80% (Standar AI Recruit Pro)</span>
-                <span>95% (Ketat)</span>
-              </div>
-            </div>
-
-            {/* Automation Toggles */}
-            <div className="space-y-4 pt-2 border-t border-border">
-              <h3 className="font-bold text-sm text-foreground flex items-center gap-2">
-                <Bot size={16} className="text-primary" />
-                Otomatisasi Alur Workflow AI
-              </h3>
-
-              <div className="p-4 bg-muted/30 border border-border rounded-lg flex items-center justify-between gap-4">
-                <div>
-                  <p className="text-xs font-bold text-foreground">Otomatisasi Undangan Wawancara Video</p>
-                  <p className="text-[11px] text-muted-foreground">
-                    Otomatis kirim email undangan wawancara video virtual jika kandidat lulus seleksi CV PO-FIT (≥80%).
-                  </p>
-                </div>
-                <input 
-                  type="checkbox"
-                  checked={autoInviteInterview}
-                  onChange={(e) => setAutoInviteInterview(e.target.checked)}
-                  className="w-4 h-4 rounded border-border text-primary focus:ring-primary cursor-pointer"
-                />
+              {/* LOCATION SECTION */}
+              <div className="col-span-1 md:col-span-2 pt-6 mt-2 border-t border-border">
+                <h4 className="text-sm font-bold text-foreground mb-4">Alamat & Lokasi</h4>
               </div>
 
-              <div className="p-4 bg-muted/30 border border-border rounded-lg flex items-center justify-between gap-4">
-                <div>
-                  <p className="text-xs font-bold text-foreground">Otomatis Arsipkan Kandidat Ditolak</p>
-                  <p className="text-[11px] text-muted-foreground">
-                    Otomatis pindahkan data kandidat ke halaman Arsip setelah HR memberikan keputusan penolakan.
-                  </p>
-                </div>
-                <input 
-                  type="checkbox"
-                  checked={autoArchiveRejected}
-                  onChange={(e) => setAutoArchiveRejected(e.target.checked)}
-                  className="w-4 h-4 rounded border-border text-primary focus:ring-primary cursor-pointer"
-                />
-              </div>
-            </div>
-
-            {/* Video Parameter Weights Distribution */}
-            <div className="space-y-4 pt-2 border-t border-border">
-              <h3 className="font-bold text-sm text-foreground">
-                Distribusi Bobot 5 Parameter Analisis Video AI
-              </h3>
-              <p className="text-xs text-muted-foreground">
-                Tentukan proporsi penilaian otomatis sistem untuk analisis wawancara video pelamar (Total: 100%).
-              </p>
-
-              <div className="grid grid-cols-1 sm:grid-cols-5 gap-3">
-                {[
-                  { key: 'ability', label: 'Ability', value: weights.ability },
-                  { key: 'intelligent', label: 'Intelligent', value: weights.intelligent },
-                  { key: 'personality', label: 'Personality', value: weights.personality },
-                  { key: 'attitude', label: 'Attitude', value: weights.attitude },
-                  { key: 'emotionalIntelligence', label: 'Emotional Eq.', value: weights.emotionalIntelligence },
-                ].map(param => (
-                  <div key={param.key} className="p-3 bg-muted/20 border border-border rounded-lg text-center">
-                    <p className="text-[11px] font-semibold text-foreground mb-1">{param.label}</p>
-                    <span className="text-lg font-bold text-primary">{param.value}%</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-          </div>
-        )}
-
-        {/* ==================== TAB 3: EMAIL TEMPLATES ==================== */}
-        {activeTab === 'email' && (
-          <div className="bg-card p-6 sm:p-8 rounded-xl border border-border shadow-sm space-y-6 animate-in fade-in duration-200">
-            <div>
-              <h3 className="font-bold text-base text-foreground mb-1">Template Email Otomatis</h3>
-              <p className="text-xs text-muted-foreground">Sesuaikan subjek dan pesan email pemberitahuan yang dikirim otomatis ke kandidat.</p>
-            </div>
-
-            <div className="space-y-4">
-              <div>
-                <label className="block text-xs font-semibold text-foreground mb-1.5">
-                  Subjek Email Undangan Wawancara Video
-                </label>
-                <input 
-                  type="text"
-                  value={emailInvSubject}
-                  onChange={e => setEmailInvSubject(e.target.value)}
-                  className="w-full px-4 py-2.5 bg-muted/30 border border-border rounded-lg text-xs text-foreground focus:outline-none focus:border-primary"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-foreground mb-1.5">
-                  Isi Pesan Undangan Wawancara
-                </label>
+              <div className="col-span-1 md:col-span-2">
+                <label className="block text-xs font-semibold text-foreground mb-2">Alamat Lengkap</label>
                 <textarea 
-                  rows={4}
-                  value={emailInvBody}
-                  onChange={e => setEmailInvBody(e.target.value)}
+                  rows={2}
+                  value={alamat}
+                  onChange={(e) => setAlamat(e.target.value)}
                   className="w-full p-4 bg-muted/30 border border-border rounded-lg text-xs text-foreground focus:outline-none focus:border-primary resize-none"
                 ></textarea>
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-foreground mb-1.5">
-                  Subjek Email Penerimaan (Hire)
-                </label>
+                <label className="block text-xs font-semibold text-foreground mb-2">Kota</label>
                 <input 
                   type="text"
-                  value={emailHireSubject}
-                  onChange={e => setEmailHireSubject(e.target.value)}
+                  value={kota}
+                  onChange={(e) => setKota(e.target.value)}
                   className="w-full px-4 py-2.5 bg-muted/30 border border-border rounded-lg text-xs text-foreground focus:outline-none focus:border-primary"
                 />
               </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-foreground mb-2">Provinsi</label>
+                <input 
+                  type="text"
+                  value={provinsi}
+                  onChange={(e) => setProvinsi(e.target.value)}
+                  className="w-full px-4 py-2.5 bg-muted/30 border border-border rounded-lg text-xs text-foreground focus:outline-none focus:border-primary"
+                />
+              </div>
+
+              {/* HR CONTACT SECTION */}
+              <div className="col-span-1 md:col-span-2 pt-6 mt-2 border-t border-border">
+                <h4 className="text-sm font-bold text-foreground mb-4">Kontak HR (Untuk Keperluan Internal)</h4>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-foreground mb-2">Nama Penanggung Jawab HR</label>
+                <input 
+                  type="text"
+                  value={hrName}
+                  onChange={(e) => setHrName(e.target.value)}
+                  className="w-full px-4 py-2.5 bg-muted/30 border border-border rounded-lg text-xs text-foreground focus:outline-none focus:border-primary"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-foreground mb-2">Jabatan HR</label>
+                <input 
+                  type="text"
+                  value={hrPosition}
+                  onChange={(e) => setHrPosition(e.target.value)}
+                  className="w-full px-4 py-2.5 bg-muted/30 border border-border rounded-lg text-xs text-foreground focus:outline-none focus:border-primary"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-foreground mb-2">Nomor WhatsApp HR</label>
+                <input 
+                  type="text"
+                  value={hrWhatsapp}
+                  onChange={(e) => setHrWhatsapp(e.target.value)}
+                  className="w-full px-4 py-2.5 bg-muted/30 border border-border rounded-lg text-xs text-foreground focus:outline-none focus:border-primary"
+                />
+              </div>
+
+            </div>
+          </div>
+        )}
+
+        {/* ==================== TAB 2: EMAIL TEMPLATES ==================== */}
+        {activeTab === 'email' && (
+          <div className="bg-card p-6 sm:p-8 rounded-xl border border-border shadow-sm space-y-8 animate-in fade-in duration-200">
+            <div>
+              <h3 className="font-bold text-base text-foreground mb-1">Template Email Otomatis</h3>
+              <p className="text-xs text-muted-foreground">Sesuaikan subjek dan pesan email pemberitahuan yang dikirim otomatis ke kandidat. Gunakan tag dinamis seperti <code>{`{{candidate_name}}`}</code>, <code>{`{{job_title}}`}</code>, dan <code>{`{{company_name}}`}</code>.</p>
+            </div>
+
+            <div className="space-y-6">
+              
+              {/* Interview Invitation */}
+              <div className="p-5 bg-muted/20 border border-border rounded-xl space-y-4">
+                <h4 className="text-sm font-bold text-foreground">Undangan Wawancara Video</h4>
+                <div>
+                  <label className="block text-xs font-semibold text-foreground mb-1.5">Subjek Email</label>
+                  <input 
+                    type="text"
+                    value={emailInvSubject}
+                    onChange={e => setEmailInvSubject(e.target.value)}
+                    className="w-full px-4 py-2.5 bg-muted/30 border border-border rounded-lg text-xs text-foreground focus:outline-none focus:border-primary"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-foreground mb-1.5">Isi Pesan</label>
+                  <textarea 
+                    rows={4}
+                    value={emailInvBody}
+                    onChange={e => setEmailInvBody(e.target.value)}
+                    className="w-full p-4 bg-muted/30 border border-border rounded-lg text-xs text-foreground focus:outline-none focus:border-primary resize-none"
+                  ></textarea>
+                </div>
+              </div>
+
+              {/* Hiring Offer */}
+              <div className="p-5 bg-emerald-500/5 border border-emerald-500/20 rounded-xl space-y-4">
+                <h4 className="text-sm font-bold text-emerald-600 dark:text-emerald-400">Pemberitahuan Diterima (Hired)</h4>
+                <div>
+                  <label className="block text-xs font-semibold text-foreground mb-1.5">Subjek Email</label>
+                  <input 
+                    type="text"
+                    value={emailHireSubject}
+                    onChange={e => setEmailHireSubject(e.target.value)}
+                    className="w-full px-4 py-2.5 bg-background border border-border rounded-lg text-xs text-foreground focus:outline-none focus:border-primary"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-foreground mb-1.5">Isi Pesan</label>
+                  <textarea 
+                    rows={4}
+                    value={emailHireBody}
+                    onChange={e => setEmailHireBody(e.target.value)}
+                    className="w-full p-4 bg-background border border-border rounded-lg text-xs text-foreground focus:outline-none focus:border-primary resize-none"
+                  ></textarea>
+                </div>
+              </div>
+
+              {/* Rejection */}
+              <div className="p-5 bg-rose-500/5 border border-rose-500/20 rounded-xl space-y-4">
+                <h4 className="text-sm font-bold text-rose-600 dark:text-rose-400">Pemberitahuan Ditolak (Rejected)</h4>
+                <div>
+                  <label className="block text-xs font-semibold text-foreground mb-1.5">Subjek Email</label>
+                  <input 
+                    type="text"
+                    value={emailRejectSubject}
+                    onChange={e => setEmailRejectSubject(e.target.value)}
+                    className="w-full px-4 py-2.5 bg-background border border-border rounded-lg text-xs text-foreground focus:outline-none focus:border-primary"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-foreground mb-1.5">Isi Pesan</label>
+                  <textarea 
+                    rows={4}
+                    value={emailRejectBody}
+                    onChange={e => setEmailRejectBody(e.target.value)}
+                    className="w-full p-4 bg-background border border-border rounded-lg text-xs text-foreground focus:outline-none focus:border-primary resize-none"
+                  ></textarea>
+                </div>
+              </div>
+
             </div>
           </div>
         )}

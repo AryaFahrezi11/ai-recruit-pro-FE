@@ -21,7 +21,7 @@ export default function AdminLoginPage() {
     setIsLoading(true);
     
     try {
-      const response = await loginUser(email, password);
+      const response = await loginUser(email, password, 'admin');
       if (response.user.role !== 'admin') {
         toast.error('Akses ditolak. Akun Anda bukan admin.');
         setIsLoading(false);
@@ -31,7 +31,7 @@ export default function AdminLoginPage() {
       setToken(response.access_token);
       setUser(response.user);
       toast.success('Login Admin Berhasil');
-      router.push('/admin/dashboard');
+      router.push('/admin');
     } catch (error: any) {
       const errorMsg = error.message === 'Failed to fetch' 
         ? 'Tidak dapat terhubung ke server. Periksa koneksi internet Anda.' 

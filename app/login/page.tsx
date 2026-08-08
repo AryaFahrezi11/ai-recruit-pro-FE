@@ -56,7 +56,7 @@ export default function CompanyLoginPage() {
     setIsLoading(true);
 
     try {
-      const response = await loginUser(email, password);
+      const response = await loginUser(email, password, 'perusahaan');
       
       // Strict role check
       if (response.user.role !== 'perusahaan') {

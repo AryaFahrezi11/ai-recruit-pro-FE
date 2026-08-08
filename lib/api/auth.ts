@@ -1,10 +1,18 @@
-export const loginUser = async (email: string, password: string) => {
-  const res = await fetch('http://localhost:8000/api/auth/login', {
+import { getBaseUrl } from '@/lib/api';
+
+export const loginUser = async (email: string, password: string, role?: string) => {
+  const bodyData: any = { email, password };
+  if (role) {
+    bodyData.role = role;
+  }
+  
+  const baseUrl = getBaseUrl();
+  const res = await fetch(`${baseUrl}/auth/login`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({ email, password }),
+    body: JSON.stringify(bodyData),
   });
 
   if (!res.ok) {
@@ -44,7 +52,15 @@ export const fetchAuth = async (url: string, options: RequestInit = {}) => {
     headers.set('Content-Type', 'application/json');
   }
 
-  const res = await fetch(`http://localhost:8000${url}`, {
+  const baseUrl = getBaseUrl();
+  let cleanUrl = url;
+  if (cleanUrl.startsWith('/api/')) {
+    cleanUrl = cleanUrl.substring(4);
+  } else if (!cleanUrl.startsWith('/')) {
+    cleanUrl = '/' + cleanUrl;
+  }
+
+  const res = await fetch(`${baseUrl}${cleanUrl}`, {
     ...options,
     headers,
   });

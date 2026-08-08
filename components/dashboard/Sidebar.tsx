@@ -1,10 +1,11 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { useTranslation } from '@/hooks/useTranslation';
 import { useAppStore } from '@/lib/store/useAppStore';
+import { toast } from 'react-hot-toast';
 import {
   LayoutDashboard,
   Users,
@@ -14,13 +15,16 @@ import {
   HelpCircle,
   Plus,
   GraduationCap,
-  ArrowLeftRight
+  ArrowLeftRight,
+  LogOut
 } from 'lucide-react';
 
 export function Sidebar() {
   const { t } = useTranslation();
   const pathname = usePathname();
-  const { isMobileSidebarOpen, setMobileSidebar } = useAppStore();
+  const router = useRouter();
+  const { isMobileSidebarOpen, setMobileSidebar, logout } = useAppStore();
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
 
   const navItems = [
     { name: t.sidebar.dashboard, href: '/dashboard', icon: LayoutDashboard },
@@ -122,9 +126,46 @@ export function Sidebar() {
                 </Link>
               );
             })}
+            <button
+              onClick={() => setShowLogoutModal(true)}
+              className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-bold text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-colors text-left mt-2"
+            >
+              <LogOut size={18} className="text-rose-500" />
+              Keluar (Logout)
+            </button>
           </nav>
         </div>
       </div>
+      {/* Logout Modal */}
+      {showLogoutModal && (
+        <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
+          <div className="bg-card text-card-foreground border border-border w-full max-w-sm rounded-2xl shadow-xl p-6 animate-in fade-in zoom-in-95 duration-200">
+            <h3 className="text-lg font-bold mb-2">Konfirmasi Keluar</h3>
+            <p className="text-sm text-muted-foreground mb-6">
+              Apakah Anda yakin ingin keluar dari akun perusahaan?
+            </p>
+            <div className="flex justify-end gap-3">
+              <button 
+                onClick={() => setShowLogoutModal(false)}
+                className="px-4 py-2 rounded-lg text-sm font-semibold hover:bg-muted text-foreground transition-colors"
+              >
+                Batal
+              </button>
+              <button 
+                onClick={() => {
+                  setShowLogoutModal(false);
+                  logout();
+                  toast.success('Berhasil keluar dari akun perusahaan.');
+                  router.push('/login');
+                }}
+                className="px-4 py-2 rounded-lg text-sm font-semibold bg-rose-500 hover:bg-rose-600 text-white transition-colors"
+              >
+                Ya, Keluar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }

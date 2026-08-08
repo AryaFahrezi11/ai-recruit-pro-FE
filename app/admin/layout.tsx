@@ -15,6 +15,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const user = useAppStore((state) => state.user);
   const logout = useAppStore((state) => state.logout);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
 
   useEffect(() => {
     // If not on login page and not authenticated as admin, redirect to login
@@ -89,7 +90,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
           <div className="p-4 border-t border-white/10">
             <button
-              onClick={handleLogout}
+              onClick={() => setShowLogoutModal(true)}
               className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-rose-400 hover:bg-rose-500/10 transition-colors w-full"
             >
               <LogOut size={18} />
@@ -98,6 +99,32 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           </div>
         </div>
       </aside>
+
+      {/* Logout Modal */}
+      {showLogoutModal && (
+        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
+          <div className="bg-white text-slate-800 border border-slate-200 w-full max-w-sm rounded-2xl shadow-xl p-6 animate-in fade-in zoom-in-95 duration-200">
+            <h3 className="text-lg font-bold mb-2">Konfirmasi Keluar</h3>
+            <p className="text-sm text-slate-500 mb-6">
+              Apakah Anda yakin ingin keluar dari sistem Admin?
+            </p>
+            <div className="flex justify-end gap-3">
+              <button 
+                onClick={() => setShowLogoutModal(false)}
+                className="px-4 py-2 rounded-lg text-sm font-semibold hover:bg-slate-100 text-slate-600 transition-colors"
+              >
+                Batal
+              </button>
+              <button 
+                onClick={handleLogout}
+                className="px-4 py-2 rounded-lg text-sm font-semibold bg-rose-500 hover:bg-rose-600 text-white transition-colors"
+              >
+                Ya, Keluar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Main Content */}
       <main className="flex-1 flex flex-col min-w-0">
@@ -110,15 +137,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             <div className="relative hidden md:block">
               <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
               <input type="text" placeholder="Cari data..." className="pl-9 pr-4 py-1.5 bg-slate-100 border-none rounded-full text-sm focus:ring-2 focus:ring-blue-500/20 outline-none w-64" />
-            </div>
-          </div>
-          <div className="flex items-center gap-3">
-            <button className="w-8 h-8 flex items-center justify-center rounded-full bg-slate-100 text-slate-500 hover:text-blue-600 transition-colors relative">
-              <Bell size={18} />
-              <span className="absolute top-1.5 right-2 w-2 h-2 bg-rose-500 rounded-full border-2 border-white"></span>
-            </button>
-            <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center text-white font-bold text-xs shadow-md">
-              A
             </div>
           </div>
         </header>

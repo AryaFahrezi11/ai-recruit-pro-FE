@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState, useRef } from 'react';
 import Link from 'next/link';
-import { usePathname, useRouter } from 'next/navigation';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useAppStore } from '@/lib/store/useAppStore';
 import { useTranslation } from '@/hooks/useTranslation';
 import {
@@ -30,6 +30,7 @@ export default function PelamarPerfectLayout({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
+  const searchParams = useSearchParams();
   const router = useRouter();
   const { theme, toggleTheme, language, setLanguage } = useAppStore();
   const { t } = useTranslation();
@@ -40,8 +41,10 @@ export default function PelamarPerfectLayout({
     name: 'Pelamar AI'
   });
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
+    setIsMounted(true);
     // Exclude public authentication pages from route guard
     const isAuthPage = pathname === '/pelamar/login' || pathname === '/pelamar/register';
 
@@ -139,7 +142,13 @@ export default function PelamarPerfectLayout({
             {/* Navigation Tabs */}
             <nav className="hidden lg:flex items-center gap-1">
               {navItems.map((item) => {
-                const isActive = pathname === item.href || (item.href.includes('view=') && typeof window !== 'undefined' && window.location.search.includes('view=companies') && item.href.includes('view=companies'));
+                const itemUrl = new URL(item.href, 'http://localhost');
+                const isPathActive = pathname === itemUrl.pathname;
+                const itemView = itemUrl.searchParams.get('view');
+                const currentView = searchParams.get('view');
+                const isViewQueryMatch = itemView === currentView || (!itemView && !currentView);
+                const isActive = isPathActive && isViewQueryMatch;
+
                 return (
                   <Link
                     key={item.name}
@@ -258,7 +267,13 @@ export default function PelamarPerfectLayout({
         <div className="lg:hidden flex items-center justify-around bg-slate-50 dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 py-2 px-2 overflow-x-auto">
           {navItems.map((item) => {
             const Icon = item.icon;
-            const isActive = pathname === item.href;
+            const itemUrl = new URL(item.href, 'http://localhost');
+            const isPathActive = pathname === itemUrl.pathname;
+            const itemView = itemUrl.searchParams.get('view');
+            const currentView = searchParams.get('view');
+            const isViewQueryMatch = itemView === currentView || (!itemView && !currentView);
+            const isActive = isPathActive && isViewQueryMatch;
+            
             return (
               <Link
                 key={item.name}

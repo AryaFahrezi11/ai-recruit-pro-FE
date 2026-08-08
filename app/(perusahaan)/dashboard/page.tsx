@@ -1,12 +1,13 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useTranslation } from '@/hooks/useTranslation';
 import { StatCard } from '@/components/dashboard/StatCard';
 import { PipelineChart } from '@/components/dashboard/PipelineChart';
 import { RecentActivity } from '@/components/dashboard/RecentActivity';
 import { CandidateModal } from '@/components/pipeline/CandidateModal';
+import { fetchAuth } from '@/lib/api/auth';
 import {
   Users,
   Calendar,
@@ -57,33 +58,30 @@ export default function DashboardPage() {
     }
   ];
 
-  // Mock top active job openings
-  const activeJobs = [
-    {
-      title: 'Senior Frontend Developer',
-      department: 'Engineering',
-      threshold: 80,
-      applicants: 42,
-      passed: 28,
-      posted: '2 hari lalu',
-    },
-    {
-      title: 'Backend Engineer (Go/Node.js)',
-      department: 'Engineering',
-      threshold: 85,
-      applicants: 35,
-      passed: 19,
-      posted: '5 hari lalu',
-    },
-    {
-      title: 'UI/UX Product Designer',
-      department: 'Design',
-      threshold: 75,
-      applicants: 28,
-      passed: 15,
-      posted: '1 minggu lalu',
-    },
-  ];
+  const [activeJobs, setActiveJobs] = useState<any[]>([]);
+
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        const res = await fetchAuth('/api/jobs/my-jobs');
+        if (res.ok) {
+          const data = await res.json();
+          const mappedJobs = data.slice(0, 3).map((j: any) => ({
+            title: j.judul_posisi,
+            department: j.department || 'Engineering',
+            threshold: j.cv_threshold || 80,
+            applicants: j.openings_count || 0,
+            passed: 0,
+            posted: j.created_at ? new Date(j.created_at).toLocaleDateString('id-ID') : 'Baru',
+          }));
+          setActiveJobs(mappedJobs);
+        }
+      } catch (err) {
+        console.error('Failed to load company dashboard jobs', err);
+      }
+    };
+    loadData();
+  }, []);
 
   return (
     <div className="max-w-7xl mx-auto space-y-8 pb-16 animate-in fade-in duration-300">

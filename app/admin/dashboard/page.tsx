@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
+import Link from 'next/link';
 import { Users, Building2, GraduationCap, ShieldCheck, TrendingUp, AlertCircle } from 'lucide-react';
 import { fetchAuth } from '@/lib/api/auth';
 import { toast } from 'react-hot-toast';
@@ -90,9 +91,9 @@ export default function AdminDashboard() {
             <p className="text-amber-700 text-sm mt-1">
               Ada <strong>{stats.pendingVerifications} perusahaan</strong> baru yang mendaftar dan menunggu proses verifikasi legalitas (NIB/NPWP).
             </p>
-            <a href="/admin/verifikasi" className="inline-block mt-3 px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold rounded-lg transition-colors shadow-sm">
+            <Link href="/admin/verifikasi" className="inline-block mt-3 px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold rounded-lg transition-colors shadow-sm">
               Tinjau Sekarang
-            </a>
+            </Link>
           </div>
         </div>
       )}

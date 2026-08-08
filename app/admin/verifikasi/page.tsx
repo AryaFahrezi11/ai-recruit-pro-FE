@@ -78,8 +78,23 @@ export default function AdminVerificationPage() {
                 </div>
 
                 <div className="grid grid-cols-2 gap-4 pt-4 border-t border-slate-100 text-sm">
+                  <div className="col-span-2">
+                    <span className="block text-xs font-semibold text-slate-400">Deskripsi Perusahaan</span>
+                    <p className="font-medium text-slate-700 text-xs mt-1 leading-relaxed">{company.deskripsi || 'Tidak Ada Deskripsi'}</p>
+                  </div>
+                  <div className="col-span-2">
+                    <span className="block text-xs font-semibold text-slate-400">Lokasi / Alamat Lengkap</span>
+                    <span className="font-medium text-slate-700 text-xs leading-relaxed block mt-1">
+                      {company.alamat ? `${company.alamat}, ` : ''}{company.kota || ''}{company.provinsi ? `, ${company.provinsi}` : ''}
+                      {!company.alamat && !company.kota && !company.provinsi && 'Tidak Ada Lokasi'}
+                    </span>
+                  </div>
                   <div>
-                    <span className="block text-xs font-semibold text-slate-400">Alamat Email</span>
+                    <span className="block text-xs font-semibold text-slate-400">Tahun Berdiri</span>
+                    <span className="font-medium text-slate-700">{company.tahun_berdiri || '-'}</span>
+                  </div>
+                  <div>
+                    <span className="block text-xs font-semibold text-slate-400">Website Resmi</span>
                     <span className="font-medium text-slate-700">{company.website_url || 'Tidak Ada'}</span>
                   </div>
                   <div>

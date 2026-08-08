@@ -80,11 +80,12 @@ function DashboardContent() {
   const [workPolicyFilter, setWorkPolicyFilter] = useState('Semua');
 
   // Currently selected job ID for the right side detail pane
-  const [selectedJobId, setSelectedJobId] = useState<number>(101);
+  const [selectedJobId, setSelectedJobId] = useState<number>(0);
+  const [shareJob, setShareJob] = useState<Job | null>(null);
 
   const [cvDetails, setCvDetails] = useState<any>(null);
   const [appliedJobs, setAppliedJobs] = useState<number[]>([]);
-  const [savedJobIds, setSavedJobIds] = useState<number[]>([101]);
+  const [savedJobIds, setSavedJobIds] = useState<number[]>([]);
   const [applyingJobModalData, setApplyingJobModalData] = useState<{ id: number | string; title: string; company: string } | null>(null);
 
   useEffect(() => {
@@ -109,18 +110,6 @@ function DashboardContent() {
       setAppliedJobs(JSON.parse(savedApplied));
     }
 
-    const fetchBackendSavedJobs = async () => {
-      try {
-        const res = await api.get('/saved-jobs/');
-        if (Array.isArray(res) && res.length > 0) {
-          const ids = res.map((item: any) => item.id);
-          setSavedJobIds((prev) => Array.from(new Set([...prev, ...ids])));
-        }
-      } catch (err) {
-        console.error('Failed to fetch backend saved jobs:', err);
-      }
-    };
-    fetchBackendSavedJobs();
   }, []);
 
   useEffect(() => {
@@ -469,6 +458,14 @@ function DashboardContent() {
     });
   };
 
+  const handleCopyLink = () => {
+    if (!shareJob) return;
+    const url = typeof window !== 'undefined' ? window.location.origin + '/jobs/' + shareJob.id : 'http://localhost:3000/jobs/' + shareJob.id;
+    navigator.clipboard.writeText(url);
+    toast.success('Link berhasil disalin ke clipboard!');
+    setShareJob(null);
+  };
+
   // Filter Jobs List
   const filteredJobs = useMemo(() => {
     return jobsList.filter((job) => {
@@ -649,6 +646,33 @@ function DashboardContent() {
         /* DUAL-PANE KITALULUS SPLIT VIEW */
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
 
+          {/* SHARE MODAL */}
+          {shareJob && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
+              <div className="bg-white dark:bg-slate-900 rounded-3xl w-full max-w-md p-6 shadow-2xl relative border border-slate-200 dark:border-slate-700">
+                <button onClick={() => setShareJob(null)} className="absolute right-4 top-4 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer p-1 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"><X size={20}/></button>
+                <div className="space-y-4">
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 bg-[#F0F8FB] dark:bg-slate-800 rounded-full flex items-center justify-center text-[#2596be]">
+                      <Share2 size={24} />
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-bold text-slate-900 dark:text-white">Bagikan Lowongan</h3>
+                      <p className="text-sm text-slate-500 line-clamp-1">{shareJob.title} di {shareJob.company}</p>
+                    </div>
+                  </div>
+                  
+                  <div className="p-3 bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 flex items-center gap-3">
+                    <input type="text" readOnly value={typeof window !== 'undefined' ? window.location.origin + '/jobs/' + shareJob.id : ''} className="w-full bg-transparent text-sm text-slate-600 dark:text-slate-300 outline-none" />
+                    <button onClick={handleCopyLink} className="px-4 py-2 bg-[#2596be] text-white text-xs font-bold rounded-lg hover:bg-[#1D7FA1] transition-colors whitespace-nowrap cursor-pointer shadow-sm">
+                      Salin Link
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* LEFT COLUMN: SELECTABLE JOB CARDS LIST (~38% Width / 5 Cols) */}
           <div className="lg:col-span-5 space-y-4">
             
@@ -689,7 +713,6 @@ function DashboardContent() {
                 filteredJobs.map((job) => {
                   const isSelected = selectedJob.id === job.id;
                   const isSaved = savedJobIds.includes(job.id);
-                  const isApplied = appliedJobs.includes(job.id);
 
                   return (
                     <div

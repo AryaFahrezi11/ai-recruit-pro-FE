@@ -34,7 +34,7 @@ export default function PelamarLoginPage() {
     setError('');
 
     try {
-      const res = await api.post('/auth/login', { email, password });
+      const res = await api.post('/auth/login', { email, password, role: 'pelamar' });
 
       const token = res.access_token;
       const role = res.role;

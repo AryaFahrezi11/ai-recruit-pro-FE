@@ -24,7 +24,7 @@ function CreateJobForm() {
   const [categoryId, setCategoryId] = useState('');
   const [categories, setCategories] = useState<{id: string, nama_kategori: string}[]>([]);
   const [employmentType, setEmploymentType] = useState('Full-time');
-  const [workMode, setWorkMode] = useState('Hybrid');
+  const [workMode, setWorkMode] = useState('hybrid');
   const [location, setLocation] = useState('');
   const [experienceLevel, setExperienceLevel] = useState('Entry Level');
   const [pendidikanMin, setPendidikanMin] = useState('');
@@ -348,9 +348,9 @@ function CreateJobForm() {
                   onChange={(e) => setWorkMode(e.target.value)}
                   className="w-1/3 px-3 py-2.5 bg-muted/30 border border-border rounded-lg text-sm text-foreground focus:outline-none focus:border-primary transition-all"
                 >
-                  <option value="Hybrid">Hybrid</option>
-                  <option value="Remote">Remote</option>
-                  <option value="On-site">On-site</option>
+                  <option value="hybrid">Hybrid</option>
+                  <option value="remote">Remote</option>
+                  <option value="onsite">On-site</option>
                 </select>
                 <input 
                   type="text"
@@ -883,3 +883,4 @@ export default function CreateJobPage() {
     </Suspense>
   );
 }
+ 
