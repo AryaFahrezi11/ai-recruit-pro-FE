@@ -78,10 +78,6 @@ export default function PerusahaanLayout({
             >
               <Menu size={20} />
             </button>
-            <div className="flex items-center gap-2">
-              <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
-              <span className="text-xs font-bold text-foreground">Portal Rekrutmen Perusahaan</span>
-            </div>
           </div>
 
           <div className="flex items-center gap-4 ml-4">
