@@ -104,6 +104,10 @@ export default function PelamarRegisterPage() {
         otp_code: enteredOtp
       });
 
+      // Clear any previous session's CV data for clean initial registration
+      localStorage.removeItem('candidateCvData');
+      localStorage.removeItem('candidateCvCreated');
+
       if (res.access_token) {
         localStorage.setItem('access_token', res.access_token);
         localStorage.setItem('user_role', res.role || 'pelamar');

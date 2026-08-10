@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef, Suspense } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useAppStore } from '@/lib/store/useAppStore';
@@ -22,7 +22,70 @@ import {
   BookOpen,
   CheckCircle2
 } from 'lucide-react';
-import { api } from '@/lib/api';
+import { toast } from 'react-hot-toast';
+import { api, removeAuthToken } from '@/lib/api';
+
+function PelamarDesktopNav({ navItems, pathname }: { navItems: any[]; pathname: string }) {
+  const searchParams = useSearchParams();
+
+  return (
+    <nav className="hidden lg:flex items-center gap-1">
+      {navItems.map((item) => {
+        const itemUrl = new URL(item.href, 'http://localhost');
+        const isPathActive = pathname === itemUrl.pathname;
+        const itemView = itemUrl.searchParams.get('view');
+        const currentView = searchParams.get('view');
+        const isViewQueryMatch = itemView === currentView || (!itemView && !currentView);
+        const isActive = isPathActive && isViewQueryMatch;
+
+        return (
+          <Link
+            key={item.name}
+            href={item.href}
+            className={`px-4 py-2 rounded-xl text-sm font-bold transition-all relative ${
+              isActive
+                ? 'text-[#2596be] dark:text-cyan-400 font-extrabold after:content-[""] after:absolute after:bottom-[-20px] after:left-0 after:right-0 after:h-0.5 after:bg-[#2596be]'
+                : 'text-slate-600 dark:text-slate-300 hover:text-[#2596be] dark:hover:text-cyan-400 hover:bg-slate-100 dark:hover:bg-slate-800'
+            }`}
+          >
+            {item.name}
+          </Link>
+        );
+      })}
+    </nav>
+  );
+}
+
+function PelamarMobileNav({ navItems, pathname }: { navItems: any[]; pathname: string }) {
+  const searchParams = useSearchParams();
+
+  return (
+    <div className="lg:hidden flex items-center justify-around bg-slate-50 dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 py-2 px-2 overflow-x-auto">
+      {navItems.map((item) => {
+        const Icon = item.icon;
+        const itemUrl = new URL(item.href, 'http://localhost');
+        const isPathActive = pathname === itemUrl.pathname;
+        const itemView = itemUrl.searchParams.get('view');
+        const currentView = searchParams.get('view');
+        const isViewQueryMatch = itemView === currentView || (!itemView && !currentView);
+        const isActive = isPathActive && isViewQueryMatch;
+        
+        return (
+          <Link
+            key={item.name}
+            href={item.href}
+            className={`flex flex-col items-center gap-1 px-3 py-1.5 rounded-xl text-[11px] font-bold whitespace-nowrap ${
+              isActive ? 'text-[#2596be] bg-white dark:bg-slate-800 shadow-2xs' : 'text-slate-500 dark:text-slate-400'
+            }`}
+          >
+            <Icon size={16} />
+            {item.name}
+          </Link>
+        );
+      })}
+    </div>
+  );
+}
 
 export default function PelamarPerfectLayout({
   children,
@@ -30,12 +93,12 @@ export default function PelamarPerfectLayout({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
-  const searchParams = useSearchParams();
   const router = useRouter();
   const { theme, toggleTheme, language, setLanguage } = useAppStore();
   const { t } = useTranslation();
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [userProfile, setUserProfile] = useState<{ email: string; name: string }>({
     email: 'pelamar@example.com',
     name: 'Pelamar AI'
@@ -55,18 +118,23 @@ export default function PelamarPerfectLayout({
 
     // Check candidate session state in localStorage
     const loggedIn = localStorage.getItem('isPelamarLoggedIn');
-    if (!loggedIn || loggedIn !== 'true') {
-      setIsAuthenticated(false);
-      router.push('/pelamar/login');
-    } else {
-      setIsAuthenticated(true);
+    // Auth guard check
+    const isLoggedIn = localStorage.getItem('isPelamarLoggedIn');
+    const token = localStorage.getItem('token');
 
-      // Load profile info dynamically
+    if (!isLoggedIn && !token) {
+      if (pathname.startsWith('/pelamar') && pathname !== '/pelamar/login' && pathname !== '/pelamar/register') {
+        router.push('/pelamar/login');
+        return;
+      }
+    }
+
+    if (isLoggedIn) {
       const savedEmail = localStorage.getItem('user_email');
-      if (savedEmail) {
-        const derivedName = savedEmail.split('@')[0].replace(/[._-]/g, ' ');
-        const formattedName = derivedName.charAt(0).toUpperCase() + derivedName.slice(1);
-        setUserProfile({ email: savedEmail, name: formattedName });
+      const savedName = localStorage.getItem('user_name');
+      if (savedEmail || savedName) {
+        const formattedName = savedName || savedEmail?.split('@')[0] || 'Pelamar AI';
+        setUserProfile({ email: savedEmail || 'pelamar@example.com', name: formattedName });
       }
 
       // Fetch from API
@@ -81,6 +149,9 @@ export default function PelamarPerfectLayout({
           }
         })
         .catch((err) => console.error('Failed to fetch profile in layout:', err));
+      setIsAuthenticated(true);
+    } else {
+      setIsAuthenticated(false);
     }
   }, [pathname, router]);
 
@@ -96,8 +167,15 @@ export default function PelamarPerfectLayout({
   }, []);
 
   const handleLogout = () => {
-    localStorage.removeItem('isPelamarLoggedIn');
     setIsProfileOpen(false);
+    setShowLogoutModal(true);
+  };
+
+  const confirmLogout = () => {
+    localStorage.removeItem('isPelamarLoggedIn');
+    removeAuthToken();
+    setShowLogoutModal(false);
+    toast.success('Berhasil keluar dari sistem.');
     router.push('/pelamar/login');
   };
 
@@ -140,30 +218,9 @@ export default function PelamarPerfectLayout({
             </Link>
 
             {/* Navigation Tabs */}
-            <nav className="hidden lg:flex items-center gap-1">
-              {navItems.map((item) => {
-                const itemUrl = new URL(item.href, 'http://localhost');
-                const isPathActive = pathname === itemUrl.pathname;
-                const itemView = itemUrl.searchParams.get('view');
-                const currentView = searchParams.get('view');
-                const isViewQueryMatch = itemView === currentView || (!itemView && !currentView);
-                const isActive = isPathActive && isViewQueryMatch;
-
-                return (
-                  <Link
-                    key={item.name}
-                    href={item.href}
-                    className={`px-4 py-2 rounded-xl text-sm font-bold transition-all relative ${
-                      isActive
-                        ? 'text-[#2596be] dark:text-cyan-400 font-extrabold after:content-[""] after:absolute after:bottom-[-20px] after:left-0 after:right-0 after:h-0.5 after:bg-[#2596be]'
-                        : 'text-slate-600 dark:text-slate-300 hover:text-[#2596be] dark:hover:text-cyan-400 hover:bg-slate-100 dark:hover:bg-slate-800'
-                    }`}
-                  >
-                    {item.name}
-                  </Link>
-                );
-              })}
-            </nav>
+            <Suspense fallback={<nav className="hidden lg:flex items-center gap-1" />}>
+              <PelamarDesktopNav navItems={navItems} pathname={pathname} />
+            </Suspense>
           </div>
 
           {/* Right Controls: Language, Theme, Profile Avatar Dropdown, For Employers */}
@@ -264,30 +321,9 @@ export default function PelamarPerfectLayout({
         </div>
 
         {/* Mobile Navigation Bar Links */}
-        <div className="lg:hidden flex items-center justify-around bg-slate-50 dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 py-2 px-2 overflow-x-auto">
-          {navItems.map((item) => {
-            const Icon = item.icon;
-            const itemUrl = new URL(item.href, 'http://localhost');
-            const isPathActive = pathname === itemUrl.pathname;
-            const itemView = itemUrl.searchParams.get('view');
-            const currentView = searchParams.get('view');
-            const isViewQueryMatch = itemView === currentView || (!itemView && !currentView);
-            const isActive = isPathActive && isViewQueryMatch;
-            
-            return (
-              <Link
-                key={item.name}
-                href={item.href}
-                className={`flex flex-col items-center gap-1 px-3 py-1.5 rounded-xl text-[11px] font-bold whitespace-nowrap ${
-                  isActive ? 'text-[#2596be] bg-white dark:bg-slate-800 shadow-2xs' : 'text-slate-500 dark:text-slate-400'
-                }`}
-              >
-                <Icon size={16} />
-                {item.name}
-              </Link>
-            );
-          })}
-        </div>
+        <Suspense fallback={null}>
+          <PelamarMobileNav navItems={navItems} pathname={pathname} />
+        </Suspense>
       </header>
 
       {/* Main Content Area */}
@@ -310,6 +346,43 @@ export default function PelamarPerfectLayout({
           </div>
         </div>
       </footer>
+
+      {/* LOGOUT CONFIRMATION MODAL */}
+      {showLogoutModal && (
+        <div className="fixed inset-0 z-[100] bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in">
+          <div className="bg-white dark:bg-slate-900 text-slate-900 dark:text-white border border-slate-200 dark:border-slate-800 w-full max-w-sm rounded-3xl shadow-2xl p-6 space-y-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-2xl bg-red-50 dark:bg-red-950/50 text-red-600 dark:text-red-400 flex items-center justify-center shrink-0">
+                <LogOut size={20} />
+              </div>
+              <div>
+                <h3 className="text-base font-black">Konfirmasi Keluar</h3>
+                <p className="text-xs text-slate-500 dark:text-slate-400">
+                  Apakah Anda yakin ingin keluar?
+                </p>
+              </div>
+            </div>
+            <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed bg-slate-50 dark:bg-slate-800/60 p-3 rounded-2xl border border-slate-100 dark:border-slate-800">
+              Anda perlu melakukan login kembali untuk dapat melamar pekerjaan dan mengakses fitur CV ATS.
+            </p>
+            <div className="flex items-center justify-end gap-2.5 pt-1">
+              <button 
+                onClick={() => setShowLogoutModal(false)}
+                className="px-4 py-2 rounded-full text-xs font-bold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors cursor-pointer"
+              >
+                Batal
+              </button>
+              <button 
+                onClick={confirmLogout}
+                className="px-5 py-2 rounded-full text-xs font-extrabold bg-red-600 hover:bg-red-700 text-white shadow-md transition-colors cursor-pointer"
+              >
+                Ya, Keluar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
+

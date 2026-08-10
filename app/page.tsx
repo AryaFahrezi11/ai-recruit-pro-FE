@@ -179,13 +179,18 @@ export default function PerfectlyNeatLandingPage() {
           benefits: (() => { try { return j.benefits_json ? JSON.parse(j.benefits_json) : []; } catch(e){ return []; } })(),
           tags: [j.tipe_pekerjaan, j.lokasi_kerja === 'remote' ? 'Remote' : j.lokasi_kerja === 'hybrid' ? 'Hybrid' : 'On-site'].filter(Boolean),
           postedAgo: (() => {
-            const created = j.tanggal_buka ? new Date(j.tanggal_buka) : new Date();
-            const diffDays = Math.ceil(Math.abs(Date.now() - created.getTime()) / (1000 * 60 * 60 * 24));
-            return diffDays <= 1 ? 'Hari ini' : `${diffDays} hari yang lalu`;
+            const created = j.tanggal_buka ? new Date(j.tanggal_buka) : (j.created_at ? new Date(j.created_at) : new Date());
+            const now = new Date();
+            const createdStartOfDay = new Date(created.getFullYear(), created.getMonth(), created.getDate());
+            const nowStartOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+            const diffDays = Math.floor((nowStartOfDay.getTime() - createdStartOfDay.getTime()) / (1000 * 60 * 60 * 24));
+            if (diffDays <= 0) return 'Hari ini';
+            if (diffDays === 1) return '1 hari yang lalu';
+            return `${diffDays} hari yang lalu`;
           })(),
           publishDate: (() => {
-            if (!j.tanggal_buka) return '-';
-            const date = new Date(j.tanggal_buka);
+            if (!j.tanggal_buka && !j.created_at) return '-';
+            const date = j.tanggal_buka ? new Date(j.tanggal_buka) : new Date(j.created_at);
             return date.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
           })(),
           applicationDeadline: (() => {
@@ -194,9 +199,12 @@ export default function PerfectlyNeatLandingPage() {
             return date.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
           })(),
           isNew: (() => {
-            const created = j.tanggal_buka ? new Date(j.tanggal_buka) : new Date();
-            const diffDays = Math.ceil(Math.abs(Date.now() - created.getTime()) / (1000 * 60 * 60 * 24));
-            return diffDays <= 7;
+            const created = j.tanggal_buka ? new Date(j.tanggal_buka) : (j.created_at ? new Date(j.created_at) : new Date());
+            const now = new Date();
+            const createdStartOfDay = new Date(created.getFullYear(), created.getMonth(), created.getDate());
+            const nowStartOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+            const diffDays = Math.floor((nowStartOfDay.getTime() - createdStartOfDay.getTime()) / (1000 * 60 * 60 * 24));
+            return diffDays >= 0 && diffDays <= 7;
           })(),
           openingsCount: j.openings_count || 1,
           description: j.deskripsi_pekerjaan || '',

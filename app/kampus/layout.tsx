@@ -25,6 +25,7 @@ export default function KampusLayout({
   // Popover States
   const [showNotifications, setShowNotifications] = useState(false);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [unreadCount, setUnreadCount] = useState(2);
 
   useEffect(() => {
@@ -285,7 +286,7 @@ export default function KampusLayout({
                       <button 
                         onClick={() => {
                           setShowProfileMenu(false);
-                          toast.success('Simulasi Logout Kampus berhasil.');
+                          setShowLogoutModal(true);
                         }}
                         className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-colors"
                       >
@@ -306,6 +307,45 @@ export default function KampusLayout({
           {children}
         </main>
       </div>
+
+      {/* LOGOUT CONFIRMATION MODAL */}
+      {showLogoutModal && (
+        <div className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in">
+          <div className="bg-card text-card-foreground border border-border w-full max-w-sm rounded-3xl shadow-2xl p-6 space-y-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-2xl bg-rose-50 dark:bg-rose-950/50 text-rose-600 dark:text-rose-400 flex items-center justify-center shrink-0">
+                <LogOut size={20} />
+              </div>
+              <div>
+                <h3 className="text-base font-black">Konfirmasi Keluar</h3>
+                <p className="text-xs text-muted-foreground">
+                  Apakah Anda yakin ingin keluar?
+                </p>
+              </div>
+            </div>
+            <p className="text-xs text-muted-foreground leading-relaxed bg-muted/50 p-3 rounded-2xl border border-border">
+              Anda perlu melakukan login kembali untuk dapat mengelola data mahasiswa dan dasbor kampus.
+            </p>
+            <div className="flex items-center justify-end gap-2.5 pt-1">
+              <button 
+                onClick={() => setShowLogoutModal(false)}
+                className="px-4 py-2 rounded-full text-xs font-bold bg-muted hover:bg-muted/80 text-foreground transition-colors cursor-pointer"
+              >
+                Batal
+              </button>
+              <button 
+                onClick={() => {
+                  setShowLogoutModal(false);
+                  toast.success('Berhasil keluar dari akun Kampus.');
+                }}
+                className="px-5 py-2 rounded-full text-xs font-extrabold bg-rose-600 hover:bg-rose-700 text-white shadow-md transition-colors cursor-pointer"
+              >
+                Ya, Keluar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

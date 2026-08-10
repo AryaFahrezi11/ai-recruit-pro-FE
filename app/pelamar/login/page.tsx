@@ -41,6 +41,11 @@ export default function PelamarLoginPage() {
       const userId = res.user_id;
 
       if (token) {
+        const previousEmail = localStorage.getItem('user_email');
+        if (previousEmail && previousEmail !== email) {
+          localStorage.removeItem('candidateCvData');
+          localStorage.removeItem('candidateCvCreated');
+        }
         localStorage.setItem('access_token', token);
         localStorage.setItem('user_role', role || 'pelamar');
         localStorage.setItem('user_id', userId || '');
