@@ -44,6 +44,8 @@ export function removeAuthToken() {
     localStorage.removeItem('user_email');
     localStorage.removeItem('isPerusahaanLoggedIn');
     localStorage.removeItem('isPelamarLoggedIn');
+    localStorage.removeItem('candidateCvData');
+    localStorage.removeItem('candidateCvCreated');
   }
 }
 

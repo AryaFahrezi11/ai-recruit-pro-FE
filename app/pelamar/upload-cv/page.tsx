@@ -36,46 +36,41 @@ export default function AtsCvBuilderPage() {
   const [activeTab, setActiveTab] = useState<'builder' | 'upload'>('builder');
   const [uploadError, setUploadError] = useState('');
 
-  // Form State for ATS CV Builder
+  // Form State for ATS CV Builder (Empty initial state for new applicants)
   const [fullName, setFullName] = useState('');
-  const [jobTitle, setJobTitle] = useState('Frontend Engineer');
+  const [jobTitle, setJobTitle] = useState('');
   const [email, setEmail] = useState('');
-  const [phone, setPhone] = useState('081298765432');
-  const [location, setLocation] = useState('Jakarta, Indonesia');
-  const [socialLinks, setSocialLinks] = useState([{ platform: 'LinkedIn', url: 'linkedin.com/in/pelamar' }]);
-  const [summary, setSummary] = useState(
-    'Senior Frontend Engineer berpengalaman 4+ tahun dalam merancang antarmuka web performan tinggi menggunakan Next.js, React, TypeScript, dan Tailwind CSS. Terbiasa mengoptimalkan Web Vitals dan berkolaborasi dalam tim agile.'
-  );
+  const [phone, setPhone] = useState('');
+  const [location, setLocation] = useState('');
+  const [linkedinUrl, setLinkedinUrl] = useState('');
+  const [portfolioUrl, setPortfolioUrl] = useState('');
+  const [socialLinks, setSocialLinks] = useState<Array<{ platform: string; url: string }>>([]);
+  const [summary, setSummary] = useState('');
 
-  // Experience
+  // Experience (starts empty for new applicants)
   const [experiences, setExperiences] = useState([
     {
-      company: 'PT Tech Inovasi Nusantara',
-      role: 'Senior Frontend Engineer',
-      period: '2022 - Sekarang',
-      description: 'Memimpin arsitektur frontend platform SaaS berbasis Next.js App Router, meningkatkan skor Lighthouse Web Vitals sebesar 40%.'
-    },
-    {
-      company: 'Global Digital Solusindo',
-      role: 'Frontend Developer',
-      period: '2020 - 2022',
-      description: 'Mengembangkan komponen UI reusable berbasis React & Tailwind CSS untuk sistem manajemen rekrutmen.'
+      company: '',
+      role: '',
+      period: '',
+      description: ''
     }
   ]);
 
-  // Education
+  // Education (starts empty for new applicants)
   const [education, setEducation] = useState([
     {
-      school: 'Universitas Indonesia',
-      degree: 'S1 Teknik Informatika',
-      period: '2016 - 2020',
-      gpa: 'IPK 3.85 / 4.00'
+      school: '',
+      degree: '',
+      period: '',
+      gpa: ''
     }
   ]);
 
-  // Skills & Certifications
-  const [skills, setSkills] = useState('React.js, Next.js, TypeScript, JavaScript (ES6+), Tailwind CSS, State Management (Zustand/Redux), REST API, Git, Web Accessibility (a11y)');
-  const [certifications, setCertifications] = useState('Meta Frontend Developer Professional Certificate, AWS Certified Cloud Practitioner');
+  // Skills (starts empty for new applicants)
+  const [skills, setSkills] = useState('');
+  // Certifications as dynamic list with credential links
+  const [certifications, setCertifications] = useState<Array<{ name: string; credentialUrl: string }>>([{ name: '', credentialUrl: '' }]);
 
   const [isSaved, setIsSaved] = useState(false);
   const [isSavedToDb, setIsSavedToDb] = useState(false);
@@ -86,18 +81,34 @@ export default function AtsCvBuilderPage() {
   const [rawPdfFile, setRawPdfFile] = useState<File | null>(null);
 
   useEffect(() => {
-    // Check if CV already created
-    const savedCv = localStorage.getItem('candidateCvData');
-    if (savedCv) {
-      setIsSaved(true);
+    const savedEmail = localStorage.getItem('user_email') || '';
+    if (savedEmail) {
+      setEmail(savedEmail);
     }
 
-    const savedEmail = localStorage.getItem('user_email') || 'pelamar@example.com';
-    const derivedName = savedEmail.split('@')[0].replace(/[._-]/g, ' ');
-    const formattedName = derivedName.charAt(0).toUpperCase() + derivedName.slice(1);
-
-    setEmail(savedEmail);
-    setFullName(formattedName);
+    // Check if CV already created for current user email
+    const savedCv = localStorage.getItem('candidateCvData');
+    if (savedCv) {
+      try {
+        const parsedCv = JSON.parse(savedCv);
+        // Only load if saved CV belongs to current logged in user email
+        if (!parsedCv.email || !savedEmail || parsedCv.email === savedEmail) {
+          setIsSaved(true);
+          if (parsedCv.fullName && parsedCv.fullName !== 'Nama Pelamar') setFullName(parsedCv.fullName);
+          if (parsedCv.jobTitle) setJobTitle(parsedCv.jobTitle);
+          if (parsedCv.email) setEmail(parsedCv.email);
+          if (parsedCv.phone) setPhone(parsedCv.phone);
+          if (parsedCv.location) setLocation(parsedCv.location);
+          if (parsedCv.linkedinUrl !== undefined) setLinkedinUrl(parsedCv.linkedinUrl);
+          if (parsedCv.portfolioUrl !== undefined) setPortfolioUrl(parsedCv.portfolioUrl);
+          if (parsedCv.summary) setSummary(parsedCv.summary);
+          if (parsedCv.experiences && Array.isArray(parsedCv.experiences) && parsedCv.experiences.length > 0) setExperiences(parsedCv.experiences);
+          if (parsedCv.education && Array.isArray(parsedCv.education) && parsedCv.education.length > 0) setEducation(parsedCv.education);
+          if (parsedCv.skills) setSkills(parsedCv.skills);
+          if (parsedCv.certifications && Array.isArray(parsedCv.certifications) && parsedCv.certifications.length > 0) setCertifications(parsedCv.certifications);
+        }
+      } catch (_) {}
+    }
 
     const fetchProfile = async () => {
       try {
@@ -106,22 +117,29 @@ export default function AtsCvBuilderPage() {
           if (res.email) setEmail(res.email);
           if (res.profil) {
             const p = res.profil;
-            if (p.nama_lengkap) setFullName(p.nama_lengkap);
+            if (p.nama_lengkap && p.nama_lengkap !== 'Nama Pelamar') setFullName(p.nama_lengkap);
             if (p.judul_posisi) setJobTitle(p.judul_posisi);
             if (p.no_telepon) setPhone(p.no_telepon);
             if (p.alamat) setLocation(p.alamat);
-            if (p.linkedin_url) {
+            if (p.linkedin_url) setLinkedinUrl(p.linkedin_url);
+            if (p.portfolio_url) setPortfolioUrl(p.portfolio_url);
+            if (p.social_links) {
               try {
-                const parsed = JSON.parse(p.linkedin_url);
-                if (Array.isArray(parsed)) setSocialLinks(parsed);
-                else setSocialLinks([{ platform: 'LinkedIn', url: p.linkedin_url }]);
-              } catch (_) {
-                setSocialLinks([{ platform: 'LinkedIn', url: p.linkedin_url }]);
-              }
+                const parsedSl = typeof p.social_links === 'string' ? JSON.parse(p.social_links) : p.social_links;
+                if (Array.isArray(parsedSl) && parsedSl.length > 0) setSocialLinks(parsedSl);
+              } catch (_) {}
             }
             if (p.ringkasan_diri) setSummary(p.ringkasan_diri);
             if (p.keahlian) setSkills(p.keahlian);
-            if (p.sertifikasi) setCertifications(p.sertifikasi);
+            if (p.sertifikasi) {
+              try {
+                const parsedCert = typeof p.sertifikasi === 'string' ? JSON.parse(p.sertifikasi) : p.sertifikasi;
+                if (Array.isArray(parsedCert) && parsedCert.length > 0) setCertifications(parsedCert);
+              } catch (_) {
+                // Legacy plain string fallback
+                if (p.sertifikasi.trim()) setCertifications([{ name: p.sertifikasi, credentialUrl: '' }]);
+              }
+            }
 
             if (p.pengalaman_kerja) {
               try {
@@ -144,6 +162,23 @@ export default function AtsCvBuilderPage() {
     };
     fetchProfile();
   }, []);
+
+  // Handler for Certifications (dynamic list)
+  const handleAddCertification = () => {
+    setCertifications([...certifications, { name: '', credentialUrl: '' }]);
+  };
+
+  const handleRemoveCertification = (index: number) => {
+    if (certifications.length <= 1) return;
+    setCertifications(certifications.filter((_, idx) => idx !== index));
+  };
+
+  const handleCertificationChange = (index: number, field: 'name' | 'credentialUrl', value: string) => {
+    const updated = certifications.map((cert, idx) =>
+      idx === index ? { ...cert, [field]: value } : cert
+    );
+    setCertifications(updated);
+  };
 
   // Handler for Social Links
   const handleAddSocialLink = () => {
@@ -227,6 +262,8 @@ export default function AtsCvBuilderPage() {
       email,
       phone,
       location,
+      linkedinUrl,
+      portfolioUrl,
       socialLinks,
       summary,
       experiences,
@@ -246,19 +283,21 @@ export default function AtsCvBuilderPage() {
         judul_posisi: jobTitle,
         no_telepon: phone,
         alamat: location,
-        linkedin_url: JSON.stringify(socialLinks),
+        linkedin_url: linkedinUrl,
+        portfolio_url: portfolioUrl,
+        social_links: socialLinks,
         ringkasan_diri: summary,
         pengalaman_kerja: JSON.stringify(experiences),
         riwayat_pendidikan: JSON.stringify(education),
         keahlian: skills,
-        sertifikasi: certifications
+        sertifikasi: JSON.stringify(certifications)
       });
 
       setIsSavedToDb(true);
-      setDbSuccessMessage(res.message || 'CV Berhasil Disimpan');
+      setDbSuccessMessage(res.message || 'CV Berhasil Disimpan ke Database');
     } catch (err: any) {
       setIsSavedToDb(true);
-      setDbSuccessMessage('CV Berhasil Disimpan');
+      setDbSuccessMessage('CV Berhasil Disimpan ke Database');
     } finally {
       setIsSavingDb(false);
     }
@@ -270,7 +309,7 @@ export default function AtsCvBuilderPage() {
     setUploadError('');
 
     try {
-      let resMsg = 'CV Berhasil Disimpan';
+      let resMsg = 'CV Berhasil Disimpan ke Database';
 
       if (rawPdfFile) {
         const formData = new FormData();
@@ -283,12 +322,14 @@ export default function AtsCvBuilderPage() {
           judul_posisi: jobTitle,
           no_telepon: phone,
           alamat: location,
-          linkedin_url: JSON.stringify(socialLinks),
+          linkedin_url: linkedinUrl,
+          portfolio_url: portfolioUrl,
+          social_links: socialLinks,
           ringkasan_diri: summary,
           pengalaman_kerja: JSON.stringify(experiences),
           riwayat_pendidikan: JSON.stringify(education),
           keahlian: skills,
-          sertifikasi: certifications
+          sertifikasi: JSON.stringify(certifications)
         });
         if (res && res.message) resMsg = res.message;
       }
@@ -347,8 +388,8 @@ export default function AtsCvBuilderPage() {
 
   const handleDownloadPdf = () => {
     const originalTitle = document.title;
-    const cleanName = (fullName || 'Pelamar').trim().replace(/[^a-zA-Z0-9_-]/g, '_').replace(/_+/g, '_');
-    document.title = `CV_${cleanName}_ATS`;
+    const cleanName = (fullName || 'CV Pelamar').trim();
+    document.title = cleanName;
     window.print();
     setTimeout(() => {
       document.title = originalTitle;
@@ -432,6 +473,7 @@ export default function AtsCvBuilderPage() {
                       type="text"
                       value={fullName}
                       onChange={(e) => setFullName(e.target.value)}
+                      placeholder="Budi Santoso"
                       className="w-full px-4 py-2.5 bg-[#F0F8FB] dark:bg-slate-800 border border-[#C2E5EF] dark:border-slate-700 focus:border-[#1b7b9e] dark:focus:border-cyan-400 rounded-xl text-xs font-bold outline-none dark:text-white"
                     />
                   </div>
@@ -442,6 +484,7 @@ export default function AtsCvBuilderPage() {
                       type="text"
                       value={jobTitle}
                       onChange={(e) => setJobTitle(e.target.value)}
+                      placeholder="Frontend Engineer / Staff Marketing"
                       className="w-full px-4 py-2.5 bg-[#F0F8FB] dark:bg-slate-800 border border-[#C2E5EF] dark:border-slate-700 focus:border-[#1b7b9e] dark:focus:border-cyan-400 rounded-xl text-xs font-bold outline-none dark:text-white"
                     />
                   </div>
@@ -454,6 +497,7 @@ export default function AtsCvBuilderPage() {
                       type="email"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
+                      placeholder="budi.santoso@email.com"
                       className="w-full px-3 py-2 bg-[#F0F8FB] dark:bg-slate-800 border border-[#C2E5EF] dark:border-slate-700 focus:border-[#1b7b9e] dark:focus:border-cyan-400 rounded-xl text-xs outline-none dark:text-white"
                     />
                   </div>
@@ -463,6 +507,7 @@ export default function AtsCvBuilderPage() {
                       type="text"
                       value={phone}
                       onChange={(e) => setPhone(e.target.value)}
+                      placeholder="081234567890"
                       className="w-full px-3 py-2 bg-[#F0F8FB] dark:bg-slate-800 border border-[#C2E5EF] dark:border-slate-700 focus:border-[#1b7b9e] dark:focus:border-cyan-400 rounded-xl text-xs outline-none dark:text-white"
                     />
                   </div>
@@ -472,7 +517,37 @@ export default function AtsCvBuilderPage() {
                       type="text"
                       value={location}
                       onChange={(e) => setLocation(e.target.value)}
+                      placeholder="Jakarta Selatan, DKI Jakarta"
                       className="w-full px-3 py-2 bg-[#F0F8FB] dark:bg-slate-800 border border-[#C2E5EF] dark:border-slate-700 focus:border-[#1b7b9e] dark:focus:border-cyan-400 rounded-xl text-xs outline-none dark:text-white"
+                    />
+                  </div>
+                </div>
+
+                {/* Explicit LinkedIn & Portfolio Links Grid */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                      🔗 Tautan Profile LinkedIn
+                    </label>
+                    <input
+                      type="text"
+                      value={linkedinUrl}
+                      onChange={(e) => setLinkedinUrl(e.target.value)}
+                      placeholder="linkedin.com/in/username"
+                      className="w-full px-3.5 py-2 bg-[#F0F8FB] dark:bg-slate-800 border border-[#C2E5EF] dark:border-slate-700 focus:border-[#1b7b9e] dark:focus:border-cyan-400 rounded-xl text-xs font-bold outline-none dark:text-white"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                      🌐 Link Portofolio / Website / GitHub
+                    </label>
+                    <input
+                      type="text"
+                      value={portfolioUrl}
+                      onChange={(e) => setPortfolioUrl(e.target.value)}
+                      placeholder="github.com/username atau portfolio.com"
+                      className="w-full px-3.5 py-2 bg-[#F0F8FB] dark:bg-slate-800 border border-[#C2E5EF] dark:border-slate-700 focus:border-[#1b7b9e] dark:focus:border-cyan-400 rounded-xl text-xs font-bold outline-none dark:text-white"
                     />
                   </div>
                 </div>
@@ -480,13 +555,13 @@ export default function AtsCvBuilderPage() {
                 {/* Social Links List */}
                 <div className="space-y-3 mt-4 pt-4 border-t border-slate-100 dark:border-slate-800">
                   <div className="flex items-center justify-between">
-                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-300">Tautan / Media Sosial</label>
+                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-300">Tautan Tambahan (Opsional)</label>
                     <button
                       type="button"
                       onClick={handleAddSocialLink}
                       className="text-[#1b7b9e] dark:text-cyan-400 hover:underline text-[11px] font-bold flex items-center gap-1"
                     >
-                      <Plus size={12} /> Tambah Tautan
+                      <Plus size={12} /> Tambah Tautan Lanjutan
                     </button>
                   </div>
                   {socialLinks.map((link, idx) => (
@@ -495,17 +570,17 @@ export default function AtsCvBuilderPage() {
                         type="text"
                         value={link.platform}
                         onChange={(e) => handleSocialLinkChange(idx, 'platform', e.target.value)}
-                        placeholder="Platform (LinkedIn, dll)"
+                        placeholder="Platform (Dribbble, Behance, dll)"
                         className="w-1/3 px-3 py-2 bg-[#F0F8FB] dark:bg-slate-800 border border-[#C2E5EF] dark:border-slate-700 focus:border-[#1b7b9e] dark:focus:border-cyan-400 rounded-xl text-xs outline-none dark:text-white"
                       />
                       <input
                         type="text"
                         value={link.url}
                         onChange={(e) => handleSocialLinkChange(idx, 'url', e.target.value)}
-                        placeholder="URL (misal: linkedin.com/in/pelamar)"
+                        placeholder="URL Tautan"
                         className="w-2/3 px-3 py-2 bg-[#F0F8FB] dark:bg-slate-800 border border-[#C2E5EF] dark:border-slate-700 focus:border-[#1b7b9e] dark:focus:border-cyan-400 rounded-xl text-xs outline-none dark:text-white"
                       />
-                      {socialLinks.length > 1 && (
+                      {socialLinks.length > 0 && (
                         <button
                           type="button"
                           onClick={() => handleRemoveSocialLink(idx)}
@@ -528,6 +603,7 @@ export default function AtsCvBuilderPage() {
                   rows={3}
                   value={summary}
                   onChange={(e) => setSummary(e.target.value)}
+                  placeholder="Tuliskan ringkasan singkat mengenai latar belakang profesional, pencapaian utama, serta keahlian utama Anda di sini..."
                   className="w-full px-4 py-3 bg-[#F0F8FB] dark:bg-slate-800 border border-[#C2E5EF] dark:border-slate-700 focus:border-[#1b7b9e] dark:focus:border-cyan-400 rounded-xl text-xs outline-none leading-relaxed dark:text-white"
                 />
               </div>
@@ -568,14 +644,14 @@ export default function AtsCvBuilderPage() {
                         type="text"
                         value={exp.company}
                         onChange={(e) => handleExperienceChange(idx, 'company', e.target.value)}
-                        placeholder="Nama Perusahaan (misal: PT Tech Nusantara)"
+                        placeholder="PT Tech Inovasi Nusantara"
                         className="px-3.5 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 focus:border-[#1b7b9e] dark:focus:border-cyan-400 rounded-xl text-xs font-bold outline-none dark:text-white"
                       />
                       <input
                         type="text"
                         value={exp.role}
                         onChange={(e) => handleExperienceChange(idx, 'role', e.target.value)}
-                        placeholder="Posisi Jabatan (misal: Senior Frontend Engineer)"
+                        placeholder="Senior Frontend Engineer"
                         className="px-3.5 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 focus:border-[#1b7b9e] dark:focus:border-cyan-400 rounded-xl text-xs font-bold outline-none dark:text-white"
                       />
                     </div>
@@ -585,7 +661,7 @@ export default function AtsCvBuilderPage() {
                         type="text"
                         value={exp.period}
                         onChange={(e) => handleExperienceChange(idx, 'period', e.target.value)}
-                        placeholder="Periode Kerja (misal: 2022 - Sekarang)"
+                        placeholder="2022 - Sekarang"
                         className="w-full px-3.5 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 focus:border-[#1b7b9e] dark:focus:border-cyan-400 rounded-xl text-xs outline-none dark:text-white"
                       />
                     </div>
@@ -637,14 +713,14 @@ export default function AtsCvBuilderPage() {
                         type="text"
                         value={edu.school}
                         onChange={(e) => handleEducationChange(idx, 'school', e.target.value)}
-                        placeholder="Nama Sekolah / Universitas"
+                        placeholder="Universitas Indonesia"
                         className="px-3.5 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 focus:border-[#1b7b9e] dark:focus:border-cyan-400 rounded-xl text-xs font-bold outline-none dark:text-white"
                       />
                       <input
                         type="text"
                         value={edu.degree}
                         onChange={(e) => handleEducationChange(idx, 'degree', e.target.value)}
-                        placeholder="Gelar / Jurusan (misal: S1 Teknik Informatika)"
+                        placeholder="S1 Teknik Informatika"
                         className="px-3.5 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 focus:border-[#1b7b9e] dark:focus:border-cyan-400 rounded-xl text-xs font-bold outline-none dark:text-white"
                       />
                     </div>
@@ -654,14 +730,14 @@ export default function AtsCvBuilderPage() {
                         type="text"
                         value={edu.period}
                         onChange={(e) => handleEducationChange(idx, 'period', e.target.value)}
-                        placeholder="Periode (misal: 2016 - 2020)"
+                        placeholder="2016 - 2020"
                         className="px-3.5 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 focus:border-[#1b7b9e] dark:focus:border-cyan-400 rounded-xl text-xs outline-none dark:text-white"
                       />
                       <input
                         type="text"
                         value={edu.gpa}
                         onChange={(e) => handleEducationChange(idx, 'gpa', e.target.value)}
-                        placeholder="IPK / Nilai Akhir (misal: IPK 3.85 / 4.00)"
+                        placeholder="IPK 3.85 / 4.00"
                         className="px-3.5 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 focus:border-[#1b7b9e] dark:focus:border-cyan-400 rounded-xl text-xs outline-none dark:text-white"
                       />
                     </div>
@@ -670,10 +746,12 @@ export default function AtsCvBuilderPage() {
               </div>
 
               {/* Section 5: Keahlian Teknis & Sertifikasi */}
-              <div className="space-y-2">
-                <h3 className="text-xs font-black uppercase tracking-wider text-[#1b7b9e] dark:text-cyan-400 flex items-center gap-2">
-                  <Wrench size={16} /> 4. {t.pelamar.uploadCv.skills} &amp; Sertifikat
-                </h3>
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-xs font-black uppercase tracking-wider text-[#1b7b9e] dark:text-cyan-400 flex items-center gap-2">
+                    <Wrench size={16} /> 4. {t.pelamar.uploadCv.skills} & Sertifikat
+                  </h3>
+                </div>
                 <div className="space-y-3">
                   <div>
                     <label className="block text-[11px] font-bold text-slate-500 dark:text-slate-400 mb-1">Keahlian Utama</label>
@@ -681,19 +759,54 @@ export default function AtsCvBuilderPage() {
                       rows={2}
                       value={skills}
                       onChange={(e) => setSkills(e.target.value)}
-                      placeholder={t.pelamar.uploadCv.skillsPlaceholder}
+                      placeholder="React.js, Next.js, TypeScript, JavaScript (ES6+), Tailwind CSS, REST API, Git"
                       className="w-full px-4 py-2.5 bg-[#F0F8FB] dark:bg-slate-800 border border-[#C2E5EF] dark:border-slate-700 focus:border-[#1b7b9e] dark:focus:border-cyan-400 rounded-xl text-xs outline-none dark:text-white"
                     />
                   </div>
-                  <div>
-                    <label className="block text-[11px] font-bold text-slate-500 dark:text-slate-400 mb-1">Daftar Sertifikat (pisahkan dengan koma)</label>
-                    <textarea
-                      rows={2}
-                      value={certifications}
-                      onChange={(e) => setCertifications(e.target.value)}
-                      placeholder="AWS Certified Cloud Practitioner, Google Data Analytics..."
-                      className="w-full px-4 py-2.5 bg-[#F0F8FB] dark:bg-slate-800 border border-[#C2E5EF] dark:border-slate-700 focus:border-[#1b7b9e] dark:focus:border-cyan-400 rounded-xl text-xs outline-none dark:text-white"
-                    />
+
+                  {/* Dynamic Certifications with Credential Links */}
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <label className="block text-[11px] font-bold text-slate-500 dark:text-slate-400">Daftar Sertifikat & Link Kredensial</label>
+                      <button
+                        type="button"
+                        onClick={handleAddCertification}
+                        className="text-[#1b7b9e] dark:text-cyan-400 hover:underline text-[11px] font-bold flex items-center gap-1"
+                      >
+                        <Plus size={12} /> Tambah Sertifikat
+                      </button>
+                    </div>
+                    {certifications.map((cert, idx) => (
+                      <div key={idx} className="p-3 rounded-xl bg-[#F0F8FB] dark:bg-slate-800 border border-[#C2E5EF] dark:border-slate-700 space-y-2">
+                        <div className="flex items-center justify-between">
+                          <span className="text-[10px] font-bold text-slate-400">Sertifikat #{idx + 1}</span>
+                          {certifications.length > 1 && (
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveCertification(idx)}
+                              className="p-1 text-slate-400 hover:text-red-500 transition-colors"
+                              title="Hapus"
+                            >
+                              <Trash2 size={13} />
+                            </button>
+                          )}
+                        </div>
+                        <input
+                          type="text"
+                          value={cert.name}
+                          onChange={(e) => handleCertificationChange(idx, 'name', e.target.value)}
+                          placeholder="AWS Certified Cloud Practitioner"
+                          className="w-full px-3.5 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 focus:border-[#1b7b9e] dark:focus:border-cyan-400 rounded-xl text-xs font-bold outline-none dark:text-white"
+                        />
+                        <input
+                          type="url"
+                          value={cert.credentialUrl}
+                          onChange={(e) => handleCertificationChange(idx, 'credentialUrl', e.target.value)}
+                          placeholder="https://www.credly.com/badges/... atau link kredensial"
+                          className="w-full px-3.5 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 focus:border-[#1b7b9e] dark:focus:border-cyan-400 rounded-xl text-xs outline-none dark:text-white"
+                        />
+                      </div>
+                    ))}
                   </div>
                 </div>
               </div>
@@ -746,6 +859,8 @@ export default function AtsCvBuilderPage() {
                 @page {
                   size: A4 portrait;
                   margin: 10mm;
+                  margin-top: 0;
+                  margin-bottom: 0;
                 }
                 .no-print {
                   display: none !important;
@@ -781,17 +896,30 @@ export default function AtsCvBuilderPage() {
 
               {/* ATS Header */}
               <div className="border-b-2 border-slate-800 pb-4 space-y-1 text-center font-sans">
-                <h2 className="text-2xl font-black uppercase text-slate-900 tracking-tight">{fullName || 'NAMA LENGKAP'}</h2>
-                <span className="text-sm font-bold text-[#1b7b9e] block">{jobTitle}</span>
+                <h2 className="text-2xl font-black uppercase tracking-tight text-slate-900">
+                  {fullName || <span className="text-slate-400 font-bold tracking-wider">CONTOH NAMA LENGKAP</span>}
+                </h2>
+                {jobTitle ? (
+                  <span className="text-sm font-bold text-[#1b7b9e] block">{jobTitle}</span>
+                ) : (
+                  <span className="text-xs italic text-slate-400 block font-normal">[Judul Posisi / Peran]</span>
+                )}
                 <div className="text-[11px] text-slate-600 flex items-center justify-center flex-wrap gap-2 pt-1 font-medium">
-                  <span>{email}</span> • <span>{phone}</span> • <span>{location}</span>
-                  {socialLinks.length > 0 && socialLinks.map((link, idx) => (
-                    <React.Fragment key={idx}>
-                      {link.url && (
-                        <> • <span>{link.url}</span></>
-                      )}
-                    </React.Fragment>
-                  ))}
+                  <span>{email || <span className="text-slate-400">email@contoh.com</span>}</span> •{' '}
+                  <span>{phone || <span className="text-slate-400">0812xxxxxxxx</span>}</span> •{' '}
+                  <span>{location || <span className="text-slate-400">Kota Domisili</span>}</span>
+                  {linkedinUrl ? (
+                    <> • <span className="font-bold text-[#1b7b9e]">LinkedIn: {linkedinUrl}</span></>
+                  ) : (
+                    <span className="text-slate-400 italic"> • LinkedIn</span>
+                  )}
+                  {portfolioUrl && <> • <span className="font-bold text-[#1b7b9e]">Portofolio: {portfolioUrl}</span></>}
+                  {socialLinks.length > 0 &&
+                    socialLinks.map((link, idx) => (
+                      <React.Fragment key={idx}>
+                        {link.url && <> • <span>{link.platform ? `${link.platform}: ` : ''}{link.url}</span></>}
+                      </React.Fragment>
+                    ))}
                 </div>
               </div>
 
@@ -800,7 +928,13 @@ export default function AtsCvBuilderPage() {
                 <h3 className="text-xs font-bold uppercase tracking-wider text-slate-900 border-b border-slate-300 pb-1 font-sans">
                   RINGKASAN PROFESIONAL
                 </h3>
-                <p className="text-xs text-slate-700 leading-relaxed font-sans">{summary}</p>
+                <p className="text-xs text-slate-700 leading-relaxed font-sans">
+                  {summary || (
+                    <span className="text-slate-400 italic">
+                      Ringkasan profesional Anda akan muncul di sini setelah diisi pada formulir di sebelah kiri.
+                    </span>
+                  )}
+                </p>
               </div>
 
               {/* ATS Experience */}
@@ -808,17 +942,33 @@ export default function AtsCvBuilderPage() {
                 <h3 className="text-xs font-bold uppercase tracking-wider text-slate-900 border-b border-slate-300 pb-1">
                   PENGALAMAN KERJA
                 </h3>
-                {experiences.map((exp, idx) => (
-                  <div key={idx} className="space-y-1">
-                    <div className="flex justify-between items-baseline text-xs font-bold text-slate-900">
-                      <span>{exp.role} — {exp.company}</span>
-                      <span className="text-[11px] text-slate-500 font-semibold">{exp.period}</span>
+                {experiences.some((exp) => exp.company || exp.role || exp.description) ? (
+                  experiences.map((exp, idx) => (
+                    <div key={idx} className="space-y-1">
+                      <div className="flex justify-between items-baseline text-xs font-bold text-slate-900">
+                        <span>
+                          {exp.role || '[Posisi]'} — {exp.company || '[Perusahaan]'}
+                        </span>
+                        <span className="text-[11px] text-slate-500 font-semibold">{exp.period}</span>
+                      </div>
+                      {exp.description && (
+                        <p className="text-xs text-slate-600 leading-normal pl-3 border-l-2 border-slate-200">
+                          • {exp.description}
+                        </p>
+                      )}
                     </div>
-                    <p className="text-xs text-slate-600 leading-normal pl-3 border-l-2 border-slate-200">
-                      • {exp.description}
+                  ))
+                ) : (
+                  <div className="space-y-1 text-slate-400 italic">
+                    <div className="flex justify-between items-baseline text-xs">
+                      <span>[Posisi Jabatan] — [Nama Perusahaan]</span>
+                      <span className="text-[11px]">[Periode Kerja]</span>
+                    </div>
+                    <p className="text-xs leading-normal pl-3 border-l-2 border-slate-200">
+                      • Deskripsi tanggung jawab dan pencapaian Anda akan muncul di sini.
                     </p>
                   </div>
-                ))}
+                )}
               </div>
 
               {/* ATS Education */}
@@ -826,25 +976,50 @@ export default function AtsCvBuilderPage() {
                 <h3 className="text-xs font-bold uppercase tracking-wider text-slate-900 border-b border-slate-300 pb-1">
                   PENDIDIKAN
                 </h3>
-                {education.map((edu, idx) => (
-                  <div key={idx} className="flex justify-between items-baseline text-xs">
-                    <span className="font-bold text-slate-900">{edu.degree} — {edu.school} ({edu.gpa})</span>
-                    <span className="text-[11px] text-slate-500">{edu.period}</span>
+                {education.some((edu) => edu.school || edu.degree) ? (
+                  education.map((edu, idx) => (
+                    <div key={idx} className="flex justify-between items-baseline text-xs">
+                      <span className="font-bold text-slate-900">
+                        {edu.degree || '[Gelar/Jurusan]'} — {edu.school || '[Nama Sekolah/Universitas]'} {edu.gpa ? `(${edu.gpa})` : ''}
+                      </span>
+                      <span className="text-[11px] text-slate-500">{edu.period}</span>
+                    </div>
+                  ))
+                ) : (
+                  <div className="flex justify-between items-baseline text-xs text-slate-400 italic">
+                    <span>[Gelar / Jurusan] — [Nama Institusi / Universitas]</span>
+                    <span className="text-[11px]">[Periode]</span>
                   </div>
-                ))}
+                )}
               </div>
 
               {/* ATS Skills */}
               <div className="space-y-1.5 font-sans">
                 <h3 className="text-xs font-bold uppercase tracking-wider text-slate-900 border-b border-slate-300 pb-1">
-                  KEAHLIAN TEKNIS &amp; SERTIFIKASI
+                  KEAHLIAN TEKNIS & SERTIFIKASI
                 </h3>
                 <p className="text-xs text-slate-700 leading-relaxed">
-                  <strong className="text-slate-900">Keahlian:</strong> {skills}
+                  <strong className="text-slate-900">Keahlian:</strong>{' '}
+                  {skills || <span className="text-slate-400 italic">Daftar keahlian teknis Anda...</span>}
                 </p>
-                <p className="text-xs text-slate-700 leading-relaxed">
-                  <strong className="text-slate-900">Sertifikasi:</strong> {certifications}
-                </p>
+                <div className="text-xs text-slate-700 leading-relaxed">
+                  <strong className="text-slate-900">Sertifikasi:</strong>{' '}
+                  {certifications.some(c => c.name.trim()) ? (
+                    <ul className="mt-1 space-y-0.5 list-none pl-0">
+                      {certifications.filter(c => c.name.trim()).map((cert, idx) => (
+                        <li key={idx} className="flex items-center gap-1.5">
+                          <span className="inline-block w-1.5 h-1.5 rounded-full bg-slate-400 shrink-0" />
+                          <span>{cert.name}</span>
+                          {cert.credentialUrl && (
+                            <a href={cert.credentialUrl} target="_blank" rel="noopener noreferrer" className="text-[#1b7b9e] font-bold underline text-[10px] ml-1">[Lihat Kredensial]</a>
+                          )}
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <span className="text-slate-400 italic">Daftar sertifikat & link kredensial...</span>
+                  )}
+                </div>
               </div>
 
             </div>

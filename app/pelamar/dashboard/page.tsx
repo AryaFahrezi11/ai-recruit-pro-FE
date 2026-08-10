@@ -31,31 +31,43 @@ import {
   Award,
   Zap,
   HelpCircle,
-  Users
+  Users,
+  Copy,
+  MessageCircle,
+  Mail,
+  Globe
 } from 'lucide-react';
 import { ApplyJobModal } from '@/components/ApplyJobModal';
 import { api, parseErrorMessage } from '@/lib/api';
 
 interface Job {
-  id: number;
+  id: number | string;
   title: string;
   company: string;
   logo: string;
   location: string;
   education: string;
+  educationLevel: string;
+  experienceLevel: string;
+  openingsCount: number;
+  benefits: string[];
   workPolicy: string;
   salary: string;
   postedAgo: string;
+  publishDate: string;
+  applicationDeadline?: string | null;
   isPromoted?: boolean;
+  isNew?: boolean;
   matchScore: number;
   reason: string;
   descriptionBullets: string[];
+  responsibilitiesBullets: string[];
   placementInfo: string;
   criteriaBullets: string[];
 }
 
 interface Company {
-  id: number;
+  id: number | string;
   name: string;
   logo: string;
   industry: string;
@@ -80,13 +92,17 @@ function DashboardContent() {
   const [workPolicyFilter, setWorkPolicyFilter] = useState('Semua');
 
   // Currently selected job ID for the right side detail pane
-  const [selectedJobId, setSelectedJobId] = useState<number>(0);
+  const [selectedJobId, setSelectedJobId] = useState<number | string>('');
   const [shareJob, setShareJob] = useState<Job | null>(null);
 
   const [cvDetails, setCvDetails] = useState<any>(null);
-  const [appliedJobs, setAppliedJobs] = useState<number[]>([]);
-  const [savedJobIds, setSavedJobIds] = useState<number[]>([]);
+  const [appliedJobs, setAppliedJobs] = useState<(number | string)[]>([]);
+  const [savedJobIds, setSavedJobIds] = useState<(number | string)[]>([]);
   const [applyingJobModalData, setApplyingJobModalData] = useState<{ id: number | string; title: string; company: string } | null>(null);
+
+  const [jobsList, setJobsList] = useState<Job[]>([]);
+  const [companiesList, setCompaniesList] = useState<Company[]>([]);
+  const [isLoadingJobs, setIsLoadingJobs] = useState<boolean>(true);
 
   useEffect(() => {
     const savedEmail = localStorage.getItem('user_email') || 'pelamar@example.com';
@@ -107,10 +123,134 @@ function DashboardContent() {
 
     const savedApplied = localStorage.getItem('appliedJobsList');
     if (savedApplied) {
-      setAppliedJobs(JSON.parse(savedApplied));
+      try { setAppliedJobs(JSON.parse(savedApplied)); } catch(e){}
     }
 
+    const storedSaved = localStorage.getItem('candidateSavedJobsList');
+    if (storedSaved) {
+      try { setSavedJobIds(JSON.parse(storedSaved)); } catch(e){}
+    }
+
+    fetchRealData();
   }, []);
+
+  const fetchRealData = async () => {
+    setIsLoadingJobs(true);
+    try {
+      // 1. Fetch real active jobs from backend API
+      const resJobs = await api.get('/jobs/');
+      const rawJobsList = Array.isArray(resJobs) ? resJobs : (resJobs?.data && Array.isArray(resJobs.data) ? resJobs.data : []);
+
+      if (rawJobsList.length > 0) {
+        const safeParseArray = (val: any) => {
+          if (!val) return [];
+          if (Array.isArray(val)) return val;
+          try {
+            const parsed = JSON.parse(val);
+            return Array.isArray(parsed) ? parsed : [val];
+          } catch {
+            return typeof val === 'string' ? val.split('\n').filter((s: string) => s.trim()) : [val];
+          }
+        };
+
+        const mappedJobs: Job[] = rawJobsList.map((j: any) => {
+          const benefitsArray = (() => {
+            if (!j.benefits_json) return [];
+            if (Array.isArray(j.benefits_json)) return j.benefits_json;
+            try {
+              const parsed = JSON.parse(j.benefits_json);
+              return Array.isArray(parsed) ? parsed : [j.benefits_json];
+            } catch {
+              return typeof j.benefits_json === 'string' ? j.benefits_json.split(',').map((b: string) => b.trim()).filter(Boolean) : [];
+            }
+          })();
+
+          const expLevel = (() => {
+            const el = j.experience_level;
+            if (el === 'Entry Level') return 'Entry Level (0 - 1 Tahun)';
+            if (el === 'Mid Level') return 'Mid Level (2 - 4 Tahun)';
+            if (el === 'Senior Level') return 'Senior Level (5+ Tahun)';
+            if (el === 'Lead / Manager') return 'Lead / Manager (8+ Tahun)';
+            return el || (j.pengalaman_min_tahun > 3 ? 'Senior Level (5+ Tahun)' : 'Mid Level (2 - 4 Tahun)');
+          })();
+
+          const createdDate = j.tanggal_buka ? new Date(j.tanggal_buka) : (j.created_at ? new Date(j.created_at) : new Date());
+          const now = new Date();
+          const createdStartOfDay = new Date(createdDate.getFullYear(), createdDate.getMonth(), createdDate.getDate());
+          const nowStartOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+          const diffDays = Math.floor((nowStartOfDay.getTime() - createdStartOfDay.getTime()) / (1000 * 60 * 60 * 24));
+
+          const postedAgoText = (() => {
+            if (diffDays <= 0) return 'Hari ini';
+            if (diffDays === 1) return '1 hari yang lalu';
+            return `${diffDays} hari yang lalu`;
+          })();
+
+          const isNewJob = diffDays >= 0 && diffDays <= 7;
+
+          return {
+            id: j.id,
+            title: j.judul_posisi,
+            company: j.perusahaan?.nama_perusahaan || 'Perusahaan',
+            logo: (j.perusahaan?.logo_url && j.perusahaan.logo_url !== '') 
+                  ? (j.perusahaan.logo_url.startsWith('http') ? j.perusahaan.logo_url : `http://${typeof window !== 'undefined' ? window.location.hostname : '127.0.0.1'}:8000${j.perusahaan.logo_url}`)
+                  : 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=120&auto=format&fit=crop&q=80',
+            location: j.kota || (j.perusahaan?.kota ? j.perusahaan.kota : 'Remote'),
+            education: j.pendidikan_min || safeParseArray(j.kualifikasi)[0] || 'Terbuka untuk umum',
+            educationLevel: j.pendidikan_min || 'SMA/SMK/D3/S1',
+            experienceLevel: expLevel,
+            openingsCount: j.openings_count || 1,
+            benefits: benefitsArray,
+            workPolicy: (() => {
+              const type = j.tipe_pekerjaan ? j.tipe_pekerjaan.split('_').map((w: any) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ') : 'Full Time';
+              const loc = j.lokasi_kerja === 'remote' ? 'Remote (WFH)' : j.lokasi_kerja === 'hybrid' ? 'Hybrid' : 'On-site';
+              return `${type} (${loc})`;
+            })(),
+            salary: (j.tampilkan_gaji && j.gaji_min && j.gaji_max) 
+                    ? `Rp ${(j.gaji_min/1000000).toFixed(0)} Jt - Rp ${(j.gaji_max/1000000).toFixed(0)} Jt` 
+                    : 'Gaji Dirahasiakan',
+            postedAgo: postedAgoText,
+            publishDate: createdDate.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }),
+            applicationDeadline: j.tanggal_tutup ? new Date(j.tanggal_tutup).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) : null,
+            isPromoted: j.is_promoted || false,
+            isNew: isNewJob,
+            matchScore: j.match_score || 92,
+            reason: j.reason || 'Keahlian & kualifikasi Anda sesuai dengan posisi ini.',
+            descriptionBullets: safeParseArray(j.deskripsi_pekerjaan),
+            responsibilitiesBullets: safeParseArray(j.tanggung_jawab),
+            placementInfo: j.kota ? `Untuk lokasi di ${j.kota}` : (j.lokasi_kerja === 'remote' ? 'Remote (Kerja Dari Mana Saja)' : 'Lokasi Perusahaan'),
+            criteriaBullets: safeParseArray(j.kualifikasi),
+          };
+        });
+
+        setJobsList(mappedJobs);
+        setSelectedJobId(mappedJobs[0].id);
+      }
+
+      // 2. Fetch real verified companies from backend API
+      const resComp = await api.get('/perusahaan/verified');
+      const rawCompList = Array.isArray(resComp) ? resComp : (resComp?.data && Array.isArray(resComp.data) ? resComp.data : []);
+
+      if (rawCompList.length > 0) {
+        const mappedComp: Company[] = rawCompList.map((c: any) => ({
+          id: c.id,
+          name: c.nama_perusahaan,
+          logo: (c.logo_url && c.logo_url !== '') 
+                ? (c.logo_url.startsWith('http') ? c.logo_url : `http://${typeof window !== 'undefined' ? window.location.hostname : '127.0.0.1'}:8000${c.logo_url}`)
+                : 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=120&auto=format&fit=crop&q=80',
+          industry: c.industri || 'Umum & Teknologi',
+          location: c.kota || c.alamat || 'Indonesia',
+          openJobsCount: c.jobs_count || c.open_jobs_count || 0,
+          description: c.deskripsi || 'Perusahaan terverifikasi di platform AI Recruit Pro.'
+        }));
+        setCompaniesList(mappedComp);
+      }
+    } catch (err) {
+      console.error('Gagal mengambil data real dari backend:', err);
+    } finally {
+      setIsLoadingJobs(false);
+    }
+  };
 
   useEffect(() => {
     const view = searchParams.get('view');
@@ -118,318 +258,11 @@ function DashboardContent() {
     else if (view === 'saved') setActiveTab('saved');
   }, [searchParams]);
 
-  // Companies List
-  const companiesList: Company[] = [
-    {
-      id: 1,
-      name: 'Mint Patisserie',
-      logo: 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=120&auto=format&fit=crop&q=80',
-      industry: 'Kuliner & F&B Modern',
-      location: 'Jakarta Barat, DKI Jakarta',
-      openJobsCount: 4,
-      description: 'Produsen pastry & toko roti premium terkemuka dengan beberapa cabang di Jakarta.'
-    },
-    {
-      id: 2,
-      name: 'PT Tiga Putri Bijaksana',
-      logo: 'https://images.unsplash.com/photo-1516549655169-df83a0774514?w=120&auto=format&fit=crop&q=80',
-      industry: 'Layanan Kesehatan & Klinik',
-      location: 'Kota Depok, Jawa Barat',
-      openJobsCount: 6,
-      description: 'Jaringan klinik medis & penyedia administrasi kesehatan tepercaya.'
-    },
-    {
-      id: 3,
-      name: 'PT Citra Indojaya Perkasa',
-      logo: 'https://images.unsplash.com/photo-1560179707-f14e90ef3623?w=120&auto=format&fit=crop&q=80',
-      industry: 'Telekomunikasi & Call Center',
-      location: 'Jakarta Utara, DKI Jakarta',
-      openJobsCount: 10,
-      description: 'Penyedia layanan alih daya customer care & telemarketing nasional.'
-    },
-    {
-      id: 4,
-      name: 'PT Supra Boga Lestari Tbk',
-      logo: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=120&auto=format&fit=crop&q=80',
-      industry: 'Ritel & Supermarket Tech',
-      location: 'Jakarta Barat, DKI Jakarta',
-      openJobsCount: 12,
-      description: 'Pengelola jaringan supermarket Ranch Market & Farmers Market di Indonesia.'
-    },
-    {
-      id: 5,
-      name: 'Wanderus Technologies',
-      logo: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=120&auto=format&fit=crop&q=80',
-      industry: 'Software & Cloud Solutions',
-      location: 'Bali (Jarak Jauh)',
-      openJobsCount: 8,
-      description: 'Global tech studio mengembangkan platform SaaS berbasis kecerdasan buatan.'
-    }
-  ];
-
-  // Jobs Dataset matching KitaLulus Layout Screenshot
-  const jobsList: Job[] = [
-    {
-      id: 101,
-      title: 'Admin Stocking (Mangga Besar)',
-      company: 'Mint Patisserie',
-      logo: 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=120&auto=format&fit=crop&q=80',
-      location: 'Jakarta Barat, DKI Jakarta',
-      education: 'Minimal SMA/SMK/Sederajat',
-      workPolicy: 'Kontrak • Kerja dari kantor (WFO)',
-      salary: 'Rp 2.000.000 - Rp 2.500.000',
-      postedAgo: 'Terakhir diperbarui 2 hari yang lalu',
-      isPromoted: true,
-      matchScore: 95,
-      reason: 'Keteletihan data stok & kemampuan komputasi dasar di CV Anda sangat relevan.',
-      descriptionBullets: [
-        'Menyusun laporan stok dan status inventaris secara berkala.',
-        'Memberi label, menyimpan, dan menata barang di lokasi penyimpanan yang sesuai.',
-        'Memantau ketersediaan barang dan melaporkan jika ada kekurangan atau ketidaksesuaian.',
-        'Membantu dalam proses stock opname dan audit inventaris rutin.'
-      ],
-      placementInfo: 'Untuk lokasi di Mangga Besar, Jakarta Barat',
-      criteriaBullets: [
-        'BERSEDIA DATANG UNTUK TEST LANGSUNG di Mangga Besar, Jakarta Barat.',
-        'Pria/Wanita 18 - 25 Tahun, Rapi & Teliti.',
-        'WAJIB BISA MENGGUNAKAN KOMPUTER Rajin (tidak malas), inisiatif tinggi, jujur.',
-        'Bisa bekerja full time - 6 hari dalam 1 minggu jam 08.30 s/d 18.00.',
-        'Tanggal merah tetap masuk (Shift / Kontrak 1 Tahun).'
-      ]
-    },
-    {
-      id: 102,
-      title: 'admin Klinik',
-      company: 'PT tiga putri bijaksana',
-      logo: 'https://images.unsplash.com/photo-1516549655169-df83a0774514?w=120&auto=format&fit=crop&q=80',
-      location: 'Kota Depok, Jawa Barat',
-      education: 'Minimal SMA/SMK/Sederajat',
-      workPolicy: 'Kontrak • Kerja dari kantor (WFO)',
-      salary: 'Rp 2.400.000 - Rp 2.700.000',
-      postedAgo: 'Terakhir diperbarui 3 hari yang lalu',
-      isPromoted: true,
-      matchScore: 92,
-      reason: 'Kemampuan komunikasi ramah & administrasi dokumen sesuai standar klinik.',
-      descriptionBullets: [
-        'Mengelola pendaftaran pasien dan jadwal konsultasi dokter.',
-        'Melakukan pencatatan administrasi rekam medis dan klaim asuransi kesehatan.',
-        'Menyusun rekapitulasi harian transaksi klinik.'
-      ],
-      placementInfo: 'Untuk lokasi di Margonda, Kota Depok',
-      criteriaBullets: [
-        'Pendidikan minimal SMA/SMK Sederajat.',
-        'Komunikatif, ramah, dan berpenampilan rapi.',
-        'Menguasai Microsoft Word & Excel dasar.'
-      ]
-    },
-    {
-      id: 103,
-      title: 'Call Center',
-      company: 'PT Citra Indojaya Perkasa',
-      logo: 'https://images.unsplash.com/photo-1560179707-f14e90ef3623?w=120&auto=format&fit=crop&q=80',
-      location: 'Jakarta Utara, DKI Jakarta',
-      education: 'Minimal D3/D4',
-      workPolicy: 'Full time • Hybrid',
-      salary: 'Rp 5.729.876 - Rp 7.000.000',
-      postedAgo: 'Terakhir diperbarui 1 hari yang lalu',
-      isPromoted: true,
-      matchScore: 94,
-      reason: 'Skor komunikasi lisan lisan & pemecahan masalah Anda sangat baik.',
-      descriptionBullets: [
-        'Menerima panggilan masuk (inbound call) dan menangani keluhan pelanggan.',
-        'Eskalasi masalah teknis ke tim terkait dan mencatat ticketing sistem.'
-      ],
-      placementInfo: 'Sunter, Jakarta Utara',
-      criteriaBullets: [
-        'Pendidikan D3 / S1 Semua Jurusan.',
-        'Artikulasi suara jelas dan tidak dialek kental.',
-        'Bersedia bekerja sistem shift.'
-      ]
-    },
-    {
-      id: 104,
-      title: 'IT Application Developer',
-      company: 'PT Supra Boga Lestari Tbk',
-      logo: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=120&auto=format&fit=crop&q=80',
-      location: 'Jakarta Barat, DKI Jakarta',
-      education: 'Minimal D3/S1 Informatika',
-      workPolicy: 'Full time • Hybrid',
-      salary: 'Rp 8.000.000 - Rp 12.000.000',
-      postedAgo: 'Terakhir diperbarui 17 jam yang lalu',
-      isPromoted: false,
-      matchScore: 96,
-      reason: 'Pengalaman Next.js & React pada CV ATS Anda mempunyai keselarasan 96%.',
-      descriptionBullets: [
-        'Mengembangkan platform e-commerce & aplikasi manajemen stok ritel.',
-        'Integrasi RESTful API & arsitektur Frontend modern berbasis React/Next.js.'
-      ],
-      placementInfo: 'Kedoya, Jakarta Barat',
-      criteriaBullets: [
-        'Pengalaman minimal 2 tahun sebagai Frontend / Fullstack Developer.',
-        'Menguasai TypeScript, React, Next.js, dan REST API.'
-      ]
-    },
-    {
-      id: 105,
-      title: 'Front-End Web Designer (Remote – Indonesia)',
-      company: 'Wanderus Technologies',
-      logo: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=120&auto=format&fit=crop&q=80',
-      location: 'Bali (Jarak jauh)',
-      education: 'Minimal D3/S1',
-      workPolicy: 'Full time • Remote (WFH)',
-      salary: 'Rp 7.000.000 - Rp 10.000.000',
-      postedAgo: 'Terakhir diperbarui 5 hari yang lalu',
-      isPromoted: false,
-      matchScore: 91,
-      reason: 'Portofolio UI/UX Design & komponen React pas dengan kebutuhan tim global.',
-      descriptionBullets: [
-        'Merancang antarmuka pengguna Web SaaS yang intuitif dan responsif.',
-        'Menerjemahkan desain Figma ke dalam komponen React / Tailwind CSS.'
-      ],
-      placementInfo: 'Remote (Kerja Dari Mana Saja)',
-      criteriaBullets: [
-        'Minimal 2 tahun pengalaman UI/UX & Frontend Design.',
-        'Portofolio web desain aktif dapat ditunjukkan.'
-      ]
-    },
-    {
-      id: 106,
-      title: 'Staff Accounting',
-      company: 'PT Maju Sejahtera Abadi',
-      logo: 'https://images.unsplash.com/photo-1554224155-6726b3ff858f?w=120&auto=format&fit=crop&q=80',
-      location: 'Jakarta Selatan, DKI Jakarta',
-      education: 'Minimal D3/S1 Akuntansi',
-      workPolicy: 'Full time • Kerja dari kantor (WFO)',
-      salary: 'Rp 5.000.000 - Rp 7.000.000',
-      postedAgo: 'Terakhir diperbarui 1 hari yang lalu',
-      isPromoted: false,
-      matchScore: 88,
-      reason: 'Kemampuan analisis data keuangan & ketelitian Anda sesuai dengan kebutuhan posisi.',
-      descriptionBullets: [
-        'Membuat laporan keuangan bulanan dan tahunan perusahaan.',
-        'Melakukan rekonsiliasi bank dan pencatatan jurnal transaksi.',
-        'Mengelola faktur pajak, PPN, dan PPh sesuai regulasi.'
-      ],
-      placementInfo: 'Untuk lokasi di Kuningan, Jakarta Selatan',
-      criteriaBullets: [
-        'Pendidikan minimal D3/S1 Akuntansi atau Keuangan.',
-        'Menguasai software akuntansi (Accurate, Jurnal, atau SAP).',
-        'Teliti, jujur, dan mampu bekerja di bawah tekanan deadline.'
-      ]
-    },
-    {
-      id: 107,
-      title: 'Digital Marketing Specialist',
-      company: 'PT Kreasi Digital Nusantara',
-      logo: 'https://images.unsplash.com/photo-1552664730-d307ca884978?w=120&auto=format&fit=crop&q=80',
-      location: 'Bandung, Jawa Barat',
-      education: 'Minimal S1 Marketing/Komunikasi',
-      workPolicy: 'Full time • Hybrid',
-      salary: 'Rp 6.000.000 - Rp 9.000.000',
-      postedAgo: 'Terakhir diperbarui 4 jam yang lalu',
-      isPromoted: true,
-      matchScore: 89,
-      reason: 'Pengalaman campaign digital & analitik media sosial Anda sangat relevan.',
-      descriptionBullets: [
-        'Merancang dan mengeksekusi strategi digital marketing multi-channel.',
-        'Mengelola campaign Google Ads, Meta Ads, dan TikTok Ads.',
-        'Menganalisis performa campaign menggunakan Google Analytics & Data Studio.',
-        'Membuat konten marketing yang engaging untuk berbagai platform.'
-      ],
-      placementInfo: 'Untuk lokasi di Dago, Bandung',
-      criteriaBullets: [
-        'Pengalaman minimal 1 tahun di bidang Digital Marketing.',
-        'Menguasai Google Ads, Facebook Ads Manager, dan tools SEO.',
-        'Kreatif, data-driven, dan up-to-date dengan tren digital.'
-      ]
-    },
-    {
-      id: 108,
-      title: 'Customer Service Representative',
-      company: 'PT Tokopedia Care',
-      logo: 'https://images.unsplash.com/photo-1556745757-8d76bdb6984b?w=120&auto=format&fit=crop&q=80',
-      location: 'Jakarta Pusat, DKI Jakarta',
-      education: 'Minimal SMA/SMK/Sederajat',
-      workPolicy: 'Kontrak • Kerja dari kantor (WFO)',
-      salary: 'Rp 4.500.000 - Rp 5.500.000',
-      postedAgo: 'Terakhir diperbarui 6 jam yang lalu',
-      isPromoted: false,
-      matchScore: 90,
-      reason: 'Kemampuan komunikasi & problem solving Anda cocok untuk posisi ini.',
-      descriptionBullets: [
-        'Menangani pertanyaan dan keluhan pelanggan via chat, email, dan telepon.',
-        'Memberikan solusi yang tepat dan cepat sesuai SOP perusahaan.',
-        'Melakukan follow-up terhadap tiket komplain yang belum terselesaikan.'
-      ],
-      placementInfo: 'Untuk lokasi di Menteng, Jakarta Pusat',
-      criteriaBullets: [
-        'Pendidikan minimal SMA/SMK Sederajat.',
-        'Memiliki kemampuan komunikasi yang baik dan sabar.',
-        'Bersedia bekerja shift dan di hari libur nasional.',
-        'Pengalaman di bidang customer service menjadi nilai plus.'
-      ]
-    },
-    {
-      id: 109,
-      title: 'Backend Engineer (Node.js)',
-      company: 'PT Solusi Teknologi Indonesia',
-      logo: 'https://images.unsplash.com/photo-1519389950473-47ba0277781c?w=120&auto=format&fit=crop&q=80',
-      location: 'Surabaya, Jawa Timur',
-      education: 'Minimal S1 Teknik Informatika',
-      workPolicy: 'Full time • Remote (WFH)',
-      salary: 'Rp 10.000.000 - Rp 15.000.000',
-      postedAgo: 'Terakhir diperbarui 12 jam yang lalu',
-      isPromoted: true,
-      matchScore: 93,
-      reason: 'Skill Node.js & pengalaman arsitektur microservices Anda sangat sesuai.',
-      descriptionBullets: [
-        'Mengembangkan dan maintain RESTful API & GraphQL services.',
-        'Merancang arsitektur microservices yang scalable dan reliable.',
-        'Optimasi database query dan implementasi caching strategy.',
-        'Menulis unit test dan integration test untuk memastikan kualitas kode.'
-      ],
-      placementInfo: 'Remote (Seluruh Indonesia)',
-      criteriaBullets: [
-        'Pengalaman minimal 3 tahun sebagai Backend Developer.',
-        'Menguasai Node.js, TypeScript, PostgreSQL, dan Redis.',
-        'Familiar dengan Docker, Kubernetes, dan CI/CD pipeline.',
-        'Mampu bekerja secara mandiri dan dalam tim remote.'
-      ]
-    },
-    {
-      id: 110,
-      title: 'HRD & Recruitment Staff',
-      company: 'PT Global Talent Solutions',
-      logo: 'https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?w=120&auto=format&fit=crop&q=80',
-      location: 'Tangerang, Banten',
-      education: 'Minimal S1 Psikologi/Manajemen',
-      workPolicy: 'Full time • Kerja dari kantor (WFO)',
-      salary: 'Rp 5.500.000 - Rp 8.000.000',
-      postedAgo: 'Terakhir diperbarui 2 hari yang lalu',
-      isPromoted: false,
-      matchScore: 86,
-      reason: 'Latar belakang manajemen SDM & keterampilan komunikasi Anda relevan.',
-      descriptionBullets: [
-        'Mengelola proses rekrutmen end-to-end dari sourcing hingga onboarding.',
-        'Melakukan screening CV, interview awal, dan psikotes kandidat.',
-        'Menyusun laporan rekrutmen bulanan dan analisis turnover karyawan.',
-        'Mengelola database kandidat dan sistem HRIS perusahaan.'
-      ],
-      placementInfo: 'Untuk lokasi di BSD City, Tangerang Selatan',
-      criteriaBullets: [
-        'Pendidikan S1 Psikologi, Manajemen SDM, atau Hukum.',
-        'Pengalaman minimal 1 tahun di bidang HR/Recruitment.',
-        'Menguasai teknik interview berbasis kompetensi.',
-        'Mampu menggunakan platform job portal dan LinkedIn Recruiter.'
-      ]
-    }
-  ];
-
   // Save Job Toggle
   const toggleSaveJob = async (jobId: any) => {
     let newSaved: any[];
-    if (savedJobIds.includes(jobId)) {
-      newSaved = savedJobIds.filter((id) => id !== jobId);
+    if (savedJobIds.includes(jobId) || savedJobIds.includes(String(jobId))) {
+      newSaved = savedJobIds.filter((id) => String(id) !== String(jobId));
       setSavedJobIds(newSaved);
       localStorage.setItem('candidateSavedJobsList', JSON.stringify(newSaved));
       try {
@@ -469,7 +302,7 @@ function DashboardContent() {
   // Filter Jobs List
   const filteredJobs = useMemo(() => {
     return jobsList.filter((job) => {
-      if (activeTab === 'saved') return savedJobIds.includes(job.id);
+      if (activeTab === 'saved') return savedJobIds.some(id => String(id) === String(job.id));
 
       const matchesSearch = !searchQuery ||
         job.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -486,7 +319,7 @@ function DashboardContent() {
 
   // Selected Job Details Object for Right Pane
   const selectedJob = useMemo(() => {
-    return jobsList.find((j) => j.id === selectedJobId) || filteredJobs[0] || jobsList[0];
+    return jobsList.find((j) => String(j.id) === String(selectedJobId)) || filteredJobs[0] || jobsList[0];
   }, [jobsList, selectedJobId, filteredJobs]);
 
   return (
@@ -646,29 +479,122 @@ function DashboardContent() {
         /* DUAL-PANE KITALULUS SPLIT VIEW */
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
 
-          {/* SHARE MODAL */}
+          {/* RICH SOCIAL SHARE MODAL */}
           {shareJob && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
-              <div className="bg-white dark:bg-slate-900 rounded-3xl w-full max-w-md p-6 shadow-2xl relative border border-slate-200 dark:border-slate-700">
-                <button onClick={() => setShareJob(null)} className="absolute right-4 top-4 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer p-1 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"><X size={20}/></button>
-                <div className="space-y-4">
-                  <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 bg-[#F0F8FB] dark:bg-slate-800 rounded-full flex items-center justify-center text-[#2596be]">
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fadeIn">
+              <div className="bg-white dark:bg-slate-900 rounded-3xl w-full max-w-lg p-6 sm:p-8 shadow-2xl relative border border-slate-200 dark:border-slate-800 space-y-6">
+                
+                {/* Modal Header */}
+                <div className="flex items-start justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="w-12 h-12 rounded-2xl bg-[#E0F1F7] dark:bg-slate-800 text-[#2596be] dark:text-cyan-400 flex items-center justify-center shrink-0">
                       <Share2 size={24} />
                     </div>
                     <div>
-                      <h3 className="text-lg font-bold text-slate-900 dark:text-white">Bagikan Lowongan</h3>
-                      <p className="text-sm text-slate-500 line-clamp-1">{shareJob.title} di {shareJob.company}</p>
+                      <h3 className="text-lg font-black text-slate-900 dark:text-white">Bagikan Lowongan Pekerjaan</h3>
+                      <p className="text-xs text-slate-500 font-bold line-clamp-1">
+                        {shareJob.title} • {shareJob.company}
+                      </p>
                     </div>
                   </div>
-                  
-                  <div className="p-3 bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 flex items-center gap-3">
-                    <input type="text" readOnly value={typeof window !== 'undefined' ? window.location.origin + '/jobs/' + shareJob.id : ''} className="w-full bg-transparent text-sm text-slate-600 dark:text-slate-300 outline-none" />
-                    <button onClick={handleCopyLink} className="px-4 py-2 bg-[#2596be] text-white text-xs font-bold rounded-lg hover:bg-[#1D7FA1] transition-colors whitespace-nowrap cursor-pointer shadow-sm">
-                      Salin Link
+                  <button
+                    onClick={() => setShareJob(null)}
+                    className="p-2 rounded-full text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-700 transition-colors cursor-pointer"
+                  >
+                    <X size={20} />
+                  </button>
+                </div>
+
+                {/* Social Media Share Buttons Grid */}
+                <div className="space-y-2">
+                  <p className="text-xs font-extrabold text-slate-500 uppercase tracking-wider">
+                    Pilih Media Sosial untuk Berbagi:
+                  </p>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                    {/* WhatsApp */}
+                    <button
+                      onClick={() => {
+                        const url = typeof window !== 'undefined' ? window.location.origin + '/jobs/' + shareJob.id : '';
+                        const text = `Lowongan Pekerjaan: ${shareJob.title} di ${shareJob.company}\n\nApply & lihat detail loker:\n${url}`;
+                        window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`, '_blank');
+                      }}
+                      className="p-3.5 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 hover:bg-emerald-100 dark:hover:bg-emerald-900/50 text-emerald-700 dark:text-emerald-300 font-extrabold text-xs flex flex-col items-center gap-2 transition-all cursor-pointer group shadow-2xs"
+                    >
+                      <div className="w-10 h-10 rounded-full bg-emerald-500 text-white flex items-center justify-center group-hover:scale-110 transition-transform">
+                        <MessageCircle size={20} />
+                      </div>
+                      <span>WhatsApp</span>
+                    </button>
+
+                    {/* Telegram */}
+                    <button
+                      onClick={() => {
+                        const url = typeof window !== 'undefined' ? window.location.origin + '/jobs/' + shareJob.id : '';
+                        const text = `Lowongan Pekerjaan: ${shareJob.title} di ${shareJob.company}`;
+                        window.open(`https://t.me/share/url?url=${encodeURIComponent(url)}&text=${encodeURIComponent(text)}`, '_blank');
+                      }}
+                      className="p-3.5 rounded-2xl bg-sky-50 dark:bg-sky-950/40 border border-sky-200 dark:border-sky-800 hover:bg-sky-100 dark:hover:bg-sky-900/50 text-sky-700 dark:text-sky-300 font-extrabold text-xs flex flex-col items-center gap-2 transition-all cursor-pointer group shadow-2xs"
+                    >
+                      <div className="w-10 h-10 rounded-full bg-sky-500 text-white flex items-center justify-center group-hover:scale-110 transition-transform">
+                        <Send size={20} />
+                      </div>
+                      <span>Telegram</span>
+                    </button>
+
+                    {/* LinkedIn */}
+                    <button
+                      onClick={() => {
+                        const url = typeof window !== 'undefined' ? window.location.origin + '/jobs/' + shareJob.id : '';
+                        window.open(`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(url)}`, '_blank');
+                      }}
+                      className="p-3.5 rounded-2xl bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800 hover:bg-blue-100 dark:hover:bg-blue-900/50 text-blue-700 dark:text-blue-300 font-extrabold text-xs flex flex-col items-center gap-2 transition-all cursor-pointer group shadow-2xs"
+                    >
+                      <div className="w-10 h-10 rounded-full bg-[#0A66C2] text-white flex items-center justify-center group-hover:scale-110 transition-transform">
+                        <Globe size={20} />
+                      </div>
+                      <span>LinkedIn</span>
+                    </button>
+
+                    {/* Email */}
+                    <button
+                      onClick={() => {
+                        const url = typeof window !== 'undefined' ? window.location.origin + '/jobs/' + shareJob.id : '';
+                        const subject = `Lowongan Pekerjaan: ${shareJob.title} di ${shareJob.company}`;
+                        const body = `Halo,\n\nSaya ingin membagikan info lowongan pekerjaan berikut:\n\nPosisi: ${shareJob.title}\nPerusahaan: ${shareJob.company}\nLokasi: ${shareJob.location}\n\nLink detail & pendaftaran: ${url}`;
+                        window.open(`mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`, '_blank');
+                      }}
+                      className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-extrabold text-xs flex flex-col items-center gap-2 transition-all cursor-pointer group shadow-2xs"
+                    >
+                      <div className="w-10 h-10 rounded-full bg-slate-700 text-white flex items-center justify-center group-hover:scale-110 transition-transform">
+                        <Mail size={20} />
+                      </div>
+                      <span>Email</span>
                     </button>
                   </div>
                 </div>
+
+                {/* Copy Link Input Bar */}
+                <div className="space-y-2">
+                  <p className="text-xs font-extrabold text-slate-500 uppercase tracking-wider">
+                    Atau Salin Tautan Link:
+                  </p>
+                  <div className="p-2 pl-4 bg-slate-50 dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 flex items-center gap-2">
+                    <input
+                      type="text"
+                      readOnly
+                      value={typeof window !== 'undefined' ? window.location.origin + '/jobs/' + shareJob.id : ''}
+                      className="w-full bg-transparent text-xs sm:text-sm font-semibold text-slate-700 dark:text-slate-300 outline-none truncate"
+                    />
+                    <button
+                      onClick={handleCopyLink}
+                      className="px-4 py-2.5 bg-[#2596be] hover:bg-[#1D7FA1] text-white text-xs font-black rounded-xl transition-all cursor-pointer shrink-0 shadow-sm flex items-center gap-1.5"
+                    >
+                      <Copy size={14} />
+                      <span>Salin Link</span>
+                    </button>
+                  </div>
+                </div>
+
               </div>
             </div>
           )}
@@ -711,8 +637,8 @@ function DashboardContent() {
                 </div>
               ) : (
                 filteredJobs.map((job) => {
-                  const isSelected = selectedJob.id === job.id;
-                  const isSaved = savedJobIds.includes(job.id);
+                  const isSelected = String(selectedJob.id) === String(job.id);
+                  const isSaved = savedJobIds.some(id => String(id) === String(job.id));
 
                   return (
                     <div
@@ -730,45 +656,71 @@ function DashboardContent() {
                           <img
                             src={job.logo}
                             alt={job.company}
-                            className="w-11 h-11 rounded-xl object-cover border border-slate-200 dark:border-slate-700 shrink-0"
+                            className="w-12 h-12 rounded-2xl object-cover border border-slate-200 dark:border-slate-700 shrink-0"
                           />
                           <div>
-                            <h3 className="text-sm sm:text-base font-extrabold text-slate-800 dark:text-white leading-snug hover:text-[#2596be]">
+                            <div className="flex flex-wrap items-center gap-1.5 mb-1">
+                              <span className="font-extrabold text-xs text-slate-700 dark:text-slate-300">
+                                {job.company}
+                              </span>
+                              {job.isNew && (
+                                <span className="px-2 py-0.5 rounded-md bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 font-extrabold text-[10px] border border-amber-200 dark:border-amber-800">
+                                  Loker Terbaru
+                                </span>
+                              )}
+                              {job.isPromoted && (
+                                <span className="px-2 py-0.5 rounded-md bg-cyan-100 dark:bg-cyan-950/60 text-cyan-800 dark:text-cyan-300 font-extrabold text-[10px]">
+                                  Dipromosikan
+                                </span>
+                              )}
+                            </div>
+                            <h3 className="text-base sm:text-lg font-black text-slate-900 dark:text-white leading-snug hover:text-[#2596be] transition-colors">
                               {job.title}
                             </h3>
-                            <p className="text-xs font-bold text-slate-500 dark:text-slate-400">
-                              {job.company}
-                            </p>
                           </div>
                         </div>
-
-                        {job.isPromoted && (
-                          <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider shrink-0">
-                            Dipromosikan
-                          </span>
-                        )}
                       </div>
+
+                      {/* Kuota Posisi Pill Badge */}
+                      {job.openingsCount > 0 && (
+                        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#E0F1F7] dark:bg-slate-800 text-[#2596be] dark:text-cyan-400 text-xs font-extrabold border border-[#B8E1ED] dark:border-slate-700">
+                          <Users size={13} />
+                          <span>Kuota: {job.openingsCount} Posisi</span>
+                        </div>
+                      )}
 
                       {/* Detail Bullet Badges */}
-                      <div className="space-y-1 text-xs text-slate-600 dark:text-slate-300 font-medium">
+                      <div className="space-y-1.5 text-xs text-slate-600 dark:text-slate-300 font-medium">
                         <div className="flex items-center gap-1.5">
-                          <MapPin size={13} className="text-slate-400 shrink-0" />
-                          <span>{job.location}</span>
+                          <MapPin size={14} className="text-slate-400 shrink-0" />
+                          <span>
+                            <strong className="text-slate-800 dark:text-slate-200">{job.location}</strong> • {job.workPolicy} ({job.experienceLevel}) • {job.educationLevel}
+                          </span>
                         </div>
                         <div className="flex items-center gap-1.5">
-                          <GraduationCap size={13} className="text-slate-400 shrink-0" />
-                          <span>{job.education}</span>
-                        </div>
-                        <div className="flex items-center gap-1.5">
-                          <DollarSign size={13} className="text-slate-400 shrink-0" />
-                          <span className="font-bold text-slate-700 dark:text-slate-200">{job.salary}</span>
+                          <DollarSign size={14} className="text-[#2596be] shrink-0" />
+                          <span className="font-black text-slate-900 dark:text-white text-sm">{job.salary}</span>
                         </div>
                       </div>
+
+                      {/* Benefits Pills List */}
+                      {job.benefits && job.benefits.length > 0 && (
+                        <div className="flex flex-wrap items-center gap-1.5 pt-1">
+                          {job.benefits.slice(0, 4).map((b, idx) => (
+                            <span key={idx} className="px-2.5 py-0.5 rounded-full bg-[#F0F8FB] dark:bg-slate-800 text-[#2596be] dark:text-cyan-400 text-[11px] font-bold border border-[#C2E5EF] dark:border-slate-700 flex items-center gap-1">
+                              ✓ {b}
+                            </span>
+                          ))}
+                          {job.benefits.length > 4 && (
+                            <span className="text-[10px] font-bold text-slate-400">+{job.benefits.length - 4} lainnya</span>
+                          )}
+                        </div>
+                      )}
 
                       {/* Card Bottom Time & Share/Bookmark */}
                       <div className="flex items-center justify-between pt-2 border-t border-slate-100 dark:border-slate-800 text-[11px]">
-                        <span className="text-slate-400 font-medium">
-                          {job.postedAgo}
+                        <span className="text-slate-400 font-bold">
+                          Diterbitkan: {job.publishDate} • {job.postedAgo}
                         </span>
 
                         <div className="flex items-center gap-2">
@@ -777,7 +729,7 @@ function DashboardContent() {
                               e.stopPropagation();
                               toggleSaveJob(job.id);
                             }}
-                            className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-[#2596be] transition-colors"
+                            className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-[#2596be] transition-colors cursor-pointer"
                             title={isSaved ? 'Hapus Simpan' : 'Simpan Lowongan'}
                           >
                             {isSaved ? (
@@ -790,10 +742,10 @@ function DashboardContent() {
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
-                              toast.success(`Link lowongan "${job.title}" telah disalin!`);
+                              setShareJob(job);
                             }}
-                            className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-slate-700 transition-colors"
-                            title="Bagikan"
+                            className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-[#2596be] transition-colors cursor-pointer"
+                            title="Bagikan Lowongan"
                           >
                             <Share2 size={16} />
                           </button>
@@ -819,35 +771,100 @@ function DashboardContent() {
                       alt={selectedJob.company}
                       className="w-16 h-16 rounded-2xl object-cover border border-slate-200 dark:border-slate-700 shrink-0"
                     />
-                    <div className="space-y-1">
+                    <div className="space-y-1.5">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className="text-sm font-extrabold text-[#2596be] dark:text-cyan-400">
+                          {selectedJob.company}
+                        </span>
+                        {selectedJob.isNew && (
+                          <span className="px-2.5 py-0.5 rounded-md bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 font-extrabold text-xs border border-amber-200 dark:border-amber-800">
+                            Loker Terbaru
+                          </span>
+                        )}
+                        {selectedJob.isPromoted && (
+                          <span className="px-2.5 py-0.5 rounded-md bg-cyan-100 dark:bg-cyan-950/60 text-cyan-800 dark:text-cyan-300 font-extrabold text-xs">
+                            Dipromosikan
+                          </span>
+                        )}
+                      </div>
+
                       <h1 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white leading-tight">
                         {selectedJob.title}
                       </h1>
-                      <p className="text-sm font-extrabold text-[#2596be] dark:text-cyan-400">
-                        {selectedJob.company}
-                      </p>
+
+                      {selectedJob.openingsCount > 0 && (
+                        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#E0F1F7] dark:bg-slate-800 text-[#2596be] dark:text-cyan-400 text-xs font-extrabold border border-[#B8E1ED] dark:border-slate-700">
+                          <Users size={13} />
+                          <span>Kuota Terbuka: {selectedJob.openingsCount} Posisi</span>
+                        </div>
+                      )}
                     </div>
                   </div>
 
-                  {/* Bullet Info Badges List */}
+                  {/* Info Grid Cards */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 text-xs text-slate-700 dark:text-slate-300 font-semibold pt-1">
-                    <div className="flex items-center gap-2">
-                      <MapPin size={15} className="text-[#2596be] shrink-0" />
-                      <span>{selectedJob.location}</span>
+                    <div className="flex items-center gap-2 p-2.5 bg-slate-50 dark:bg-slate-800/60 rounded-xl">
+                      <MapPin size={16} className="text-[#2596be] shrink-0" />
+                      <div>
+                        <p className="text-[10px] text-slate-400 font-bold uppercase">Lokasi Penempatan</p>
+                        <p className="font-extrabold">{selectedJob.location}</p>
+                      </div>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <GraduationCap size={15} className="text-[#2596be] shrink-0" />
-                      <span>{selectedJob.education}</span>
+
+                    <div className="flex items-center gap-2 p-2.5 bg-slate-50 dark:bg-slate-800/60 rounded-xl">
+                      <GraduationCap size={16} className="text-[#2596be] shrink-0" />
+                      <div>
+                        <p className="text-[10px] text-slate-400 font-bold uppercase">Min. Pendidikan</p>
+                        <p className="font-extrabold">{selectedJob.educationLevel}</p>
+                      </div>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <Briefcase size={15} className="text-[#2596be] shrink-0" />
-                      <span>{selectedJob.workPolicy}</span>
+
+                    <div className="flex items-center gap-2 p-2.5 bg-slate-50 dark:bg-slate-800/60 rounded-xl">
+                      <Briefcase size={16} className="text-[#2596be] shrink-0" />
+                      <div>
+                        <p className="text-[10px] text-slate-400 font-bold uppercase">Kebijakan & Tipe Kerja</p>
+                        <p className="font-extrabold">{selectedJob.workPolicy}</p>
+                      </div>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <DollarSign size={15} className="text-[#2596be] shrink-0" />
-                      <span className="font-extrabold text-slate-900 dark:text-white">{selectedJob.salary}</span>
+
+                    <div className="flex items-center gap-2 p-2.5 bg-slate-50 dark:bg-slate-800/60 rounded-xl">
+                      <Award size={16} className="text-[#2596be] shrink-0" />
+                      <div>
+                        <p className="text-[10px] text-slate-400 font-bold uppercase">Level Pengalaman</p>
+                        <p className="font-extrabold">{selectedJob.experienceLevel}</p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2 p-2.5 bg-slate-50 dark:bg-slate-800/60 rounded-xl">
+                      <DollarSign size={16} className="text-[#2596be] shrink-0" />
+                      <div>
+                        <p className="text-[10px] text-slate-400 font-bold uppercase">Rentang Gaji</p>
+                        <p className="font-black text-[#2596be] dark:text-cyan-400 text-sm">{selectedJob.salary}</p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2 p-2.5 bg-slate-50 dark:bg-slate-800/60 rounded-xl">
+                      <Clock size={16} className="text-[#2596be] shrink-0" />
+                      <div>
+                        <p className="text-[10px] text-slate-400 font-bold uppercase">Batas Akhir Lamaran</p>
+                        <p className="font-extrabold">{selectedJob.applicationDeadline || 'Tidak ditentukan'}</p>
+                      </div>
                     </div>
                   </div>
+
+                  {/* Benefits Pills */}
+                  {selectedJob.benefits && selectedJob.benefits.length > 0 && (
+                    <div className="space-y-1.5 pt-1">
+                      <p className="text-[11px] font-extrabold text-slate-500 uppercase tracking-wider">Fasilitas &amp; Benefit Pekerjaan:</p>
+                      <div className="flex flex-wrap items-center gap-1.5">
+                        {selectedJob.benefits.map((benefit, idx) => (
+                          <span key={idx} className="px-3 py-1 rounded-full bg-[#F0F8FB] dark:bg-slate-800 text-[#2596be] dark:text-cyan-400 text-xs font-extrabold border border-[#C2E5EF] dark:border-slate-700 flex items-center gap-1">
+                            ✓ {benefit}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
 
                   {/* AI PO-FIT Match Badge */}
                   <div className="p-3.5 rounded-2xl bg-[#F0F8FB] dark:bg-slate-800/80 border border-[#C2E5EF] dark:border-slate-700 flex items-center justify-between gap-3 text-xs">
@@ -860,13 +877,13 @@ function DashboardContent() {
                     </span>
                   </div>
 
-                  <p className="text-[11px] text-slate-400 italic">
-                    {selectedJob.postedAgo}
+                  <p className="text-[11px] text-slate-400 font-bold italic">
+                    Diterbitkan: {selectedJob.publishDate} • {selectedJob.postedAgo}
                   </p>
 
                   {/* Action CTA Buttons Bar (Matching KitaLulus Primary Blue Button) */}
                   <div className="flex flex-wrap items-center gap-3 pt-2">
-                    {appliedJobs.includes(selectedJob.id) ? (
+                    {appliedJobs.some(id => String(id) === String(selectedJob.id)) ? (
                       <span className="px-6 py-3 rounded-2xl bg-emerald-100 text-emerald-800 font-black text-xs sm:text-sm border border-emerald-300 flex items-center gap-2">
                         <CheckCircle2 size={16} /> {t.pelamar.dashboard.jobSaved}
                       </span>
@@ -884,20 +901,20 @@ function DashboardContent() {
                     <button
                       onClick={() => toggleSaveJob(selectedJob.id)}
                       className={`p-3 rounded-2xl border transition-colors cursor-pointer ${
-                        savedJobIds.includes(selectedJob.id)
+                        savedJobIds.some(id => String(id) === String(selectedJob.id))
                           ? 'bg-cyan-50 border-[#2596be] text-[#2596be] dark:bg-slate-800'
                           : 'border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50'
                       }`}
                       title="Simpan Lowongan"
                     >
-                      <Bookmark size={18} className={savedJobIds.includes(selectedJob.id) ? 'fill-current' : ''} />
+                      <Bookmark size={18} className={savedJobIds.some(id => String(id) === String(selectedJob.id)) ? 'fill-current' : ''} />
                     </button>
 
                     {/* Share */}
                     <button
-                      onClick={() => toast.success(`Link lowongan "${selectedJob.title}" telah disalin!`)}
+                      onClick={() => setShareJob(selectedJob)}
                       className="p-3 rounded-2xl border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 transition-colors cursor-pointer"
-                      title="Bagikan"
+                      title="Bagikan Lowongan"
                     >
                       <Share2 size={18} />
                     </button>
@@ -912,7 +929,7 @@ function DashboardContent() {
                       {t.pelamar.dashboard.aboutRole}
                     </h3>
                     <p className="font-bold text-slate-800 dark:text-slate-200">
-                      Dicari {selectedJob.title} dengan jobdesc:
+                      Gambaran Umum &amp; Deskripsi Pekerjaan:
                     </p>
                     <ul className="space-y-1.5 list-disc pl-5">
                       {selectedJob.descriptionBullets.map((bullet, idx) => (
@@ -921,15 +938,19 @@ function DashboardContent() {
                     </ul>
                   </div>
 
-                  {/* Penempatan */}
-                  <div className="space-y-2 text-xs sm:text-sm text-slate-700 dark:text-slate-300">
-                    <h3 className="font-extrabold text-sm text-slate-900 dark:text-white uppercase tracking-wider">
-                      {t.pelamar.dashboard.responsibilities}
-                    </h3>
-                    <p className="font-medium text-slate-600 dark:text-slate-400">
-                      {selectedJob.placementInfo}
-                    </p>
-                  </div>
+                  {/* Tanggung Jawab Pekerjaan */}
+                  {selectedJob.responsibilitiesBullets && selectedJob.responsibilitiesBullets.length > 0 && (
+                    <div className="space-y-3 text-xs sm:text-sm text-slate-700 dark:text-slate-300">
+                      <h3 className="font-extrabold text-sm text-slate-900 dark:text-white uppercase tracking-wider">
+                        Tanggung Jawab Utama
+                      </h3>
+                      <ul className="space-y-1.5 list-disc pl-5 font-semibold text-slate-700 dark:text-slate-300">
+                        {selectedJob.responsibilitiesBullets.map((resp, idx) => (
+                          <li key={idx}>{resp}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
 
                   {/* Kriteria / Kualifikasi */}
                   <div className="space-y-3 text-xs sm:text-sm text-slate-700 dark:text-slate-300">
@@ -941,6 +962,16 @@ function DashboardContent() {
                         <li key={idx}>{crit}</li>
                       ))}
                     </ul>
+                  </div>
+
+                  {/* Informasi Lokasi & Penempatan */}
+                  <div className="space-y-2 text-xs sm:text-sm text-slate-700 dark:text-slate-300 pt-2 border-t border-slate-100 dark:border-slate-800">
+                    <h3 className="font-extrabold text-sm text-slate-900 dark:text-white uppercase tracking-wider">
+                      Lokasi Penempatan
+                    </h3>
+                    <p className="font-medium text-slate-600 dark:text-slate-400">
+                      {selectedJob.placementInfo}
+                    </p>
                   </div>
                 </div>
 
