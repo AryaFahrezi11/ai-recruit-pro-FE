@@ -33,13 +33,13 @@ export default function KampusLayout({
   }, []);
 
   const navItems = [
-    { name: t.sidebar?.dashboard || 'Dasbor Karir', href: '/kampus/dashboard', icon: LayoutDashboard },
-    { name: t.kampus?.studentsTitle || 'Data Mahasiswa', href: '/kampus/mahasiswa', icon: Users },
+    { name: t.sidebar?.dashboard || 'Dasbor Karir', href: '/campus/dashboard', icon: LayoutDashboard },
+    { name: t.kampus?.studentsTitle || 'Data Mahasiswa', href: '/campus/students', icon: Users },
   ];
 
   const bottomItems = [
-    { name: t.sidebar?.settings || 'Pengaturan', href: '/kampus/settings', icon: Settings },
-    { name: t.sidebar?.support || 'Bantuan', href: '/kampus/support', icon: HelpCircle },
+    { name: t.sidebar?.settings || 'Pengaturan', href: '/campus/settings', icon: Settings },
+    { name: t.sidebar?.support || 'Bantuan', href: '/campus/support', icon: HelpCircle },
   ];
 
   return (
@@ -242,7 +242,7 @@ export default function KampusLayout({
 
               {/* Support Link */}
               <Link 
-                href="/kampus/support"
+                href="/campus/support"
                 className="w-9 h-9 rounded-full flex items-center justify-center hover:bg-muted transition-colors text-muted-foreground"
               >
                 <HelpCircle size={18} />
@@ -271,13 +271,13 @@ export default function KampusLayout({
                     </div>
 
                     <div className="space-y-1">
-                      <Link href="/kampus/mahasiswa" onClick={() => setShowProfileMenu(false)} className="block px-3 py-2 rounded-lg text-xs font-medium text-foreground hover:bg-muted">
+                      <Link href="/campus/students" onClick={() => setShowProfileMenu(false)} className="block px-3 py-2 rounded-lg text-xs font-medium text-foreground hover:bg-muted">
                         Data Mahasiswa
                       </Link>
-                      <Link href="/kampus/settings" onClick={() => setShowProfileMenu(false)} className="block px-3 py-2 rounded-lg text-xs font-medium text-foreground hover:bg-muted">
+                      <Link href="/campus/settings" onClick={() => setShowProfileMenu(false)} className="block px-3 py-2 rounded-lg text-xs font-medium text-foreground hover:bg-muted">
                         Pengaturan Kampus
                       </Link>
-                      <Link href="/kampus/support" onClick={() => setShowProfileMenu(false)} className="block px-3 py-2 rounded-lg text-xs font-medium text-foreground hover:bg-muted">
+                      <Link href="/campus/support" onClick={() => setShowProfileMenu(false)} className="block px-3 py-2 rounded-lg text-xs font-medium text-foreground hover:bg-muted">
                         Pusat Bantuan Kampus
                       </Link>
                     </div>

@@ -33,7 +33,7 @@ export default function SupportPage() {
   const faqs = [
     {
       q: 'Mengapa kandidat dengan skor kecocokan 79% ditandai tidak lolos di tahap Seleksi CV?',
-      a: 'Sistem AI PO-FIT menggunakan algoritma Cosine Similarity untuk mengukur kecocokan teks CV pelamar dengan deskripsi pekerjaan. Jika skor berada di bawah ambang batas yang ditentukan perusahaan (misal 80%), kandidat akan ditandai gagal seleksi PO-FIT. Namun, HR tetap memiliki wewenang untuk meninjau kembali berkas kandidat tersebut.'
+      a: 'Sistem AI PO-FIT menggunakan algoritma Cosine Similarity untuk mengukur kecocokan teks CV pelamar dengan deskripsi pekerjaan. Jika skor berada di bawah ambang batas yang ditentukan perusahaan (misal 60%), kandidat akan ditandai gagal seleksi PO-FIT. Namun, HR tetap memiliki wewenang untuk meninjau kembali berkas kandidat tersebut.'
     },
     {
       q: 'Apakah HR dapat mengubah keputusan rekomendasi yang diberikan oleh sistem AI?',
@@ -90,7 +90,7 @@ export default function SupportPage() {
               1. Seleksi CV (PO-FIT)
             </div>
             <p className="text-xs text-muted-foreground leading-relaxed">
-              Membandingkan Vektor Kata CV dengan Deskripsi Pekerjaan menggunakan algoritma <strong>Cosine Similarity</strong>. Menghasilkan persentase skor kecocokan (80% = Ambang Batas Lolos).
+              Membandingkan Vektor Kata CV dengan Deskripsi Pekerjaan menggunakan algoritma <strong>Cosine Similarity</strong>. Menghasilkan persentase skor kecocokan (60% = Ambang Batas Lolos).
             </p>
           </div>
 

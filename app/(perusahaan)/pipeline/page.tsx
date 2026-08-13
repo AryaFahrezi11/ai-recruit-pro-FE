@@ -1,11 +1,14 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useTranslation } from '@/hooks/useTranslation';
 import { KanbanColumn } from '@/components/pipeline/KanbanColumn';
 import { CandidateCard, CandidateStage, CandidateStatus } from '@/components/pipeline/CandidateCard';
 import { CandidateModal } from '@/components/pipeline/CandidateModal';
-import { Filter, ArrowUpDown, Download } from 'lucide-react';
+import { Filter, ArrowUpDown, Download, Loader2 } from 'lucide-react';
+import { fetchAuth } from '@/lib/api/auth';
+import { api, parseErrorMessage } from '@/lib/api';
+import toast from 'react-hot-toast';
 
 interface CandidateData {
   name: string;
@@ -23,11 +26,83 @@ interface CandidateData {
     attitude: number;
     emotionalIntelligence: number;
   };
+  cvData?: any;
+  cvDocument?: any;
+  jobData?: any;
+  analisisCv?: any;
 }
 
 export default function PipelinePage() {
   const { t } = useTranslation();
   const [selectedCandidate, setSelectedCandidate] = useState<CandidateData | null>(null);
+  
+  const [applications, setApplications] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [analyzingId, setAnalyzingId] = useState<string | null>(null);
+
+  const loadApplications = async () => {
+    try {
+      setLoading(true);
+      const res = await fetchAuth('/api/applications/');
+      if (res.ok) {
+        const data = await res.json();
+        setApplications(data.data || []);
+      }
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadApplications();
+  }, []);
+
+  const handleUpdateStatus = async (applicationId: string, newStatus: string) => {
+    try {
+      setLoading(true);
+      const res = await fetchAuth(`/api/applications/${applicationId}/status`, {
+        method: 'PATCH',
+        body: JSON.stringify({ status: newStatus }),
+      });
+      if (!res.ok) {
+        throw new Error('Gagal memperbarui status lamaran');
+      }
+      toast.success('Status lamaran berhasil diperbarui');
+      loadApplications(); // Refresh data
+    } catch (error: any) {
+      toast.error(error.message || parseErrorMessage(error) || 'Gagal memperbarui status');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleAnalyze = async (applicationId: string) => {
+    try {
+      setAnalyzingId(applicationId);
+      const res = await fetchAuth(`/api/applications/${applicationId}/analyze`, { method: 'POST' });
+      
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.detail || 'Gagal menjalankan analisis AI');
+      }
+
+      toast.success('Analisis AI Berhasil');
+      loadApplications(); // Refresh data
+    } catch (error: any) {
+      toast.error(error.message || parseErrorMessage(error) || 'Gagal menjalankan analisis AI');
+    } finally {
+      setAnalyzingId(null);
+    }
+  };
+
+  const uploadCvApps = applications.filter(a => a.status === 'upload_cv' || a.status === 'dikirim');
+  const screeningApps = applications.filter(a => a.status === 'cv_screening' || a.status === 'lolos_cv' || a.status === 'ditolak_sistem');
+  const virtualInterviewApps = applications.filter(a => a.status === 'virtual_interview');
+  const videoAnalysisApps = applications.filter(a => a.status === 'video_analysis');
+  const humanValidationApps = applications.filter(a => a.status === 'human_validation' || a.status === 'Lolos');
+  const archiveApps = applications.filter(a => a.status === 'ditolak' || a.status === 'Tidak Lolos');
 
   return (
     <div className="flex flex-col h-full max-w-full">
@@ -60,121 +135,144 @@ export default function PipelinePage() {
         <div className="flex gap-6 items-start min-w-max h-full">
           
           {/* 1. UPLOAD CV */}
-          <KanbanColumn title={t.pipeline.uploadCV} count={8}>
-            <CandidateCard 
-              name="Rina Permata"
-              role="Frontend Developer"
-              stage="upload_cv"
-              timeInfo={`${t.pipeline.uploadedAgo} 1h ago`}
-              onClick={() => setSelectedCandidate({ name: "Rina Permata", role: "Frontend Developer", stage: "upload_cv", education: "S1 Sistem Informasi (IPK 3.91)", university: "Universitas Indonesia" })}
-            />
-            <CandidateCard 
-              name="Budi Santoso"
-              role="Backend Engineer"
-              stage="upload_cv"
-              timeInfo={`${t.pipeline.uploadedAgo} 3h ago`}
-              onClick={() => setSelectedCandidate({ name: "Budi Santoso", role: "Backend Engineer", stage: "upload_cv", education: "S1 Teknik Informatika (IPK 3.75)", university: "Institut Teknologi Bandung" })}
-            />
-            <CandidateCard 
-              name="Dewi Lestari"
-              role="UI/UX Designer"
-              stage="upload_cv"
-              timeInfo={`${t.pipeline.uploadedAgo} 5h ago`}
-              onClick={() => setSelectedCandidate({ name: "Dewi Lestari", role: "UI/UX Designer", stage: "upload_cv", education: "S1 DKV (IPK 3.80)", university: "Universitas Gadjah Mada" })}
-            />
+          <KanbanColumn title={t.pipeline.uploadCV} count={uploadCvApps.length}>
+            {uploadCvApps.map((app) => (
+              <CandidateCard 
+                key={app.id}
+                name={app.pelamar?.nama_lengkap || 'Kandidat'}
+                role={(app as any).cvData?.jobTitle || app.job?.judul_posisi || 'Posisi'}
+                appliedJob={app.job?.judul_posisi}
+                education={app.pelamar?.pendidikan_terakhir || (app as any).cvData?.education?.[0]?.degree}
+                university={app.pelamar?.institusi_pendidikan || (app as any).cvData?.education?.[0]?.school}
+                stage="upload_cv"
+                timeInfo={app.applied_at ? new Date(app.applied_at).toLocaleDateString() : 'Baru'}
+                actionLabel="Seleksi AI"
+                actionLoading={analyzingId === app.id}
+                onActionClick={() => handleAnalyze(app.id)}
+                onClick={() => setSelectedCandidate({ name: app.pelamar?.nama_lengkap || 'Kandidat', role: (app as any).cvData?.jobTitle || app.job?.judul_posisi || '', stage: "upload_cv", education: app.pelamar?.pendidikan_terakhir, university: app.pelamar?.institusi_pendidikan, cvData: (app as any).cvData, cvDocument: (app as any).cv_document, jobData: app.job })}
+              />
+            ))}
+            
           </KanbanColumn>
 
           {/* 2. CV SCREENING (PO-FIT) */}
-          <KanbanColumn title={t.pipeline.cvScreening} count={6}>
-            <CandidateCard 
-              name="Alex Mercer"
-              role="React Developer @ TechCorp"
-              stage="cv_screening"
-              status="processing"
-              cvScore={92}
-              timeInfo={t.pipeline.cosineSimilarity}
-              onClick={() => setSelectedCandidate({ name: "Alex Mercer", role: "React Developer @ TechCorp", stage: "cv_screening", cvScore: 92, status: "processing", education: "S1 Teknik Komputer (IPK 3.65)", university: "Universitas Indonesia" })}
-            />
-            <CandidateCard 
-              name="Sarah Chen"
-              role="UI Engineer @ StartupX"
-              stage="cv_screening"
-              status="pending"
-              cvScore={88}
-              timeInfo={t.pipeline.cosineSimilarity}
-              onClick={() => setSelectedCandidate({ name: "Sarah Chen", role: "UI Engineer @ StartupX", stage: "cv_screening", cvScore: 88, status: "pending", education: "S1 Computer Science (IPK 3.88)", university: "Universitas Bina Nusantara" })}
-            />
+          <KanbanColumn title={t.pipeline.cvScreening} count={screeningApps.length}>
+            {screeningApps.map((app) => {
+              const cvScore = Math.round(app.analisis_cv?.skor_kecocokan || 0);
+              const threshold = app.analisis_cv?.threshold_digunakan || app.job?.cv_threshold || 60;
+              const isAiProcessed = cvScore > 0 || app.analisis_cv;
+              const isPassed = cvScore >= threshold;
+
+              const actionButtons = isAiProcessed ? (
+                <div className="flex items-center gap-1.5">
+                  {isPassed ? (
+                    <button
+                      onClick={(e) => { e.stopPropagation(); handleUpdateStatus(app.id, 'virtual_interview'); }}
+                      className="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white text-[10px] font-bold rounded-md transition-colors shadow-2xs whitespace-nowrap"
+                    >
+                      Lanjut Wawancara
+                    </button>
+                  ) : (
+                    <>
+                      <button
+                        onClick={(e) => { e.stopPropagation(); handleUpdateStatus(app.id, 'virtual_interview'); }}
+                        className="px-2 py-1 bg-[#2596be] hover:bg-[#1D7FA1] text-white text-[10px] font-bold rounded-md transition-colors shadow-2xs whitespace-nowrap"
+                        title="Lanjutkan ke wawancara meskipun nilai kurang dari threshold"
+                      >
+                        Override
+                      </button>
+                      <button
+                        onClick={(e) => { e.stopPropagation(); handleUpdateStatus(app.id, 'ditolak'); }}
+                        className="px-2 py-1 bg-rose-600 hover:bg-rose-700 text-white text-[10px] font-bold rounded-md transition-colors shadow-2xs whitespace-nowrap"
+                      >
+                        Diskualifikasi
+                      </button>
+                    </>
+                  )}
+                </div>
+              ) : undefined;
+
+              return (
+                <CandidateCard 
+                  key={app.id}
+                  name={app.pelamar?.nama_lengkap || 'Kandidat'}
+                  role={(app as any).cvData?.jobTitle || app.job?.judul_posisi || 'Posisi'}
+                  appliedJob={app.job?.judul_posisi}
+                  education={app.pelamar?.pendidikan_terakhir || (app as any).cvData?.education?.[0]?.degree}
+                  university={app.pelamar?.institusi_pendidikan || (app as any).cvData?.education?.[0]?.school}
+                  stage="cv_screening"
+                  cvScore={cvScore}
+                  threshold={threshold}
+                  status={app.status === 'lolos_cv' ? undefined : (app.status === 'ditolak_sistem' ? undefined : 'processing')}
+                  timeInfo={t.pipeline.cosineSimilarity}
+                  customActions={actionButtons}
+                  onClick={() => setSelectedCandidate({ name: app.pelamar?.nama_lengkap || 'Kandidat', role: (app as any).cvData?.jobTitle || app.job?.judul_posisi || '', stage: "cv_screening", cvScore: cvScore, education: app.pelamar?.pendidikan_terakhir, university: app.pelamar?.institusi_pendidikan, cvData: (app as any).cvData, cvDocument: (app as any).cv_document, jobData: app.job, analisisCv: app.analisis_cv })}
+                />
+              );
+            })}
           </KanbanColumn>
 
           {/* 3. VIRTUAL INTERVIEW */}
-          <KanbanColumn title={t.pipeline.virtualInterview} count={5}>
-            <CandidateCard 
-              name="David Kim"
-              role="Sr. Frontend @ MegaWeb"
-              stage="interview"
-              status="video_uploaded"
-              cvScore={95}
-              videoUploaded={true}
-              timeInfo={t.pipeline.interviewDone}
-              onClick={() => setSelectedCandidate({ name: "David Kim", role: "Sr. Frontend @ MegaWeb", stage: "interview", cvScore: 95, status: "video_uploaded", videoUploaded: true, education: "S1 Teknik Informatika (IPK 3.85)", university: "Universitas Indonesia" })}
-            />
-            <CandidateCard 
-              name="Anisa Rahmawati"
-              role="React Developer"
-              stage="interview"
-              status="awaiting_video"
-              cvScore={84}
-              videoUploaded={false}
-              timeInfo={t.pipeline.waitingInterview}
-              onClick={() => setSelectedCandidate({ name: "Anisa Rahmawati", role: "React Developer", stage: "interview", cvScore: 84, status: "awaiting_video", videoUploaded: false, education: "S1 Informatika (IPK 3.70)", university: "Universitas Telkom" })}
-            />
+          <KanbanColumn title={t.pipeline.virtualInterview} count={virtualInterviewApps.length}>
+            {virtualInterviewApps.map((app) => (
+              <CandidateCard 
+                key={app.id}
+                name={app.pelamar?.nama_lengkap || 'Kandidat'}
+                role={(app as any).cvData?.jobTitle || app.job?.judul_posisi || 'Posisi'}
+                appliedJob={app.job?.judul_posisi}
+                stage="interview"
+                status="awaiting_video"
+                timeInfo="Menunggu Jadwal/Video"
+                onClick={() => setSelectedCandidate({ name: app.pelamar?.nama_lengkap || 'Kandidat', role: (app as any).cvData?.jobTitle || app.job?.judul_posisi || '', stage: "interview", cvScore: Math.round(app.analisis_cv?.skor_kecocokan || 0), education: app.pelamar?.pendidikan_terakhir, university: app.pelamar?.institusi_pendidikan, cvData: (app as any).cvData, cvDocument: (app as any).cv_document, jobData: app.job, analisisCv: app.analisis_cv })}
+              />
+            ))}
           </KanbanColumn>
 
           {/* 4. AI VIDEO ANALYSIS */}
-          <KanbanColumn title={t.pipeline.videoAnalysis} count={4}>
-            <CandidateCard 
-              name="David Kim"
-              role="Sr. Frontend @ MegaWeb"
-              stage="ai_analysis"
-              status="processing"
-              videoScores={{ ability: 85, intelligent: 92, personality: 78, attitude: 88, emotionalIntelligence: 80 }}
-              timeInfo={t.pipeline.analyzing}
-              onClick={() => setSelectedCandidate({ 
-                name: "David Kim", role: "Sr. Frontend @ MegaWeb", stage: "ai_analysis", status: "processing",
-                cvScore: 95, videoUploaded: true, education: "S1 Teknik Informatika (IPK 3.85)", university: "Universitas Indonesia",
-                videoScores: { ability: 85, intelligent: 92, personality: 78, attitude: 88, emotionalIntelligence: 80 }
-              })}
-            />
+          <KanbanColumn title={t.pipeline.videoAnalysis} count={videoAnalysisApps.length}>
+            {videoAnalysisApps.map((app) => (
+              <CandidateCard 
+                key={app.id}
+                name={app.pelamar?.nama_lengkap || 'Kandidat'}
+                role={(app as any).cvData?.jobTitle || app.job?.judul_posisi || 'Posisi'}
+                appliedJob={app.job?.judul_posisi}
+                stage="video_analysis"
+                status="processing"
+                onClick={() => setSelectedCandidate({ name: app.pelamar?.nama_lengkap || 'Kandidat', role: (app as any).cvData?.jobTitle || app.job?.judul_posisi || '', stage: "video_analysis", cvScore: Math.round(app.analisis_cv?.skor_kecocokan || 0), education: app.pelamar?.pendidikan_terakhir, university: app.pelamar?.institusi_pendidikan, cvData: (app as any).cvData, cvDocument: (app as any).cv_document, jobData: app.job, analisisCv: app.analisis_cv })}
+              />
+            ))}
           </KanbanColumn>
 
           {/* 5. HUMAN VALIDATION */}
-          <KanbanColumn title={t.pipeline.humanValidation} count={3}>
-            <CandidateCard 
-              name="David Kim"
-              role="Sr. Frontend @ MegaWeb"
-              stage="human_validation"
-              status="needs_approval"
-              videoScores={{ ability: 85, intelligent: 92, personality: 78, attitude: 88, emotionalIntelligence: 80 }}
-              timeInfo={t.pipeline.awaitingDecision}
-              onClick={() => setSelectedCandidate({ 
-                name: "David Kim", role: "Sr. Frontend @ MegaWeb", stage: "human_validation", status: "needs_approval",
-                cvScore: 95, videoUploaded: true, education: "S1 Teknik Informatika (IPK 3.85)", university: "Universitas Indonesia",
-                videoScores: { ability: 85, intelligent: 92, personality: 78, attitude: 88, emotionalIntelligence: 80 }
-              })}
-            />
-            <CandidateCard 
-              name="Siti Nurhaliza"
-              role="Angular Developer"
-              stage="human_validation"
-              status="needs_approval"
-              videoScores={{ ability: 80, intelligent: 85, personality: 90, attitude: 82, emotionalIntelligence: 88 }}
-              timeInfo={t.pipeline.awaitingDecision}
-              onClick={() => setSelectedCandidate({ 
-                name: "Siti Nurhaliza", role: "Angular Developer", stage: "human_validation", status: "needs_approval",
-                cvScore: 89, videoUploaded: true, education: "S1 Sistem Informasi (IPK 3.78)", university: "Universitas Padjadjaran",
-                videoScores: { ability: 80, intelligent: 85, personality: 90, attitude: 82, emotionalIntelligence: 88 }
-              })}
-            />
+          <KanbanColumn title={t.pipeline.humanValidation} count={humanValidationApps.length}>
+            {humanValidationApps.map((app) => (
+              <CandidateCard 
+                key={app.id}
+                name={app.pelamar?.nama_lengkap || 'Kandidat'}
+                role={(app as any).cvData?.jobTitle || app.job?.judul_posisi || 'Posisi'}
+                appliedJob={app.job?.judul_posisi}
+                stage="human_validation"
+                status="needs_approval"
+                onClick={() => setSelectedCandidate({ name: app.pelamar?.nama_lengkap || 'Kandidat', role: (app as any).cvData?.jobTitle || app.job?.judul_posisi || '', stage: "human_validation", cvScore: Math.round(app.analisis_cv?.skor_kecocokan || 0), education: app.pelamar?.pendidikan_terakhir, university: app.pelamar?.institusi_pendidikan, cvData: (app as any).cvData, cvDocument: (app as any).cv_document, jobData: app.job, analisisCv: app.analisis_cv })}
+              />
+            ))}
+          </KanbanColumn>
+
+          {/* 6. ARSIP / DISKUALIFIKASI */}
+          <KanbanColumn title="Arsip / Diskualifikasi" count={archiveApps.length}>
+            {archiveApps.map((app) => (
+              <CandidateCard 
+                key={app.id}
+                name={app.pelamar?.nama_lengkap || 'Kandidat'}
+                role={(app as any).cvData?.jobTitle || app.job?.judul_posisi || 'Posisi'}
+                appliedJob={app.job?.judul_posisi}
+                stage="cv_screening"
+                cvScore={Math.round(app.analisis_cv?.skor_kecocokan || 0)}
+                threshold={app.analisis_cv?.threshold_digunakan || app.job?.cv_threshold || 60}
+                timeInfo="Ditolak / Arsip"
+                onClick={() => setSelectedCandidate({ name: app.pelamar?.nama_lengkap || 'Kandidat', role: (app as any).cvData?.jobTitle || app.job?.judul_posisi || '', stage: "cv_screening", cvScore: Math.round(app.analisis_cv?.skor_kecocokan || 0), education: app.pelamar?.pendidikan_terakhir, university: app.pelamar?.institusi_pendidikan, cvData: (app as any).cvData, cvDocument: (app as any).cv_document, jobData: app.job, analisisCv: app.analisis_cv })}
+              />
+            ))}
           </KanbanColumn>
 
         </div>

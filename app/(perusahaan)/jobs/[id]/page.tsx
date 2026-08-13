@@ -43,7 +43,7 @@ function JobDetailView() {
   const [keywordInput, setKeywordInput] = useState('');
 
   // AI Configuration
-  const [threshold, setThreshold] = useState<number>(80);
+  const [threshold, setThreshold] = useState<number>(60);
   const [videoQuestions, setVideoQuestions] = useState<string[]>([]);
   const [newQuestion, setNewQuestion] = useState('');
 
@@ -171,7 +171,7 @@ function JobDetailView() {
         setResponsibilities(parseJsonArray(job.tanggung_jawab));
         setRequirements(parseJsonArray(job.kualifikasi));
         setAiKeywords(parseJsonArray(job.ai_keywords_json));
-        setThreshold(job.cv_threshold || 80);
+        setThreshold(job.cv_threshold || 60);
         setVideoQuestions(parseJsonArray(job.video_questions_json));
         setSalaryMin(job.gaji_min ? String(job.gaji_min) : '');
         setSalaryMax(job.gaji_max ? String(job.gaji_max) : '');
@@ -486,7 +486,7 @@ function JobDetailView() {
               {t.jobs.aiKeywords}
             </label>
             <p className="text-[11px] text-muted-foreground mb-3">
-              Kata kunci ini akan digunakan oleh AI system untuk menghitung skor kecocokan Cosine Similarity saat kandidat mengunggah CV.
+              Keahlian ini akan ditambahkan sebagai bobot utama perhitungan AI saat membandingkan kecocokan dengan CV kandidat.
             </p>
             
             <div className="p-3 bg-muted/30 border border-border rounded-lg flex flex-wrap gap-2 items-center min-h-[52px]">
@@ -522,7 +522,7 @@ function JobDetailView() {
                   {t.jobs.thresholdHelp}
                 </p>
               </div>
-              <span className={`text-2xl font-bold ${threshold >= 80 ? 'text-emerald-500' : 'text-amber-500'}`}>
+              <span className={`text-2xl font-bold ${threshold >= 60 ? 'text-emerald-500' : 'text-amber-500'}`}>
                 {threshold}%
               </span>
             </div>
@@ -538,9 +538,9 @@ function JobDetailView() {
             />
             
             <div className="flex justify-between text-[10px] text-muted-foreground font-mono">
-              <span>50% (Longgar)</span>
-              <span className="font-bold text-emerald-600 dark:text-emerald-400">80% (Rekomendasi AI)</span>
-              <span>95% (Ketat)</span>
+              <span>30% (Longgar)</span>
+              <span className="font-bold text-emerald-600 dark:text-emerald-400">60% (Rekomendasi AI)</span>
+              <span>80% (Ketat)</span>
             </div>
           </div>
 

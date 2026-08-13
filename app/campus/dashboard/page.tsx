@@ -43,7 +43,7 @@ export default function KampusDashboardPage() {
         </div>
 
         <Link 
-          href="/kampus/mahasiswa"
+          href="/campus/students"
           className="px-5 py-2.5 bg-violet-600 hover:bg-violet-700 text-white font-bold text-xs rounded-xl transition-all flex items-center gap-2 shadow-md shadow-violet-600/20 shrink-0 active:scale-95"
         >
           <Users size={16} />
@@ -109,7 +109,7 @@ export default function KampusDashboardPage() {
                 </h3>
               </div>
 
-              <Link href="/kampus/mahasiswa" className="text-xs font-bold text-violet-600 hover:underline flex items-center gap-1">
+              <Link href="/campus/students" className="text-xs font-bold text-violet-600 hover:underline flex items-center gap-1">
                 Filter Jurusan
                 <ChevronRight size={14} />
               </Link>
@@ -178,7 +178,7 @@ export default function KampusDashboardPage() {
 
             <div className="pt-2 text-center">
               <Link 
-                href="/kampus/mahasiswa"
+                href="/campus/students"
                 className="text-xs font-bold text-violet-600 hover:underline flex items-center justify-center gap-1"
               >
                 Lihat Seluruh Mahasiswa Terdaftar

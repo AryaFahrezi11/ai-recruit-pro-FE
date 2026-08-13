@@ -117,6 +117,13 @@ function DashboardContent() {
         fullName: formattedName,
         jobTitle: 'Pelamar AI Recruit Pro',
         skills: 'Frontend, Software Engineering, Problem Solving',
+        summary: 'Seorang profesional yang berdedikasi tinggi dengan fokus pada problem solving dan pengembangan perangkat lunak modern.',
+        experiences: [
+          { role: 'Software Engineer', company: 'PT. Teknologi Masa Depan', period: '2022 - Sekarang', description: 'Mengembangkan aplikasi web responsif menggunakan Next.js dan TypeScript.' }
+        ],
+        education: [
+          { school: 'Universitas Komputer Indonesia', degree: 'S1 Teknik Informatika', period: '2018 - 2022', gpa: '3.80' }
+        ],
         updatedAt: 'Hari ini'
       });
     }
@@ -137,8 +144,13 @@ function DashboardContent() {
   const fetchRealData = async () => {
     setIsLoadingJobs(true);
     try {
-      // 1. Fetch real active jobs from backend API
-      const resJobs = await api.get('/jobs/');
+      // Fetch jobs and companies in parallel
+      const [resJobs, resComp, resProfile] = await Promise.all([
+        api.get('/jobs/?limit=100'),
+        api.get('/perusahaan/verified'),
+        api.get('/users/profile').catch(() => null)
+      ]);
+
       const rawJobsList = Array.isArray(resJobs) ? resJobs : (resJobs?.data && Array.isArray(resJobs.data) ? resJobs.data : []);
 
       if (rawJobsList.length > 0) {
@@ -227,8 +239,6 @@ function DashboardContent() {
         setSelectedJobId(mappedJobs[0].id);
       }
 
-      // 2. Fetch real verified companies from backend API
-      const resComp = await api.get('/perusahaan/verified');
       const rawCompList = Array.isArray(resComp) ? resComp : (resComp?.data && Array.isArray(resComp.data) ? resComp.data : []);
 
       if (rawCompList.length > 0) {
@@ -245,6 +255,61 @@ function DashboardContent() {
         }));
         setCompaniesList(mappedComp);
       }
+
+      if (resProfile && resProfile.profil) {
+        const p = resProfile.profil;
+        
+        let parsedExp = [];
+        if (p.pengalaman_kerja) {
+          try {
+            parsedExp = typeof p.pengalaman_kerja === 'string' ? JSON.parse(p.pengalaman_kerja) : p.pengalaman_kerja;
+            if (!Array.isArray(parsedExp)) parsedExp = [];
+          } catch (_) {}
+        }
+        
+        let parsedEdu = [];
+        if (p.riwayat_pendidikan) {
+          try {
+            parsedEdu = typeof p.riwayat_pendidikan === 'string' ? JSON.parse(p.riwayat_pendidikan) : p.riwayat_pendidikan;
+            if (!Array.isArray(parsedEdu)) parsedEdu = [];
+          } catch (_) {}
+        }
+
+        let parsedCert = [];
+        if (p.sertifikasi) {
+          try {
+            parsedCert = typeof p.sertifikasi === 'string' ? JSON.parse(p.sertifikasi) : p.sertifikasi;
+            if (!Array.isArray(parsedCert)) parsedCert = [];
+          } catch (_) {
+            if (p.sertifikasi.trim()) parsedCert = [{ name: p.sertifikasi, credentialUrl: '' }];
+          }
+        }
+
+        let parsedSocial = [];
+        if (p.social_links) {
+          try {
+            parsedSocial = typeof p.social_links === 'string' ? JSON.parse(p.social_links) : p.social_links;
+            if (!Array.isArray(parsedSocial)) parsedSocial = [];
+          } catch (_) {}
+        }
+
+        setCvDetails({
+          fullName: p.nama_lengkap && p.nama_lengkap !== 'Nama Pelamar' ? p.nama_lengkap : (resProfile.email?.split('@')[0] || 'Pelamar'),
+          jobTitle: p.judul_posisi || 'Pelamar AI Recruit Pro',
+          email: resProfile.email || p.email,
+          phone: p.no_telepon || '',
+          location: p.alamat || '',
+          linkedinUrl: p.linkedin_url || '',
+          portfolioUrl: p.portfolio_url || '',
+          socialLinks: parsedSocial,
+          skills: p.keahlian || 'Belum ada skill yang ditambahkan',
+          summary: p.ringkasan_diri || '',
+          experiences: parsedExp,
+          education: parsedEdu,
+          certifications: parsedCert,
+          updatedAt: 'Baru Saja'
+        });
+      }
     } catch (err) {
       console.error('Gagal mengambil data real dari backend:', err);
     } finally {
@@ -256,6 +321,7 @@ function DashboardContent() {
     const view = searchParams.get('view');
     if (view === 'companies') setActiveTab('companies');
     else if (view === 'saved') setActiveTab('saved');
+    else setActiveTab('recommended');
   }, [searchParams]);
 
   // Save Job Toggle
@@ -431,9 +497,10 @@ function DashboardContent() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
             {companiesList.map((comp) => (
-              <div
+                <div
                 key={comp.id}
-                className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-2xs hover:shadow-md transition-all space-y-4 flex flex-col justify-between"
+                onClick={() => router.push(`/applicant/companies/${comp.id}`)}
+                className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-2xs hover:shadow-md hover:border-[#2596be]/40 transition-all space-y-4 flex flex-col justify-between cursor-pointer group"
               >
                 <div className="space-y-3">
                   <div className="flex items-start justify-between gap-3">
@@ -448,7 +515,7 @@ function DashboardContent() {
                   </div>
 
                   <div>
-                    <h4 className="font-black text-lg text-slate-800 dark:text-white">
+                    <h4 className="font-black text-lg text-slate-800 dark:text-white group-hover:text-[#2596be] transition-colors">
                       {comp.name}
                     </h4>
                     <p className="text-xs text-slate-500 font-bold">
@@ -461,16 +528,12 @@ function DashboardContent() {
                   </p>
                 </div>
 
-                <button
-                  onClick={() => {
-                    setSearchQuery(comp.name);
-                    setActiveTab('recommended');
-                  }}
-                  className="w-full py-2.5 rounded-xl border border-[#2596be] text-[#2596be] hover:bg-[#F0F8FB] dark:hover:bg-slate-800 text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-2"
+                <div
+                  className="w-full py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 group-hover:border-[#2596be] group-hover:text-[#2596be] group-hover:bg-[#F0F8FB] dark:group-hover:bg-slate-800 text-slate-600 dark:text-slate-400 text-xs font-bold transition-all flex items-center justify-center gap-2"
                 >
                   <span>Lihat {comp.openJobsCount} Lowongan Buka</span>
                   <ChevronRight className="w-4 h-4" />
-                </button>
+                </div>
               </div>
             ))}
           </div>
@@ -759,12 +822,12 @@ function DashboardContent() {
           </div>
 
           {/* RIGHT COLUMN: DYNAMIC JOB DETAIL PANE (~62% Width / 7 Cols) */}
-          <div className="lg:col-span-7 sticky top-28 h-[calc(100vh-130px)] flex flex-col">
+          <div className="lg:col-span-7 sticky top-28 h-[calc(100vh-130px)]">
             {selectedJob && (
-              <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-md flex flex-col overflow-hidden h-full">
+              <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-md overflow-y-auto h-full custom-scrollbar">
                 
-                {/* Detail Header — FIXED / Non-scrolling */}
-                <div className="shrink-0 p-6 sm:p-8 pb-4 space-y-4 border-b border-slate-100 dark:border-slate-800">
+                {/* Detail Header */}
+                <div className="p-6 sm:p-8 pb-4 space-y-4 border-b border-slate-100 dark:border-slate-800">
                   <div className="flex items-start gap-4">
                     <img
                       src={selectedJob.logo}
@@ -866,17 +929,6 @@ function DashboardContent() {
                     </div>
                   )}
 
-                  {/* AI PO-FIT Match Badge */}
-                  <div className="p-3.5 rounded-2xl bg-[#F0F8FB] dark:bg-slate-800/80 border border-[#C2E5EF] dark:border-slate-700 flex items-center justify-between gap-3 text-xs">
-                    <div className="flex items-center gap-2 text-[#2596be] dark:text-cyan-400 font-extrabold">
-                      <Sparkles size={16} />
-                      <span>Analisis PO-FIT AI ({selectedJob.matchScore}% Match):</span>
-                    </div>
-                    <span className="text-slate-600 dark:text-slate-300 text-xs font-medium">
-                      {selectedJob.reason}
-                    </span>
-                  </div>
-
                   <p className="text-[11px] text-slate-400 font-bold italic">
                     Diterbitkan: {selectedJob.publishDate} • {selectedJob.postedAgo}
                   </p>
@@ -921,8 +973,8 @@ function DashboardContent() {
                   </div>
                 </div>
 
-                {/* Scrollable Description Content */}
-                <div className="flex-1 overflow-y-auto p-6 sm:p-8 pt-6 space-y-6">
+                {/* Description Content */}
+                <div className="p-6 sm:p-8 pt-6 space-y-6">
                   {/* Deskripsi Pekerjaan */}
                   <div className="space-y-3 text-xs sm:text-sm text-slate-700 dark:text-slate-300 leading-relaxed">
                     <h3 className="font-extrabold text-sm text-slate-900 dark:text-white uppercase tracking-wider">
@@ -986,9 +1038,10 @@ function DashboardContent() {
       {applyingJobModalData && (
         <ApplyJobModal
           job={applyingJobModalData}
+          cvData={cvDetails}
           onClose={() => setApplyingJobModalData(null)}
           onSuccess={() => {
-            router.push('/pelamar/status');
+            router.push('/applicant/status');
           }}
         />
       )}

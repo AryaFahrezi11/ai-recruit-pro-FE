@@ -213,7 +213,7 @@ export default function SavedJobsPage() {
     localStorage.setItem('appliedJobsList', JSON.stringify(newApplied));
 
     alert(`🎉 Sukses! CV ATS-Friendly Anda ("${cvDetails?.fullName || 'Pelamar'}") telah terkirim ke HR ${companyName} untuk posisi "${title}".`);
-    router.push('/pelamar/status');
+    router.push('/applicant/status');
   };
 
   // Filter saved jobs list
@@ -332,7 +332,7 @@ export default function SavedJobsPage() {
             </p>
           </div>
           <Link
-            href="/pelamar/dashboard"
+            href="/applicant/dashboard"
             className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-[#2596be] hover:bg-[#1D7FA1] text-white font-extrabold text-xs shadow-md transition-all cursor-pointer"
           >
             <span>{t.pelamar.tersimpan.startSearching}</span>
@@ -511,17 +511,6 @@ export default function SavedJobsPage() {
                   </div>
                 </div>
               )}
-
-              {/* AI PO-FIT Match Badge */}
-              <div className="p-3.5 rounded-2xl bg-[#F0F8FB] dark:bg-slate-800/80 border border-[#C2E5EF] dark:border-slate-700 flex items-center justify-between gap-3 text-xs">
-                <div className="flex items-center gap-2 text-[#2596be] dark:text-cyan-400 font-extrabold shrink-0">
-                  <Sparkles size={16} />
-                  <span>Analisis PO-FIT AI ({activeJobModal.matchScore || 92}% Match):</span>
-                </div>
-                <span className="text-slate-600 dark:text-slate-300 text-xs font-medium truncate">
-                  {activeJobModal.reason || 'Keahlian & kualifikasi Anda sesuai dengan posisi ini.'}
-                </span>
-              </div>
 
               <p className="text-[11px] text-slate-400 font-bold italic">
                 Diterbitkan: {activeJobModal.publishDate} • {activeJobModal.postedAgo}

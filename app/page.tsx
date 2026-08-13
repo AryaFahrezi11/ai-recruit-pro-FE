@@ -412,7 +412,7 @@ export default function PerfectlyNeatLandingPage() {
             </Link>
 
             <Link
-              href="/pelamar/login"
+              href="/applicant/login"
               className="px-5 py-2.5 rounded-full bg-[#1b7b9e] hover:bg-[#1D7FA1] text-white text-xs font-bold shadow-md hover:shadow-lg transition-all duration-200 flex items-center gap-1.5"
             >
               <Users size={16} className="text-[#E0F1F7]" />
@@ -876,13 +876,13 @@ export default function PerfectlyNeatLandingPage() {
 
                       <div className="flex items-center gap-3">
                         <Link
-                          href="/pelamar/login"
+                          href="/applicant/login"
                           className="px-4 py-2 rounded-full border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 font-bold hover:bg-slate-50 dark:hover:bg-slate-800 text-xs text-center inline-block"
                         >
                           {language === 'en' ? 'View Details' : 'Lihat Detail'}
                         </Link>
                         <Link
-                          href="/pelamar/login"
+                          href="/applicant/login"
                           className="inline-flex items-center gap-2 px-5 py-2 rounded-full bg-[#1b7b9e] hover:bg-[#1D7FA1] text-white font-bold text-xs shadow-xs"
                         >
                           {language === 'en' ? 'Apply Now' : 'Lamar'} <ArrowRight size={15} className="text-[#E0F1F7]" />
@@ -960,7 +960,7 @@ export default function PerfectlyNeatLandingPage() {
 
                   {/* Action Button */}
                   <Link
-                    href="/pelamar/login"
+                    href="/applicant/login"
                     className="w-full py-4 rounded-full bg-[#1b7b9e] hover:bg-[#1D7FA1] text-white font-extrabold text-xs sm:text-sm shadow-md transition-all flex items-center justify-center gap-2"
                   >
                     {lang.startPoFitSelection}
@@ -1072,10 +1072,10 @@ export default function PerfectlyNeatLandingPage() {
             <div className="space-y-3">
               <h4 className="font-bold text-[#1b7b9e] dark:text-cyan-400 text-xs uppercase tracking-wider">{lang.findJob}</h4>
               <ul className="space-y-2">
-                <li><Link href="/pelamar/login" className="hover:text-[#1b7b9e] dark:hover:text-cyan-300">Dashboard Pelamar</Link></li>
-                <li><Link href="/pelamar/login" className="hover:text-[#1b7b9e] dark:hover:text-cyan-300">Upload CV (NLP)</Link></li>
-                <li><Link href="/pelamar/login" className="hover:text-[#1b7b9e] dark:hover:text-cyan-300">Wawancara Video AI</Link></li>
-                <li><Link href="/pelamar/login" className="hover:text-[#1b7b9e] dark:hover:text-cyan-300">Status Validasi</Link></li>
+                <li><Link href="/applicant/login" className="hover:text-[#1b7b9e] dark:hover:text-cyan-300">Dashboard Pelamar</Link></li>
+                <li><Link href="/applicant/login" className="hover:text-[#1b7b9e] dark:hover:text-cyan-300">Upload CV (NLP)</Link></li>
+                <li><Link href="/applicant/login" className="hover:text-[#1b7b9e] dark:hover:text-cyan-300">Wawancara Video AI</Link></li>
+                <li><Link href="/applicant/login" className="hover:text-[#1b7b9e] dark:hover:text-cyan-300">Status Validasi</Link></li>
               </ul>
             </div>
 

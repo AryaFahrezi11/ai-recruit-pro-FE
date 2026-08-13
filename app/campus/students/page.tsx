@@ -68,7 +68,7 @@ export default function KampusMahasiswaPage() {
       videoScores: { ability: 85, intelligent: 92, personality: 78, attitude: 88, emotionalIntelligence: 80 },
       applications: [
         { company: 'PT MegaWeb Tech', role: 'Senior Frontend Developer', status: 'hired', stageText: 'Diterima Kerja (Tahap 5 Validasi HR)', poFitScore: 95, dateApplied: '15 Jul 2026' },
-        { company: 'PT FinanceCorp', role: 'Frontend Engineer', status: 'rejected', stageText: 'Ditolak (Skor PO-FIT 74% dibawah threshold 80%)', poFitScore: 74, dateApplied: '02 Jun 2026' }
+        { company: 'PT FinanceCorp', role: 'Frontend Engineer', status: 'rejected', stageText: 'Ditolak (Skor PO-FIT 74% dibawah threshold 60%)', poFitScore: 74, dateApplied: '02 Jun 2026' }
       ]
     },
     {
@@ -141,7 +141,7 @@ export default function KampusMahasiswaPage() {
       videoDuration: '10 Menit 15 Detik',
       videoScores: { ability: 75, intelligent: 70, personality: 78, attitude: 76, emotionalIntelligence: 72 },
       applications: [
-        { company: 'PT Creative Design Hub', role: 'UI/UX Product Designer', status: 'rejected', stageText: 'Ditolak pada Seleksi CV (Skor PO-FIT 72% < Threshold 80%)', poFitScore: 72, dateApplied: '12 Jul 2026' }
+        { company: 'PT Creative Design Hub', role: 'UI/UX Product Designer', status: 'rejected', stageText: 'Ditolak pada Seleksi CV (Skor PO-FIT 72% < Threshold 60%)', poFitScore: 72, dateApplied: '12 Jul 2026' }
       ]
     }
   ]);

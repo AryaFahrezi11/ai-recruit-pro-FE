@@ -9,9 +9,11 @@ import {
   Upload, Brain, UserCheck, Scan, Download, ExternalLink,
   Clock, AlertCircle, Sparkles, Briefcase, Mail, Phone, Lock, Archive, GraduationCap, Building2
 } from 'lucide-react';
+import { ParseSkills } from '@/components/ui/ParseSkills';
 import {
   Radar, RadarChart, PolarGrid, PolarAngleAxis, ResponsiveContainer
 } from 'recharts';
+import { ChevronDown, ChevronUp } from 'lucide-react';
 
 interface CandidateModalProps {
   candidate: {
@@ -30,6 +32,10 @@ interface CandidateModalProps {
       attitude: number;
       emotionalIntelligence: number;
     };
+    cvData?: any;
+    cvDocument?: any;
+    jobData?: any;
+    analisisCv?: any;
   };
   onClose: () => void;
 }
@@ -87,6 +93,7 @@ export function CandidateModal({ candidate, onClose }: CandidateModalProps) {
   const router = useRouter();
   const stage = candidate.stage || 'upload_cv';
   const stageIndex = STAGE_ORDER.indexOf(stage);
+  const threshold = candidate.analisisCv?.threshold_digunakan ?? candidate.jobData?.cv_threshold ?? 60;
 
   // Archive feedback banner state
   const [archiveStatus, setArchiveStatus] = useState<'idle' | 'hired' | 'rejected'>('idle');
@@ -103,6 +110,8 @@ export function CandidateModal({ candidate, onClose }: CandidateModalProps) {
     }
   };
 
+  const [showCvDetail, setShowCvDetail] = useState(false);
+  const [showJobDetail, setShowJobDetail] = useState(false);
   const [activeTab, setActiveTab] = useState<string>(getInitialTab(stage));
 
   useEffect(() => {
@@ -119,7 +128,7 @@ export function CandidateModal({ candidate, onClose }: CandidateModalProps) {
     { subject: t.modal.intelligent, A: candidate.videoScores?.intelligent || 92, fullMark: 100 },
     { subject: t.modal.personality, A: candidate.videoScores?.personality || 78, fullMark: 100 },
     { subject: t.modal.attitude, A: candidate.videoScores?.attitude || 88, fullMark: 100 },
-    { subject: t.modal.emotionalIntelligence, A: candidate.videoScores?.emotionalIntelligence || 80, fullMark: 100 },
+    { subject: t.modal.emotionalIntelligence, A: candidate.videoScores?.emotionalIntelligence || 60, fullMark: 100 },
   ];
 
   // Video analysis parameters
@@ -237,85 +246,333 @@ export function CandidateModal({ candidate, onClose }: CandidateModalProps) {
             <div className="space-y-6 animate-in fade-in duration-300">
 
               {/* Candidate Info Header */}
-              <div className="bg-card p-6 rounded-xl border border-border shadow-sm flex flex-col sm:flex-row justify-between gap-4 items-start">
-                <div className="flex gap-4 items-center">
-                  <div className="w-16 h-16 rounded-full bg-blue-100 dark:bg-blue-950 text-blue-600 dark:text-blue-400 flex items-center justify-center font-bold text-2xl border border-blue-200 dark:border-blue-800">
+              <div className="bg-card p-4 sm:p-6 rounded-xl border border-border shadow-sm flex flex-col sm:flex-row justify-between gap-4 sm:gap-4 items-start">
+                <div className="flex gap-3 sm:gap-4 items-start sm:items-center w-full sm:w-auto">
+                  <div className="w-12 h-12 sm:w-16 sm:h-16 shrink-0 rounded-full bg-blue-100 dark:bg-blue-950 text-blue-600 dark:text-blue-400 flex items-center justify-center font-bold text-xl sm:text-2xl border border-blue-200 dark:border-blue-800">
                     {candidate.name.charAt(0)}
                   </div>
-                  <div>
-                    <h2 className="text-xl font-bold text-foreground">{candidate.name}</h2>
-                    <p className="text-sm font-medium text-primary flex items-center gap-1.5 mt-0.5">
-                      <Briefcase size={14} />
-                      {candidate.role}
+                  <div className="flex-1 min-w-0">
+                    <h2 className="text-lg sm:text-xl font-bold text-foreground truncate">{candidate.name}</h2>
+                    <p className="text-xs sm:text-sm font-medium text-primary flex items-center gap-1.5 mt-0.5">
+                      <Briefcase size={14} className="shrink-0" />
+                      <span className="truncate">{candidate.role}</span>
                     </p>
-                    <p className="text-xs text-muted-foreground mt-1 flex flex-wrap items-center gap-3">
-                      <span className="flex items-center gap-1 font-bold text-violet-700 dark:text-violet-300 bg-violet-100 dark:bg-violet-950/60 px-2 py-0.5 rounded"><GraduationCap size={13} /> {candidate.university || 'Universitas Indonesia'}</span>
-                      <span className="flex items-center gap-1"><Mail size={12} /> {safeEmailName}@email.com</span>
-                      <span className="flex items-center gap-1"><Phone size={12} /> +62 812-9876-5432</span>
+                    <p className="text-[11px] sm:text-xs text-muted-foreground mt-1.5 flex flex-wrap items-center gap-2 sm:gap-3">
+                      <span className="flex items-center gap-1 font-bold text-violet-700 dark:text-violet-300 bg-violet-100 dark:bg-violet-950/60 px-2 py-0.5 rounded w-max"><GraduationCap size={13} /> <span className="truncate max-w-[120px] sm:max-w-[200px]">{candidate.university || candidate.cvData?.education?.[0]?.school || 'Pendidikan Tidak Tersedia'}</span></span>
+                      <span className="flex items-center gap-1 w-max"><Mail size={12} className="shrink-0" /> <span className="truncate max-w-[150px] sm:max-w-none">{candidate.cvData?.email || 'email_tidak_tersedia@contoh.com'}</span></span>
+                      <span className="flex items-center gap-1 w-max"><Phone size={12} className="shrink-0" /> {candidate.cvData?.phone || 'Nomor tidak tersedia'}</span>
                     </p>
                   </div>
                 </div>
 
-                <div className="flex flex-col items-end gap-2">
-                  <span className="px-3 py-1 bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 text-xs font-semibold rounded-full border border-blue-200 dark:border-blue-900">
+                <div className="flex flex-row sm:flex-col items-center sm:items-end justify-between w-full sm:w-auto gap-2 pt-2 sm:pt-0 border-t sm:border-0 border-border">
+                  <span className="px-3 py-1 bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 text-[11px] sm:text-xs font-semibold rounded-full border border-blue-200 dark:border-blue-900">
                     {t.modal.tahapUploadTitle}
                   </span>
-                  <span className="text-xs text-muted-foreground">2h ago</span>
+                  <span className="text-[10px] sm:text-xs text-muted-foreground">Baru Saja</span>
                 </div>
               </div>
 
               {/* Uploaded Document Card */}
               <div className="bg-card p-6 rounded-xl border border-border shadow-sm">
-                <h3 className="font-bold text-base text-foreground mb-4 flex items-center gap-2">
-                  <FileText size={18} className="text-primary" />
-                  {t.modal.berkasCV}
-                </h3>
-
-                <div className="p-4 bg-muted/40 rounded-xl border border-border flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 rounded-lg bg-rose-500/10 text-rose-500 flex items-center justify-center font-bold text-sm">
-                      PDF
+                {/* Job Details Card */}
+                {candidate.jobData && (
+                  <div className="bg-card p-6 rounded-xl border border-border shadow-sm mb-6 mt-4">
+                    <h3 className="font-bold text-base text-foreground mb-4 flex items-center gap-2">
+                      <Briefcase size={18} className="text-primary" />
+                      Detail Lowongan yang Dilamar
+                    </h3>
+                    <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
+                      <div className="p-4 bg-muted/30 rounded-lg border border-border">
+                        <p className="text-xs text-muted-foreground mb-1">Posisi</p>
+                        <p className="text-sm font-semibold text-foreground">{candidate.jobData.judul_posisi || '-'}</p>
+                      </div>
+                      <div className="p-4 bg-muted/30 rounded-lg border border-border">
+                        <p className="text-xs text-muted-foreground mb-1">Tipe Pekerjaan</p>
+                        <p className="text-sm font-semibold text-foreground capitalize">
+                          {candidate.jobData.tipe_pekerjaan ? candidate.jobData.tipe_pekerjaan.replace('_', ' ') : '-'}
+                        </p>
+                      </div>
+                      <div className="p-4 bg-muted/30 rounded-lg border border-border">
+                        <p className="text-xs text-muted-foreground mb-1">Lokasi</p>
+                        <p className="text-sm font-semibold text-foreground capitalize">
+                          {candidate.jobData.lokasi_kerja === 'remote' ? 'Remote (WFH)' : candidate.jobData.lokasi_kerja === 'hybrid' ? 'Hybrid' : 'On-site'}
+                          {candidate.jobData.kota ? ` - ${candidate.jobData.kota}` : ''}
+                        </p>
+                      </div>
+                      <div className="p-4 bg-muted/30 rounded-lg border border-border">
+                        <p className="text-xs text-muted-foreground mb-1">Kualifikasi Min.</p>
+                        <p className="text-sm font-semibold text-foreground">
+                          {candidate.jobData.pendidikan_min || 'Umum'} 
+                          {candidate.jobData.pengalaman_min_tahun > 0 ? ` (${candidate.jobData.pengalaman_min_tahun} Tahun)` : ''}
+                        </p>
+                      </div>
+                      <div className="p-4 bg-muted/30 rounded-lg border border-border">
+                        <p className="text-xs text-muted-foreground mb-1">Departemen</p>
+                        <p className="text-sm font-semibold text-foreground">{candidate.jobData.department || 'Umum'}</p>
+                      </div>
+                      <div className="p-4 bg-muted/30 rounded-lg border border-border">
+                        <p className="text-xs text-muted-foreground mb-1">Batas Minimal AI (CV)</p>
+                        <p className="text-sm font-semibold text-amber-600">{candidate.jobData.cv_threshold}% Kecocokan</p>
+                      </div>
+                      <div className="p-4 bg-muted/30 rounded-lg border border-border">
+                        <p className="text-xs text-muted-foreground mb-1">Kata Kunci (AI)</p>
+                        <div className="flex flex-wrap gap-1 mt-1">
+                          {candidate.jobData.ai_keywords && candidate.jobData.ai_keywords.length > 0 ? (
+                            candidate.jobData.ai_keywords.slice(0, 3).map((kw: string, i: number) => (
+                              <span key={i} className="px-1.5 py-0.5 bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300 text-[10px] rounded font-medium truncate max-w-[80px]">
+                                {kw}
+                              </span>
+                            ))
+                          ) : '-'}
+                          {candidate.jobData.ai_keywords && candidate.jobData.ai_keywords.length > 3 && (
+                            <span className="px-1.5 py-0.5 bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 text-[10px] rounded font-medium">
+                              +{candidate.jobData.ai_keywords.length - 3}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                      <div className="p-4 bg-muted/30 rounded-lg border border-border">
+                        <p className="text-xs text-muted-foreground mb-1">Periode Lowongan</p>
+                        <p className="text-sm font-semibold text-foreground">
+                          {candidate.jobData.tanggal_buka && candidate.jobData.tanggal_tutup ? 
+                            `${new Date(candidate.jobData.tanggal_buka).toLocaleDateString('id-ID', { day: '2-digit', month: 'short' })} - ${new Date(candidate.jobData.tanggal_tutup).toLocaleDateString('id-ID', { day: '2-digit', month: 'short' })}` : '-'}
+                        </p>
+                      </div>
+                      <div className="p-4 bg-muted/30 rounded-lg border border-border">
+                        <p className="text-xs text-muted-foreground mb-1">Rentang Gaji</p>
+                        <p className="text-sm font-semibold text-foreground">
+                          {candidate.jobData.tampilkan_gaji && candidate.jobData.gaji_min && candidate.jobData.gaji_max 
+                            ? `Rp ${(candidate.jobData.gaji_min / 1000000).toFixed(0)}Jt - Rp ${(candidate.jobData.gaji_max / 1000000).toFixed(0)}Jt` 
+                            : 'Dirahasiakan'}
+                        </p>
+                      </div>
                     </div>
-                    <div>
-                      <p className="font-semibold text-sm text-foreground">{`CV_${safeFileName}.pdf`}</p>
-                      <p className="text-xs text-muted-foreground">2.4 MB • Applicant Portal</p>
+
+                    {/* Collapsible Detailed Job Info */}
+                    <div className="mt-4 pt-4 border-t border-border">
+                      <button 
+                        onClick={() => setShowJobDetail(!showJobDetail)}
+                        className="w-full flex items-center justify-between text-sm font-semibold text-primary hover:text-primary/80 transition-colors"
+                      >
+                        Lihat Deskripsi Pekerjaan Lengkap
+                        {showJobDetail ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                      </button>
+                      
+                      {showJobDetail && (
+                        <div className="mt-4 space-y-4 text-sm animate-in slide-in-from-top-2 border-t border-border/50 pt-4">
+                          {candidate.jobData.deskripsi_pekerjaan && candidate.jobData.deskripsi_pekerjaan.length > 0 && (
+                            <div>
+                              <h4 className="font-bold text-foreground mb-1">Deskripsi Pekerjaan</h4>
+                              <ul className="list-disc pl-5 text-muted-foreground space-y-1">
+                                {candidate.jobData.deskripsi_pekerjaan.map((desc: string, i: number) => (
+                                  <li key={i}>{desc}</li>
+                                ))}
+                              </ul>
+                            </div>
+                          )}
+                          
+                          {candidate.jobData.tanggung_jawab && candidate.jobData.tanggung_jawab.length > 0 && (
+                            <div>
+                              <h4 className="font-bold text-foreground mb-1">Tanggung Jawab Utama</h4>
+                              <ul className="list-disc pl-5 text-muted-foreground space-y-1">
+                                {candidate.jobData.tanggung_jawab.map((resp: string, i: number) => (
+                                  <li key={i}>{resp}</li>
+                                ))}
+                              </ul>
+                            </div>
+                          )}
+                          
+                          {candidate.jobData.kualifikasi && candidate.jobData.kualifikasi.length > 0 && (
+                            <div>
+                              <h4 className="font-bold text-foreground mb-1">Kualifikasi yang Dibutuhkan</h4>
+                              <ul className="list-disc pl-5 text-muted-foreground space-y-1">
+                                {candidate.jobData.kualifikasi.map((req: string, i: number) => (
+                                  <li key={i}>{req}</li>
+                                ))}
+                              </ul>
+                            </div>
+                          )}
+                          {candidate.jobData.benefits && candidate.jobData.benefits.length > 0 && (
+                            <div>
+                              <h4 className="font-bold text-foreground mb-1">Benefit & Keuntungan</h4>
+                              <ul className="list-disc pl-5 text-muted-foreground space-y-1">
+                                {candidate.jobData.benefits.map((benefit: string, i: number) => (
+                                  <li key={i}>{benefit}</li>
+                                ))}
+                              </ul>
+                            </div>
+                          )}
+                          
+                          {candidate.jobData.ai_keywords && candidate.jobData.ai_keywords.length > 0 && (
+                            <div>
+                              <h4 className="font-bold text-foreground mb-1 flex items-center gap-2"><Sparkles size={14} className="text-amber-500" /> Kriteria Syarat Utama</h4>
+                              <div className="flex flex-wrap gap-2 mt-2">
+                                {candidate.jobData.ai_keywords.map((kw: string, i: number) => (
+                                  <span key={i} className="px-2 py-1 bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 text-xs border border-amber-200 dark:border-amber-800 rounded font-medium">
+                                    {kw}
+                                  </span>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      )}
                     </div>
                   </div>
+                )}
+                
+                {/* Candidate Extracted ATS CV Preview */}
+                {candidate.cvData ? (
+                  <div className="mt-6 pt-6 border-t border-slate-200 dark:border-slate-800">
+                    <h4 className="text-sm font-bold text-foreground mb-4">Pratinjau CV Terstruktur (ATS)</h4>
+                    <div className="bg-white p-8 sm:p-10 rounded-lg border border-slate-300 shadow-sm text-slate-800 space-y-6 font-serif overflow-hidden">
+                      {/* ATS Header */}
+                      <div className="border-b-2 border-slate-800 pb-4 space-y-1 text-center font-sans">
+                        <h2 className="text-2xl font-black uppercase tracking-tight text-slate-900">
+                          {candidate.cvData.fullName || <span className="text-slate-400 font-bold tracking-wider">NAMA PELAMAR</span>}
+                        </h2>
+                        {candidate.cvData.jobTitle ? (
+                          <span className="text-sm font-bold text-[#1b7b9e] block">{candidate.cvData.jobTitle}</span>
+                        ) : (
+                          <span className="text-xs italic text-slate-400 block font-normal">[Judul Posisi / Peran]</span>
+                        )}
+                        <div className="text-[11px] text-slate-600 flex items-center justify-center flex-wrap gap-2 pt-1 font-medium">
+                          <span>{candidate.cvData.email || <span className="text-slate-400">email@contoh.com</span>}</span> •{' '}
+                          <span>{candidate.cvData.phone || <span className="text-slate-400">0812xxxxxxxx</span>}</span> •{' '}
+                          <span>{candidate.cvData.location || <span className="text-slate-400">Kota Domisili</span>}</span>
+                          {candidate.cvData.linkedinUrl ? (
+                            <> • <span className="font-bold text-[#1b7b9e]">LinkedIn: {candidate.cvData.linkedinUrl}</span></>
+                          ) : (
+                            <span className="text-slate-400 italic"> • LinkedIn</span>
+                          )}
+                          {candidate.cvData.portfolioUrl && <> • <span className="font-bold text-[#1b7b9e]">Portofolio: {candidate.cvData.portfolioUrl}</span></>}
+                          {candidate.cvData.socialLinks && candidate.cvData.socialLinks.length > 0 &&
+                            candidate.cvData.socialLinks.map((link: any, idx: number) => (
+                              <React.Fragment key={idx}>
+                                {link.url && <> • <span>{link.platform ? `${link.platform}: ` : ''}{link.url}</span></>}
+                              </React.Fragment>
+                            ))}
+                        </div>
+                      </div>
 
-                  <div className="flex items-center gap-2">
-                    <button className="px-3 py-1.5 bg-card border border-border hover:bg-muted text-xs font-medium rounded-lg transition-colors flex items-center gap-1.5">
-                      <Download size={14} />
-                      Download
-                    </button>
-                    <button className="px-3 py-1.5 bg-primary text-primary-foreground hover:bg-primary/90 text-xs font-medium rounded-lg transition-colors flex items-center gap-1.5">
-                      <ExternalLink size={14} />
-                      Preview CV
-                    </button>
-                  </div>
-                </div>
+                      {/* ATS Summary */}
+                      <div className="space-y-1.5">
+                        <h3 className="text-xs font-bold uppercase tracking-wider text-slate-900 border-b border-slate-300 pb-1 font-sans">
+                          RINGKASAN PROFESIONAL
+                        </h3>
+                        <p className="text-xs text-slate-700 leading-relaxed font-sans text-justify whitespace-pre-line">
+                          {candidate.cvData.summary || (
+                            <span className="text-slate-400 italic">
+                              Ringkasan profesional kandidat tidak tersedia.
+                            </span>
+                          )}
+                        </p>
+                      </div>
 
-                {/* Candidate Extracted Bio Preview */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
-                  <div className="p-4 bg-muted/20 rounded-lg border border-border">
-                    <p className="text-xs text-muted-foreground mb-1">{t.modal.pendidikanTerakhir}</p>
-                    <p className="text-sm font-semibold text-foreground">{t.modal.pendidikanDemo}</p>
-                  </div>
-                  <div className="p-4 bg-muted/20 rounded-lg border border-border">
-                    <p className="text-xs text-muted-foreground mb-1">{t.modal.pengalamanKerja}</p>
-                    <p className="text-sm font-semibold text-foreground">{t.modal.pengalamanDemo}</p>
-                  </div>
-                  <div className="p-4 bg-muted/20 rounded-lg border border-border">
-                    <p className="text-xs text-muted-foreground mb-1">{t.modal.keahlianUtama}</p>
-                    <p className="text-sm font-semibold text-foreground">{t.modal.keahlianDemo}</p>
-                  </div>
-                </div>
+                      {/* ATS Experience */}
+                      <div className="space-y-3 font-sans">
+                        <h3 className="text-xs font-bold uppercase tracking-wider text-slate-900 border-b border-slate-300 pb-1">
+                          PENGALAMAN KERJA
+                        </h3>
+                        {candidate.cvData.experiences && candidate.cvData.experiences.length > 0 && candidate.cvData.experiences.some((exp: any) => exp.company || exp.role || exp.description) ? (
+                          candidate.cvData.experiences.map((exp: any, idx: number) => (
+                            <div key={idx} className="space-y-1">
+                              <div className="flex justify-between items-baseline text-xs font-bold text-slate-900">
+                                <span>
+                                  {exp.role || '[Posisi]'} — {exp.company || '[Perusahaan]'}
+                                </span>
+                                <span className="text-[11px] text-slate-500 font-semibold">{exp.period}</span>
+                              </div>
+                              {exp.description && (
+                                <p className="text-xs text-slate-600 leading-normal pl-3 border-l-2 border-slate-200 text-justify whitespace-pre-line">
+                                  • {exp.description}
+                                </p>
+                              )}
+                            </div>
+                          ))
+                        ) : (
+                          <div className="space-y-1 text-slate-400 italic">
+                            <div className="flex justify-between items-baseline text-xs">
+                              <span>[Posisi Jabatan] — [Nama Perusahaan]</span>
+                              <span className="text-[11px]">[Periode Kerja]</span>
+                            </div>
+                            <p className="text-xs leading-normal pl-3 border-l-2 border-slate-200 text-justify">
+                              • Deskripsi tanggung jawab dan pencapaian belum diisi.
+                            </p>
+                          </div>
+                        )}
+                      </div>
 
-                <div className="mt-6 p-4 bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-900 rounded-lg flex items-center gap-3">
-                  <Clock className="text-blue-500 shrink-0" size={20} />
-                  <p className="text-xs text-blue-700 dark:text-blue-300">
-                    <strong>{t.modal.statusBerkas}:</strong> {t.modal.berkasSiap}
-                  </p>
-                </div>
+                      {/* ATS Education */}
+                      <div className="space-y-3 font-sans">
+                        <h3 className="text-xs font-bold uppercase tracking-wider text-slate-900 border-b border-slate-300 pb-1">
+                          PENDIDIKAN
+                        </h3>
+                        {candidate.cvData.education && candidate.cvData.education.length > 0 && candidate.cvData.education.some((edu: any) => edu.school || edu.institution || edu.degree) ? (
+                          candidate.cvData.education.map((edu: any, idx: number) => (
+                            <div key={idx} className="flex justify-between items-baseline text-xs text-slate-900">
+                              <span className="font-bold">
+                                {edu.degree || '[Gelar]'} — {edu.school || edu.institution || '[Institusi]'} {edu.gpa ? `(${edu.gpa})` : ''}
+                              </span>
+                              <span className="text-[11px] text-slate-500 font-semibold">{edu.period}</span>
+                            </div>
+                          ))
+                        ) : (
+                          <div className="flex justify-between items-baseline text-xs text-slate-400 italic">
+                            <span>[Tingkat Gelar] — [Nama Institusi] (IPK)</span>
+                            <span className="text-[11px]">[Periode Belajar]</span>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* ATS Skills & Certifications */}
+                      <div className="space-y-3 font-sans pb-4">
+                        <h3 className="text-xs font-bold uppercase tracking-wider text-slate-900 border-b border-slate-300 pb-1">
+                          KEAHLIAN TEKNIS & SERTIFIKASI
+                        </h3>
+                        <div className="space-y-2 text-xs">
+                          <div className="text-slate-700">
+                            <span className="font-bold text-slate-900 block mb-1">Keahlian:</span>
+                            <ParseSkills skillsStr={candidate.cvData.skills} fallbackText="Tidak ada keahlian yang ditambahkan." />
+                          </div>
+                          {candidate.cvData.certifications && candidate.cvData.certifications.length > 0 && candidate.cvData.certifications.some((cert: any) => cert.name) && (
+                            <div className="text-slate-700">
+                              <span className="font-bold text-slate-900 block mb-1">Sertifikasi:</span>
+                              <ul className="list-disc pl-4 space-y-1 text-[11px]">
+                                {candidate.cvData.certifications.map((cert: any, idx: number) => (
+                                  <li key={idx}>
+                                    {cert.name}{' '}
+                                    {cert.credentialUrl && (
+                                      <a href={cert.credentialUrl} target="_blank" rel="noreferrer" className="text-[#1b7b9e] hover:underline font-bold ml-1">
+                                        [Lihat Kredensial]
+                                      </a>
+                                    )}
+                                  </li>
+                                ))}
+                              </ul>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
+                    <div className="p-4 bg-muted/20 rounded-lg border border-border">
+                      <p className="text-xs text-muted-foreground mb-1">{t.modal.pendidikanTerakhir}</p>
+                      <p className="text-sm font-semibold text-foreground">{t.modal.pendidikanDemo}</p>
+                    </div>
+                    <div className="p-4 bg-muted/20 rounded-lg border border-border">
+                      <p className="text-xs text-muted-foreground mb-1">{t.modal.pengalamanKerja}</p>
+                      <p className="text-sm font-semibold text-foreground">{t.modal.pengalamanDemo}</p>
+                    </div>
+                    <div className="p-4 bg-muted/20 rounded-lg border border-border">
+                      <p className="text-xs text-muted-foreground mb-1">{t.modal.keahlianUtama}</p>
+                      <p className="text-sm font-semibold text-foreground">{t.modal.keahlianDemo}</p>
+                    </div>
+                  </div>
+                )}
               </div>
 
             </div>
@@ -333,30 +590,30 @@ export function CandidateModal({ candidate, onClose }: CandidateModalProps) {
 
               {/* Main Score Card */}
               <div className="bg-card p-6 rounded-xl border border-border shadow-sm flex flex-col sm:flex-row items-center gap-6">
-                <div className={`w-28 h-28 rounded-full flex flex-col items-center justify-center shrink-0 shadow-lg ${(candidate.cvScore || 87) >= 80
+                <div className={`w-28 h-28 rounded-full flex flex-col items-center justify-center shrink-0 shadow-lg ${(candidate.cvScore || 0) >= threshold
                   ? 'bg-emerald-500 shadow-emerald-500/20 text-white'
                   : 'bg-rose-500 shadow-rose-500/20 text-white'
                   }`}>
-                  <span className="text-3xl font-bold">{candidate.cvScore || 87}%</span>
+                  <span className="text-3xl font-bold">{candidate.cvScore || 0}%</span>
                   <span className="text-[10px] uppercase tracking-wider font-semibold opacity-90">Score</span>
                 </div>
 
                 <div className="flex-1 text-center sm:text-left space-y-2">
                   <div className="flex items-center gap-2 justify-center sm:justify-start">
-                    <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold ${(candidate.cvScore || 87) >= 80
+                    <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold ${(candidate.cvScore || 0) >= threshold
                       ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800'
                       : 'bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-800'
                       }`}>
-                      {(candidate.cvScore || 87) >= 80 ? <CheckCircle2 size={14} /> : <XCircle size={14} />}
-                      {(candidate.cvScore || 87) >= 80 ? t.modal.lolosAmbang : t.modal.gagalAmbang}
+                      {(candidate.cvScore || 0) >= threshold ? <CheckCircle2 size={14} /> : <XCircle size={14} />}
+                      {(candidate.cvScore || 0) >= threshold ? t.modal.lolosAmbang.replace('60', threshold.toString()) : t.modal.gagalAmbang.replace('60', threshold.toString())}
                     </span>
                   </div>
 
                   <h3 className="text-lg font-bold text-foreground">
-                    {(candidate.cvScore || 87) >= 80 ? t.modal.kecocokanTinggi : t.modal.kecocokanRendah}
+                    {(candidate.cvScore || 0) >= threshold ? t.modal.kecocokanTinggi : t.modal.kecocokanRendah}
                   </h3>
                   <p className="text-xs text-muted-foreground leading-relaxed">
-                    Sistem PO-FIT Cosine Similarity: <strong>{candidate.cvScore || 87}%</strong> match.
+                    Sistem Analisis Kesesuaian: <strong>{candidate.cvScore || 0}%</strong> match.
                   </p>
                 </div>
               </div>
@@ -364,58 +621,50 @@ export function CandidateModal({ candidate, onClose }: CandidateModalProps) {
               {/* Progress Bar vs Threshold */}
               <div className="bg-card p-5 rounded-xl border border-border shadow-sm">
                 <div className="flex justify-between items-center text-xs font-semibold mb-2">
-                  <span>Cosine Similarity Score</span>
-                  <span className="text-primary">{candidate.cvScore || 87}% Match</span>
+                  <span>Skor Kesesuaian Profil</span>
+                  <span className="text-primary">{candidate.cvScore || 0}% Match</span>
                 </div>
                 <div className="w-full bg-muted rounded-full h-3 overflow-hidden">
                   <div
-                    className={`h-full rounded-full transition-all duration-700 ${(candidate.cvScore || 87) >= 80 ? 'bg-emerald-500' : 'bg-rose-500'}`}
-                    style={{ width: `${candidate.cvScore || 87}%` }}
+                    className={`h-full rounded-full transition-all duration-700 ${(candidate.cvScore || 0) >= threshold ? 'bg-emerald-500' : 'bg-rose-500'}`}
+                    style={{ width: `${candidate.cvScore || 0}%` }}
                   ></div>
                 </div>
                 <div className="flex justify-between items-center text-[10px] text-muted-foreground mt-1.5">
                   <span>0%</span>
-                  <span className="font-bold text-rose-500">{t.modal.ambangBatasMin}</span>
+                  <span className="font-bold text-rose-500">{t.modal.ambangBatasMin.replace('60', threshold.toString())}</span>
                   <span>100%</span>
                 </div>
               </div>
 
-              {/* Detail Category Scores */}
-              <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
-                {[
-                  { label: t.modal.formatStruktur, score: 85 },
-                  { label: t.modal.pengalamanRelevan, score: 92 },
-                  { label: t.modal.keahlianSertifikasi, score: 88 },
-                  { label: t.modal.prestasiDampak, score: 75 },
-                  { label: t.modal.bahasaKomunikasi, score: 84 },
-                ].map((item, i) => (
-                  <div key={i} className="p-3 bg-card border border-border rounded-lg text-center">
-                    <p className="text-[10px] text-muted-foreground font-medium mb-1 truncate">{item.label}</p>
-                    <p className="text-lg font-bold text-primary">{item.score}%</p>
-                  </div>
-                ))}
-              </div>
-
-              {/* Recommendations */}
+              {/* Detail Evaluasi */}
               <div className="bg-card p-5 rounded-xl border border-border shadow-sm">
-                <h3 className="font-bold text-sm mb-3 flex items-center gap-2">
-                  <Sparkles size={16} className="text-amber-500" />
-                  {t.modal.saranPerbaikan}
+                <h3 className="font-extrabold text-[#2596be] dark:text-cyan-400 flex items-center gap-2">
+                  <Sparkles size={16} /> Keterangan Analisis
                 </h3>
-                <ul className="space-y-2.5 text-xs text-foreground">
-                  <li className="flex gap-2 items-start">
-                    <Check className="text-emerald-500 shrink-0 mt-0.5" size={14} />
-                    <span>3+ years experience matching job requirements.</span>
-                  </li>
-                  <li className="flex gap-2 items-start">
-                    <Check className="text-emerald-500 shrink-0 mt-0.5" size={14} />
-                    <span>Microservices & state management keywords matched.</span>
-                  </li>
-                  <li className="flex gap-2 items-start">
-                    <Lightbulb className="text-amber-500 shrink-0 mt-0.5" size={14} />
-                    <span>Verify technical leadership during Virtual Interview stage.</span>
-                  </li>
-                </ul>
+                <p className="text-slate-700 dark:text-slate-300 text-xs">
+                  Sistem telah membandingkan profil CV kandidat dengan kriteria pekerjaan menggunakan metode gabungan kesesuaian profil dan pemenuhan syarat spesifik. Hasil persentase di atas menunjukkan tingkat kemiripan dokumen terhadap standar yang Anda tetapkan (Ambang Batas: <strong>{threshold}%</strong>).
+                </p>
+
+                {candidate.analisisCv?.hybrid_details && (
+                  <div className="mt-4 pt-4 border-t border-border/50 grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="bg-muted/30 p-3 rounded-lg border border-border">
+                      <p className="text-[11px] text-muted-foreground font-semibold uppercase tracking-wider mb-1">Skor Konteks (SBERT)</p>
+                      <p className="text-sm font-bold text-foreground">
+                        {candidate.analisisCv.hybrid_details.sbert_score}% <span className="text-xs font-normal text-muted-foreground ml-1">(Bobot 60%)</span>
+                      </p>
+                    </div>
+                    <div className="bg-muted/30 p-3 rounded-lg border border-border">
+                      <p className="text-[11px] text-muted-foreground font-semibold uppercase tracking-wider mb-1">Skor Fakta (Keyword)</p>
+                      <p className="text-sm font-bold text-foreground">
+                        {candidate.analisisCv.hybrid_details.keyword_score}% <span className="text-xs font-normal text-muted-foreground ml-1">(Bobot 40%)</span>
+                      </p>
+                      <p className="text-[10px] text-muted-foreground mt-1">
+                        Ditemukan {candidate.analisisCv.hybrid_details.keywords_found} dari {candidate.analisisCv.hybrid_details.keywords_total} keahlian wajib.
+                      </p>
+                    </div>
+                  </div>
+                )}
               </div>
 
             </div>
@@ -580,7 +829,7 @@ export function CandidateModal({ candidate, onClose }: CandidateModalProps) {
                     </div>
                     <div className="p-2 bg-muted/30 rounded border border-border col-span-2">
                       <p className="text-[10px] text-muted-foreground">{t.modal.emotionalIntelligence}</p>
-                      <p className="font-bold text-cyan-600 dark:text-cyan-400">{candidate.videoScores?.emotionalIntelligence || 80}</p>
+                      <p className="font-bold text-cyan-600 dark:text-cyan-400">{candidate.videoScores?.emotionalIntelligence || 60}</p>
                     </div>
                   </div>
                 </div>
@@ -608,8 +857,8 @@ export function CandidateModal({ candidate, onClose }: CandidateModalProps) {
                 <div className="p-4 bg-card rounded-xl border border-border shadow-sm flex items-center justify-between">
                   <div>
                     <p className="text-xs text-muted-foreground font-medium">{t.modal.cvAnalysis}</p>
-                    <p className="text-xl font-bold text-emerald-600 dark:text-emerald-400">{candidate.cvScore || 87}% Match</p>
-                    <span className="text-[10px] text-emerald-600 font-semibold">✓ Threshold ≥80%</span>
+                    <p className="text-xl font-bold text-emerald-600 dark:text-emerald-400">{candidate.cvScore || 0}% Match</p>
+                    <span className="text-[10px] text-emerald-600 font-semibold">✓ Threshold ≥60%</span>
                   </div>
                   <FileText className="text-emerald-500" size={28} />
                 </div>
@@ -683,7 +932,7 @@ export function CandidateModal({ candidate, onClose }: CandidateModalProps) {
                         { label: t.modal.intelligent, score: Math.round((candidate.videoScores?.intelligent || 92) / 10) },
                         { label: t.modal.personality, score: Math.round((candidate.videoScores?.personality || 78) / 10) },
                         { label: t.modal.attitude, score: Math.round((candidate.videoScores?.attitude || 88) / 10) },
-                        { label: t.modal.emotionalIntelligence, score: Math.round((candidate.videoScores?.emotionalIntelligence || 80) / 10) },
+                        { label: t.modal.emotionalIntelligence, score: Math.round((candidate.videoScores?.emotionalIntelligence || 60) / 10) },
                       ].map((item, i) => (
                         <div key={i}>
                           <div className="flex justify-between items-center mb-1 text-xs font-medium">

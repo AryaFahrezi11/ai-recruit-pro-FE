@@ -72,7 +72,7 @@ export default function WawancaraVideoPage() {
   };
 
   const handleFinishAssessment = () => {
-    router.push('/pelamar/status');
+    router.push('/applicant/status');
   };
 
   return (
@@ -81,7 +81,7 @@ export default function WawancaraVideoPage() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white dark:bg-slate-900 p-5 rounded-3xl border border-[#C2E5EF] dark:border-slate-800 shadow-xs">
         <div className="flex items-center gap-4">
           <Link
-            href="/pelamar/upload-cv"
+            href="/applicant/upload-cv"
             className="p-2.5 rounded-xl text-slate-500 dark:text-slate-400 hover:text-[#1b7b9e] dark:hover:text-cyan-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
             title="Kembali"
           >

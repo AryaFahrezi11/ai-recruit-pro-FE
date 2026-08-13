@@ -4,7 +4,7 @@ import { MoreHorizontal } from 'lucide-react';
 interface KanbanColumnProps {
   title: string;
   count: number;
-  children: React.ReactNode;
+  children?: React.ReactNode;
 }
 
 export function KanbanColumn({ title, count, children }: KanbanColumnProps) {

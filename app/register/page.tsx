@@ -35,6 +35,18 @@ export default function CompanyRegistrationFlow() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [errorStep1, setErrorStep1] = useState('');
 
+  const checkPasswordStrength = (pwd: string) => {
+    return {
+      length: pwd.length >= 8,
+      uppercase: /[A-Z]/.test(pwd),
+      lowercase: /[a-z]/.test(pwd),
+      number: /\d/.test(pwd),
+      special: /[@$!%*?&#^_\-]/.test(pwd),
+    };
+  };
+  const strength = checkPasswordStrength(password);
+  const isValidPassword = Object.values(strength).every(Boolean);
+
   // Step 2: OTP
   const [otpCode, setOtpCode] = useState(['', '', '', '', '', '']);
   const [errorStep2, setErrorStep2] = useState('');
@@ -77,8 +89,8 @@ export default function CompanyRegistrationFlow() {
       return;
     }
 
-    if (!password || password.length < 6) {
-      setErrorStep1('Kata sandi minimal 6 karakter.');
+    if (!isValidPassword) {
+      setErrorStep1('Kata sandi belum memenuhi semua persyaratan keamanan.');
       return;
     }
 
@@ -384,9 +396,36 @@ export default function CompanyRegistrationFlow() {
                     type="password"
                     value={password}
                     onChange={(e) => { setPassword(e.target.value); setErrorStep1(''); }}
-                    placeholder="Minimal 6 Karakter"
+                    placeholder="••••••••"
                     className="w-full pl-12 pr-4 py-3.5 bg-white border-2 border-slate-300 focus:border-[#1b7b9e] focus:ring-2 focus:ring-cyan-100 rounded-2xl text-sm outline-none transition-all"
                   />
+                </div>
+                
+                {/* Password Strength Indicator */}
+                <div className="mt-3 bg-slate-50 p-3 rounded-xl border border-slate-100">
+                  <p className="text-[10px] font-bold text-slate-500 mb-2">Persyaratan Kata Sandi:</p>
+                  <div className="grid grid-cols-2 gap-2 text-[10px]">
+                    <div className={`flex items-center gap-1.5 ${strength.length ? 'text-green-600 font-bold' : 'text-slate-500'}`}>
+                      {strength.length ? <CheckCircle2 size={12} /> : <div className="w-3 h-3 rounded-full border border-slate-300" />}
+                      Minimal 8 Karakter
+                    </div>
+                    <div className={`flex items-center gap-1.5 ${strength.uppercase ? 'text-green-600 font-bold' : 'text-slate-500'}`}>
+                      {strength.uppercase ? <CheckCircle2 size={12} /> : <div className="w-3 h-3 rounded-full border border-slate-300" />}
+                      Huruf Kapital (A-Z)
+                    </div>
+                    <div className={`flex items-center gap-1.5 ${strength.lowercase ? 'text-green-600 font-bold' : 'text-slate-500'}`}>
+                      {strength.lowercase ? <CheckCircle2 size={12} /> : <div className="w-3 h-3 rounded-full border border-slate-300" />}
+                      Huruf Kecil (a-z)
+                    </div>
+                    <div className={`flex items-center gap-1.5 ${strength.number ? 'text-green-600 font-bold' : 'text-slate-500'}`}>
+                      {strength.number ? <CheckCircle2 size={12} /> : <div className="w-3 h-3 rounded-full border border-slate-300" />}
+                      Angka (0-9)
+                    </div>
+                    <div className={`flex items-center gap-1.5 ${strength.special ? 'text-green-600 font-bold' : 'text-slate-500'}`}>
+                      {strength.special ? <CheckCircle2 size={12} /> : <div className="w-3 h-3 rounded-full border border-slate-300" />}
+                      Karakter Spesial
+                    </div>
+                  </div>
                 </div>
               </div>
 

@@ -129,7 +129,7 @@ export default function DashboardPage() {
         <StatCard
           title={t.dashboard.passedScreening || 'LOLOS CV SCREENING'}
           value="89"
-          subtitle={t.dashboard.passedScreeningSub || 'threshold >= 80%'}
+          subtitle={t.dashboard.passedScreeningSub || 'threshold >= 60%'}
           icon={<BrainCircuit size={18} />}
           trend="up"
           trendValue="57%"

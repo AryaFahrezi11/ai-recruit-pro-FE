@@ -41,7 +41,7 @@ export default function KampusSupportPage() {
     },
     {
       q: 'Bagaimana sistem AI PO-FIT menilai kesesuaian kurikulum mahasiswa dengan kualifikasi perusahaan?',
-      a: 'Sistem menganalisis teks CV, transkrip mata kuliah, serta portofolio mahasiswa terhadap deskripsi pekerjaan menggunakan metode Cosine Similarity. Skor 80% ke atas menandakan kualifikasi mahasiswa sangat memenuhi standar kebutuhan industri.'
+      a: 'Sistem menganalisis teks CV, transkrip mata kuliah, serta portofolio mahasiswa terhadap deskripsi pekerjaan menggunakan metode Cosine Similarity. Skor 60% ke atas menandakan kualifikasi mahasiswa sangat memenuhi standar kebutuhan industri.'
     },
     {
       q: 'Bagaimana prosedur mengundang perusahaan mitra baru ke dalam ekosistem karir kampus?',
@@ -97,7 +97,7 @@ export default function KampusSupportPage() {
               2. Penilaian AI PO-FIT
             </div>
             <p className="text-xs text-muted-foreground leading-relaxed">
-              Perusahaan mitra menyeleksi CV mahasiswa menggunakan skor Cosine Similarity (Threshold Lolos ≥80%).
+              Perusahaan mitra menyeleksi CV mahasiswa menggunakan skor Cosine Similarity (Threshold Lolos ≥60%).
             </p>
           </div>
 

@@ -109,7 +109,7 @@ export default function PelamarPerfectLayout({
   useEffect(() => {
     setIsMounted(true);
     // Exclude public authentication pages from route guard
-    const isAuthPage = pathname === '/pelamar/login' || pathname === '/pelamar/register';
+    const isAuthPage = pathname === '/applicant/login' || pathname === '/applicant/register';
 
     if (isAuthPage) {
       setIsAuthenticated(true);
@@ -120,11 +120,17 @@ export default function PelamarPerfectLayout({
     const loggedIn = localStorage.getItem('isPelamarLoggedIn');
     // Auth guard check
     const isLoggedIn = localStorage.getItem('isPelamarLoggedIn');
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem('access_token');
+    const role = localStorage.getItem('user_role');
+
+    if (role === 'perusahaan') {
+      router.push('/dashboard');
+      return;
+    }
 
     if (!isLoggedIn && !token) {
-      if (pathname.startsWith('/pelamar') && pathname !== '/pelamar/login' && pathname !== '/pelamar/register') {
-        router.push('/pelamar/login');
+      if (pathname.startsWith('/applicant') && pathname !== '/applicant/login' && pathname !== '/applicant/register') {
+        router.push('/applicant/login');
         return;
       }
     }
@@ -176,17 +182,17 @@ export default function PelamarPerfectLayout({
     removeAuthToken();
     setShowLogoutModal(false);
     toast.success('Berhasil keluar dari sistem.');
-    router.push('/pelamar/login');
+    router.push('/applicant/login');
   };
 
   const navItems = [
-    { name: t.pelamar.nav.findJobs, href: '/pelamar/dashboard', icon: Search },
-    { name: t.pelamar.nav.companies, href: '/pelamar/dashboard?view=companies', icon: Building2 },
-    { name: t.pelamar.nav.careerResources, href: '/pelamar/upload-cv', icon: BookOpen },
+    { name: t.pelamar.nav.findJobs, href: '/applicant/dashboard', icon: Search },
+    { name: t.pelamar.nav.companies, href: '/applicant/dashboard?view=companies', icon: Building2 },
+    { name: t.pelamar.nav.careerResources, href: '/applicant/upload-cv', icon: BookOpen },
   ];
 
   // If on login/register pages, render children without candidate layout navbar
-  if (pathname === '/pelamar/login' || pathname === '/pelamar/register') {
+  if (pathname === '/applicant/login' || pathname === '/applicant/register') {
     return <>{children}</>;
   }
 
@@ -203,7 +209,7 @@ export default function PelamarPerfectLayout({
 
           {/* Left Side: Brand & Main Navigation Links */}
           <div className="flex items-center gap-8">
-            <Link href="/pelamar/dashboard" className="flex items-center gap-3 group">
+            <Link href="/applicant/dashboard" className="flex items-center gap-3 group">
               <div className="w-10 h-10 rounded-xl bg-[#2596be] flex items-center justify-center text-white font-black text-xl shadow-sm group-hover:scale-105 transition-transform duration-200">
                 RP
               </div>
@@ -277,7 +283,7 @@ export default function PelamarPerfectLayout({
                   </div>
 
                   <Link
-                    href="/pelamar/upload-cv"
+                    href="/applicant/upload-cv"
                     onClick={() => setIsProfileOpen(false)}
                     className="flex items-center gap-3 px-4 py-2.5 rounded-2xl text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-[#F0F8FB] dark:hover:bg-slate-800 hover:text-[#2596be] transition-colors"
                   >
@@ -286,7 +292,7 @@ export default function PelamarPerfectLayout({
                   </Link>
 
                   <Link
-                    href="/pelamar/tersimpan"
+                    href="/applicant/saved"
                     onClick={() => setIsProfileOpen(false)}
                     className="flex items-center gap-3 px-4 py-2.5 rounded-2xl text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-[#F0F8FB] dark:hover:bg-slate-800 hover:text-[#2596be] transition-colors"
                   >
@@ -295,7 +301,7 @@ export default function PelamarPerfectLayout({
                   </Link>
 
                   <Link
-                    href="/pelamar/status"
+                    href="/applicant/status"
                     onClick={() => setIsProfileOpen(false)}
                     className="flex items-center gap-3 px-4 py-2.5 rounded-2xl text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-[#F0F8FB] dark:hover:bg-slate-800 hover:text-[#2596be] transition-colors"
                   >

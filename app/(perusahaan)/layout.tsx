@@ -55,10 +55,21 @@ export default function PerusahaanLayout({
     }
   ];
 
-  // Prevent hydration mismatch
+  // Prevent hydration mismatch and check auth
   useEffect(() => {
     setMounted(true);
-  }, []);
+    
+    const role = localStorage.getItem('user_role');
+    const token = localStorage.getItem('access_token');
+    
+    if (!token || role !== 'perusahaan') {
+      if (role === 'pelamar') {
+        router.push('/applicant/dashboard');
+      } else {
+        router.push('/login');
+      }
+    }
+  }, [router]);
 
   const markAllRead = () => {
     setUnreadCount(0);

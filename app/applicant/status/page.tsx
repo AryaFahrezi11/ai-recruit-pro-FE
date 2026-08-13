@@ -45,13 +45,13 @@ interface ApplicationItem {
   statusMessage: string;
   hasActionRequired?: boolean;
   cvScore: number;
-  cvBreakdown: {
-    format: number;
-    experience: number;
-    skills: number;
-    achievements: number;
-    language: number;
-    notes: string[];
+  threshold: number;
+  kategori?: string;
+  hybridDetails?: {
+    sbert_score: number;
+    keyword_score: number;
+    keywords_found: number;
+    keywords_total: number;
   };
   videoScore: number;
   videoBreakdown: {
@@ -78,17 +78,13 @@ const initialMockApplications: ApplicationItem[] = [
     hasActionRequired: true,
     statusMessage: 'CV ATS-Friendly Anda telah LOLOS skrining AI dengan skor 92%! Silakan lakukan perekaman Wawancara Video Singkat (Virtual Interview) untuk melanjutkan proses seleksi ke tahap berikutnya.',
     cvScore: 92,
-    cvBreakdown: {
-      format: 88,
-      experience: 95,
-      skills: 92,
-      achievements: 85,
-      language: 90,
-      notes: [
-        '3+ tahun pengalaman Frontend Engineer sangat relevan dengan kualifikasi senior.',
-        'Kata kunci Next.js, TypeScript, dan Tailwind CSS cocok 100% dengan Job Description.',
-        'Struktur dokumen ATS-Friendly terbaca sempurna oleh parser OCR AI.'
-      ]
+    threshold: 60,
+    kategori: 'Frontend Engineer',
+    hybridDetails: {
+      sbert_score: 90,
+      keyword_score: 94,
+      keywords_found: 8,
+      keywords_total: 10
     },
     videoScore: 0,
     videoBreakdown: {
@@ -130,35 +126,69 @@ export default function StatusValidasiPage() {
 
         if (rawList.length > 0) {
           const mapped: ApplicationItem[] = rawList.map((item: any, idx: number) => {
-            const isLolos = item.status === 'lolos_cv' || item.status === 'Lolos';
-            const cvScore = Math.round(item.skor_kecocokan || item.cv_score || 75);
+            const cvScore = Math.round(item.analisis_cv?.skor_kecocokan || item.cv_score || 0);
+            const threshold = item.analisis_cv?.threshold_digunakan || item.job?.cv_threshold || 60;
+            
+            let stageIndex = 1;
+            let statusLabel: 'Dalam Proses' | 'Lolos' | 'Tidak Lolos' | 'Lowongan Telah Ditutup' = 'Dalam Proses';
+            let tahapName = 'Stage 1: UPLOAD CV';
+            let msg = 'Profil CV Anda telah masuk pipeline. Menunggu proses seleksi AI.';
+            
+            const s = item.status || 'upload_cv';
+            
+            if (s === 'upload_cv' || s === 'dikirim') {
+              stageIndex = 1;
+              tahapName = 'Stage 1: UPLOAD CV';
+              msg = 'Profil CV Anda telah masuk pipeline. Menunggu HR Perusahaan untuk memicu proses seleksi AI.';
+            } else if (s === 'cv_screening') {
+              stageIndex = 2;
+              tahapName = 'Stage 2: CV SCREENING (PO-FIT)';
+              msg = 'CV Anda sedang dalam tahap evaluasi kecocokan (PO-FIT) oleh AI.';
+            } else if (s === 'lolos_cv' || s === 'virtual_interview') {
+              stageIndex = 3;
+              tahapName = 'Stage 3: VIRTUAL INTERVIEW';
+              msg = `Selamat! CV Anda telah LOLOS screening AI (PO-FIT) dengan skor kecocokan ${cvScore}%. Silakan lakukan perekaman Wawancara Video Singkat.`;
+            } else if (s === 'ditolak_sistem' || s === 'ditolak') {
+              stageIndex = 2;
+              tahapName = 'Stage 2: CV SCREENING (Ditolak)';
+              statusLabel = 'Tidak Lolos';
+              msg = `Mohon maaf, profil Anda belum memenuhi kriteria threshold AI (Skor: ${cvScore}%).`;
+            } else if (s === 'video_analysis') {
+              stageIndex = 4;
+              tahapName = 'Stage 4: AI VIDEO ANALYSIS';
+              msg = 'Video wawancara Anda sedang dianalisis oleh AI.';
+            } else if (s === 'human_validation') {
+              stageIndex = 5;
+              tahapName = 'Stage 5: HUMAN VALIDATION';
+              msg = 'Hasil analisis AI sedang divalidasi oleh tim rekrutmen.';
+            } else if (s === 'Lolos') {
+              stageIndex = 5;
+              tahapName = 'Stage 5: KEPUTUSAN AKHIR';
+              statusLabel = 'Lolos';
+              msg = 'Selamat! Anda dinyatakan Lolos seleksi.';
+            } else if (s === 'Tidak Lolos') {
+              stageIndex = 5;
+              tahapName = 'Stage 5: KEPUTUSAN AKHIR';
+              statusLabel = 'Tidak Lolos';
+              msg = 'Mohon maaf, Anda belum lolos seleksi kali ini.';
+            }
 
             return {
               id: item.id || idx + 1,
               jobTitle: item.job?.judul_posisi || item.judul_posisi || 'Lowongan Pekerjaan',
               companyName: item.job?.perusahaan?.nama_perusahaan || item.nama_perusahaan || 'Perusahaan Partner',
               logo: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=120&auto=format&fit=crop&q=80',
-              applyDate: item.created_at ? new Date(item.created_at).toLocaleDateString('id-ID') : 'Baru saja',
+              applyDate: item.applied_at ? new Date(item.applied_at).toLocaleDateString('id-ID') : 'Baru saja',
               kegiatan: 'WEBCAREER',
-              tahapRekrutmen: isLolos ? 'Stage 2: CV PO-FIT Lolos' : 'Stage 2: Evaluasi CV',
-              currentStageIndex: isLolos ? 3 : 2,
-              status: isLolos ? 'Lolos' : 'Dalam Proses',
-              statusMessage: isLolos
-                ? `CV Anda berhasil dianalisis oleh AI dengan skor kecocokan ${cvScore}%. Rekruter akan menghubungi Anda untuk proses wawancara.`
-                : `CV Anda sedang dalam proses peninjauan oleh sistem AI dengan skor kecocokan ${cvScore}%.`,
-              hasActionRequired: isLolos,
+              tahapRekrutmen: tahapName,
+              currentStageIndex: stageIndex,
+              status: statusLabel,
+              statusMessage: msg,
+              hasActionRequired: s === 'lolos_cv' || s === 'virtual_interview',
               cvScore: cvScore,
-              cvBreakdown: {
-                format: 85,
-                experience: 80,
-                skills: cvScore,
-                achievements: 75,
-                language: 90,
-                notes: [
-                  `Hasil analisis AI kecocokan kualifikasi: ${cvScore}%`,
-                  'Struktur dokumen PDF/TXT valid dan dapat dibaca parser.'
-                ]
-              },
+              threshold: threshold,
+              kategori: item.analisis_cv?.kategori,
+              hybridDetails: item.analisis_cv?.hybrid_details,
               videoScore: 0,
               videoBreakdown: {
                 fluency: 0,
@@ -411,10 +441,15 @@ export default function StatusValidasiPage() {
                                   : 'bg-slate-50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-800 text-slate-500'
                               }`}
                             >
-                              <div className="flex items-center justify-between text-[11px] font-black uppercase tracking-wider">
+                              <div className="flex flex-col gap-1.5 pb-2 mb-2 border-b border-black/5 dark:border-white/5">
+                                <span className="text-[10px] sm:text-[11px] font-black uppercase tracking-wider leading-tight">
+                                  {stage.name}
+                                </span>
+                              </div>
+                              <div className="flex items-center justify-between text-[10px] font-bold uppercase tracking-wider opacity-80">
                                 <span>{t.pelamar.status.viewDetails}</span>
                                 {(isClickableCv || isClickableVideo) && (
-                                  <span className="px-2 py-0.5 rounded-full bg-white dark:bg-slate-800 text-[#2596be] dark:text-cyan-400 font-bold text-[10px] border border-[#B8E1ED] shadow-2xs">
+                                  <span className="px-2 py-0.5 rounded-full bg-white dark:bg-slate-800 text-[#2596be] dark:text-cyan-400 font-bold text-[9px] border border-[#B8E1ED] shadow-2xs">
                                     {t.pelamar.status.clickDetail}
                                   </span>
                                 )}
@@ -479,7 +514,7 @@ export default function StatusValidasiPage() {
                       {app.currentStageIndex === 3 && app.status === 'Dalam Proses' && (
                         <div className="pt-2">
                           <Link
-                            href="/pelamar/wawancara"
+                            href="/applicant/interviews"
                             className="inline-flex items-center gap-2.5 px-6 py-3 rounded-full bg-[#2596be] hover:bg-[#1D7FA1] text-white font-black text-xs sm:text-sm shadow-md hover:shadow-lg transition-all animate-bounce cursor-pointer"
                           >
                             <Video size={18} className="text-cyan-200" />
@@ -561,14 +596,14 @@ export default function StatusValidasiPage() {
 
             {/* Score Banner */}
             <div className="p-6 rounded-3xl bg-[#F0F8FB] dark:bg-slate-800 border border-[#C2E5EF] dark:border-slate-700 flex flex-col sm:flex-row items-center gap-6">
-              <div className={`w-24 h-24 rounded-full flex flex-col items-center justify-center text-white shrink-0 shadow-md ${activeCvModalJob.cvScore >= 80 ? 'bg-[#2596be]' : 'bg-red-600'
+              <div className={`w-24 h-24 rounded-full flex flex-col items-center justify-center text-white shrink-0 shadow-md ${activeCvModalJob.cvScore >= activeCvModalJob.threshold ? 'bg-[#2596be]' : 'bg-red-600'
                 }`}>
                 <span className="text-3xl font-black">{activeCvModalJob.cvScore}%</span>
                 <span className="text-[10px] font-bold uppercase tracking-widest text-white/80">SCORE</span>
               </div>
 
               <div className="space-y-2 text-center sm:text-left">
-                {activeCvModalJob.cvScore >= 80 ? (
+                {activeCvModalJob.cvScore >= activeCvModalJob.threshold ? (
                   <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-emerald-100 text-emerald-800 text-xs font-extrabold border border-emerald-300">
                     <CheckCircle2 size={16} /> {t.pelamar.status.passedThreshold}
                   </div>
@@ -579,7 +614,7 @@ export default function StatusValidasiPage() {
                 )}
 
                 <h4 className="text-lg font-black text-[#2596be] dark:text-cyan-400">
-                  {activeCvModalJob.cvScore >= 80 ? t.pelamar.status.highMatch : t.pelamar.status.lowMatch}
+                  {activeCvModalJob.cvScore >= activeCvModalJob.threshold ? t.pelamar.status.highMatch : t.pelamar.status.lowMatch}
                 </h4>
                 <p className="text-xs text-slate-600 dark:text-slate-300">
                   {t.pelamar.status.algoInfo}: <strong className="text-[#2596be] dark:text-cyan-400">{activeCvModalJob.cvScore}% match</strong>.
@@ -587,31 +622,34 @@ export default function StatusValidasiPage() {
               </div>
             </div>
 
-            {/* 5 Criteria Breakdown */}
-            <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
-              <div className="p-4 rounded-2xl bg-white dark:bg-slate-800 border border-[#C2E5EF] dark:border-slate-700 text-center space-y-1">
-                <span className="text-[10px] font-extrabold text-slate-500 uppercase block">{t.pelamar.status.format}</span>
-                <span className="text-xl font-black text-[#2596be] dark:text-cyan-400">{activeCvModalJob.cvBreakdown.format}%</span>
+            {/* Real AI Data Breakdown */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div className="p-5 rounded-2xl bg-white dark:bg-slate-800 border border-[#C2E5EF] dark:border-slate-700 text-center space-y-2">
+                <span className="text-xs font-extrabold text-slate-500 uppercase block">Kesesuaian Profil</span>
+                <span className="text-3xl font-black text-[#2596be] dark:text-cyan-400">{activeCvModalJob.hybridDetails?.sbert_score ?? activeCvModalJob.cvScore}%</span>
+                <p className="text-[10px] text-slate-500">Kesesuaian pengalaman dan latar belakang</p>
               </div>
 
-              <div className="p-4 rounded-2xl bg-white dark:bg-slate-800 border border-[#C2E5EF] dark:border-slate-700 text-center space-y-1">
-                <span className="text-[10px] font-extrabold text-slate-500 uppercase block">{t.pelamar.status.experience}</span>
-                <span className="text-xl font-black text-[#2596be] dark:text-cyan-400">{activeCvModalJob.cvBreakdown.experience}%</span>
+              <div className="p-5 rounded-2xl bg-white dark:bg-slate-800 border border-[#C2E5EF] dark:border-slate-700 text-center space-y-2">
+                <span className="text-xs font-extrabold text-slate-500 uppercase block">Kecocokan Kriteria Utama</span>
+                {!activeCvModalJob.hybridDetails?.keywords_total ? (
+                  <span className="text-xl font-bold text-slate-400 block pt-1 pb-1">Tidak Diatur</span>
+                ) : (
+                  <span className="text-3xl font-black text-[#2596be] dark:text-cyan-400">{activeCvModalJob.hybridDetails?.keyword_score ?? 0}%</span>
+                )}
+                <p className="text-[10px] text-slate-500">Berdasarkan syarat spesifik lowongan</p>
               </div>
 
-              <div className="p-4 rounded-2xl bg-white dark:bg-slate-800 border border-[#C2E5EF] dark:border-slate-700 text-center space-y-1">
-                <span className="text-[10px] font-extrabold text-slate-500 uppercase block">{t.pelamar.status.skills}</span>
-                <span className="text-xl font-black text-[#2596be] dark:text-cyan-400">{activeCvModalJob.cvBreakdown.skills}%</span>
-              </div>
-
-              <div className="p-4 rounded-2xl bg-white dark:bg-slate-800 border border-[#C2E5EF] dark:border-slate-700 text-center space-y-1">
-                <span className="text-[10px] font-extrabold text-slate-500 uppercase block">{t.pelamar.status.achievements}</span>
-                <span className="text-xl font-black text-[#2596be] dark:text-cyan-400">{activeCvModalJob.cvBreakdown.achievements}%</span>
-              </div>
-
-              <div className="p-4 rounded-2xl bg-white dark:bg-slate-800 border border-[#C2E5EF] dark:border-slate-700 text-center space-y-1">
-                <span className="text-[10px] font-extrabold text-slate-500 uppercase block">{t.pelamar.status.language}</span>
-                <span className="text-xl font-black text-[#2596be] dark:text-cyan-400">{activeCvModalJob.cvBreakdown.language}%</span>
+              <div className="p-5 rounded-2xl bg-white dark:bg-slate-800 border border-[#C2E5EF] dark:border-slate-700 text-center space-y-2">
+                <span className="text-xs font-extrabold text-slate-500 uppercase block">Kriteria Terpenuhi</span>
+                {!activeCvModalJob.hybridDetails?.keywords_total ? (
+                  <span className="text-xl font-bold text-slate-400 block pt-1 pb-1">-</span>
+                ) : (
+                  <span className="text-3xl font-black text-[#2596be] dark:text-cyan-400">
+                    {activeCvModalJob.hybridDetails?.keywords_found ?? 0} <span className="text-lg text-slate-400">/ {activeCvModalJob.hybridDetails?.keywords_total}</span>
+                  </span>
+                )}
+                <p className="text-[10px] text-slate-500">Jumlah syarat yang terpenuhi di CV</p>
               </div>
             </div>
 
@@ -621,12 +659,14 @@ export default function StatusValidasiPage() {
                 <Sparkles size={16} /> {t.pelamar.status.cvNotes}
               </span>
               <ul className="space-y-2">
-                {activeCvModalJob.cvBreakdown.notes.map((note, idx) => (
-                  <li key={idx} className="flex items-start gap-2 text-slate-700 dark:text-slate-300">
-                    <Check size={16} className="text-emerald-600 shrink-0 mt-0.5" />
-                    <span>{note}</span>
-                  </li>
-                ))}
+                <li className="flex items-start gap-2 text-slate-700 dark:text-slate-300">
+                  <Check size={16} className="text-emerald-600 shrink-0 mt-0.5" />
+                  <span>Kategori Kecocokan: <strong className="uppercase">{activeCvModalJob.kategori ? activeCvModalJob.kategori.replace('_', ' ') : '-'}</strong></span>
+                </li>
+                <li className="flex items-start gap-2 text-slate-700 dark:text-slate-300">
+                  <Check size={16} className="text-emerald-600 shrink-0 mt-0.5" />
+                  <span>Skor akhir adalah gabungan dari kesesuaian profil keseluruhan dan pemenuhan kriteria wajib perusahaan.</span>
+                </li>
               </ul>
             </div>
 

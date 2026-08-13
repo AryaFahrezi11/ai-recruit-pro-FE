@@ -19,6 +19,7 @@ interface CandidateCardProps {
   role: string;
   education?: string; // Information on highest education
   university?: string; // Information on candidate's origin university
+  appliedJob?: string; // Information on the job applied for
   timeInfo: string;
   variant?: 'default' | 'screening' | 'analysis';
   timeIcon?: boolean;
@@ -26,10 +27,16 @@ interface CandidateCardProps {
   progressBar?: boolean;
   progressText?: string;
   onClick?: () => void;
+  // Custom Action Button
+  actionLabel?: string;
+  actionLoading?: boolean;
+  onActionClick?: (e: React.MouseEvent) => void;
+  customActions?: React.ReactNode;
   // Flowchart props
   stage?: CandidateStage;
   status?: CandidateStatus;
   cvScore?: number;
+  threshold?: number;
   videoUploaded?: boolean;
   videoScores?: VideoScores;
 }
@@ -48,12 +55,18 @@ export function CandidateCard({
   role,
   education,
   university,
+  appliedJob,
   timeInfo,
   variant = 'default',
   onClick,
+  actionLabel,
+  actionLoading,
+  onActionClick,
+  customActions,
   stage,
   status,
   cvScore,
+  threshold = 60,
   videoScores,
 }: CandidateCardProps) {
   const { t } = useTranslation();
@@ -118,6 +131,30 @@ export function CandidateCard({
       {/* Role */}
       <p className="text-xs font-medium text-muted-foreground mb-3">{role}</p>
 
+      {/* Education, University & Applied Job */}
+      {(education || university || appliedJob) && (
+        <div className="flex flex-col gap-1 mb-3">
+          {education && (
+            <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground font-medium">
+              <GraduationCap size={12} className="shrink-0 text-primary/70" />
+              <span className="truncate">{education}</span>
+            </div>
+          )}
+          {university && (
+            <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground font-medium">
+              <Building2 size={12} className="shrink-0 text-primary/70" />
+              <span className="truncate">{university}</span>
+            </div>
+          )}
+          {appliedJob && (
+            <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground font-medium mt-1 pt-1 border-t border-border/40">
+              <span className="shrink-0 text-[9px] px-1.5 py-0.5 bg-indigo-50 text-indigo-700 border border-indigo-200 dark:bg-indigo-950/30 dark:border-indigo-800 dark:text-indigo-400 rounded-md uppercase tracking-wider font-bold">APPLIED</span>
+              <span className="truncate text-foreground font-semibold">{appliedJob}</span>
+            </div>
+          )}
+        </div>
+      )}
+
       {/* CV Score indicator (for cv_screening stage) */}
       {cvScore !== undefined && (
         <div className="mb-3 p-2 bg-muted/40 rounded-lg border border-border/80">
@@ -125,20 +162,20 @@ export function CandidateCard({
             <span className="text-[10px] font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
               {t.pipeline?.cosineSimilarity}
             </span>
-            <span className={`text-xs font-bold ${cvScore >= 80 ? 'text-emerald-700 dark:text-emerald-400' : 'text-rose-700 dark:text-rose-400'}`}>
+            <span className={`text-xs font-bold ${cvScore >= threshold ? 'text-emerald-700 dark:text-emerald-400' : 'text-rose-700 dark:text-rose-400'}`}>
               {cvScore}% Match
             </span>
           </div>
           <div className="w-full bg-slate-200 dark:bg-slate-800 rounded-full h-2 overflow-hidden">
             <div 
-              className={`h-full rounded-full transition-all duration-500 ${cvScore >= 80 ? 'bg-emerald-600' : 'bg-rose-600'}`}
+              className={`h-full rounded-full transition-all duration-500 ${cvScore >= threshold ? 'bg-emerald-600' : 'bg-rose-600'}`}
               style={{ width: `${cvScore}%` }}
             ></div>
           </div>
           <div className="flex items-center justify-between mt-1">
-            <span className="text-[9px] font-semibold text-muted-foreground">{t.pipeline?.threshold}</span>
-            <span className={`text-[9px] font-bold ${cvScore >= 80 ? 'text-emerald-700 dark:text-emerald-400' : 'text-rose-700 dark:text-rose-400'}`}>
-              {cvScore >= 80 ? '✓ Lolos' : '✗ Dibawah Threshold'}
+            <span className="text-[9px] font-semibold text-muted-foreground">Ambang Batas: {threshold}%</span>
+            <span className={`text-[9px] font-bold ${cvScore >= threshold ? 'text-emerald-700 dark:text-emerald-400' : 'text-rose-700 dark:text-rose-400'}`}>
+              {cvScore >= threshold ? '✓ Lolos' : '✗ Dibawah Threshold'}
             </span>
           </div>
         </div>
@@ -162,10 +199,29 @@ export function CandidateCard({
         </div>
       )}
 
-      {/* Time info */}
-      <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground font-medium pt-2 border-t border-border/60">
-        <Clock size={12} className="text-muted-foreground shrink-0" />
-        <span>{timeInfo}</span>
+      {/* Time info & Action */}
+      <div className="flex items-center justify-between pt-2 border-t border-border/60 mt-1">
+        <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground font-medium">
+          <Clock size={12} className="text-muted-foreground shrink-0" />
+          <span>{timeInfo}</span>
+        </div>
+        
+        <div className="flex items-center gap-2">
+          {customActions}
+          {actionLabel && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                if (onActionClick) onActionClick(e);
+              }}
+              disabled={actionLoading}
+              className="px-3 py-1.5 bg-[#2596be] hover:bg-[#1D7FA1] text-white text-[10px] font-bold rounded-md transition-colors flex items-center gap-1 disabled:opacity-75"
+            >
+              {actionLoading ? <Loader2 size={10} className="animate-spin" /> : <Brain size={10} />}
+              {actionLoading ? 'Memproses...' : actionLabel}
+            </button>
+          )}
+        </div>
       </div>
     </div>
   );

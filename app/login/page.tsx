@@ -67,6 +67,15 @@ export default function CompanyLoginPage() {
       
       setToken(response.access_token);
       setUser(response.user);
+      
+      // Save to localStorage for api.ts helper compatibility
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('access_token', response.access_token);
+        localStorage.setItem('user_role', response.user.role);
+        localStorage.setItem('user_email', email);
+        localStorage.setItem('isPerusahaanLoggedIn', 'true');
+      }
+
       toast.success('Login Perusahaan Berhasil');
       
       // Jika Anda menggunakan app/(perusahaan)/dashboard atau app/dashboard
@@ -101,7 +110,7 @@ export default function CompanyLoginPage() {
         </Link>
 
         <Link
-          href="/pelamar/login"
+          href="/applicant/login"
           className="text-xs sm:text-sm font-bold text-[#1b7b9e] hover:underline flex items-center gap-1.5"
         >
           Portal Pelamar Kerja &rarr;

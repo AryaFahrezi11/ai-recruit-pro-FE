@@ -39,14 +39,26 @@ export default function PelamarRegisterPage() {
   const [otpCode, setOtpCode] = useState(['', '', '', '', '', '']);
   const [otpError, setOtpError] = useState('');
 
+  const checkPasswordStrength = (pwd: string) => {
+    return {
+      length: pwd.length >= 8,
+      uppercase: /[A-Z]/.test(pwd),
+      lowercase: /[a-z]/.test(pwd),
+      number: /\d/.test(pwd),
+      special: /[@$!%*?&#^_\-]/.test(pwd),
+    };
+  };
+  const strength = checkPasswordStrength(password);
+  const isValidPassword = Object.values(strength).every(Boolean);
+
   const handleRegisterSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email || !email.includes('@')) {
       setError('Masukkan alamat email yang valid.');
       return;
     }
-    if (!password || password.length < 6) {
-      setError('Kata sandi minimal 6 karakter.');
+    if (!isValidPassword) {
+      setError('Kata sandi belum memenuhi semua persyaratan keamanan.');
       return;
     }
 
@@ -117,7 +129,7 @@ export default function PelamarRegisterPage() {
       localStorage.setItem('isPelamarLoggedIn', 'true');
 
       // Redirect to pelamar dashboard
-      router.push('/pelamar/dashboard');
+      router.push('/applicant/dashboard');
     } catch (err: any) {
       setOtpError(parseErrorMessage(err));
     } finally {
@@ -193,7 +205,7 @@ export default function PelamarRegisterPage() {
 
               <div className="space-y-1">
                 <label htmlFor="password" className="block text-xs font-bold text-slate-700 dark:text-slate-300">
-                  Kata Sandi (Minimal 6 karakter)
+                  Kata Sandi <span className="text-red-500">*</span>
                 </label>
                 <div className="relative flex items-center">
                   <Lock size={18} className="absolute left-4 text-slate-400 pointer-events-none" />
@@ -205,6 +217,33 @@ export default function PelamarRegisterPage() {
                     placeholder="••••••••"
                     className="w-full pl-12 pr-4 py-3 bg-white dark:bg-slate-800 border-2 border-slate-300 dark:border-slate-700 focus:border-[#1b7b9e] dark:focus:border-cyan-400 focus:ring-2 focus:ring-cyan-100 dark:focus:ring-cyan-900 rounded-2xl text-sm outline-none transition-all dark:text-white"
                   />
+                </div>
+                
+                {/* Password Strength Indicator */}
+                <div className="mt-3 bg-slate-50 dark:bg-slate-800/50 p-3 rounded-xl border border-slate-100 dark:border-slate-700/50">
+                  <p className="text-[10px] font-bold text-slate-500 dark:text-slate-400 mb-2">Persyaratan Kata Sandi:</p>
+                  <div className="grid grid-cols-2 gap-2 text-[10px]">
+                    <div className={`flex items-center gap-1.5 ${strength.length ? 'text-green-600 dark:text-green-400 font-bold' : 'text-slate-500 dark:text-slate-400'}`}>
+                      {strength.length ? <CheckCircle2 size={12} /> : <div className="w-3 h-3 rounded-full border border-slate-300 dark:border-slate-600" />}
+                      Minimal 8 Karakter
+                    </div>
+                    <div className={`flex items-center gap-1.5 ${strength.uppercase ? 'text-green-600 dark:text-green-400 font-bold' : 'text-slate-500 dark:text-slate-400'}`}>
+                      {strength.uppercase ? <CheckCircle2 size={12} /> : <div className="w-3 h-3 rounded-full border border-slate-300 dark:border-slate-600" />}
+                      Huruf Kapital (A-Z)
+                    </div>
+                    <div className={`flex items-center gap-1.5 ${strength.lowercase ? 'text-green-600 dark:text-green-400 font-bold' : 'text-slate-500 dark:text-slate-400'}`}>
+                      {strength.lowercase ? <CheckCircle2 size={12} /> : <div className="w-3 h-3 rounded-full border border-slate-300 dark:border-slate-600" />}
+                      Huruf Kecil (a-z)
+                    </div>
+                    <div className={`flex items-center gap-1.5 ${strength.number ? 'text-green-600 dark:text-green-400 font-bold' : 'text-slate-500 dark:text-slate-400'}`}>
+                      {strength.number ? <CheckCircle2 size={12} /> : <div className="w-3 h-3 rounded-full border border-slate-300 dark:border-slate-600" />}
+                      Angka (0-9)
+                    </div>
+                    <div className={`flex items-center gap-1.5 ${strength.special ? 'text-green-600 dark:text-green-400 font-bold' : 'text-slate-500 dark:text-slate-400'}`}>
+                      {strength.special ? <CheckCircle2 size={12} /> : <div className="w-3 h-3 rounded-full border border-slate-300 dark:border-slate-600" />}
+                      Karakter Spesial
+                    </div>
+                  </div>
                 </div>
               </div>
 
@@ -227,7 +266,7 @@ export default function PelamarRegisterPage() {
 
             <div className="pt-2 text-center text-xs text-slate-600 dark:text-slate-400 font-medium">
               {t.pelamar.auth.hasAccount}{' '}
-              <Link href="/pelamar/login" className="font-extrabold text-[#1b7b9e] dark:text-cyan-400 hover:underline">
+              <Link href="/applicant/login" className="font-extrabold text-[#1b7b9e] dark:text-cyan-400 hover:underline">
                 {t.pelamar.auth.loginNow}
               </Link>
             </div>

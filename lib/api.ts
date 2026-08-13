@@ -94,8 +94,16 @@ export async function apiRequest<T = any>(
     if (response.status === 401) {
       removeAuthToken();
       if (typeof window !== 'undefined' && !window.location.pathname.includes('/login')) {
-        const isPelamar = window.location.pathname.startsWith('/pelamar');
-        window.location.href = isPelamar ? '/pelamar/login' : '/login';
+        const isPelamar = window.location.pathname.startsWith('/applicant');
+        const isAdmin = window.location.pathname.startsWith('/admin');
+        
+        if (isAdmin) {
+          window.location.href = '/admin/login';
+        } else if (isPelamar) {
+          window.location.href = '/applicant/login';
+        } else {
+          window.location.href = '/login';
+        }
       }
     }
 

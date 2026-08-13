@@ -51,7 +51,7 @@ export default function PelamarLoginPage() {
         localStorage.setItem('user_id', userId || '');
         localStorage.setItem('user_email', email);
         localStorage.setItem('isPelamarLoggedIn', 'true');
-        router.push('/pelamar/dashboard');
+        router.push('/applicant/dashboard');
       } else {
         setError('Respon login tidak valid.');
       }
@@ -154,7 +154,7 @@ export default function PelamarLoginPage() {
           {/* Bottom Switch to Register */}
           <div className="pt-2 text-center text-xs text-slate-600 dark:text-slate-400 font-medium">
             {t.pelamar.auth.noAccount}{' '}
-            <Link href="/pelamar/register" className="font-extrabold text-[#1b7b9e] dark:text-cyan-400 hover:underline">
+            <Link href="/applicant/register" className="font-extrabold text-[#1b7b9e] dark:text-cyan-400 hover:underline">
               {t.pelamar.auth.registerNow}
             </Link>
           </div>

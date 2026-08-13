@@ -68,7 +68,11 @@ export default function AtsCvBuilderPage() {
   ]);
 
   // Skills (starts empty for new applicants)
-  const [skills, setSkills] = useState('');
+  const [categorizedSkills, setCategorizedSkills] = useState<Array<{ category: string; items: string }>>([
+    { category: 'Programming Languages', items: '' },
+    { category: 'Frameworks & Libraries', items: '' },
+    { category: 'Databases & Tools', items: '' }
+  ]);
   // Certifications as dynamic list with credential links
   const [certifications, setCertifications] = useState<Array<{ name: string; credentialUrl: string }>>([{ name: '', credentialUrl: '' }]);
 
@@ -79,6 +83,8 @@ export default function AtsCvBuilderPage() {
   const [uploadState, setUploadState] = useState<'idle' | 'processing' | 'completed'>('idle');
   const [selectedFile, setSelectedFile] = useState<{ name: string; size: string } | null>(null);
   const [rawPdfFile, setRawPdfFile] = useState<File | null>(null);
+  const [rawCvText, setRawCvText] = useState('');
+  const [isParsing, setIsParsing] = useState(false);
 
   useEffect(() => {
     const savedEmail = localStorage.getItem('user_email') || '';
@@ -104,7 +110,18 @@ export default function AtsCvBuilderPage() {
           if (parsedCv.summary) setSummary(parsedCv.summary);
           if (parsedCv.experiences && Array.isArray(parsedCv.experiences) && parsedCv.experiences.length > 0) setExperiences(parsedCv.experiences);
           if (parsedCv.education && Array.isArray(parsedCv.education) && parsedCv.education.length > 0) setEducation(parsedCv.education);
-          if (parsedCv.skills) setSkills(parsedCv.skills);
+          if (parsedCv.skills) {
+            try {
+              const parsed = typeof parsedCv.skills === 'string' ? JSON.parse(parsedCv.skills) : parsedCv.skills;
+              if (Array.isArray(parsed)) {
+                setCategorizedSkills(parsed);
+              } else {
+                setCategorizedSkills([{ category: 'Core Skills', items: parsedCv.skills }]);
+              }
+            } catch (_) {
+              setCategorizedSkills([{ category: 'Core Skills', items: parsedCv.skills }]);
+            }
+          }
           if (parsedCv.certifications && Array.isArray(parsedCv.certifications) && parsedCv.certifications.length > 0) setCertifications(parsedCv.certifications);
         }
       } catch (_) {}
@@ -130,7 +147,18 @@ export default function AtsCvBuilderPage() {
               } catch (_) {}
             }
             if (p.ringkasan_diri) setSummary(p.ringkasan_diri);
-            if (p.keahlian) setSkills(p.keahlian);
+            if (p.keahlian) {
+              try {
+                const parsedSkills = typeof p.keahlian === 'string' ? JSON.parse(p.keahlian) : p.keahlian;
+                if (Array.isArray(parsedSkills) && parsedSkills.length > 0) {
+                  setCategorizedSkills(parsedSkills);
+                } else {
+                  setCategorizedSkills([{ category: 'Core Skills', items: p.keahlian }]);
+                }
+              } catch (_) {
+                setCategorizedSkills([{ category: 'Core Skills', items: p.keahlian }]);
+              }
+            }
             if (p.sertifikasi) {
               try {
                 const parsedCert = typeof p.sertifikasi === 'string' ? JSON.parse(p.sertifikasi) : p.sertifikasi;
@@ -253,6 +281,15 @@ export default function AtsCvBuilderPage() {
 
   const handleSaveAtsCv = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Validasi Keahlian
+    for (const skill of categorizedSkills) {
+      if (skill.category.trim() !== '' && skill.items.trim() === '') {
+        toast.error(`Poin keahlian untuk kategori "${skill.category}" wajib diisi!`);
+        return;
+      }
+    }
+
     setIsSavingDb(true);
     setDbSuccessMessage('');
 
@@ -268,7 +305,7 @@ export default function AtsCvBuilderPage() {
       summary,
       experiences,
       education,
-      skills,
+      skills: JSON.stringify(categorizedSkills),
       certifications,
       updatedAt: new Date().toLocaleDateString('id-ID')
     };
@@ -289,7 +326,7 @@ export default function AtsCvBuilderPage() {
         ringkasan_diri: summary,
         pengalaman_kerja: JSON.stringify(experiences),
         riwayat_pendidikan: JSON.stringify(education),
-        keahlian: skills,
+        keahlian: JSON.stringify(categorizedSkills),
         sertifikasi: JSON.stringify(certifications)
       });
 
@@ -304,6 +341,14 @@ export default function AtsCvBuilderPage() {
   };
 
   const handleSaveCvToDatabase = async () => {
+    // Validasi Keahlian
+    for (const skill of categorizedSkills) {
+      if (skill.category.trim() !== '' && skill.items.trim() === '') {
+        toast.error(`Poin keahlian untuk kategori "${skill.category}" wajib diisi!`);
+        return;
+      }
+    }
+
     setIsSavingDb(true);
     setDbSuccessMessage('');
     setUploadError('');
@@ -328,7 +373,7 @@ export default function AtsCvBuilderPage() {
           ringkasan_diri: summary,
           pengalaman_kerja: JSON.stringify(experiences),
           riwayat_pendidikan: JSON.stringify(education),
-          keahlian: skills,
+          keahlian: JSON.stringify(categorizedSkills),
           sertifikasi: JSON.stringify(certifications)
         });
         if (res && res.message) resMsg = res.message;
@@ -349,7 +394,7 @@ export default function AtsCvBuilderPage() {
     }
   };
 
-  const handleRealFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleRealFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     setUploadError('');
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
@@ -367,12 +412,50 @@ export default function AtsCvBuilderPage() {
       const formattedSize = (file.size / (1024 * 1024)).toFixed(1) + ' MB';
       setSelectedFile({ name: file.name, size: formattedSize });
       setUploadState('processing');
+      setIsParsing(true);
+      setRawCvText('');
 
-      setTimeout(() => {
+      try {
+        const formData = new FormData();
+        formData.append('cv_file', file);
+        
+        const response = await fetch('/api/parse-cv', {
+          method: 'POST',
+          body: formData,
+        });
+        
+        const result = await response.json();
+        
+        if (result.success && result.data) {
+          const { fullName: parsedName, email: parsedEmail, phone: parsedPhone, linkedinUrl: parsedLinkedin, skills: parsedSkills, rawText } = result.data;
+          
+          if (parsedName) setFullName(parsedName);
+          if (parsedEmail) setEmail(parsedEmail);
+          if (parsedPhone) setPhone(parsedPhone);
+          if (parsedLinkedin) setLinkedinUrl(parsedLinkedin);
+          if (parsedSkills) {
+            setCategorizedSkills([
+              { category: 'Keahlian Terdeteksi dari PDF', items: parsedSkills },
+              { category: 'Programming Languages', items: '' },
+              { category: 'Frameworks & Libraries', items: '' }
+            ]);
+          }
+          if (rawText) setRawCvText(rawText);
+          
+          toast.success('Berhasil membaca sebagian data CV!');
+          setActiveTab('builder'); // Redirect to builder to show the raw text panel
+        } else {
+          toast.error('Gagal membaca isi PDF.');
+        }
+      } catch (error) {
+        console.error('Error parsing CV:', error);
+        toast.error('Terjadi kesalahan saat memproses CV.');
+      } finally {
+        setIsParsing(false);
         setUploadState('completed');
         localStorage.setItem('candidateCvCreated', 'true');
         localStorage.setItem('candidateCvFileName', file.name);
-      }, 1000);
+      }
     }
   };
 
@@ -399,22 +482,10 @@ export default function AtsCvBuilderPage() {
   return (
     <div className="max-w-[1600px] w-full mx-auto space-y-8">
 
-      {/* Top Header & Breadcrumb */}
-      <div className="no-print flex items-center justify-end">
-        <div className="flex items-center gap-2">
-          <span className="w-2.5 h-2.5 rounded-full bg-[#1b7b9e] animate-pulse"></span>
-          <span className="text-xs sm:text-sm font-bold text-[#1b7b9e]">Tahap 1: Pembuatan &amp; Pengelolaan CV ATS</span>
-        </div>
-      </div>
-
       {/* Main Page Title Banner */}
       <div className="no-print bg-white dark:bg-slate-900 p-8 sm:p-10 rounded-3xl border border-[#C2E5EF] dark:border-slate-800 shadow-xs space-y-3">
         <div className="flex items-center justify-between flex-wrap gap-4">
           <div className="space-y-2">
-            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#E0F1F7] dark:bg-slate-800 text-[#1b7b9e] dark:text-cyan-400 text-xs font-bold border border-[#B8E1ED] dark:border-slate-700">
-              <Sparkles className="w-4 h-4 text-[#1b7b9e] dark:text-cyan-400" />
-              ATS-Friendly CV Generator &amp; Profile Builder
-            </div>
             <h1 className="text-2xl sm:text-4xl font-black text-[#1b7b9e] dark:text-cyan-400">
               {t.pelamar.uploadCv.title}
             </h1>
@@ -453,6 +524,27 @@ export default function AtsCvBuilderPage() {
 
           {/* Left Column: Input Form (7 Cols) */}
           <div className="no-print lg:col-span-6 bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-8 border border-[#C2E5EF] dark:border-slate-800 shadow-xs space-y-6">
+            {rawCvText && (
+              <div className="p-5 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-3xl space-y-3 mb-6 shadow-sm">
+                <div className="flex items-start gap-3">
+                  <div className="w-8 h-8 rounded-full bg-amber-100 dark:bg-amber-900 flex items-center justify-center shrink-0">
+                    <Info size={16} className="text-amber-600 dark:text-amber-400" />
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-bold text-amber-900 dark:text-amber-200">Data Mentah CV Anda</h4>
+                    <p className="text-xs text-amber-700 dark:text-amber-400 mt-1 leading-relaxed">
+                      Beberapa data telah terisi otomatis. Untuk Riwayat Kerja dan Pendidikan, silakan <b>copy-paste</b> dari teks di bawah ini ke dalam form untuk akurasi 100%.
+                    </p>
+                  </div>
+                </div>
+                <div className="bg-white dark:bg-slate-950 border border-amber-100 dark:border-amber-900 rounded-2xl p-4 h-56 overflow-y-auto custom-scrollbar shadow-inner">
+                  <pre className="text-[11px] sm:text-xs text-slate-700 dark:text-slate-300 whitespace-pre-wrap font-sans leading-relaxed">
+                    {rawCvText}
+                  </pre>
+                </div>
+              </div>
+            )}
+
             <div className="border-b border-slate-100 dark:border-slate-800 pb-4">
               <h2 className="text-xl font-black text-[#1b7b9e] dark:text-cyan-400">Biodata &amp; Riwayat Profesional</h2>
               <span className="text-xs text-slate-400">Setiap perubahan akan otomatis memperbarui tampilan CV ATS di sisi kanan.</span>
@@ -474,6 +566,7 @@ export default function AtsCvBuilderPage() {
                       value={fullName}
                       onChange={(e) => setFullName(e.target.value)}
                       placeholder="Budi Santoso"
+                      required
                       className="w-full px-4 py-2.5 bg-[#F0F8FB] dark:bg-slate-800 border border-[#C2E5EF] dark:border-slate-700 focus:border-[#1b7b9e] dark:focus:border-cyan-400 rounded-xl text-xs font-bold outline-none dark:text-white"
                     />
                   </div>
@@ -485,6 +578,7 @@ export default function AtsCvBuilderPage() {
                       value={jobTitle}
                       onChange={(e) => setJobTitle(e.target.value)}
                       placeholder="Frontend Engineer / Staff Marketing"
+                      required
                       className="w-full px-4 py-2.5 bg-[#F0F8FB] dark:bg-slate-800 border border-[#C2E5EF] dark:border-slate-700 focus:border-[#1b7b9e] dark:focus:border-cyan-400 rounded-xl text-xs font-bold outline-none dark:text-white"
                     />
                   </div>
@@ -498,6 +592,7 @@ export default function AtsCvBuilderPage() {
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       placeholder="budi.santoso@email.com"
+                      required
                       className="w-full px-3 py-2 bg-[#F0F8FB] dark:bg-slate-800 border border-[#C2E5EF] dark:border-slate-700 focus:border-[#1b7b9e] dark:focus:border-cyan-400 rounded-xl text-xs outline-none dark:text-white"
                     />
                   </div>
@@ -508,6 +603,7 @@ export default function AtsCvBuilderPage() {
                       value={phone}
                       onChange={(e) => setPhone(e.target.value)}
                       placeholder="081234567890"
+                      required
                       className="w-full px-3 py-2 bg-[#F0F8FB] dark:bg-slate-800 border border-[#C2E5EF] dark:border-slate-700 focus:border-[#1b7b9e] dark:focus:border-cyan-400 rounded-xl text-xs outline-none dark:text-white"
                     />
                   </div>
@@ -518,6 +614,7 @@ export default function AtsCvBuilderPage() {
                       value={location}
                       onChange={(e) => setLocation(e.target.value)}
                       placeholder="Jakarta Selatan, DKI Jakarta"
+                      required
                       className="w-full px-3 py-2 bg-[#F0F8FB] dark:bg-slate-800 border border-[#C2E5EF] dark:border-slate-700 focus:border-[#1b7b9e] dark:focus:border-cyan-400 rounded-xl text-xs outline-none dark:text-white"
                     />
                   </div>
@@ -534,6 +631,7 @@ export default function AtsCvBuilderPage() {
                       value={linkedinUrl}
                       onChange={(e) => setLinkedinUrl(e.target.value)}
                       placeholder="linkedin.com/in/username"
+                      required
                       className="w-full px-3.5 py-2 bg-[#F0F8FB] dark:bg-slate-800 border border-[#C2E5EF] dark:border-slate-700 focus:border-[#1b7b9e] dark:focus:border-cyan-400 rounded-xl text-xs font-bold outline-none dark:text-white"
                     />
                   </div>
@@ -547,6 +645,7 @@ export default function AtsCvBuilderPage() {
                       value={portfolioUrl}
                       onChange={(e) => setPortfolioUrl(e.target.value)}
                       placeholder="github.com/username atau portfolio.com"
+                      required
                       className="w-full px-3.5 py-2 bg-[#F0F8FB] dark:bg-slate-800 border border-[#C2E5EF] dark:border-slate-700 focus:border-[#1b7b9e] dark:focus:border-cyan-400 rounded-xl text-xs font-bold outline-none dark:text-white"
                     />
                   </div>
@@ -604,6 +703,7 @@ export default function AtsCvBuilderPage() {
                   value={summary}
                   onChange={(e) => setSummary(e.target.value)}
                   placeholder="Tuliskan ringkasan singkat mengenai latar belakang profesional, pencapaian utama, serta keahlian utama Anda di sini..."
+                  required
                   className="w-full px-4 py-3 bg-[#F0F8FB] dark:bg-slate-800 border border-[#C2E5EF] dark:border-slate-700 focus:border-[#1b7b9e] dark:focus:border-cyan-400 rounded-xl text-xs outline-none leading-relaxed dark:text-white"
                 />
               </div>
@@ -645,6 +745,7 @@ export default function AtsCvBuilderPage() {
                         value={exp.company}
                         onChange={(e) => handleExperienceChange(idx, 'company', e.target.value)}
                         placeholder="PT Tech Inovasi Nusantara"
+                        required
                         className="px-3.5 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 focus:border-[#1b7b9e] dark:focus:border-cyan-400 rounded-xl text-xs font-bold outline-none dark:text-white"
                       />
                       <input
@@ -652,6 +753,7 @@ export default function AtsCvBuilderPage() {
                         value={exp.role}
                         onChange={(e) => handleExperienceChange(idx, 'role', e.target.value)}
                         placeholder="Senior Frontend Engineer"
+                        required
                         className="px-3.5 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 focus:border-[#1b7b9e] dark:focus:border-cyan-400 rounded-xl text-xs font-bold outline-none dark:text-white"
                       />
                     </div>
@@ -662,6 +764,7 @@ export default function AtsCvBuilderPage() {
                         value={exp.period}
                         onChange={(e) => handleExperienceChange(idx, 'period', e.target.value)}
                         placeholder="2022 - Sekarang"
+                        required
                         className="w-full px-3.5 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 focus:border-[#1b7b9e] dark:focus:border-cyan-400 rounded-xl text-xs outline-none dark:text-white"
                       />
                     </div>
@@ -671,6 +774,7 @@ export default function AtsCvBuilderPage() {
                       value={exp.description}
                       onChange={(e) => handleExperienceChange(idx, 'description', e.target.value)}
                       placeholder="Deskripsi pencapaian & tanggung jawab utama..."
+                      required
                       className="w-full px-3.5 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 focus:border-[#1b7b9e] dark:focus:border-cyan-400 rounded-xl text-xs outline-none leading-relaxed dark:text-white"
                     />
                   </div>
@@ -681,7 +785,7 @@ export default function AtsCvBuilderPage() {
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
                   <h3 className="text-xs font-black uppercase tracking-wider text-[#1b7b9e] dark:text-cyan-400 flex items-center gap-2">
-                    <GraduationCap size={16} /> 2. {t.pelamar.uploadCv.education}
+                    <GraduationCap size={16} /> 4. {t.pelamar.uploadCv.education}
                   </h3>
                   <button
                     type="button"
@@ -714,6 +818,7 @@ export default function AtsCvBuilderPage() {
                         value={edu.school}
                         onChange={(e) => handleEducationChange(idx, 'school', e.target.value)}
                         placeholder="Universitas Indonesia"
+                        required
                         className="px-3.5 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 focus:border-[#1b7b9e] dark:focus:border-cyan-400 rounded-xl text-xs font-bold outline-none dark:text-white"
                       />
                       <input
@@ -721,6 +826,7 @@ export default function AtsCvBuilderPage() {
                         value={edu.degree}
                         onChange={(e) => handleEducationChange(idx, 'degree', e.target.value)}
                         placeholder="S1 Teknik Informatika"
+                        required
                         className="px-3.5 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 focus:border-[#1b7b9e] dark:focus:border-cyan-400 rounded-xl text-xs font-bold outline-none dark:text-white"
                       />
                     </div>
@@ -731,6 +837,7 @@ export default function AtsCvBuilderPage() {
                         value={edu.period}
                         onChange={(e) => handleEducationChange(idx, 'period', e.target.value)}
                         placeholder="2016 - 2020"
+                        required
                         className="px-3.5 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 focus:border-[#1b7b9e] dark:focus:border-cyan-400 rounded-xl text-xs outline-none dark:text-white"
                       />
                       <input
@@ -738,6 +845,7 @@ export default function AtsCvBuilderPage() {
                         value={edu.gpa}
                         onChange={(e) => handleEducationChange(idx, 'gpa', e.target.value)}
                         placeholder="IPK 3.85 / 4.00"
+                        required
                         className="px-3.5 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 focus:border-[#1b7b9e] dark:focus:border-cyan-400 rounded-xl text-xs outline-none dark:text-white"
                       />
                     </div>
@@ -749,19 +857,70 @@ export default function AtsCvBuilderPage() {
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
                   <h3 className="text-xs font-black uppercase tracking-wider text-[#1b7b9e] dark:text-cyan-400 flex items-center gap-2">
-                    <Wrench size={16} /> 4. {t.pelamar.uploadCv.skills} & Sertifikat
+                    <Wrench size={16} /> 5. {t.pelamar.uploadCv.skills} & Sertifikat
                   </h3>
                 </div>
                 <div className="space-y-3">
-                  <div>
-                    <label className="block text-[11px] font-bold text-slate-500 dark:text-slate-400 mb-1">Keahlian Utama</label>
-                    <textarea
-                      rows={2}
-                      value={skills}
-                      onChange={(e) => setSkills(e.target.value)}
-                      placeholder="React.js, Next.js, TypeScript, JavaScript (ES6+), Tailwind CSS, REST API, Git"
-                      className="w-full px-4 py-2.5 bg-[#F0F8FB] dark:bg-slate-800 border border-[#C2E5EF] dark:border-slate-700 focus:border-[#1b7b9e] dark:focus:border-cyan-400 rounded-xl text-xs outline-none dark:text-white"
-                    />
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <label className="block text-[11px] font-bold text-slate-500 dark:text-slate-400">Keahlian Utama (Kategori)</label>
+                      <button
+                        type="button"
+                        onClick={() => setCategorizedSkills([...categorizedSkills, { category: '', items: '' }])}
+                        className="text-[#1b7b9e] dark:text-cyan-400 hover:underline text-[11px] font-bold flex items-center gap-1"
+                      >
+                        <Plus size={12} /> Tambah Kategori
+                      </button>
+                    </div>
+                    {categorizedSkills.map((skill, idx) => (
+                      <div key={idx} className="p-3 rounded-xl bg-[#F0F8FB] dark:bg-slate-800 border border-[#C2E5EF] dark:border-slate-700 space-y-2">
+                        <div className="flex items-center justify-between">
+                          <span className="text-[10px] font-bold text-slate-400">Kategori #{idx + 1}</span>
+                          {categorizedSkills.length > 1 && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const newSkills = [...categorizedSkills];
+                                newSkills.splice(idx, 1);
+                                setCategorizedSkills(newSkills);
+                              }}
+                              className="p-1 text-slate-400 hover:text-red-500 transition-colors"
+                              title="Hapus"
+                            >
+                              <Trash2 size={13} />
+                            </button>
+                          )}
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                          <div className="md:col-span-1">
+                            <input
+                              type="text"
+                              value={skill.category}
+                              onChange={(e) => {
+                                const newSkills = [...categorizedSkills];
+                                newSkills[idx].category = e.target.value;
+                                setCategorizedSkills(newSkills);
+                              }}
+                              placeholder="Cth: Programming Languages"
+                              className="w-full px-3 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 focus:border-[#1b7b9e] dark:focus:border-cyan-400 rounded-lg text-xs outline-none dark:text-white"
+                            />
+                          </div>
+                          <div className="md:col-span-2">
+                            <input
+                              type="text"
+                              value={skill.items}
+                              onChange={(e) => {
+                                const newSkills = [...categorizedSkills];
+                                newSkills[idx].items = e.target.value;
+                                setCategorizedSkills(newSkills);
+                              }}
+                              placeholder="Cth: Dart, PHP, JavaScript"
+                              className="w-full px-3 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 focus:border-[#1b7b9e] dark:focus:border-cyan-400 rounded-lg text-xs outline-none dark:text-white"
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    ))}
                   </div>
 
                   {/* Dynamic Certifications with Credential Links */}
@@ -928,7 +1087,7 @@ export default function AtsCvBuilderPage() {
                 <h3 className="text-xs font-bold uppercase tracking-wider text-slate-900 border-b border-slate-300 pb-1 font-sans">
                   RINGKASAN PROFESIONAL
                 </h3>
-                <p className="text-xs text-slate-700 leading-relaxed font-sans">
+                <p className="text-xs text-slate-700 leading-relaxed font-sans text-justify">
                   {summary || (
                     <span className="text-slate-400 italic">
                       Ringkasan profesional Anda akan muncul di sini setelah diisi pada formulir di sebelah kiri.
@@ -952,7 +1111,7 @@ export default function AtsCvBuilderPage() {
                         <span className="text-[11px] text-slate-500 font-semibold">{exp.period}</span>
                       </div>
                       {exp.description && (
-                        <p className="text-xs text-slate-600 leading-normal pl-3 border-l-2 border-slate-200">
+                        <p className="text-xs text-slate-600 leading-normal pl-3 border-l-2 border-slate-200 text-justify">
                           • {exp.description}
                         </p>
                       )}
@@ -964,7 +1123,7 @@ export default function AtsCvBuilderPage() {
                       <span>[Posisi Jabatan] — [Nama Perusahaan]</span>
                       <span className="text-[11px]">[Periode Kerja]</span>
                     </div>
-                    <p className="text-xs leading-normal pl-3 border-l-2 border-slate-200">
+                    <p className="text-xs leading-normal pl-3 border-l-2 border-slate-200 text-justify">
                       • Deskripsi tanggung jawab dan pencapaian Anda akan muncul di sini.
                     </p>
                   </div>
@@ -998,10 +1157,20 @@ export default function AtsCvBuilderPage() {
                 <h3 className="text-xs font-bold uppercase tracking-wider text-slate-900 border-b border-slate-300 pb-1">
                   KEAHLIAN TEKNIS & SERTIFIKASI
                 </h3>
-                <p className="text-xs text-slate-700 leading-relaxed">
-                  <strong className="text-slate-900">Keahlian:</strong>{' '}
-                  {skills || <span className="text-slate-400 italic">Daftar keahlian teknis Anda...</span>}
-                </p>
+                <div className="text-xs text-slate-700 leading-relaxed text-justify">
+                  <strong className="text-slate-900 block mb-1">Keahlian:</strong>
+                  {categorizedSkills.some(s => s.category || s.items) ? (
+                    <ul className="space-y-1 list-disc pl-4 marker:text-slate-400">
+                      {categorizedSkills.filter(s => s.category || s.items).map((s, idx) => (
+                        <li key={idx} className="text-xs">
+                          <strong className="text-slate-800 dark:text-slate-200">{s.category}:</strong> {s.items}
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <span className="text-slate-400 italic">Daftar keahlian teknis Anda...</span>
+                  )}
+                </div>
                 <div className="text-xs text-slate-700 leading-relaxed">
                   <strong className="text-slate-900">Sertifikasi:</strong>{' '}
                   {certifications.some(c => c.name.trim()) ? (
@@ -1040,7 +1209,7 @@ export default function AtsCvBuilderPage() {
           />
 
           <div
-            onClick={() => fileInputRef.current?.click()}
+            onClick={() => toast('Fitur Parsing PDF Otomatis Segera Hadir!', { icon: '🚀' })}
             className="border-2 border-dashed border-slate-300 dark:border-slate-700 hover:border-[#1b7b9e] dark:hover:border-cyan-400 bg-[#F0F8FB] dark:bg-slate-800 hover:bg-[#E0F1F7]/50 dark:hover:bg-slate-700 rounded-3xl p-12 sm:p-16 text-center cursor-pointer transition-all duration-200 group relative overflow-hidden"
           >
             <div className="flex flex-col items-center justify-center space-y-5 max-w-lg mx-auto">
@@ -1075,12 +1244,13 @@ export default function AtsCvBuilderPage() {
                   type="button"
                   onClick={(e) => {
                     e.stopPropagation();
-                    fileInputRef.current?.click();
+                    toast('Fitur Parsing PDF Otomatis Segera Hadir!', { icon: '🚀' });
                   }}
-                  className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs sm:text-sm font-bold transition-colors cursor-pointer border border-slate-300 dark:border-slate-700"
+                  disabled={isParsing}
+                  className={`inline-flex items-center gap-2 px-6 py-3 rounded-full text-xs sm:text-sm font-bold transition-colors border ${isParsing ? 'bg-slate-200 dark:bg-slate-700 text-slate-500 border-slate-200 dark:border-slate-700 cursor-not-allowed' : 'bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 cursor-pointer border-slate-300 dark:border-slate-700'}`}
                 >
-                  <FileText className="w-4 h-4 text-[#1b7b9e]" />
-                  <span>{selectedFile ? 'Ganti Berkas PDF' : 'Pilih File CV (PDF)'}</span>
+                  {isParsing ? <RefreshCw className="w-4 h-4 text-[#1b7b9e] animate-spin" /> : <FileText className="w-4 h-4 text-[#1b7b9e]" />}
+                  <span>{isParsing ? 'Mengekstrak Data...' : selectedFile ? 'Ganti Berkas PDF' : 'Pilih File CV (PDF)'}</span>
                 </button>
 
                 <button

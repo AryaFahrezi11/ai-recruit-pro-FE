@@ -69,7 +69,16 @@ export const fetchAuth = async (url: string, options: RequestInit = {}) => {
     // Optional: auto-logout on 401
     useAppStore.getState().logout();
     if (typeof window !== 'undefined') {
-      window.location.href = '/admin/login';
+      const isPelamar = window.location.pathname.startsWith('/applicant');
+      const isAdmin = window.location.pathname.startsWith('/admin');
+      
+      if (isAdmin) {
+        window.location.href = '/admin/login';
+      } else if (isPelamar) {
+        window.location.href = '/applicant/login';
+      } else {
+        window.location.href = '/login';
+      }
     }
   }
   
