@@ -101,8 +101,7 @@ export default function PipelinePage() {
   const screeningApps = applications.filter(a => a.status === 'cv_screening' || a.status === 'lolos_cv' || a.status === 'ditolak_sistem');
   const virtualInterviewApps = applications.filter(a => a.status === 'virtual_interview');
   const videoAnalysisApps = applications.filter(a => a.status === 'video_analysis');
-  const humanValidationApps = applications.filter(a => a.status === 'human_validation' || a.status === 'Lolos');
-  const archiveApps = applications.filter(a => a.status === 'ditolak' || a.status === 'Tidak Lolos');
+  const humanValidationApps = applications.filter(a => a.status === 'human_validation');
 
   return (
     <div className="flex flex-col h-full max-w-full">
@@ -236,9 +235,10 @@ export default function PipelinePage() {
                 name={app.pelamar?.nama_lengkap || 'Kandidat'}
                 role={(app as any).cvData?.jobTitle || app.job?.judul_posisi || 'Posisi'}
                 appliedJob={app.job?.judul_posisi}
-                stage="video_analysis"
+                stage="ai_analysis"
                 status="processing"
-                onClick={() => setSelectedCandidate({ name: app.pelamar?.nama_lengkap || 'Kandidat', role: (app as any).cvData?.jobTitle || app.job?.judul_posisi || '', stage: "video_analysis", cvScore: Math.round(app.analisis_cv?.skor_kecocokan || 0), education: app.pelamar?.pendidikan_terakhir, university: app.pelamar?.institusi_pendidikan, cvData: (app as any).cvData, cvDocument: (app as any).cv_document, jobData: app.job, analisisCv: app.analisis_cv })}
+                timeInfo="Sedang diproses AI"
+                onClick={() => setSelectedCandidate({ name: app.pelamar?.nama_lengkap || 'Kandidat', role: (app as any).cvData?.jobTitle || app.job?.judul_posisi || '', stage: "ai_analysis", cvScore: Math.round(app.analisis_cv?.skor_kecocokan || 0), education: app.pelamar?.pendidikan_terakhir, university: app.pelamar?.institusi_pendidikan, cvData: (app as any).cvData, cvDocument: (app as any).cv_document, jobData: app.job, analisisCv: app.analisis_cv })}
               />
             ))}
           </KanbanColumn>
@@ -253,24 +253,8 @@ export default function PipelinePage() {
                 appliedJob={app.job?.judul_posisi}
                 stage="human_validation"
                 status="needs_approval"
+                timeInfo="Menunggu Keputusan"
                 onClick={() => setSelectedCandidate({ name: app.pelamar?.nama_lengkap || 'Kandidat', role: (app as any).cvData?.jobTitle || app.job?.judul_posisi || '', stage: "human_validation", cvScore: Math.round(app.analisis_cv?.skor_kecocokan || 0), education: app.pelamar?.pendidikan_terakhir, university: app.pelamar?.institusi_pendidikan, cvData: (app as any).cvData, cvDocument: (app as any).cv_document, jobData: app.job, analisisCv: app.analisis_cv })}
-              />
-            ))}
-          </KanbanColumn>
-
-          {/* 6. ARSIP / DISKUALIFIKASI */}
-          <KanbanColumn title="Arsip / Diskualifikasi" count={archiveApps.length}>
-            {archiveApps.map((app) => (
-              <CandidateCard 
-                key={app.id}
-                name={app.pelamar?.nama_lengkap || 'Kandidat'}
-                role={(app as any).cvData?.jobTitle || app.job?.judul_posisi || 'Posisi'}
-                appliedJob={app.job?.judul_posisi}
-                stage="cv_screening"
-                cvScore={Math.round(app.analisis_cv?.skor_kecocokan || 0)}
-                threshold={app.analisis_cv?.threshold_digunakan || app.job?.cv_threshold || 60}
-                timeInfo="Ditolak / Arsip"
-                onClick={() => setSelectedCandidate({ name: app.pelamar?.nama_lengkap || 'Kandidat', role: (app as any).cvData?.jobTitle || app.job?.judul_posisi || '', stage: "cv_screening", cvScore: Math.round(app.analisis_cv?.skor_kecocokan || 0), education: app.pelamar?.pendidikan_terakhir, university: app.pelamar?.institusi_pendidikan, cvData: (app as any).cvData, cvDocument: (app as any).cv_document, jobData: app.job, analisisCv: app.analisis_cv })}
               />
             ))}
           </KanbanColumn>

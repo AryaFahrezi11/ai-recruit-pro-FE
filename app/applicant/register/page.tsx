@@ -28,6 +28,7 @@ export default function PelamarRegisterPage() {
   // Form State
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -59,6 +60,10 @@ export default function PelamarRegisterPage() {
     }
     if (!isValidPassword) {
       setError('Kata sandi belum memenuhi semua persyaratan keamanan.');
+      return;
+    }
+    if (password !== confirmPassword) {
+      setError('Konfirmasi kata sandi tidak cocok dengan kata sandi.');
       return;
     }
 
@@ -244,6 +249,23 @@ export default function PelamarRegisterPage() {
                       Karakter Spesial
                     </div>
                   </div>
+                </div>
+              </div>
+
+              <div className="space-y-1 mt-4">
+                <label htmlFor="confirmPassword" className="block text-xs font-bold text-slate-700 dark:text-slate-300">
+                  Konfirmasi Kata Sandi <span className="text-red-500">*</span>
+                </label>
+                <div className="relative flex items-center">
+                  <KeyRound size={18} className="absolute left-4 text-slate-400 pointer-events-none" />
+                  <input
+                    id="confirmPassword"
+                    type="password"
+                    value={confirmPassword}
+                    onChange={(e) => { setConfirmPassword(e.target.value); setError(''); }}
+                    placeholder="••••••••"
+                    className="w-full pl-12 pr-4 py-3 bg-white dark:bg-slate-800 border-2 border-slate-300 dark:border-slate-700 focus:border-[#1b7b9e] dark:focus:border-cyan-400 focus:ring-2 focus:ring-cyan-100 dark:focus:ring-cyan-900 rounded-2xl text-sm outline-none transition-all dark:text-white"
+                  />
                 </div>
               </div>
 

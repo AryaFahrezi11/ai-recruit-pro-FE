@@ -13,10 +13,28 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-export const metadata: Metadata = {
-  title: "AI Recruit Pro",
-  description: "AI Recruit Pro",
-};
+import MaintenanceProvider from '@/components/MaintenanceProvider';
+
+export async function generateMetadata(): Promise<Metadata> {
+  try {
+    // Next.js fetch API can be used directly on the server side
+    const res = await fetch('http://127.0.0.1:8000/api/config/public', { next: { revalidate: 60 } });
+    if (res.ok) {
+      const config = await res.json();
+      return {
+        title: config.seo_title || "AI Recruit Pro",
+        description: config.seo_description || "Platform Rekrutmen Cerdas Berbasis AI",
+      };
+    }
+  } catch (error) {
+    console.error("Failed to fetch SEO metadata", error);
+  }
+  
+  return {
+    title: "AI Recruit Pro",
+    description: "Platform Rekrutmen Cerdas Berbasis AI",
+  };
+}
 
 export default function RootLayout({
   children,
@@ -29,7 +47,9 @@ export default function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
-        {children}
+        <MaintenanceProvider>
+          {children}
+        </MaintenanceProvider>
         <Toaster position="top-right" />
       </body>
     </html>

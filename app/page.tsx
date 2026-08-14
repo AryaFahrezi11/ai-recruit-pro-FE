@@ -131,7 +131,6 @@ export default function PerfectlyNeatLandingPage() {
     faqTitle: 'Informasi Untuk Pelamar',
     footerDesc: 'Platform kecerdasan bakat (Talent Intelligence) berbasis Person-Organization Fit (PO-FIT) terdepan.',
     copyright: 'AI-Recruit Pro. Seluruh hak cipta dilindungi.',
-    systemStatus: 'System Ready & Active',
     jobDetailsModalTitle: 'Perkiraan Match PO-FIT AI:',
     closeModal: 'Tutup',
   };
@@ -355,11 +354,6 @@ export default function PerfectlyNeatLandingPage() {
                 AI-Recruit <span className="text-[#1D7FA1] dark:text-cyan-300">Pro</span>
               </span>
             </Link>
-
-            <span className="hidden lg:inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#E0F1F7] dark:bg-slate-800 text-[#1b7b9e] dark:text-cyan-300 text-xs font-bold border border-[#B8E1ED] dark:border-slate-700">
-              <span className="w-2 h-2 rounded-full bg-[#1b7b9e] dark:bg-cyan-400 animate-pulse"></span>
-              {lang.systemStatus}
-            </span>
           </div>
 
           {/* Clean Nav Links */}
@@ -1103,12 +1097,6 @@ export default function PerfectlyNeatLandingPage() {
 
           <div className="pt-8 border-t border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-400">
             <span>&copy; {new Date().getFullYear()} {lang.copyright}</span>
-            <div className="flex items-center gap-2">
-              <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#E0F1F7] dark:bg-slate-800 text-[#1b7b9e] dark:text-cyan-300 font-bold text-xs">
-                <span className="w-2 h-2 rounded-full bg-[#1b7b9e] dark:bg-cyan-400"></span>
-                {lang.systemStatus}
-              </span>
-            </div>
           </div>
         </div>
       </footer>
