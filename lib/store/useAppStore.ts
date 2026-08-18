@@ -61,6 +61,7 @@ export const useAppStore = create<AppState>()(
       name: 'app-storage',
       onRehydrateStorage: () => (state) => {
         if (state && typeof window !== 'undefined') {
+          state.language = 'id';
           if (state.theme === 'dark') {
             document.documentElement.classList.add('dark');
           } else {

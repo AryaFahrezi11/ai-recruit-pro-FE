@@ -40,7 +40,8 @@ import {
   SlidersHorizontal,
   Check,
   Sun,
-  Moon
+  Moon,
+  Menu
 } from 'lucide-react';
 
 interface Job {
@@ -61,6 +62,7 @@ interface Job {
   isNew: boolean;
   applicationDeadline?: string | null;
   description: string;
+  responsibilities?: string[];
   requirements: string[];
   openingsCount: number;
 }
@@ -69,69 +71,71 @@ export default function PerfectlyNeatLandingPage() {
   const { theme, toggleTheme, language, setLanguage } = useAppStore();
   const { t } = useTranslation();
   const [mounted, setMounted] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const lang = t.landing || {
     findJob: 'Cari Kerja',
-    categories: 'Kategori Posisi',
-    poFitJobs: 'Lowongan PO-FIT',
-    aiFeatures: 'Fitur AI',
+    categories: 'Bidang Pekerjaan',
+    poFitJobs: 'Lowongan Tersedia',
+    aiFeatures: 'Fitur Unggulan',
     successStories: 'Kisah Sukses',
     companyPortal: 'Untuk Perusahaan',
     applicantPortal: 'Masuk',
-    heroTag: 'Sistem Seleksi Berbasis Person-Organization Fit (PO-FIT)',
-    heroTitleLine1: 'Temukan Karir Yang',
-    heroTitleLine2: 'Sesuai Potensi Anda',
-    heroSubtitle: 'Mencocokkan keahlian teknis, potensi individu, dan nilai-nilai organisasi secara transparan, akurat, dan bebas dari bias seleksi.',
-    accuracyStat: 'Akurasi Match AI',
-    successfulApplicants: 'Pelamar Sukses',
-    screeningProcessTime: 'Proses Skrining',
-    searchPlaceholder: 'Jabatan, Skill, atau Perusahaan',
+    heroTag: 'Platform Cari Kerja Mudah & Transparan',
+    heroTitleLine1: 'Temukan Pekerjaan Yang',
+    heroTitleLine2: 'Pas Untuk Anda',
+    heroSubtitle: 'Kami bantu Anda menemukan karir yang sesuai dengan kemampuan dan minat Anda dengan proses yang adil dan transparan.',
+    accuracyStat: 'Tingkat Kecocokan',
+    successfulApplicants: 'Pengguna Sukses',
+    screeningProcessTime: 'Proses Cepat',
+    searchPlaceholder: 'Posisi atau Nama Perusahaan',
     locationPlaceholder: 'Lokasi (misal: Jakarta, Remote)',
-    trending: 'Tren:',
-    searchBtn: 'Cari Lowongan',
-    poFitMatchResult: 'Hasil Match PO-FIT Anda',
-    dualVectorAnalysis: 'Analisis Dual-Vector AI',
+    trending: 'Populer:',
+    searchBtn: 'Cari Sekarang',
+    poFitMatchResult: 'Tingkat Kecocokan Anda',
+    dualVectorAnalysis: 'Analisis Cerdas',
     matched82: '92% Cocok',
-    biasFree: 'Bebas Dari Bias Seleksi',
-    biasFreeDesc: 'Lamaran Anda dinilai murni berdasarkan kompetensi teknis dan potensi profesional.',
+    biasFree: 'Penilaian Objektif',
+    biasFreeDesc: 'Lamaran Anda dinilai murni berdasarkan kemampuan Anda, tanpa melihat latar belakang pribadi.',
     topEmployersTitle: 'Perusahaan Populer',
-    activePartners: '500+ Mitra Aktif',
-    pillarsTag: 'Keunggulan PO-FIT AI Engine',
-    pillarsTitle: 'Metodologi Rekrutmen Masa Depan',
-    pillarsSub: '3 pilar penilaian cerdas yang memastikan kecocokan kandidat dengan budaya & ekspektasi perusahaan.',
-    pillar1Title: '1. Analisis CV NLP Instan',
-    pillar1Desc: 'CV kandidat diproses secara otomatis menggunakan ekstraksi token kata kunci dan keselarasan kualifikasi tanpa melihat faktor demografis.',
-    pillar2Title: '2. Wawancara Video Multimodal',
-    pillar2Desc: 'Analisis ekspresi visual dan nada respon lisan untuk mengukur kecerdasan emosional (EQ) serta gaya komunikasi kandidat.',
-    pillar3Title: '3. Validasi HR Tanpa Bias',
-    pillar3Desc: 'Tim HR menerima laporan agregat komprehensif untuk pengambilan keputusan akhir yang objektif dan adil.',
-    exploreCategoriesTitle: 'Jelajahi Kategori Posisi Favorit',
-    exploreCategoriesSub: 'Pilih kategori untuk memfilter posisi sesuai keahlian Anda',
-    showAllCategories: 'Tampilkan Semua Kategori',
-    highPrecisionJobsTitle: 'Lowongan Kerja Berakurasi Tinggi',
+    activePartners: '500+ Mitra Terpercaya',
+    pillarsTag: 'Mengapa Memilih Kami',
+    pillarsTitle: 'Cara Baru Mendapatkan Pekerjaan',
+    pillarsSub: '3 langkah mudah yang memastikan Anda mendapatkan pekerjaan di tempat yang tepat.',
+    pillar1Title: '1. Pencocokan CV Otomatis',
+    pillar1Desc: 'Sistem kami membaca CV Anda dan langsung mencocokkannya dengan lowongan yang paling pas.',
+    pillar2Title: '2. Wawancara Video Praktis',
+    pillar2Desc: 'Rekam video perkenalan singkat untuk menunjukkan kepribadian dan cara Anda berkomunikasi.',
+    pillar3Title: '3. Keputusan yang Adil',
+    pillar3Desc: 'Tim rekrutmen akan melihat rangkuman profil Anda secara utuh, sehingga keputusan lebih adil dan tepat sasaran.',
+    exploreCategoriesTitle: 'Kategori Pekerjaan Pilihan',
+    exploreCategoriesSub: 'Pilih kategori yang sesuai dengan minat dan keahlian Anda',
+    showAllCategories: 'Lihat Semua Kategori',
+    highPrecisionJobsTitle: 'Lowongan Pekerjaan Terbaru',
     activeJobsCount: 'Menampilkan',
-    activeJobsSuffix: 'posisi kerja aktif',
-    resetFilters: 'Reset Semua Filter',
+    activeJobsSuffix: 'lowongan kerja',
+    resetFilters: 'Hapus Semua Filter',
     workSystem: 'Sistem Kerja:',
     experienceLevel: 'Pengalaman:',
     all: 'Semua',
-    noJobsFound: 'Tidak Ada Lowongan Yang Cocok',
-    resetFilterBtn: 'Reset Filter',
-    estimatedScoreTitle: 'Estimasi Skor PO-FIT AI',
-    skillAlignment: 'Skill Alignment (NLP)',
-    commVideoResponse: 'Komunikasi & Respon Video',
-    cultureFitMatch: 'Cultural Fit Match',
-    roleDescription: 'Deskripsi Peran:',
-    keyQualifications: 'Kualifikasi Kunci:',
-    startPoFitSelection: 'Mulai Seleksi PO-FIT Untuk Posisi Ini →',
-    successStoriesTag: 'Kisah Sukses Pelamar',
-    hiredInDaysTitle: 'Diterima Bekerja Dalam Hitungan Hari',
-    hiredInDaysSub: 'Dengarkan pengalaman pelamar yang telah mendapatkan karir impian melalui seleksi PO-FIT AI.',
-    faqTag: 'Pertanyaan Umum (FAQ)',
-    faqTitle: 'Informasi Untuk Pelamar',
-    footerDesc: 'Platform kecerdasan bakat (Talent Intelligence) berbasis Person-Organization Fit (PO-FIT) terdepan.',
+    noJobsFound: 'Tidak Ada Lowongan Yang Sesuai',
+    resetFilterBtn: 'Hapus Filter',
+    estimatedScoreTitle: 'Perkiraan Kecocokan',
+    skillAlignment: 'Kecocokan Keahlian',
+    commVideoResponse: 'Cara Komunikasi',
+    cultureFitMatch: 'Kecocokan Budaya',
+    roleDescription: 'Deskripsi Pekerjaan:',
+    keyResponsibilities: 'Tanggung Jawab Utama:',
+    keyQualifications: 'Persyaratan Utama:',
+    startPoFitSelection: 'Lamar Pekerjaan Ini →',
+    successStoriesTag: 'Kisah Pengguna',
+    hiredInDaysTitle: 'Dapat Kerja Dalam Hitungan Hari',
+    hiredInDaysSub: 'Dengarkan cerita mereka yang berhasil menemukan pekerjaan impian melalui platform kami.',
+    faqTag: 'Pertanyaan Umum',
+    faqTitle: 'Informasi Untuk Anda',
+    footerDesc: 'Platform cari kerja yang menghubungkan Anda dengan perusahaan terbaik secara adil dan transparan.',
     copyright: 'AI-Recruit Pro. Seluruh hak cipta dilindungi.',
-    jobDetailsModalTitle: 'Perkiraan Match PO-FIT AI:',
+    jobDetailsModalTitle: 'Perkiraan Kecocokan Profil:',
     closeModal: 'Tutup',
   };
 
@@ -207,6 +211,7 @@ export default function PerfectlyNeatLandingPage() {
           })(),
           openingsCount: j.openings_count || 1,
           description: j.deskripsi_pekerjaan || '',
+          responsibilities: (() => { try { return j.tanggung_jawab ? JSON.parse(j.tanggung_jawab) : []; } catch(e){ return j.tanggung_jawab ? j.tanggung_jawab.split('\n').filter((k: string) => k.trim()) : []; } })(),
           requirements: (() => { try { return j.kualifikasi ? JSON.parse(j.kualifikasi) : []; } catch(e){ return j.kualifikasi ? j.kualifikasi.split('\n').filter((k: string) => k.trim()) : []; } })(),
         }));
         setRealJobs(mappedJobs);
@@ -257,33 +262,22 @@ export default function PerfectlyNeatLandingPage() {
     );
   };
 
-  // Job Categories
-  const jobCategories = [
-    { name: language === 'en' ? 'Information Technology' : 'Teknologi Informasi', count: language === 'en' ? '3,420 Openings' : '3.420 Lowongan', icon: Cpu, skills: 'React, Next.js, Node.js' },
-    { name: 'AI & Data Science', count: language === 'en' ? '1,850 Openings' : '1.850 Lowongan', icon: Bot, skills: 'Python, PyTorch, Vector DB' },
-    { name: language === 'en' ? 'Design & Creative' : 'Desain & Kreatif', count: language === 'en' ? '1,240 Openings' : '1.240 Lowongan', icon: Layers, skills: 'Figma, Design Tokens, UX' },
-    { name: language === 'en' ? 'Product Management' : 'Manajemen Produk', count: language === 'en' ? '980 Openings' : '980 Lowongan', icon: Briefcase, skills: 'Roadmap, Agile, Analytics' },
-    { name: language === 'en' ? 'Marketing & Growth' : 'Pemasaran & Growth', count: language === 'en' ? '2,150 Openings' : '2.150 Lowongan', icon: TrendingUp, skills: 'SEO, Performance, Growth' },
-    { name: language === 'en' ? 'Finance & HR' : 'Keuangan & HR', count: language === 'en' ? '1,510 Openings' : '1.510 Lowongan', icon: ShieldCheck, skills: 'Talent Ops, Compensation' },
-  ];
-
-  // Top Employers (Now dynamically fetched from DB)
   // Candidate Success Stories
   const successStories = [
     {
       name: 'Rian Pratama',
-      role: 'Senior Frontend Developer',
-      company: 'PT Tech Inovasi Nusantara',
+      role: 'Staf Administrasi',
+      company: 'PT Maju Bersama',
       avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
-      comment: language === 'en' ? 'The PO-FIT AI matching process was super transparent. I didn’t need to wait weeks for CV screening!' : 'Proses matching PO-FIT AI sangat transparan. Saya tidak perlu menunggu berminggu-minggu hanya untuk kabar screening CV!',
+      comment: language === 'en' ? 'The matching process was super transparent. I didn’t need to wait weeks for CV screening!' : 'Proses pencocokan kerjanya sangat transparan. Saya tidak perlu menunggu berminggu-minggu hanya untuk kabar panggilan kerja!',
       timeDays: language === 'en' ? '3 Days' : '3 Hari'
     },
     {
       name: 'Siti Rahmawati',
-      role: 'AI & Data Specialist',
-      company: 'Nusantara Intelligence',
+      role: 'Marketing Executive',
+      company: 'Nusantara Global',
       avatar: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=150&auto=format&fit=crop&q=80',
-      comment: language === 'en' ? 'The virtual video interview gave me confidence to demonstrate my soft skills alongside my technical CV.' : 'Fitur wawancara video virtual memberikan rasa percaya diri lebih untuk menyampaikan soft skill dibanding sekadar CV tertulis.',
+      comment: language === 'en' ? 'The virtual video interview gave me confidence to demonstrate my soft skills alongside my technical CV.' : 'Fitur wawancara video virtual memberikan rasa percaya diri lebih untuk menunjukkan kemampuan komunikasi saya dibanding sekadar CV.',
       timeDays: language === 'en' ? '5 Days' : '5 Hari'
     }
   ];
@@ -291,16 +285,16 @@ export default function PerfectlyNeatLandingPage() {
   // FAQ Items
   const faqItems = [
     {
-      q: language === 'en' ? 'How does the PO-FIT AI screening system work?' : 'Bagaimana sistem seleksi PO-FIT AI bekerja?',
-      a: language === 'en' ? 'Our AI analyzes technical qualifications from your CV using NLP embeddings and measures communication style from video interviews without demographic bias.' : 'Sistem AI menganalisis kualifikasi teknis CV Anda menggunakan NLP Embeddings dan mengukur gaya komunikasi lewat wawancara video tanpa melihat faktor demografis.'
+      q: language === 'en' ? 'How does the automated screening system work?' : 'Bagaimana sistem seleksi otomatis ini bekerja?',
+      a: language === 'en' ? 'Our system analyzes your CV and measures communication style from video interviews without background bias.' : 'Sistem kami menganalisis pengalaman di CV Anda dan menilai cara komunikasi lewat wawancara video secara adil tanpa melihat latar belakang pribadi Anda.'
     },
     {
-      q: language === 'en' ? 'Is my data secure and kept confidential?' : 'Apakah data pelamar aman dan terenkripsi?',
-      a: language === 'en' ? 'Yes, all CV files and video recordings are stored with enterprise-grade encryption and accessible only by verified HR teams.' : 'Ya, seluruh berkas CV dan rekaman video disimpan dengan enkripsi standar industri dan hanya diakses oleh tim HR resmi perusahaan perekrut.'
+      q: language === 'en' ? 'Is my data secure and kept confidential?' : 'Apakah data saya aman dan terjaga kerahasiaannya?',
+      a: language === 'en' ? 'Yes, all CV files and video recordings are stored securely and accessible only by verified HR teams.' : 'Ya, seluruh berkas CV dan rekaman video disimpan dengan aman dan hanya dapat diakses oleh tim rekrutmen resmi dari perusahaan.'
     },
     {
       q: language === 'en' ? 'Is there any fee to apply for jobs here?' : 'Apakah ada biaya yang dikenakan untuk pelamar?',
-      a: language === 'en' ? '100% Free! Applicants can apply for any active job position without any charges.' : '100% Gratis! Pelamar dapat melamar posisi pekerjaan aktif tanpa dipungut biaya apapun.'
+      a: language === 'en' ? '100% Free! Applicants can apply for any active job position without any charges.' : '100% Gratis! Anda dapat melamar pekerjaan yang tersedia tanpa dipungut biaya apapun.'
     }
   ];
 
@@ -312,6 +306,35 @@ export default function PerfectlyNeatLandingPage() {
   const combinedCompanies = useMemo(() => {
     return realCompanies.slice(0, 8); // maximum 8 companies
   }, [realCompanies]);
+
+  // Job Categories dynamically from Real Data
+  const jobCategories = useMemo(() => {
+    if (!combinedJobs || combinedJobs.length === 0) {
+      return [
+        { name: language === 'en' ? 'Sales & Marketing' : 'Sales & Marketing', count: language === 'en' ? '0 Openings' : '0 Lowongan', icon: TrendingUp, skills: 'Sales, Digital Marketing' },
+        { name: language === 'en' ? 'Finance & Accounting' : 'Finance & Accounting', count: language === 'en' ? '0 Openings' : '0 Lowongan', icon: Briefcase, skills: 'Pajak, Laporan Keuangan' },
+        { name: language === 'en' ? 'Customer Service' : 'Customer Service', count: language === 'en' ? '0 Openings' : '0 Lowongan', icon: Users, skills: 'Komunikasi, Problem Solving' },
+        { name: language === 'en' ? 'Operations' : 'Operations', count: language === 'en' ? '0 Openings' : '0 Lowongan', icon: Activity, skills: 'Logistik, Manajemen Proyek' },
+      ];
+    }
+    
+    const catMap = new Map();
+    combinedJobs.forEach(job => {
+      const cat = job.category || (language === 'en' ? 'General' : 'Umum');
+      catMap.set(cat, (catMap.get(cat) || 0) + 1);
+    });
+
+    const icons = [Briefcase, TrendingUp, Layers, Users, ShieldCheck, Activity];
+    return Array.from(catMap.entries())
+      .sort((a, b) => b[1] - a[1]) // Sort by count descending
+      .slice(0, 6)
+      .map(([name, count], idx) => ({
+        name,
+        count: language === 'en' ? `${count} Openings` : `${count} Lowongan`,
+        icon: icons[idx % icons.length],
+        skills: language === 'en' ? 'Relevant skills' : 'Keahlian relevan'
+      }));
+  }, [combinedJobs, language]);
 
   // Filter jobs
   const filteredJobs = useMemo(() => {
@@ -326,8 +349,8 @@ export default function PerfectlyNeatLandingPage() {
         job.workType.toLowerCase().includes(location.toLowerCase());
 
       const matchCat = selectedCategory === 'Semua' || selectedCategory === 'All' || job.category === selectedCategory;
-      const matchWork = selectedWorkType === 'Semua' || selectedWorkType === 'All' || job.workType === selectedWorkType;
-      const matchExp = selectedExpLevel === 'Semua' || selectedExpLevel === 'All' || job.experienceLevel === selectedExpLevel;
+      const matchWork = selectedWorkType === 'Semua' || selectedWorkType === 'All' || job.workType.toLowerCase().includes(selectedWorkType.toLowerCase());
+      const matchExp = selectedExpLevel === 'Semua' || selectedExpLevel === 'All' || job.experienceLevel.toLowerCase().includes(selectedExpLevel.toLowerCase());
 
       return matchKey && matchLoc && matchCat && matchWork && matchExp;
     });
@@ -381,14 +404,6 @@ export default function PerfectlyNeatLandingPage() {
             {mounted && (
               <>
                 <button
-                  onClick={() => setLanguage(language === 'en' ? 'id' : 'en')}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-[#C2E5EF] dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-bold text-[#1b7b9e] dark:text-cyan-400 hover:bg-[#E0F1F7] dark:hover:bg-slate-700 transition-colors shadow-2xs cursor-pointer"
-                >
-                  <Globe size={15} />
-                  <span>{language.toUpperCase()}</span>
-                </button>
-
-                <button
                   onClick={toggleTheme}
                   className="w-9 h-9 rounded-full flex items-center justify-center border border-[#C2E5EF] dark:border-slate-700 bg-white dark:bg-slate-800 text-[#1b7b9e] dark:text-cyan-400 hover:bg-[#E0F1F7] dark:hover:bg-slate-700 transition-colors shadow-2xs cursor-pointer"
                 >
@@ -407,14 +422,62 @@ export default function PerfectlyNeatLandingPage() {
 
             <Link
               href="/applicant/login"
-              className="px-5 py-2.5 rounded-full bg-[#1b7b9e] hover:bg-[#1D7FA1] text-white text-xs font-bold shadow-md hover:shadow-lg transition-all duration-200 flex items-center gap-1.5"
+              className="hidden sm:inline-flex px-5 py-2.5 rounded-full bg-[#1b7b9e] hover:bg-[#1D7FA1] text-white text-xs font-bold shadow-md hover:shadow-lg transition-all duration-200 items-center gap-1.5"
             >
               <Users size={16} className="text-[#E0F1F7]" />
               {lang.applicantPortal}
             </Link>
+
+            {/* Mobile Menu Toggle */}
+            <button
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              className="md:hidden w-10 h-10 flex items-center justify-center rounded-xl bg-[#F0F8FB] dark:bg-slate-800 text-[#1b7b9e] dark:text-cyan-400"
+            >
+              {isMobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
+            </button>
           </div>
 
         </div>
+
+        {/* Mobile Nav Overlay */}
+        {isMobileMenuOpen && (
+          <div className="md:hidden absolute top-full left-0 w-full bg-white dark:bg-slate-900 border-b border-[#C2E5EF] dark:border-slate-800 shadow-lg px-6 py-4 flex flex-col gap-4 max-h-[80vh] overflow-y-auto">
+            <a href="#hero-search" onClick={() => setIsMobileMenuOpen(false)} className="text-[#1b7b9e] dark:text-cyan-400 font-extrabold flex items-center gap-2 py-2">
+              <Compass size={18} />
+              {lang.findJob}
+            </a>
+            <a href="#categories-section" onClick={() => setIsMobileMenuOpen(false)} className="text-slate-700 dark:text-slate-200 font-bold py-2 border-t border-slate-100 dark:border-slate-800">
+              {lang.categories}
+            </a>
+            <a href="#job-feed-section" onClick={() => setIsMobileMenuOpen(false)} className="text-slate-700 dark:text-slate-200 font-bold py-2 border-t border-slate-100 dark:border-slate-800">
+              {lang.poFitJobs}
+            </a>
+            <a href="#features-pillars" onClick={() => setIsMobileMenuOpen(false)} className="text-slate-700 dark:text-slate-200 font-bold py-2 border-t border-slate-100 dark:border-slate-800">
+              {lang.aiFeatures}
+            </a>
+            <a href="#success-stories" onClick={() => setIsMobileMenuOpen(false)} className="text-slate-700 dark:text-slate-200 font-bold py-2 border-t border-slate-100 dark:border-slate-800">
+              {lang.successStories}
+            </a>
+            
+            <div className="pt-4 border-t border-slate-100 dark:border-slate-800 flex flex-col gap-3 sm:hidden">
+              <Link
+                href="/login"
+                className="w-full flex justify-center items-center gap-2 px-4 py-3 rounded-full border border-[#1b7b9e] dark:border-cyan-500 text-sm font-bold text-[#1b7b9e] dark:text-cyan-300"
+              >
+                <Building2 size={16} />
+                {lang.companyPortal}
+              </Link>
+
+              <Link
+                href="/applicant/login"
+                className="w-full flex justify-center items-center gap-2 px-4 py-3 rounded-full bg-[#1b7b9e] hover:bg-[#1D7FA1] text-white text-sm font-bold shadow-md"
+              >
+                <Users size={16} />
+                {lang.applicantPortal}
+              </Link>
+            </div>
+          </div>
+        )}
       </header>
 
       {/* Hero Section */}
@@ -425,11 +488,6 @@ export default function PerfectlyNeatLandingPage() {
 
           {/* Left Column */}
           <div className="lg:col-span-7 space-y-7">
-
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/15 border border-white/20 text-[#E0F1F7] text-xs font-extrabold backdrop-blur-md shadow-xs">
-              <Sparkles size={16} className="text-[#E0F1F7] animate-bounce" />
-              {lang.heroTag}
-            </div>
 
             <h1 className="text-4xl sm:text-6xl lg:text-7xl font-black tracking-tight leading-[1.1]">
               {lang.heroTitleLine1} <span className="text-white bg-white/15 px-4 py-1.5 rounded-3xl inline-block mt-1">{lang.heroTitleLine2}</span>
@@ -456,7 +514,13 @@ export default function PerfectlyNeatLandingPage() {
             </div>
 
             {/* Elevated Search Widget */}
-            <div className="bg-white dark:bg-slate-900 rounded-3xl p-5 sm:p-7 shadow-2xl border border-slate-100 dark:border-slate-800 text-[#1b7b9e] dark:text-cyan-400 space-y-4">
+            <form 
+              onSubmit={(e) => {
+                e.preventDefault();
+                document.getElementById('job-feed-section')?.scrollIntoView({ behavior: 'smooth' });
+              }}
+              className="bg-white dark:bg-slate-900 rounded-3xl p-5 sm:p-7 shadow-2xl border border-slate-100 dark:border-slate-800 text-[#1b7b9e] dark:text-cyan-400 space-y-4"
+            >
               <div className="grid grid-cols-1 sm:grid-cols-12 gap-3">
 
                 {/* Keyword Input */}
@@ -470,7 +534,7 @@ export default function PerfectlyNeatLandingPage() {
                     className="w-full pl-12 pr-4 py-4 bg-[#F0F8FB] dark:bg-slate-800 border border-[#C2E5EF] dark:border-slate-700 rounded-2xl text-xs sm:text-sm font-bold placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#1b7b9e] focus:bg-white dark:focus:bg-slate-800 transition-all text-slate-800 dark:text-slate-100"
                   />
                   {keyword && (
-                    <button onClick={() => setKeyword('')} className="absolute right-3 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
+                    <button type="button" onClick={() => setKeyword('')} className="absolute right-3 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
                       <X size={18} />
                     </button>
                   )}
@@ -487,7 +551,7 @@ export default function PerfectlyNeatLandingPage() {
                     className="w-full pl-12 pr-4 py-4 bg-[#F0F8FB] dark:bg-slate-800 border border-[#C2E5EF] dark:border-slate-700 rounded-2xl text-xs sm:text-sm font-bold placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#1b7b9e] focus:bg-white dark:focus:bg-slate-800 transition-all text-slate-800 dark:text-slate-100"
                   />
                   {location && (
-                    <button onClick={() => setLocation('')} className="absolute right-3 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
+                    <button type="button" onClick={() => setLocation('')} className="absolute right-3 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
                       <X size={18} />
                     </button>
                   )}
@@ -499,26 +563,27 @@ export default function PerfectlyNeatLandingPage() {
               <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-2">
                 <div className="flex items-center gap-2 text-xs text-slate-500 overflow-x-auto w-full sm:w-auto">
                   <span className="font-bold text-slate-400 text-xs uppercase tracking-wider">{lang.trending}</span>
-                  {['Frontend', 'AI Specialist', 'Product', 'Remote'].map((tag, idx) => (
+                  {(language === 'en' ? ['Sales', 'Finance', 'Customer Support', 'Remote'] : ['Sales', 'Finance', 'Customer Support', 'Remote']).map((tag, idx) => (
                     <button
                       key={idx}
+                      type="button"
                       onClick={() => setKeyword(tag)}
-                      className="px-3.5 py-1 rounded-full bg-[#E0F1F7] dark:bg-slate-800 text-[#1b7b9e] dark:text-cyan-300 hover:bg-[#B8E1ED] dark:hover:bg-slate-700 text-xs font-bold transition-colors whitespace-nowrap"
+                      className="px-3.5 py-1 rounded-full bg-[#E0F1F7] dark:bg-slate-800 text-[#1b7b9e] dark:text-cyan-300 hover:bg-[#B8E1ED] dark:hover:bg-slate-700 text-xs font-bold transition-colors whitespace-nowrap cursor-pointer"
                     >
                       #{tag}
                     </button>
                   ))}
                 </div>
 
-                <a
-                  href="#job-feed-section"
-                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2.5 px-10 py-4 rounded-2xl bg-[#1b7b9e] hover:bg-[#1D7FA1] text-white text-xs sm:text-sm font-black shadow-md transition-all duration-200"
+                <button
+                  type="submit"
+                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2.5 px-10 py-4 rounded-2xl bg-[#1b7b9e] hover:bg-[#1D7FA1] text-white text-xs sm:text-sm font-black shadow-md transition-all duration-200 cursor-pointer"
                 >
                   <Search size={18} />
                   {lang.searchBtn}
-                </a>
+                </button>
               </div>
-            </div>
+            </form>
 
           </div>
 
@@ -939,8 +1004,19 @@ export default function PerfectlyNeatLandingPage() {
                   <div className="space-y-4 text-xs sm:text-sm text-slate-600 dark:text-slate-300">
                     <div>
                       <h4 className="font-bold text-[#1b7b9e] dark:text-cyan-400 text-sm mb-1">{lang.roleDescription}</h4>
-                      <p className="leading-relaxed">{selectedPreviewJob.description}</p>
+                      <p className="leading-relaxed whitespace-pre-line">{selectedPreviewJob.description}</p>
                     </div>
+
+                    {selectedPreviewJob.responsibilities && selectedPreviewJob.responsibilities.length > 0 && (
+                      <div>
+                        <h4 className="font-bold text-[#1b7b9e] dark:text-cyan-400 text-sm mb-1">{lang.keyResponsibilities}</h4>
+                        <ul className="list-disc list-inside space-y-1.5">
+                          {selectedPreviewJob.responsibilities.map((resp: string, idx: number) => (
+                            <li key={idx}>{resp}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
 
                     <div>
                       <h4 className="font-bold text-[#1b7b9e] dark:text-cyan-400 text-sm mb-1">{lang.keyQualifications}</h4>
@@ -1073,15 +1149,6 @@ export default function PerfectlyNeatLandingPage() {
               </ul>
             </div>
 
-            <div className="space-y-3">
-              <h4 className="font-bold text-[#1b7b9e] dark:text-cyan-400 text-xs uppercase tracking-wider">{language === 'en' ? 'For Employers' : 'Untuk Perusahaan'}</h4>
-              <ul className="space-y-2">
-                <li><Link href="/login" className="hover:text-[#1b7b9e] dark:hover:text-cyan-300">Portal HR / Dashboard</Link></li>
-                <li><Link href="/pipeline" className="hover:text-[#1b7b9e] dark:hover:text-cyan-300">Pipeline Rekrutmen Kanban</Link></li>
-                <li><Link href="/reviews" className="hover:text-[#1b7b9e] dark:hover:text-cyan-300">Decision Hub PO-FIT</Link></li>
-                <li><Link href="/archive" className="hover:text-[#1b7b9e] dark:hover:text-cyan-300">Arsip Rekam Jejak</Link></li>
-              </ul>
-            </div>
 
             <div className="space-y-3">
               <h4 className="font-bold text-[#1b7b9e] dark:text-cyan-400 text-xs uppercase tracking-wider">{language === 'en' ? 'Methodology & Security' : 'Metodologi & Keamanan'}</h4>

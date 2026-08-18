@@ -94,14 +94,7 @@ export default function PerusahaanLayout({
           <div className="flex items-center gap-4 ml-4">
             {mounted && (
               <>
-                <button
-                  onClick={() => setLanguage(language === 'en' ? 'id' : 'en')}
-                  className="flex items-center gap-2 px-3 py-1.5 rounded-full hover:bg-muted text-sm font-medium transition-colors border border-border"
-                  title="Toggle Language"
-                >
-                  <Globe size={16} className="text-muted-foreground" />
-                  {language.toUpperCase()}
-                </button>
+
 
                 <button
                   onClick={toggleTheme}
