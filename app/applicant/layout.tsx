@@ -232,15 +232,6 @@ export default function PelamarPerfectLayout({
           {/* Right Controls: Language, Theme, Profile Avatar Dropdown, For Employers */}
           <div className="flex items-center gap-3 sm:gap-4">
 
-            {/* Toggle Language Dropdown */}
-            <button
-              onClick={() => setLanguage(language === 'en' ? 'id' : 'en')}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors shadow-2xs cursor-pointer"
-              title="Ganti Bahasa"
-            >
-              <Globe size={15} className="text-[#2596be]" />
-              <span>{t.pelamar.header.language} ({language.toUpperCase()})</span>
-            </button>
 
             {/* Toggle Theme Dark/Light Mode */}
             <button
@@ -250,15 +241,6 @@ export default function PelamarPerfectLayout({
             >
               {theme === 'dark' ? <Sun size={17} /> : <Moon size={17} />}
             </button>
-
-            {/* Link Untuk Perusahaan */}
-            <Link
-              href="/login"
-              className="hidden md:inline-flex items-center gap-1.5 text-xs font-bold text-[#2596be] dark:text-cyan-400 hover:underline px-3 py-1.5 rounded-full hover:bg-cyan-50 dark:hover:bg-slate-800 transition-colors"
-            >
-              <Building2 size={15} />
-              <span>{t.pelamar.header.forEmployers}</span>
-            </Link>
 
             <div className="h-6 w-[1px] bg-slate-200 dark:bg-slate-800 hidden sm:block"></div>
 

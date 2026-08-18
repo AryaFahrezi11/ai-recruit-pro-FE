@@ -59,6 +59,7 @@ interface Job {
   isPromoted?: boolean;
   isNew?: boolean;
   matchScore: number;
+  createdAtMs: number;
   reason: string;
   descriptionBullets: string[];
   responsibilitiesBullets: string[];
@@ -90,9 +91,12 @@ function DashboardContent() {
   const [locationQuery, setLocationQuery] = useState('');
   const [educationFilter, setEducationFilter] = useState('Semua');
   const [workPolicyFilter, setWorkPolicyFilter] = useState('Semua');
+  const [sortOrder, setSortOrder] = useState('rekomendasi');
+  const [industryFilter, setIndustryFilter] = useState('Semua');
 
   // Currently selected job ID for the right side detail pane
-  const [selectedJobId, setSelectedJobId] = useState<number | string>('');
+  const urlJobId = searchParams.get('jobId');
+  const [selectedJobId, setSelectedJobId] = useState<number | string>(urlJobId || '');
   const [shareJob, setShareJob] = useState<Job | null>(null);
 
   const [cvDetails, setCvDetails] = useState<any>(null);
@@ -145,11 +149,21 @@ function DashboardContent() {
     setIsLoadingJobs(true);
     try {
       // Fetch jobs and companies in parallel
-      const [resJobs, resComp, resProfile] = await Promise.all([
+      const [resJobs, resComp, resProfile, resApps] = await Promise.all([
         api.get('/jobs/?limit=100'),
         api.get('/perusahaan/verified'),
-        api.get('/users/profile').catch(() => null)
+        api.get('/users/profile').catch(() => null),
+        api.get('/applications/').catch(() => null)
       ]);
+
+      if (resApps) {
+        const rawList = Array.isArray(resApps) ? resApps : resApps.data || [];
+        const appliedIds = rawList.map((app: any) => String(app.job_id || app.job?.id || ''));
+        if (appliedIds.length > 0) {
+          setAppliedJobs(appliedIds);
+          localStorage.setItem('appliedJobsList', JSON.stringify(appliedIds));
+        }
+      }
 
       const rawJobsList = Array.isArray(resJobs) ? resJobs : (resJobs?.data && Array.isArray(resJobs.data) ? resJobs.data : []);
 
@@ -227,6 +241,7 @@ function DashboardContent() {
             isPromoted: j.is_promoted || false,
             isNew: isNewJob,
             matchScore: j.match_score || 92,
+            createdAtMs: createdDate.getTime(),
             reason: j.reason || 'Keahlian & kualifikasi Anda sesuai dengan posisi ini.',
             descriptionBullets: safeParseArray(j.deskripsi_pekerjaan),
             responsibilitiesBullets: safeParseArray(j.tanggung_jawab),
@@ -236,7 +251,11 @@ function DashboardContent() {
         });
 
         setJobsList(mappedJobs);
-        setSelectedJobId(mappedJobs[0].id);
+        if (urlJobId && mappedJobs.some(j => String(j.id) === String(urlJobId))) {
+          setSelectedJobId(urlJobId);
+        } else {
+          setSelectedJobId(mappedJobs[0].id);
+        }
       }
 
       const rawCompList = Array.isArray(resComp) ? resComp : (resComp?.data && Array.isArray(resComp.data) ? resComp.data : []);
@@ -367,7 +386,7 @@ function DashboardContent() {
 
   // Filter Jobs List
   const filteredJobs = useMemo(() => {
-    return jobsList.filter((job) => {
+    let result = jobsList.filter((job) => {
       if (activeTab === 'saved') return savedJobIds.some(id => String(id) === String(job.id));
 
       const matchesSearch = !searchQuery ||
@@ -376,12 +395,35 @@ function DashboardContent() {
 
       const matchesLocation = !locationQuery || job.location.toLowerCase().includes(locationQuery.toLowerCase());
 
-      const matchesEdu = educationFilter === 'Semua' || job.education.includes(educationFilter);
-      const matchesWork = workPolicyFilter === 'Semua' || job.workPolicy.includes(workPolicyFilter);
+      const matchesEdu = educationFilter === 'Semua' || job.education.includes(educationFilter) || job.educationLevel.includes(educationFilter);
+      const matchesWork = workPolicyFilter === 'Semua' || job.workPolicy.includes(workPolicyFilter) || (workPolicyFilter === 'On-site' && job.workPolicy.includes('WFO'));
 
       return matchesSearch && matchesLocation && matchesEdu && matchesWork;
     });
-  }, [jobsList, savedJobIds, activeTab, searchQuery, locationQuery, educationFilter, workPolicyFilter]);
+
+    if (sortOrder === 'terbaru') {
+      result.sort((a, b) => b.createdAtMs - a.createdAtMs);
+    } else if (sortOrder === 'terlama') {
+      result.sort((a, b) => a.createdAtMs - b.createdAtMs);
+    } else if (sortOrder === 'rekomendasi') {
+      result.sort((a, b) => b.matchScore - a.matchScore);
+    }
+
+    return result;
+  }, [jobsList, savedJobIds, activeTab, searchQuery, locationQuery, educationFilter, workPolicyFilter, sortOrder]);
+
+  const filteredCompanies = useMemo(() => {
+    return companiesList.filter((comp) => {
+      const matchesSearch = !searchQuery ||
+        comp.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        comp.industry.toLowerCase().includes(searchQuery.toLowerCase());
+      
+      const matchesLocation = !locationQuery || comp.location.toLowerCase().includes(locationQuery.toLowerCase());
+      const matchesIndustry = industryFilter === 'Semua' || comp.industry.toLowerCase().includes(industryFilter.toLowerCase());
+
+      return matchesSearch && matchesLocation && matchesIndustry;
+    });
+  }, [companiesList, searchQuery, locationQuery, industryFilter]);
 
   // Selected Job Details Object for Right Pane
   const selectedJob = useMemo(() => {
@@ -394,7 +436,10 @@ function DashboardContent() {
       {/* VIBRANT TOP SEARCH BANNER (Primary Brand Color Header System) */}
       <div className="bg-gradient-to-r from-[#2596be] via-[#1b7b9e] to-[#0c2b3d] rounded-3xl p-6 sm:p-8 text-white shadow-xl space-y-5">
         <form
-          onSubmit={(e) => e.preventDefault()}
+          onSubmit={(e) => {
+            e.preventDefault();
+            if (activeTab !== 'companies') setActiveTab('recommended');
+          }}
           className="grid grid-cols-1 md:grid-cols-12 gap-3"
         >
           {/* Left Input: Keyword */}
@@ -404,7 +449,7 @@ function DashboardContent() {
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder={t.pelamar.dashboard.searchPlaceholder}
+              placeholder={activeTab === 'companies' ? 'Cari nama perusahaan atau industri...' : t.pelamar.dashboard.searchPlaceholder}
               className="w-full pl-12 pr-4 py-3.5 bg-white text-slate-800 rounded-2xl text-sm font-semibold placeholder:text-slate-400 outline-none focus:ring-2 focus:ring-[#2596be] shadow-inner"
             />
           </div>
@@ -420,55 +465,74 @@ function DashboardContent() {
               className="w-full pl-12 pr-4 py-3.5 bg-white text-slate-800 rounded-2xl text-sm font-semibold placeholder:text-slate-400 outline-none focus:ring-2 focus:ring-[#2596be] shadow-inner"
             />
           </div>
-
-          {/* Primary Color Search Action Button */}
-          <div className="md:col-span-2">
-            <button
-              type="submit"
-              className="w-full py-3.5 bg-[#2596be] hover:bg-[#1D7FA1] text-white rounded-2xl font-black text-sm shadow-md hover:shadow-lg transition-all cursor-pointer flex items-center justify-center gap-2 border border-white/20"
-            >
-              <Search className="w-5 h-5" />
-              <span>{t.pelamar.dashboard.searchButton}</span>
-            </button>
-          </div>
         </form>
 
-        {/* Filter Pill Dropdowns (Primary Theme Styling) */}
         <div className="flex flex-wrap items-center gap-2 pt-1 text-xs">
           <button
-            onClick={() => { setSearchQuery(''); setLocationQuery(''); setEducationFilter('Semua'); setWorkPolicyFilter('Semua'); }}
+            onClick={() => { 
+                setSearchQuery(''); setLocationQuery(''); 
+                setEducationFilter('Semua'); setWorkPolicyFilter('Semua'); 
+                setIndustryFilter('Semua');
+            }}
             className="px-4 py-2 rounded-full bg-white/20 hover:bg-white/30 text-white font-bold border border-white/30 transition-all cursor-pointer flex items-center gap-1.5"
           >
             <span>Semua Filter</span>
-            <span className="w-4 h-4 rounded-full bg-[#E0F1F7] text-[#2596be] flex items-center justify-center text-[10px] font-black">1</span>
           </button>
 
-          {/* Edu filter */}
-          <select
-            value={educationFilter}
-            onChange={(e) => setEducationFilter(e.target.value)}
-            className="px-4 py-2 rounded-full bg-white/15 hover:bg-white/25 text-white font-bold border border-white/30 outline-none cursor-pointer text-xs"
-          >
-            <option className="text-slate-800" value="Semua">Minimum Pendidikan ∨</option>
-            <option className="text-slate-800" value="SMA">SMA/SMK/Sederajat</option>
-            <option className="text-slate-800" value="D3">D3/D4</option>
-            <option className="text-slate-800" value="S1">S1 Informatika/Teknik</option>
-          </select>
+          {activeTab === 'companies' ? (
+            <select
+              value={industryFilter}
+              onChange={(e) => setIndustryFilter(e.target.value)}
+              className="px-4 py-2 rounded-full bg-white/15 hover:bg-white/25 text-white font-bold border border-white/30 outline-none cursor-pointer text-xs"
+            >
+              <option className="text-slate-800" value="Semua">Semua Industri</option>
+              <option className="text-slate-800" value="Teknologi">Teknologi & IT</option>
+              <option className="text-slate-800" value="Keuangan">Keuangan & Perbankan</option>
+              <option className="text-slate-800" value="Kesehatan">Kesehatan</option>
+              <option className="text-slate-800" value="Pendidikan">Pendidikan</option>
+              <option className="text-slate-800" value="Manufaktur">Manufaktur</option>
+            </select>
+          ) : (
+            <>
+              <select
+                value={educationFilter}
+                onChange={(e) => { setEducationFilter(e.target.value); setActiveTab('recommended'); }}
+                className="px-4 py-2 rounded-full bg-white/15 hover:bg-white/25 text-white font-bold border border-white/30 outline-none cursor-pointer text-xs"
+              >
+                <option className="text-slate-800" value="Semua">Minimum Pendidikan</option>
+                <option className="text-slate-800" value="SMA">SMA/SMK/Sederajat</option>
+                <option className="text-slate-800" value="D3">D3</option>
+                <option className="text-slate-800" value="S1">D4/S1</option>
+                <option className="text-slate-800" value="S2">S2</option>
+              </select>
 
-          {/* Policy filter */}
-          <select
-            value={workPolicyFilter}
-            onChange={(e) => setWorkPolicyFilter(e.target.value)}
-            className="px-4 py-2 rounded-full bg-white/15 hover:bg-white/25 text-white font-bold border border-white/30 outline-none cursor-pointer text-xs"
-          >
-            <option className="text-slate-800" value="Semua">Kebijakan Kerja ∨</option>
-            <option className="text-slate-800" value="WFO">Kerja dari Kantor (WFO)</option>
-            <option className="text-slate-800" value="Remote">Remote / Jarak Jauh</option>
-            <option className="text-slate-800" value="Hybrid">Hybrid</option>
-          </select>
+              <select
+                value={workPolicyFilter}
+                onChange={(e) => { setWorkPolicyFilter(e.target.value); setActiveTab('recommended'); }}
+                className="px-4 py-2 rounded-full bg-white/15 hover:bg-white/25 text-white font-bold border border-white/30 outline-none cursor-pointer text-xs"
+              >
+                <option className="text-slate-800" value="Semua">Kebijakan Kerja</option>
+                <option className="text-slate-800" value="On-site">Kerja dari Kantor (WFO)</option>
+                <option className="text-slate-800" value="Remote">Remote / Jarak Jauh</option>
+                <option className="text-slate-800" value="Hybrid">Hybrid</option>
+              </select>
+            </>
+          )}
 
           <button
-            onClick={() => setActiveTab(activeTab === 'companies' ? 'recommended' : 'companies')}
+            onClick={() => setActiveTab('recommended')}
+            className={`px-4 py-2 rounded-full font-bold border transition-all cursor-pointer flex items-center gap-1.5 ${
+              activeTab !== 'companies'
+                ? 'bg-[#E0F1F7] text-[#2596be] border-[#B8E1ED] font-extrabold'
+                : 'bg-white/15 hover:bg-white/25 text-white border-white/30'
+            }`}
+          >
+            <Briefcase className="w-4 h-4" />
+            <span>Daftar Lowongan</span>
+          </button>
+
+          <button
+            onClick={() => setActiveTab('companies')}
             className={`px-4 py-2 rounded-full font-bold border transition-all cursor-pointer flex items-center gap-1.5 ${
               activeTab === 'companies'
                 ? 'bg-[#E0F1F7] text-[#2596be] border-[#B8E1ED] font-extrabold'
@@ -476,7 +540,7 @@ function DashboardContent() {
             }`}
           >
             <Building2 className="w-4 h-4" />
-            <span>Daftar Perusahaan ({companiesList.length})</span>
+            <span>Daftar Perusahaan ({filteredCompanies.length})</span>
           </button>
         </div>
       </div>
@@ -485,18 +549,13 @@ function DashboardContent() {
       {activeTab === 'companies' ? (
         /* COMPANIES LIST VIEW */
         <div className="space-y-4">
-          <div className="p-5 rounded-3xl bg-[#F0F8FB] dark:bg-slate-900 border border-[#C2E5EF] dark:border-slate-800 space-y-1">
-            <h3 className="font-extrabold text-[#2596be] text-base flex items-center gap-2">
-              <Building2 className="w-5 h-5 text-[#2596be]" />
-              Fitur Perusahaan &amp; Informasi Loker Buka
-            </h3>
-            <p className="text-xs text-slate-600 dark:text-slate-400">
-              Lihat profil perusahaan terkemuka yang sedang aktif merekrut beserta jumlah lowongan kerja aktifnya.
-            </p>
-          </div>
-
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-            {companiesList.map((comp) => (
+            {filteredCompanies.length === 0 ? (
+                <div className="col-span-full py-12 text-center">
+                    <p className="text-slate-500 font-semibold">Tidak ada perusahaan yang sesuai dengan pencarian Anda.</p>
+                </div>
+            ) : (
+                filteredCompanies.map((comp) => (
                 <div
                 key={comp.id}
                 onClick={() => router.push(`/applicant/companies/${comp.id}`)}
@@ -535,7 +594,7 @@ function DashboardContent() {
                   <ChevronRight className="w-4 h-4" />
                 </div>
               </div>
-            ))}
+            )))}
           </div>
         </div>
       ) : (
@@ -679,7 +738,15 @@ function DashboardContent() {
 
               <div className="flex items-center gap-1 text-xs text-slate-500 font-bold">
                 <span>Urut berdasarkan:</span>
-                <span className="text-[#2596be] font-extrabold cursor-pointer">Rekomendasi PO-FIT ∨</span>
+                <select 
+                  value={sortOrder}
+                  onChange={(e) => setSortOrder(e.target.value)}
+                  className="text-[#2596be] font-extrabold cursor-pointer bg-transparent outline-none"
+                >
+                  <option className="text-slate-700" value="rekomendasi">Rekomendasi PO-FIT</option>
+                  <option className="text-slate-700" value="terbaru">Terbaru</option>
+                  <option className="text-slate-700" value="terlama">Terlama</option>
+                </select>
               </div>
             </div>
 
@@ -936,8 +1003,8 @@ function DashboardContent() {
                   {/* Action CTA Buttons Bar (Matching KitaLulus Primary Blue Button) */}
                   <div className="flex flex-wrap items-center gap-3 pt-2">
                     {appliedJobs.some(id => String(id) === String(selectedJob.id)) ? (
-                      <span className="px-6 py-3 rounded-2xl bg-emerald-100 text-emerald-800 font-black text-xs sm:text-sm border border-emerald-300 flex items-center gap-2">
-                        <CheckCircle2 size={16} /> {t.pelamar.dashboard.jobSaved}
+                      <span className="px-7 py-3 rounded-2xl bg-emerald-100 text-emerald-800 font-black text-xs sm:text-sm border border-emerald-300 flex items-center gap-2 shadow-sm cursor-not-allowed opacity-90">
+                        <CheckCircle2 size={16} /> Anda sudah melamar
                       </span>
                     ) : (
                       <button

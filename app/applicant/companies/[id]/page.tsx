@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { api, getBaseUrl } from '@/lib/api';
 import { 
   Building2, 
@@ -32,17 +32,23 @@ interface CompanyProfile {
   jobs: any[];
 }
 
-export default function CompanyProfilePage() {
-  const { id } = useParams();
+export default function CompanyProfilePage({ params }: { params: Promise<{ id: string }> }) {
+  const resolvedParams = React.use(params);
+  const id = resolvedParams.id;
   const router = useRouter();
   const [company, setCompany] = useState<CompanyProfile | null>(null);
+  const [similarCompanies, setSimilarCompanies] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchCompany = async () => {
       try {
-        const res = await api.get(`/perusahaan/${id}`);
-        const data = res.data || res;
+        const [resComp, resAll] = await Promise.all([
+            api.get(`/perusahaan/${id}`),
+            api.get('/perusahaan/verified')
+        ]);
+        const data = resComp.data || resComp;
+        const allComps = resAll.data || resAll;
         
         // Handle logo absolute URL
         if (data.logo_url && !data.logo_url.startsWith('http')) {
@@ -51,6 +57,25 @@ export default function CompanyProfilePage() {
         }
         
         setCompany(data);
+
+        // Find similar companies
+        if (allComps && Array.isArray(allComps)) {
+            let similar = allComps.filter((c: any) => c.id !== id && c.industri === data.industri);
+            if (similar.length === 0) {
+                // Fallback if no exact industry match
+                similar = allComps.filter((c: any) => c.id !== id);
+            }
+            similar = similar.slice(0, 4);
+
+            // Handle logo absolute URLs for similar companies
+            similar.forEach((c: any) => {
+                if (c.logo_url && !c.logo_url.startsWith('http')) {
+                    const baseUrl = typeof window !== 'undefined' ? window.location.hostname : '127.0.0.1';
+                    c.logo_url = `http://${baseUrl}:8000${c.logo_url}`;
+                }
+            });
+            setSimilarCompanies(similar);
+        }
       } catch (err) {
         console.error('Failed to fetch company:', err);
       } finally {
@@ -171,10 +196,10 @@ export default function CompanyProfilePage() {
         </div>
 
         {/* Content Layout */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
+        <div className="space-y-10">
           
-          {/* Left Column: Description */}
-          <div className="lg:col-span-2 space-y-8">
+          {/* Section 1: Description & Address */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-8 shadow-sm border border-slate-200 dark:border-slate-800">
               <div className="flex items-center gap-3 mb-6">
                 <Info className="text-[#2596be]" size={24} />
@@ -196,14 +221,14 @@ export default function CompanyProfilePage() {
             </div>
           </div>
           
-          {/* Right Column: Active Jobs */}
-          <div className="lg:col-span-1 space-y-6">
+          {/* Section 2: Active Jobs (Horizontal Scroll) */}
+          <div className="space-y-6">
             <div className="flex items-center justify-between">
-              <h3 className="text-xl font-black text-slate-800 dark:text-white flex items-center gap-2">
-                <Briefcase size={20} className="text-[#2596be]"/> Loker Aktif
+              <h3 className="text-xl sm:text-2xl font-black text-slate-800 dark:text-white flex items-center gap-2">
+                <Briefcase size={24} className="text-[#2596be]"/> Loker Aktif
               </h3>
-              <span className="w-8 h-8 rounded-full bg-[#E0F1F7] text-[#2596be] font-bold flex items-center justify-center text-xs">
-                {company.jobs_count}
+              <span className="px-3 py-1 rounded-full bg-[#E0F1F7] text-[#2596be] font-bold text-xs">
+                {company.jobs_count} Lowongan Buka
               </span>
             </div>
             
@@ -216,39 +241,99 @@ export default function CompanyProfilePage() {
                 <p className="text-xs text-slate-500">Perusahaan ini sedang tidak membuka lowongan pekerjaan baru.</p>
               </div>
             ) : (
-              <div className="space-y-4">
-                {company.jobs.map((job) => (
-                  <div 
-                    key={job.id} 
-                    className="bg-white dark:bg-slate-900 p-5 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-2xs hover:shadow-md hover:border-[#2596be]/50 transition-all cursor-pointer group"
-                    onClick={() => router.push(`/applicant/dashboard?view=recommended&jobId=${job.id}`)}
-                  >
-                    <div className="flex justify-between items-start mb-3">
-                      <h4 className="font-extrabold text-slate-800 dark:text-white text-base group-hover:text-[#2596be] transition-colors leading-snug">
-                        {job.judul_posisi}
-                      </h4>
-                      <ExternalLink size={16} className="text-slate-300 group-hover:text-[#2596be] opacity-0 group-hover:opacity-100 transition-all shrink-0" />
-                    </div>
-                    <div className="space-y-2 text-xs font-semibold text-slate-500">
-                      <div className="flex items-center gap-1.5">
-                        <MapPin size={14} className="text-[#2596be]" /> {job.kota} ({job.lokasi_kerja === 'remote' ? 'Remote' : 'On-site'})
+              <div className="relative overflow-hidden w-full pb-6">
+                <style dangerouslySetInnerHTML={{__html: `
+                  @keyframes marquee {
+                    0% { transform: translateX(0); }
+                    100% { transform: translateX(calc(-50% - 12px)); }
+                  }
+                  .animate-marquee {
+                    animation: marquee 30s linear infinite;
+                  }
+                  .animate-marquee:hover {
+                    animation-play-state: paused;
+                  }
+                `}} />
+                
+                <div className="flex w-max gap-6 animate-marquee">
+                  {[...company.jobs, ...company.jobs, ...company.jobs, ...company.jobs].map((job, idx) => (
+                    <div 
+                      key={`${job.id}-${idx}`} 
+                      className="min-w-[280px] sm:min-w-[340px] max-w-[360px] flex-shrink-0 bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-2xs hover:shadow-md hover:border-[#2596be]/50 transition-all cursor-pointer group flex flex-col justify-between h-[240px]"
+                      onClick={() => router.push(`/applicant/dashboard?view=recommended&jobId=${job.id}`)}
+                    >
+                      <div>
+                          <div className="flex justify-between items-start mb-3">
+                          <h4 className="font-extrabold text-slate-800 dark:text-white text-lg group-hover:text-[#2596be] transition-colors leading-snug line-clamp-2 pr-4">
+                              {job.judul_posisi}
+                          </h4>
+                          <ExternalLink size={16} className="text-slate-300 group-hover:text-[#2596be] opacity-0 group-hover:opacity-100 transition-all shrink-0 mt-1" />
+                          </div>
+                          <div className="space-y-2 text-xs font-semibold text-slate-500">
+                          <div className="flex items-center gap-1.5">
+                              <MapPin size={14} className="text-[#2596be]" /> {job.kota} ({job.lokasi_kerja === 'remote' ? 'Remote' : 'On-site'})
+                          </div>
+                          <div className="flex items-center gap-1.5">
+                              <Briefcase size={14} className="text-[#2596be]" /> {job.experience_level || 'Semua Level'}
+                          </div>
+                          {(job.tampilkan_gaji && job.gaji_min && job.gaji_max) && (
+                              <div className="flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400 mt-2">
+                                  <span className="font-bold text-sm bg-emerald-50 dark:bg-emerald-950/40 px-2.5 py-1 rounded-lg">Rp {(job.gaji_min/1000000).toFixed(0)} Jt - Rp {(job.gaji_max/1000000).toFixed(0)} Jt</span>
+                              </div>
+                          )}
+                          </div>
                       </div>
-                      <div className="flex items-center gap-1.5">
-                        <Briefcase size={14} className="text-[#2596be]" /> {job.experience_level || 'Semua Level'}
+                      <div className="pt-4 border-t border-slate-100 dark:border-slate-800 flex justify-between items-center">
+                        <span className="text-[10px] font-bold text-slate-400 bg-slate-50 dark:bg-slate-800 px-2 py-1 rounded-md">
+                          {job.tipe_pekerjaan ? job.tipe_pekerjaan.split('_').join(' ').toUpperCase() : 'FULL TIME'}
+                        </span>
+                        <span className="text-xs font-black text-[#2596be] bg-[#F0F8FB] px-3 py-1.5 rounded-lg group-hover:bg-[#2596be] group-hover:text-white transition-all">
+                          Lihat Detail &rarr;
+                        </span>
                       </div>
                     </div>
-                    <div className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800 flex justify-between items-center">
-                      <span className="text-[10px] font-bold text-slate-400 bg-slate-50 dark:bg-slate-800 px-2 py-1 rounded-md">
-                        {job.tipe_pekerjaan ? job.tipe_pekerjaan.split('_').join(' ').toUpperCase() : 'FULL TIME'}
-                      </span>
-                      <span className="text-xs font-black text-[#2596be]">Lihat Detail &rarr;</span>
-                    </div>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
             )}
           </div>
-          
+
+          {/* Section 3: Similar Companies */}
+          {similarCompanies.length > 0 && (
+          <div className="space-y-6 pt-8 border-t border-slate-200 dark:border-slate-800">
+            <div className="flex items-center justify-between">
+              <h3 className="text-xl sm:text-2xl font-black text-slate-800 dark:text-white flex items-center gap-2">
+                <Building2 size={24} className="text-[#2596be]"/> Perusahaan Serupa
+              </h3>
+            </div>
+            
+            <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+              {similarCompanies.map((comp) => (
+                <div 
+                  key={comp.id}
+                  onClick={() => router.push(`/applicant/companies/${comp.id}`)}
+                  className="bg-white dark:bg-slate-900 p-5 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-2xs hover:shadow-md hover:border-[#2596be]/40 transition-all cursor-pointer flex flex-col items-center text-center group"
+                >
+                  <img 
+                    src={comp.logo_url || 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=100&auto=format&fit=crop&q=80'} 
+                    alt={comp.nama_perusahaan}
+                    className="w-16 h-16 rounded-2xl object-cover border border-slate-100 dark:border-slate-700 mb-3"
+                  />
+                  <h4 className="font-extrabold text-slate-800 dark:text-white text-sm group-hover:text-[#2596be] transition-colors mb-1 line-clamp-1">
+                    {comp.nama_perusahaan}
+                  </h4>
+                  <p className="text-[10px] text-slate-500 font-bold mb-3">{comp.industri}</p>
+                  <div className="w-full mt-auto pt-3 border-t border-slate-100 dark:border-slate-800">
+                    <span className="text-xs font-black text-[#2596be] group-hover:underline">
+                      {comp.jobs_count || 0} Lowongan Buka
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+          )}
+
         </div>
       </div>
     </div>
