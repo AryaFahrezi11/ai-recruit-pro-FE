@@ -355,7 +355,7 @@ export default function CompanyRegistrationFlow() {
           <div className="bg-white rounded-3xl p-8 sm:p-10 shadow-2xl border border-[#C2E5EF] space-y-7">
             <div className="space-y-2">
               <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-[#E0F1F7] text-[#1b7b9e] text-xs font-extrabold border border-[#B8E1ED]">
-                <Building2 size={14} /> Langkah 1 dari 3: Registrasi Akun Perusahaan
+                <Building2 size={14} /> Step 1 of 3: Employer Registration
               </div>
               <h1 className="text-3xl font-black text-[#1b7b9e]">Buat Akun Perusahaan Baru</h1>
               <p className="text-xs sm:text-sm text-slate-500">
@@ -368,7 +368,7 @@ export default function CompanyRegistrationFlow() {
               {/* Corporate Email */}
               <div className="space-y-1">
                 <label className="block text-xs font-bold text-slate-700">
-                  Email Perusahaan Resmi <span className="text-red-500">*</span>
+                  Official Company Email <span className="text-red-500">*</span>
                 </label>
                 <div className="relative flex items-center">
                   <Mail size={18} className="absolute left-4 text-slate-400 pointer-events-none" />
@@ -388,7 +388,7 @@ export default function CompanyRegistrationFlow() {
               {/* Password */}
               <div className="space-y-1">
                 <label className="block text-xs font-bold text-slate-700">
-                  Kata Sandi <span className="text-red-500">*</span>
+                  Password <span className="text-red-500">*</span>
                 </label>
                 <div className="relative flex items-center">
                   <Lock size={18} className="absolute left-4 text-slate-400 pointer-events-none" />
@@ -432,7 +432,7 @@ export default function CompanyRegistrationFlow() {
               {/* Confirm Password */}
               <div className="space-y-1">
                 <label className="block text-xs font-bold text-slate-700">
-                  Konfirmasi Kata Sandi <span className="text-red-500">*</span>
+                  Confirm Password <span className="text-red-500">*</span>
                 </label>
                 <div className="relative flex items-center">
                   <Lock size={18} className="absolute left-4 text-slate-400 pointer-events-none" />

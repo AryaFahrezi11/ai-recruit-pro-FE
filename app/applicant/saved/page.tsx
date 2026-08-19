@@ -1,8 +1,8 @@
 'use client';
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, Suspense } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useTranslation } from '@/hooks/useTranslation';
 import {
   Bookmark,
@@ -49,11 +49,24 @@ interface SavedJob {
   savedAt: string;
 }
 
-export default function SavedJobsPage() {
+function SavedJobsContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { t } = useTranslation();
-  const [searchQuery, setSearchQuery] = useState('');
-  const [policyFilter, setPolicyFilter] = useState('Semua');
+  const [searchQuery, setSearchQuery] = useState(searchParams.get('keyword') || '');
+  const [policyFilter, setPolicyFilter] = useState(searchParams.get('policy') || 'Semua');
+
+  const updateUrlParams = (updates: Record<string, string>) => {
+    const params = new URLSearchParams(searchParams.toString());
+    Object.entries(updates).forEach(([key, value]) => {
+      if (value && value !== 'Semua' && value !== 'All') {
+        params.set(key, value);
+      } else {
+        params.delete(key);
+      }
+    });
+    router.push(`?${params.toString()}`, { scroll: false });
+  };
 
   const [cvDetails, setCvDetails] = useState<any>(null);
   const [appliedJobs, setAppliedJobs] = useState<number[]>([]);
@@ -98,8 +111,15 @@ export default function SavedJobsPage() {
           }
         } catch (e) {}
 
+        const apiParams = new URLSearchParams();
+        const kw = searchParams.get('keyword');
+        const policy = searchParams.get('policy');
+        if (kw) apiParams.append('keyword', kw);
+        if (policy && policy !== 'Semua') apiParams.append('tipe_pekerjaan', policy);
+        const qs = apiParams.toString();
+
         // 2. Fetch all jobs from backend API
-        const resJobs = await api.get('/jobs/');
+        const resJobs = await api.get(qs ? `/jobs/?${qs}` : '/jobs/');
         const rawJobsList = Array.isArray(resJobs) ? resJobs : (resJobs?.data && Array.isArray(resJobs.data) ? resJobs.data : []);
         
         if (rawJobsList.length > 0) {
@@ -186,7 +206,7 @@ export default function SavedJobsPage() {
       }
     };
     fetchRealData();
-  }, []);
+  }, [searchParams]);
 
   // Remove saved job
   const handleRemoveSaved = async (jobId: any) => {
@@ -277,24 +297,28 @@ export default function SavedJobsPage() {
       <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 border border-slate-200 dark:border-slate-800 shadow-2xs space-y-4">
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
 
-          {/* Search Box */}
-          <div className="relative w-full sm:w-96 flex items-center">
-            <Search className="absolute left-4 text-slate-400 w-4 h-4 pointer-events-none" />
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Cari dalam lowongan tersimpan..."
-              className="w-full pl-11 pr-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100 rounded-2xl text-xs font-bold outline-none focus:ring-2 focus:ring-[#2596be]"
-            />
-          </div>
+          <form 
+            className="flex flex-col sm:flex-row items-center gap-3 w-full"
+            onSubmit={(e) => {
+              e.preventDefault();
+              updateUrlParams({ keyword: searchQuery, policy: policyFilter });
+            }}
+          >
+            <div className="relative w-full sm:w-96 flex items-center">
+              <Search className="absolute left-4 text-slate-400 w-4 h-4 pointer-events-none" />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Cari dalam lowongan tersimpan..."
+                className="w-full pl-11 pr-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100 rounded-2xl text-xs font-bold outline-none focus:ring-2 focus:ring-[#2596be]"
+              />
+            </div>
 
-          {/* Filter Dropdown & Clear All */}
-          <div className="flex items-center gap-3 w-full sm:w-auto justify-between sm:justify-end">
             <select
               value={policyFilter}
               onChange={(e) => setPolicyFilter(e.target.value)}
-              className="px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 rounded-2xl text-xs font-bold outline-none cursor-pointer"
+              className="w-full sm:w-auto px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 rounded-2xl text-xs font-bold outline-none cursor-pointer"
             >
               <option value="Semua">Semua Kebijakan Kerja</option>
               <option value="WFO">Kerja dari Kantor (WFO)</option>
@@ -302,6 +326,16 @@ export default function SavedJobsPage() {
               <option value="Hybrid">Hybrid</option>
             </select>
 
+            <button
+              type="submit"
+              className="w-full sm:w-auto px-5 py-2.5 rounded-2xl bg-[#2596be] hover:bg-[#1b7b9e] text-white font-bold text-xs transition-colors cursor-pointer shrink-0"
+            >
+              Cari
+            </button>
+          </form>
+
+          {/* Clear All */}
+          <div className="flex items-center gap-3 w-full sm:w-auto justify-between sm:justify-end">
             {visibleSavedJobs.length > 0 && (
               <button
                 onClick={handleClearAllSaved}
@@ -573,5 +607,13 @@ export default function SavedJobsPage() {
       )}
 
     </div>
+  );
+}
+
+export default function SavedJobsPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center bg-white dark:bg-slate-950"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#1b7b9e]"></div></div>}>
+      <SavedJobsContent />
+    </Suspense>
   );
 }

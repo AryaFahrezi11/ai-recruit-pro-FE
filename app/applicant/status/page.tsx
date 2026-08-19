@@ -1,7 +1,8 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { toast } from 'react-hot-toast';
 import { useTranslation } from '@/hooks/useTranslation';
 import {
@@ -100,11 +101,27 @@ const initialMockApplications: ApplicationItem[] = [
   }
 ];
 
-export default function StatusValidasiPage() {
+function StatusValidasiContent() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const { t } = useTranslation();
-  const [searchTerm, setSearchTerm] = useState('');
-  const [stageFilter, setStageFilter] = useState('Semua Tahapan');
-  const [statusFilter, setStatusFilter] = useState('Semua Status');
+  
+  const [searchTerm, setSearchTerm] = useState(searchParams.get('search') || '');
+  const [platformFilter, setPlatformFilter] = useState(searchParams.get('platform') || t.pelamar.status.allPlatform);
+  const [stageFilter, setStageFilter] = useState(searchParams.get('stage') || t.pelamar.status.allStages);
+  const [statusFilter, setStatusFilter] = useState(searchParams.get('status') || t.pelamar.status.allStatus);
+
+  const updateUrlParams = (updates: Record<string, string>) => {
+    const params = new URLSearchParams(searchParams.toString());
+    Object.entries(updates).forEach(([key, value]) => {
+      if (value && value !== t.pelamar.status.allStatus && value !== t.pelamar.status.allStages && value !== t.pelamar.status.allPlatform) {
+        params.set(key, value);
+      } else {
+        params.delete(key);
+      }
+    });
+    router.push(`?${params.toString()}`, { scroll: false });
+  };
 
   // Expanded application cards state
   const [expandedJobIds, setExpandedJobIds] = useState<number[]>([5, 4]);
@@ -121,7 +138,16 @@ export default function StatusValidasiPage() {
     const fetchApplications = async () => {
       try {
         setIsLoading(true);
-        const res = await api.get('/applications/');
+        const apiParams = new URLSearchParams();
+        const search = searchParams.get('search');
+        const stage = searchParams.get('stage');
+        const status = searchParams.get('status');
+        if (search) apiParams.append('search', search);
+        if (stage && stage !== 'Semua Tahapan') apiParams.append('stage', stage);
+        if (status && status !== 'Semua Status') apiParams.append('status', status);
+        const qs = apiParams.toString();
+
+        const res = await api.get(qs ? `/applications/?${qs}` : '/applications/');
         const rawList = Array.isArray(res) ? res : res.data || [];
 
         if (rawList.length > 0) {
@@ -216,7 +242,7 @@ export default function StatusValidasiPage() {
     };
 
     fetchApplications();
-  }, []);
+  }, [searchParams]);
 
   const pipelineStagesList = [
     { number: 1, name: '1. UPLOAD CV', key: 'cv_upload' },
@@ -238,20 +264,14 @@ export default function StatusValidasiPage() {
   const filteredApplications = applications.filter(app => {
     const matchesSearch = app.jobTitle.toLowerCase().includes(searchTerm.toLowerCase()) ||
       app.companyName.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = statusFilter === 'Semua Status' || app.status === statusFilter;
-    return matchesSearch && matchesStatus;
+    const matchesStatus = statusFilter === t.pelamar.status.allStatus || app.status === statusFilter;
+    const matchesPlatform = platformFilter === t.pelamar.status.allPlatform || app.kegiatan === platformFilter;
+    const matchesStage = stageFilter === t.pelamar.status.allStages || app.tahapRekrutmen.toLowerCase().includes(stageFilter.toLowerCase());
+    return matchesSearch && matchesStatus && matchesPlatform && matchesStage;
   });
 
   return (
     <div className="max-w-[1600px] w-full mx-auto space-y-8">
-
-      {/* Top Header & Breadcrumb */}
-      <div className="flex items-center justify-end">
-        <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#E0F1F7] dark:bg-slate-800 border border-[#B8E1ED] dark:border-slate-700 text-[#2596be] dark:text-cyan-400 text-xs sm:text-sm font-bold">
-          <Clock className="w-4 h-4 text-[#2596be]" />
-          Portal Status Lamaran Candidate Pro
-        </span>
-      </div>
 
       {/* Main Title & Search Filter Bar */}
       <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-8 border border-[#C2E5EF] dark:border-slate-800 shadow-xs space-y-6">
@@ -263,7 +283,13 @@ export default function StatusValidasiPage() {
         </div>
 
         {/* Search & Dropdown Filter Inputs */}
-        <div className="grid grid-cols-1 sm:grid-cols-12 gap-3 pt-2">
+        <form 
+          className="grid grid-cols-1 sm:grid-cols-12 gap-3 pt-2"
+          onSubmit={(e) => {
+            e.preventDefault();
+            updateUrlParams({ search: searchTerm, stage: stageFilter, status: statusFilter, platform: platformFilter });
+          }}
+        >
           {/* Search Box */}
           <div className="sm:col-span-4 relative flex items-center">
             <Search size={18} className="absolute left-4 text-slate-400 pointer-events-none" />
@@ -279,6 +305,8 @@ export default function StatusValidasiPage() {
           {/* Dropdown 1: Platform */}
           <div className="sm:col-span-3">
             <select
+              value={platformFilter}
+              onChange={(e) => setPlatformFilter(e.target.value)}
               className="w-full px-4 py-2.5 bg-[#F0F8FB] dark:bg-slate-800 border border-[#C2E5EF] dark:border-slate-700 focus:border-[#2596be] rounded-2xl text-xs font-bold text-slate-700 dark:text-slate-200 outline-none cursor-pointer"
             >
               <option>{t.pelamar.status.allPlatform}</option>
@@ -295,9 +323,11 @@ export default function StatusValidasiPage() {
               className="w-full px-4 py-2.5 bg-[#F0F8FB] dark:bg-slate-800 border border-[#C2E5EF] dark:border-slate-700 focus:border-[#2596be] rounded-2xl text-xs font-bold text-slate-700 dark:text-slate-200 outline-none cursor-pointer"
             >
               <option>{t.pelamar.status.allStages}</option>
-              <option>CV Screening</option>
-              <option>AI Video Analysis</option>
-              <option>Human Validation</option>
+              <option value="UPLOAD CV">1. UPLOAD CV</option>
+              <option value="CV SCREENING">2. CV SCREENING (PO-FIT)</option>
+              <option value="VIRTUAL INTERVIEW">3. VIRTUAL INTERVIEW</option>
+              <option value="VIDEO ANALYSIS">4. AI VIDEO ANALYSIS</option>
+              <option value="HUMAN VALIDATION">5. HUMAN VALIDATION</option>
             </select>
           </div>
 
@@ -309,22 +339,22 @@ export default function StatusValidasiPage() {
               className="w-full px-4 py-2.5 bg-[#F0F8FB] dark:bg-slate-800 border border-[#C2E5EF] dark:border-slate-700 focus:border-[#2596be] rounded-2xl text-xs font-bold text-slate-700 dark:text-slate-200 outline-none cursor-pointer"
             >
               <option>{t.pelamar.status.allStatus}</option>
-              <option>{t.pelamar.status.inProgress}</option>
-              <option>{t.pelamar.status.passed}</option>
-              <option>{t.pelamar.status.failed}</option>
+              <option value="Dalam Proses">{t.pelamar.status.inProgress}</option>
+              <option value="Lolos">{t.pelamar.status.passed}</option>
+              <option value="Tidak Lolos">{t.pelamar.status.failed}</option>
             </select>
           </div>
 
           {/* Search Button */}
           <div className="sm:col-span-1">
             <button
-              type="button"
+              type="submit"
               className="w-full py-2.5 bg-[#2596be] hover:bg-[#1D7FA1] text-white rounded-2xl font-bold text-xs shadow-xs transition-colors cursor-pointer"
             >
               {t.pelamar.status.searchButton}
             </button>
           </div>
-        </div>
+        </form>
       </div>
 
       {/* APPLICATIONS LIST CARDS */}
@@ -795,5 +825,13 @@ export default function StatusValidasiPage() {
       )}
 
     </div>
+  );
+}
+
+export default function StatusValidasiPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center bg-white dark:bg-slate-950"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#1b7b9e]"></div></div>}>
+      <StatusValidasiContent />
+    </Suspense>
   );
 }

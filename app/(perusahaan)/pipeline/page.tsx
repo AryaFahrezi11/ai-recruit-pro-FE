@@ -110,22 +110,8 @@ export default function PipelinePage() {
         <div>
           <h1 className="text-2xl font-bold text-foreground mb-1">{t.pipeline.title}</h1>
           <p className="text-sm text-muted-foreground font-medium">
-            42 {t.pipeline.totalCandidates} &bull; 28 {t.pipeline.inActiveStages}
+            {applications.length} {t.pipeline.totalCandidates} &bull; {uploadCvApps.length + screeningApps.length + virtualInterviewApps.length + videoAnalysisApps.length + humanValidationApps.length} {t.pipeline.inActiveStages}
           </p>
-        </div>
-        <div className="flex items-center gap-3">
-          <button 
-            onClick={() => window.print()}
-            className="flex items-center gap-2 px-4 py-2 bg-card border border-border rounded-lg text-sm font-semibold text-foreground hover:bg-muted transition-colors shadow-2xs"
-            title="Ekspor Laporan Pipeline ke PDF"
-          >
-            <Download size={16} className="text-muted-foreground" />
-            Ekspor PDF Pipeline
-          </button>
-          <button className="flex items-center gap-2 px-4 py-2 bg-card border border-border rounded-lg text-sm font-medium text-foreground hover:bg-muted transition-colors shadow-sm">
-            <Filter size={16} className="text-muted-foreground" />
-            {t.pipeline.filter}
-          </button>
         </div>
       </div>
 

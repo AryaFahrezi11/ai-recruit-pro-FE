@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { useTranslation } from '@/hooks/useTranslation';
 import { useAppStore } from '@/lib/store/useAppStore';
@@ -58,11 +59,25 @@ function getVideoQuestionsCount(json: string | null): number {
   }
 }
 
-export default function JobOpeningsPage() {
+function JobOpeningsContent() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const { t } = useTranslation();
   const token = useAppStore(state => state.token);
-  const [activeTab, setActiveTab] = useState<'all' | 'active' | 'draft' | 'closed'>('all');
-  const [searchQuery, setSearchQuery] = useState('');
+  const [activeTab, setActiveTab] = useState<'all' | 'active' | 'draft' | 'closed'>((searchParams.get('tab') as any) || 'all');
+  const [searchQuery, setSearchQuery] = useState(searchParams.get('search') || '');
+
+  const updateUrlParams = (updates: Record<string, string>) => {
+    const params = new URLSearchParams(searchParams.toString());
+    Object.entries(updates).forEach(([key, value]) => {
+      if (value && value !== 'all') {
+        params.set(key, value);
+      } else {
+        params.delete(key);
+      }
+    });
+    router.push(`?${params.toString()}`, { scroll: false });
+  };
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
   const [jobs, setJobs] = useState<JobItem[]>([]);
@@ -77,7 +92,11 @@ export default function JobOpeningsPage() {
     setIsLoading(true);
     setError('');
     try {
-      const res = await fetchAuth('/api/jobs/my-jobs');
+      const apiParams = new URLSearchParams();
+      const search = searchParams.get('search');
+      if (search) apiParams.append('search', search);
+      const qs = apiParams.toString();
+      const res = await fetchAuth(qs ? `/api/jobs/my-jobs?${qs}` : '/api/jobs/my-jobs');
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
         throw new Error(data.detail || 'Gagal memuat data lowongan.');
@@ -92,11 +111,11 @@ export default function JobOpeningsPage() {
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [searchParams]);
 
   useEffect(() => {
     loadJobs();
-  }, [loadJobs]);
+  }, [loadJobs, searchParams]);
 
   const handleCopyLink = (jobTitle: string) => {
     navigator.clipboard.writeText(`https://recruitpro.ai/jobs/apply?title=${encodeURIComponent(jobTitle)}`);
@@ -226,7 +245,10 @@ export default function JobOpeningsPage() {
               return (
                 <button
                   key={tab.id}
-                  onClick={() => setActiveTab(tab.id as typeof activeTab)}
+                  onClick={() => {
+                    setActiveTab(tab.id as typeof activeTab);
+                    updateUrlParams({ tab: tab.id });
+                  }}
                   className={`px-4 py-2 rounded-lg text-xs font-bold transition-all whitespace-nowrap flex items-center gap-2 ${
                     isActive 
                       ? 'bg-primary text-primary-foreground shadow-sm' 
@@ -246,16 +268,30 @@ export default function JobOpeningsPage() {
 
           {/* Search */}
           <div className="flex items-center gap-3 w-full sm:w-auto">
-            <div className="relative flex-1 sm:w-64">
-              <Search className="absolute left-3 top-2.5 text-muted-foreground" size={16} />
-              <input 
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Cari posisi, departemen, atau kota..."
-                className="w-full pl-9 pr-4 py-2 bg-muted/30 border border-border rounded-lg text-xs text-foreground focus:outline-none focus:border-primary font-medium"
-              />
-            </div>
+            <form 
+              className="flex items-center gap-2 flex-1 sm:w-auto"
+              onSubmit={(e) => {
+                e.preventDefault();
+                updateUrlParams({ search: searchQuery, tab: activeTab });
+              }}
+            >
+              <div className="relative flex-1 sm:w-64">
+                <Search className="absolute left-3 top-2.5 text-muted-foreground" size={16} />
+                <input 
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Cari posisi, departemen, atau kota..."
+                  className="w-full pl-9 pr-4 py-2 bg-muted/30 border border-border rounded-lg text-xs text-foreground focus:outline-none focus:border-primary font-medium"
+                />
+              </div>
+              <button
+                type="submit"
+                className="px-4 py-2 bg-primary hover:bg-primary/90 text-primary-foreground rounded-lg text-xs font-bold shadow-sm transition-colors cursor-pointer"
+              >
+                Cari
+              </button>
+            </form>
           </div>
 
         </div>
@@ -502,5 +538,13 @@ export default function JobOpeningsPage() {
       )}
 
     </div>
+  );
+}
+
+export default function JobOpeningsPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center bg-background"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div></div>}>
+      <JobOpeningsContent />
+    </Suspense>
   );
 }

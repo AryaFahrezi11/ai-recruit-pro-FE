@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Search, Plus, Edit, Trash2, Database, LayoutTemplate, Briefcase, AlertTriangle } from 'lucide-react';
 import { fetchAuth } from '@/lib/api/auth';
 import { toast } from 'react-hot-toast';
@@ -11,13 +12,27 @@ interface Category {
   deskripsi: string | null;
 }
 
-export default function MasterDataPage() {
-  const [activeTab, setActiveTab] = useState<'kategori' | 'skill'>('kategori');
+function MasterDataContent() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const [activeTab, setActiveTab] = useState<'kategori' | 'skill'>((searchParams.get('tab') as any) || 'kategori');
   
   // Category State
   const [categories, setCategories] = useState<Category[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState(searchParams.get('search') || '');
+
+  const updateUrlParams = (updates: Record<string, string>) => {
+    const params = new URLSearchParams(searchParams.toString());
+    Object.entries(updates).forEach(([key, value]) => {
+      if (value) {
+        params.set(key, value);
+      } else {
+        params.delete(key);
+      }
+    });
+    router.push(`?${params.toString()}`, { scroll: false });
+  };
 
   // Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -45,7 +60,7 @@ export default function MasterDataPage() {
     if (activeTab === 'kategori') {
       loadCategories();
     }
-  }, [activeTab]);
+  }, [activeTab, searchParams]);
 
   const handleOpenModal = (mode: 'add' | 'edit', category?: Category) => {
     setModalMode(mode);
@@ -121,7 +136,10 @@ export default function MasterDataPage() {
       {/* Tabs */}
       <div className="flex items-center gap-2 border-b border-slate-200">
         <button
-          onClick={() => setActiveTab('kategori')}
+          onClick={() => {
+            setActiveTab('kategori');
+            updateUrlParams({ tab: 'kategori' });
+          }}
           className={`px-4 py-3 text-sm font-semibold border-b-2 transition-colors flex items-center gap-2 ${
             activeTab === 'kategori' 
               ? 'border-blue-600 text-blue-600' 
@@ -132,7 +150,10 @@ export default function MasterDataPage() {
           Kategori Lowongan
         </button>
         <button
-          onClick={() => setActiveTab('skill')}
+          onClick={() => {
+            setActiveTab('skill');
+            updateUrlParams({ tab: 'skill' });
+          }}
           className={`px-4 py-3 text-sm font-semibold border-b-2 transition-colors flex items-center gap-2 ${
             activeTab === 'skill' 
               ? 'border-blue-600 text-blue-600' 
@@ -147,16 +168,30 @@ export default function MasterDataPage() {
       {activeTab === 'kategori' && (
         <div className="space-y-4 animate-in fade-in duration-300">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div className="relative">
-              <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-              <input 
-                type="text"
-                placeholder="Cari kategori..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-8 pr-4 py-2 w-64 bg-white border border-slate-200 rounded-lg text-sm text-slate-600 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
-              />
-            </div>
+            <form 
+              className="flex items-center gap-2"
+              onSubmit={(e) => {
+                e.preventDefault();
+                updateUrlParams({ search: searchQuery });
+              }}
+            >
+              <div className="relative">
+                <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                <input 
+                  type="text"
+                  placeholder="Cari kategori..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-8 pr-4 py-2 w-64 bg-white border border-slate-200 rounded-lg text-sm text-slate-600 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                />
+              </div>
+              <button
+                type="submit"
+                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-semibold transition-colors shadow-sm cursor-pointer"
+              >
+                Cari
+              </button>
+            </form>
             <button 
               onClick={() => handleOpenModal('add')}
               className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-lg shadow-sm transition-colors flex items-center gap-2"
@@ -313,5 +348,13 @@ export default function MasterDataPage() {
       )}
 
     </div>
+  );
+}
+
+export default function MasterDataPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center bg-slate-50"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div></div>}>
+      <MasterDataContent />
+    </Suspense>
   );
 }

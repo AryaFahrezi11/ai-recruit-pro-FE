@@ -1,11 +1,34 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useTranslation } from '@/hooks/useTranslation';
-import { ChevronDown, Calendar as CalendarIcon, Download, Search } from 'lucide-react';
+import { Calendar as CalendarIcon, Download, Search } from 'lucide-react';
+import { fetchAuth } from '@/lib/api/auth';
 
-export function ArchiveFilters() {
+export function ArchiveFilters({ 
+  search, setSearch, 
+  jobFilter, setJobFilter, 
+  date, setDate 
+}: any) {
   const { t } = useTranslation();
+  
+  const [jobs, setJobs] = useState<any[]>([]);
+
+  useEffect(() => {
+    const fetchJobs = async () => {
+      try {
+        const res = await fetchAuth('/api/jobs/my-jobs');
+        if (res.ok) {
+          const data = await res.json();
+          const activeJobs = (Array.isArray(data) ? data : []).filter((j: any) => j.status === 'active');
+          setJobs(activeJobs);
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    };
+    fetchJobs();
+  }, []);
 
   return (
     <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-card p-4 rounded-t-xl border border-border border-b-0">
@@ -16,31 +39,36 @@ export function ArchiveFilters() {
           <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
           <input 
             type="text" 
-            placeholder="Cari kandidat di arsip (nama, posisi, kampus)..."
+            placeholder={t.archive?.searchCandidate || "Search kandidat di arsip (nama, role, kampus)..."}
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
             className="w-full pl-9 pr-4 py-2 bg-background border border-border rounded-lg text-xs font-medium text-foreground outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all"
           />
         </div>
 
-        {/* Department Dropdown */}
-        <button className="flex items-center justify-between min-w-[150px] px-3 py-2 bg-background border border-border rounded-lg text-xs text-foreground hover:bg-muted transition-colors font-medium">
-          <span>{t.archive?.allDepartments}</span>
-          <ChevronDown size={14} className="text-muted-foreground ml-2" />
-        </button>
-
-        {/* Outcome Dropdown */}
-        <button className="flex items-center justify-between min-w-[120px] px-3 py-2 bg-background border border-border rounded-lg text-xs text-foreground hover:bg-muted transition-colors font-medium">
-          <span>{t.archive?.outcome}</span>
-          <ChevronDown size={14} className="text-muted-foreground ml-2" />
-        </button>
+        {/* Job Dropdown */}
+        <select 
+          value={jobFilter}
+          onChange={(e) => setJobFilter(e.target.value)}
+          className="min-w-[150px] px-3 py-2 bg-background border border-border rounded-lg text-xs text-foreground hover:bg-muted transition-colors font-medium outline-none"
+        >
+          <option value="">{t.archive?.allJobs || "Semua Pekerjaan"}</option>
+          {jobs.map(job => (
+            <option key={job.id} value={job.id}>
+              {job.judul_posisi}
+            </option>
+          ))}
+        </select>
 
         {/* Date Picker (Mock) */}
         <div className="relative">
           <input 
-            type="text" 
+            type="date" 
             placeholder="mm/dd/yyyy"
-            className="w-[130px] px-3 py-2 pr-9 bg-background border border-border rounded-lg text-xs font-medium text-foreground outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all"
+            value={date}
+            onChange={(e) => setDate(e.target.value)}
+            className="w-[140px] px-3 py-2 bg-background border border-border rounded-lg text-xs font-medium text-foreground outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all [&::-webkit-calendar-picker-indicator]:opacity-50"
           />
-          <CalendarIcon size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
         </div>
       </div>
 

@@ -12,18 +12,16 @@ import {
   ResponsiveContainer,
 } from 'recharts';
 
-const data = [
-  { name: 'Mon', value: 200 },
-  { name: 'Tue', value: 350 },
-  { name: 'Wed', value: 300 },
-  { name: 'Thu', value: 600 },
-  { name: 'Fri', value: 550 },
-  { name: 'Sat', value: 800 },
-  { name: 'Sun', value: 750 },
-  { name: 'Mon', value: 950 },
-];
+interface ChartDataPoint {
+  name: string;
+  value: number;
+}
 
-export function PipelineChart() {
+interface PipelineChartProps {
+  data: ChartDataPoint[];
+}
+
+export function PipelineChart({ data }: PipelineChartProps) {
   const { t } = useTranslation();
 
   return (

@@ -27,55 +27,221 @@ import {
   FileText,
   GraduationCap,
   Activity,
-  Check
+  Check,
+  UserPlus,
+  MessageSquare
 } from 'lucide-react';
 
 export default function DashboardPage() {
   const { t } = useTranslation();
   const [selectedCandidate, setSelectedCandidate] = useState<any | null>(null);
 
-  // Mock candidates awaiting HR validation
-  const pendingCandidates = [
-    {
-      name: "David Kim",
-      role: "Sr. Frontend @ MegaWeb",
-      education: "S1 Teknik Informatika (IPK 3.85)",
-      stage: "human_validation",
-      status: "needs_approval",
-      cvScore: 95,
-      videoUploaded: true,
-      videoScores: { ability: 85, intelligent: 92, personality: 78, attitude: 88, emotionalIntelligence: 80 }
-    },
-    {
-      name: "Siti Nurhaliza",
-      role: "Angular Developer",
-      education: "S1 Sistem Informasi (IPK 3.78)",
-      stage: "human_validation",
-      status: "needs_approval",
-      cvScore: 89,
-      videoUploaded: true,
-      videoScores: { ability: 80, intelligent: 85, personality: 90, attitude: 82, emotionalIntelligence: 88 }
-    }
-  ];
-
+  const [pendingCandidates, setPendingCandidates] = useState<any[]>([]);
   const [activeJobs, setActiveJobs] = useState<any[]>([]);
+  const [pipelineData, setPipelineData] = useState<any[]>([]);
+  const [recentActivities, setRecentActivities] = useState<any[]>([]);
+  const [trendCv, setTrendCv] = useState('+0');
+  const [avgSpeed, setAvgSpeed] = useState('< 2.5');
+
+  // Dashboard stats
+  const [stats, setStats] = useState({
+    cvReceived: 0,
+    passedScreening: 0,
+    interviewScheduled: 0,
+    awaitingValidation: 0,
+    avgCosineSimilarity: 0,
+    aiHrAccuracy: 100
+  });
 
   useEffect(() => {
     const loadData = async () => {
       try {
-        const res = await fetchAuth('/api/jobs/my-jobs');
-        if (res.ok) {
-          const data = await res.json();
-          const mappedJobs = data.slice(0, 3).map((j: any) => ({
+        const [jobsRes, appsRes] = await Promise.all([
+          fetchAuth('/api/jobs/my-jobs'),
+          fetchAuth('/api/applications/')
+        ]);
+
+        let jobsData = [];
+        if (jobsRes.ok) {
+          jobsData = await jobsRes.json();
+        }
+        
+        let appsData = [];
+        if (appsRes.ok) {
+          const appsJson = await appsRes.json();
+          appsData = appsJson.data || [];
+        }
+
+        // Pipeline Chart Data (Last 7 Days)
+        const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+        const chartDataMap: Record<string, number> = {};
+        for (let i = 6; i >= 0; i--) {
+          const d = new Date();
+          d.setDate(d.getDate() - i);
+          chartDataMap[days[d.getDay()]] = 0;
+        }
+        
+        // Also trend metrics calculations
+        const oneWeekAgo = new Date();
+        oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+        let cvThisWeek = 0;
+        let cvLastWeek = 0;
+        
+        let avgProcessTimeMs = 0;
+        let processTimeCount = 0;
+
+        // Calculate avg cosine similarity & fill chart map
+        let totalCosine = 0;
+        let cosineCount = 0;
+        let rejectedByHr = 0;
+        appsData.forEach((a: any) => {
+          if (a.analisis_cv?.skor_kecocokan) {
+            totalCosine += parseFloat(a.analisis_cv.skor_kecocokan);
+            cosineCount++;
+          }
+          if (a.applied_at) {
+            const appliedDate = new Date(a.applied_at);
+            const dayStr = days[appliedDate.getDay()];
+            if (chartDataMap[dayStr] !== undefined) {
+              chartDataMap[dayStr]++;
+            }
+            if (appliedDate >= oneWeekAgo) {
+              cvThisWeek++;
+            } else if (appliedDate >= new Date(oneWeekAgo.getTime() - 7 * 24 * 60 * 60 * 1000)) {
+              cvLastWeek++;
+            }
+          }
+          if (a.analisis_cv?.waktu_proses_ms) {
+            avgProcessTimeMs += a.analisis_cv.waktu_proses_ms;
+            processTimeCount++;
+          }
+          if (a.status === 'ditolak') {
+             rejectedByHr++;
+          }
+        });
+        
+        const chartData = Object.keys(chartDataMap).map(k => ({ name: k, value: chartDataMap[k] }));
+        setPipelineData(chartData);
+
+        const avgScreeningSpeed = processTimeCount > 0 ? (avgProcessTimeMs / processTimeCount / 1000).toFixed(1) : '< 2.5';
+        setAvgSpeed(avgScreeningSpeed.toString());
+
+        const trendCvReceived = cvLastWeek === 0 ? `+${cvThisWeek}` : `${cvThisWeek > cvLastWeek ? '+' : ''}${((cvThisWeek - cvLastWeek) / cvLastWeek * 100).toFixed(0)}%`;
+        setTrendCv(trendCvReceived);
+
+        // Process Applications Stats to match Pipeline columns
+        const cvReceived = appsData.filter((a: any) => a.status === 'upload_cv' || a.status === 'dikirim').length;
+        
+        const passedScreening = appsData.filter((a: any) => a.status === 'cv_screening' || a.status === 'lolos_cv' || a.status === 'ditolak_sistem').length;
+        
+        const interviewScheduled = appsData.filter((a: any) => a.status === 'virtual_interview' || a.status === 'video_analysis').length;
+        
+        const awaitingValidation = appsData.filter((a: any) => a.status === 'human_validation').length;
+
+        // Calculate HR accuracy
+        const avgCosineSimilarity = cosineCount > 0 ? (totalCosine / cosineCount).toFixed(1) : 0;
+        
+        // For HR Accuracy, compute from total applications that passed screening initially
+        const totalPassed = appsData.filter((a: any) => !['upload_cv', 'dikirim', 'cv_screening', 'ditolak_sistem'].includes(a.status)).length;
+        const hrAccuracy = totalPassed > 0 ? (100 - (rejectedByHr / totalPassed * 100)).toFixed(1) : 0;
+
+        setStats({
+          cvReceived,
+          passedScreening,
+          interviewScheduled,
+          awaitingValidation,
+          avgCosineSimilarity: avgCosineSimilarity as number,
+          aiHrAccuracy: hrAccuracy as number
+        });
+
+        // Create Recent Activity
+        const sortedApps = [...appsData].sort((a: any, b: any) => new Date(b.updated_at || b.applied_at).getTime() - new Date(a.updated_at || a.applied_at).getTime());
+        const recent = sortedApps.slice(0, 5).map((a: any, index: number) => {
+          const dateObj = new Date(a.updated_at || a.applied_at);
+          
+          let icon = UserPlus;
+          let iconBg = 'bg-blue-100 dark:bg-blue-900/30';
+          let iconColor = 'text-blue-600 dark:text-blue-400';
+          let actionText = 'melamar posisi';
+          let target = a.job?.judul_posisi || '';
+
+          if (a.status === 'lolos_cv' || a.status === 'video_analysis') {
+            icon = BrainCircuit;
+            iconBg = 'bg-cyan-100 dark:bg-cyan-900/30';
+            iconColor = 'text-cyan-600 dark:text-cyan-400';
+            actionText = 'lolos AI screening untuk';
+          } else if (a.status === 'virtual_interview') {
+             icon = Calendar;
+             iconBg = 'bg-amber-100 dark:bg-amber-900/30';
+             iconColor = 'text-amber-600 dark:text-amber-400';
+             actionText = 'menunggu interview untuk';
+          } else if (a.status === 'Lolos') {
+             icon = CheckCircle2;
+             iconBg = 'bg-purple-100 dark:bg-purple-900/30';
+             iconColor = 'text-purple-600 dark:text-purple-400';
+             actionText = 'diterima (Lolos) pada posisi';
+          } else if (a.status === 'ditolak_sistem' || a.status === 'ditolak') {
+             icon = Check;
+             iconBg = 'bg-rose-100 dark:bg-rose-900/30';
+             iconColor = 'text-rose-600 dark:text-rose-400';
+             actionText = 'ditolak pada posisi';
+          }
+
+          // Format time diff nicely
+          const diffMs = new Date().getTime() - dateObj.getTime();
+          const diffMins = Math.floor(diffMs / 60000);
+          const diffHours = Math.floor(diffMins / 60);
+          const diffDays = Math.floor(diffHours / 24);
+          let timeStr = `${diffMins} mnt lalu`;
+          if (diffDays > 0) timeStr = `${diffDays} hari lalu`;
+          else if (diffHours > 0) timeStr = `${diffHours} jam lalu`;
+          else if (diffMins === 0) timeStr = 'Baru saja';
+
+          return {
+            id: a.id || index,
+            type: a.status,
+            user: a.pelamar?.nama_lengkap || 'Candidate',
+            action: actionText,
+            target: target,
+            time: timeStr,
+            icon: icon,
+            iconBg: iconBg,
+            iconColor: iconColor,
+          };
+        });
+        setRecentActivities(recent);
+
+        // Get Pending Candidates (status === 'human_validation')
+        const pending = appsData.filter((a: any) => a.status === 'human_validation').map((a: any) => ({
+          id: a.id,
+          name: a.pelamar?.nama_lengkap || "Candidate",
+          role: a.job?.judul_posisi || "Role",
+          education: "-", // Education not exposed in /api/applications/ default
+          stage: "human_validation",
+          status: "needs_approval",
+          cvScore: Math.round(a.analisis_cv?.skor_kecocokan || 0),
+          videoUploaded: true,
+          videoScores: { ability: 85, intelligent: 92, personality: 78, attitude: 88, emotionalIntelligence: 80 } // Mock video scores for now as they aren't in applications/ list
+        }));
+        setPendingCandidates(pending);
+
+        // Process Jobs with correct `passed` count
+        const rejectedStatuses = ['upload_cv', 'dikirim', 'cv_screening', 'ditolak_sistem', 'ditolak'];
+        const mappedJobs = jobsData.slice(0, 3).map((j: any) => {
+          const jobApps = appsData.filter((a: any) => a.job?.id === j.id);
+          const jobPassed = jobApps.filter((a: any) => !rejectedStatuses.includes(a.status)).length;
+          
+          return {
+            id: j.id,
             title: j.judul_posisi,
             department: j.department || 'Engineering',
             threshold: j.cv_threshold || 80,
-            applicants: j.openings_count || 0,
-            passed: 0,
+            applicants: jobApps.length,
+            passed: jobPassed,
             posted: j.created_at ? new Date(j.created_at).toLocaleDateString('id-ID') : 'Baru',
-          }));
-          setActiveJobs(mappedJobs);
-        }
+          };
+        });
+        setActiveJobs(mappedJobs);
       } catch (err) {
         console.error('Failed to load company dashboard jobs', err);
       }
@@ -99,18 +265,6 @@ export default function DashboardPage() {
         </div>
 
         <div className="flex items-center gap-3 w-full sm:w-auto">
-          <button className="flex items-center gap-2 px-4 py-2 bg-card border border-border rounded-xl text-xs font-semibold text-foreground hover:bg-muted transition-colors shadow-2xs">
-            <CalendarDays size={15} className="text-muted-foreground" />
-            {t.dashboard.last30Days}
-          </button>
-          <button
-            onClick={() => window.print()}
-            className="flex items-center gap-2 px-4 py-2 bg-primary hover:bg-primary/90 text-primary-foreground font-bold text-xs rounded-xl transition-all shadow-md shadow-primary/20 active:scale-95 cursor-pointer"
-            title="Ekspor Laporan Dasbor ke PDF"
-          >
-            <Download size={15} />
-            {t.dashboard.exportReport} (PDF)
-          </button>
         </div>
       </div>
 
@@ -118,41 +272,41 @@ export default function DashboardPage() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
         <StatCard
           title={t.dashboard.cvReceived || 'CV DITERIMA'}
-          value="156"
+          value={stats.cvReceived.toString()}
           subtitle={t.dashboard.cvReceivedSub || 'minggu ini'}
           icon={<Users size={18} />}
-          trend="up"
-          trendValue="+24"
+          trend={trendCv.startsWith('-') ? 'down' : 'up'}
+          trendValue={trendCv}
           iconBgColor="bg-blue-50 dark:bg-blue-950/60 border border-blue-200/80 dark:border-blue-800"
           iconColor="text-blue-600 dark:text-blue-400"
         />
         <StatCard
           title={t.dashboard.passedScreening || 'LOLOS CV SCREENING'}
-          value="89"
+          value={stats.passedScreening.toString()}
           subtitle={t.dashboard.passedScreeningSub || 'threshold >= 60%'}
           icon={<BrainCircuit size={18} />}
-          trend="up"
-          trendValue="57%"
+          trend="neutral"
+          trendValue="-"
           iconBgColor="bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200/80 dark:border-emerald-800"
           iconColor="text-emerald-600 dark:text-emerald-400"
         />
         <StatCard
           title={t.dashboard.interviewScheduled || 'WAWANCARA VIDEO'}
-          value="34"
+          value={stats.interviewScheduled.toString()}
           subtitle={t.dashboard.interviewScheduledSub || 'proses analisis AI'}
           icon={<Calendar size={18} />}
           trend="neutral"
-          trendValue="8"
+          trendValue="-"
           iconBgColor="bg-amber-50 dark:bg-amber-950/60 border border-amber-200/80 dark:border-amber-800"
           iconColor="text-amber-600 dark:text-amber-400"
         />
         <StatCard
           title={t.dashboard.awaitingValidation || 'MENUNGGU VALIDASI HR'}
-          value="12"
+          value={stats.awaitingValidation.toString()}
           subtitle={t.dashboard.awaitingValidationSub || 'siap dikonfirmasi HR'}
           icon={<Clock size={18} />}
-          trend="down"
-          trendValue="-3"
+          trend="neutral"
+          trendValue="-"
           iconBgColor="bg-rose-50 dark:bg-rose-950/60 border border-rose-200/80 dark:border-rose-800"
           iconColor="text-rose-600 dark:text-rose-400"
         />
@@ -170,9 +324,11 @@ export default function DashboardPage() {
             <div>
               <div className="flex items-center gap-2">
                 <h2 className="font-bold text-base text-foreground">{t.dashboard.pendingApprovalTitle}</h2>
-                <span className="px-2.5 py-0.5 bg-rose-100 text-rose-700 dark:bg-rose-950/80 dark:text-rose-300 border border-rose-200 dark:border-rose-800 font-extrabold text-[11px] rounded-full">
-                  2 Perlu Validasi
-                </span>
+                {pendingCandidates.length > 0 && (
+                  <span className="px-2.5 py-0.5 bg-rose-100 text-rose-700 dark:bg-rose-950/80 dark:text-rose-300 border border-rose-200 dark:border-rose-800 font-extrabold text-[11px] rounded-full">
+                    {pendingCandidates.length} Perlu Validasi
+                  </span>
+                )}
               </div>
               <p className="text-xs text-muted-foreground mt-0.5">{t.dashboard.pendingApprovalSub}</p>
             </div>
@@ -189,43 +345,49 @@ export default function DashboardPage() {
 
         {/* Candidate Cards Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {pendingCandidates.map((c, i) => (
-            <div key={i} className="p-4 bg-muted/30 hover:bg-muted/50 rounded-xl border border-border transition-all flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-              <div className="flex items-start gap-3">
-                <div className="w-10 h-10 rounded-full bg-[#1b7b9e]/15 text-[#1b7b9e] dark:bg-[#1b7b9e]/30 dark:text-cyan-300 font-black flex items-center justify-center text-sm border border-[#1b7b9e]/30 shrink-0 mt-0.5 sm:mt-0 shadow-2xs">
-                  {c.name.charAt(0)}
-                </div>
-                <div className="space-y-1">
-                  <h4 className="font-bold text-sm text-foreground leading-snug">{c.name}</h4>
-                  <p className="text-xs font-semibold text-muted-foreground">{c.role}</p>
+          {pendingCandidates.length === 0 ? (
+            <div className="col-span-1 md:col-span-2 p-8 text-center bg-muted/20 border border-border rounded-xl">
+              <p className="text-sm text-muted-foreground font-medium">Tidak ada kandidat yang menunggu validasi HR saat ini.</p>
+            </div>
+          ) : (
+            pendingCandidates.map((c, i) => (
+              <div key={i} className="p-4 bg-muted/30 hover:bg-muted/50 rounded-xl border border-border transition-all flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                <div className="flex items-start gap-3">
+                  <div className="w-10 h-10 rounded-full bg-[#1b7b9e]/15 text-[#1b7b9e] dark:bg-[#1b7b9e]/30 dark:text-cyan-300 font-black flex items-center justify-center text-sm border border-[#1b7b9e]/30 shrink-0 mt-0.5 sm:mt-0 shadow-2xs">
+                    {c.name.charAt(0)}
+                  </div>
+                  <div className="space-y-1">
+                    <h4 className="font-bold text-sm text-foreground leading-snug">{c.name}</h4>
+                    <p className="text-xs font-semibold text-muted-foreground">{c.role}</p>
 
-                  {c.education && (
-                    <div className="inline-flex items-center gap-1 text-[11px] font-bold text-purple-700 dark:text-purple-300 bg-purple-50 dark:bg-purple-950/60 px-2 py-0.5 rounded-md border border-purple-200/80 dark:border-purple-800">
-                      <GraduationCap size={12} className="text-purple-600 dark:text-purple-400 shrink-0" />
-                      <span>{c.education}</span>
+                    {c.education && c.education !== "-" && (
+                      <div className="inline-flex items-center gap-1 text-[11px] font-bold text-purple-700 dark:text-purple-300 bg-purple-50 dark:bg-purple-950/60 px-2 py-0.5 rounded-md border border-purple-200/80 dark:border-purple-800">
+                        <GraduationCap size={12} className="text-purple-600 dark:text-purple-400 shrink-0" />
+                        <span>{c.education}</span>
+                      </div>
+                    )}
+
+                    <div className="flex flex-wrap items-center gap-2 pt-1">
+                      <span className="px-2.5 py-0.5 bg-emerald-50 text-emerald-700 dark:bg-emerald-950/70 dark:text-emerald-300 font-bold text-[11px] rounded-md border border-emerald-200/80 dark:border-emerald-800">
+                        CV Match: {c.cvScore}%
+                      </span>
+                      <span className="px-2.5 py-0.5 bg-sky-50 text-sky-700 dark:bg-sky-950/70 dark:text-sky-300 font-bold text-[11px] rounded-md border border-sky-200/80 dark:border-sky-800">
+                        Video Score: {c.videoScores ? ((c.videoScores.ability + c.videoScores.intelligent + c.videoScores.personality + c.videoScores.attitude + c.videoScores.emotionalIntelligence) / 5).toFixed(1) : '-'}
+                      </span>
                     </div>
-                  )}
-
-                  <div className="flex flex-wrap items-center gap-2 pt-1">
-                    <span className="px-2.5 py-0.5 bg-emerald-50 text-emerald-700 dark:bg-emerald-950/70 dark:text-emerald-300 font-bold text-[11px] rounded-md border border-emerald-200/80 dark:border-emerald-800">
-                      CV Match: {c.cvScore}%
-                    </span>
-                    <span className="px-2.5 py-0.5 bg-sky-50 text-sky-700 dark:bg-sky-950/70 dark:text-sky-300 font-bold text-[11px] rounded-md border border-sky-200/80 dark:border-sky-800">
-                      Video Score: 84.6
-                    </span>
                   </div>
                 </div>
-              </div>
 
-              <button
-                onClick={() => setSelectedCandidate(c)}
-                className="w-full sm:w-auto px-4 py-2 bg-primary hover:bg-primary/90 text-primary-foreground font-extrabold text-xs rounded-xl transition-all shrink-0 flex items-center justify-center gap-1.5 shadow-sm active:scale-95 cursor-pointer"
-              >
-                <UserCheck size={14} />
-                {t.dashboard.validateNow}
-              </button>
-            </div>
-          ))}
+                <button
+                  onClick={() => setSelectedCandidate(c)}
+                  className="w-full sm:w-auto px-4 py-2 bg-primary hover:bg-primary/90 text-primary-foreground font-extrabold text-xs rounded-xl transition-all shrink-0 flex items-center justify-center gap-1.5 shadow-sm active:scale-95 cursor-pointer"
+                >
+                  <UserCheck size={14} />
+                  {t.dashboard.validateNow}
+                </button>
+              </div>
+            ))
+          )}
         </div>
       </div>
 
@@ -236,7 +398,7 @@ export default function DashboardPage() {
         <div className="lg:col-span-2 space-y-6">
 
           {/* Pipeline Growth Chart */}
-          <PipelineChart />
+          <PipelineChart data={pipelineData} />
 
           {/* ACTIVE JOBS OVERVIEW */}
           <div className="bg-card p-5 sm:p-6 rounded-2xl border border-border shadow-sm space-y-4 w-full">
@@ -313,10 +475,10 @@ export default function DashboardPage() {
               <div className="p-4 bg-muted/30 border border-border rounded-xl space-y-2">
                 <div className="flex justify-between items-center text-xs">
                   <span className="font-bold text-foreground">{t.dashboard.avgCosineSimilarity}</span>
-                  <span className="font-bold text-blue-600 dark:text-blue-400">84.2%</span>
+                  <span className="font-bold text-blue-600 dark:text-blue-400">{stats.avgCosineSimilarity}%</span>
                 </div>
                 <div className="w-full bg-muted rounded-full h-2 overflow-hidden">
-                  <div className="bg-blue-600 h-full rounded-full" style={{ width: '84.2%' }}></div>
+                  <div className="bg-blue-600 h-full rounded-full" style={{ width: `${stats.avgCosineSimilarity}%` }}></div>
                 </div>
               </div>
 
@@ -324,10 +486,10 @@ export default function DashboardPage() {
               <div className="p-4 bg-muted/30 border border-border rounded-xl space-y-2">
                 <div className="flex justify-between items-center text-xs">
                   <span className="font-bold text-foreground">{t.dashboard.aiHrAccuracy}</span>
-                  <span className="font-bold text-emerald-600 dark:text-emerald-400">94.8%</span>
+                  <span className="font-bold text-emerald-600 dark:text-emerald-400">{stats.aiHrAccuracy}%</span>
                 </div>
                 <div className="w-full bg-muted rounded-full h-2 overflow-hidden">
-                  <div className="bg-emerald-600 h-full rounded-full" style={{ width: '94.8%' }}></div>
+                  <div className="bg-emerald-600 h-full rounded-full" style={{ width: `${stats.aiHrAccuracy}%` }}></div>
                 </div>
               </div>
 
@@ -335,7 +497,7 @@ export default function DashboardPage() {
               <div className="p-4 bg-muted/30 border border-border rounded-xl flex items-center justify-between">
                 <div>
                   <p className="text-xs font-bold text-foreground">{t.dashboard.avgProcessingSpeed}</p>
-                  <p className="text-xs text-muted-foreground">&lt; 2.5 Detik per Berkas CV</p>
+                  <p className="text-xs text-muted-foreground">{avgSpeed} Detik per Berkas CV</p>
                 </div>
                 <span className="px-2.5 py-1 bg-purple-50 text-purple-700 dark:bg-purple-950/70 dark:text-purple-300 font-extrabold text-xs rounded-lg border border-purple-200/80 dark:border-purple-800">
                   ⚡ Super Fast
@@ -345,7 +507,7 @@ export default function DashboardPage() {
           </div>
 
           {/* Recent Activity Feed */}
-          <RecentActivity />
+          <RecentActivity activities={recentActivities} />
 
         </div>
 

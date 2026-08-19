@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Search, Briefcase, Eye, Ban, CheckCircle, AlertTriangle, ExternalLink } from 'lucide-react';
 import { fetchAuth } from '@/lib/api/auth';
 import { toast } from 'react-hot-toast';
@@ -17,18 +18,38 @@ interface JobItem {
   openings_count?: number;
 }
 
-export default function AdminJobsPage() {
+function AdminJobsContent() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const [jobs, setJobs] = useState<JobItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState(searchParams.get('search') || '');
 
   const [confirmDialog, setConfirmDialog] = useState<{isOpen: boolean, jobId: string, status: string}>({ isOpen: false, jobId: '', status: '' });
+
+  const updateUrlParams = (updates: Record<string, string>) => {
+    const params = new URLSearchParams(searchParams.toString());
+    Object.entries(updates).forEach(([key, value]) => {
+      if (value) {
+        params.set(key, value);
+      } else {
+        params.delete(key);
+      }
+    });
+    router.push(`?${params.toString()}`, { scroll: false });
+  };
 
   const loadJobs = async () => {
     setIsLoading(true);
     try {
+      const apiParams = new URLSearchParams();
+      apiParams.append('limit', '200');
+      const search = searchParams.get('search');
+      if (search) apiParams.append('search', search);
+      const qs = apiParams.toString();
+
       // Fetch jobs with a large limit. For a real production app, this should have pagination.
-      const res = await fetchAuth('/api/jobs?limit=200');
+      const res = await fetchAuth(`/api/jobs?${qs}`);
       if (!res.ok) throw new Error('Failed to load jobs');
       const data = await res.json();
       // The API might return an array directly or { data: [...] }
@@ -43,7 +64,7 @@ export default function AdminJobsPage() {
 
   useEffect(() => {
     loadJobs();
-  }, []);
+  }, [searchParams]);
 
   const openConfirmDialog = (jobId: string, currentStatus: string) => {
     setConfirmDialog({ isOpen: true, jobId, status: currentStatus });
@@ -90,16 +111,30 @@ export default function AdminJobsPage() {
         </div>
         
         <div className="flex flex-wrap items-center gap-3">
-          <div className="relative">
-            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-            <input 
-              type="text"
-              placeholder="Cari posisi atau perusahaan..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-8 pr-4 py-2 w-64 bg-white border border-slate-200 rounded-lg text-sm text-slate-600 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
-            />
-          </div>
+          <form 
+            className="flex items-center gap-2"
+            onSubmit={(e) => {
+              e.preventDefault();
+              updateUrlParams({ search: searchQuery });
+            }}
+          >
+            <div className="relative">
+              <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+              <input 
+                type="text"
+                placeholder="Cari posisi atau perusahaan..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-8 pr-4 py-2 w-64 bg-white border border-slate-200 rounded-lg text-sm text-slate-600 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+              />
+            </div>
+            <button
+              type="submit"
+              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-semibold transition-colors shadow-sm cursor-pointer"
+            >
+              Cari
+            </button>
+          </form>
         </div>
       </div>
 
@@ -231,5 +266,13 @@ export default function AdminJobsPage() {
       )}
 
     </div>
+  );
+}
+
+export default function AdminJobsPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center bg-white"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div></div>}>
+      <AdminJobsContent />
+    </Suspense>
   );
 }

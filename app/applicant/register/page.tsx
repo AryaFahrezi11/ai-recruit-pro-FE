@@ -178,7 +178,7 @@ export default function PelamarRegisterPage() {
           <div className="w-full max-w-md bg-white dark:bg-slate-900 rounded-3xl p-8 sm:p-10 shadow-2xl border border-[#C2E5EF] dark:border-slate-800 space-y-7 relative animate-in fade-in duration-200">
             <div className="space-y-2">
               <span className="px-3 py-1 bg-[#E0F1F7] dark:bg-slate-800 text-[#1b7b9e] dark:text-cyan-400 rounded-full text-[11px] font-extrabold border border-[#B8E1ED] dark:border-slate-700 inline-block">
-                Langkah 1 dari 2: Pendaftaran Akun Pelamar
+                Step 1 of 2: Applicant Registration
               </span>
               <h1 className="text-3xl font-black text-[#1b7b9e] dark:text-cyan-400">{t.pelamar.auth.registerTitle}</h1>
               <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400">
@@ -210,7 +210,7 @@ export default function PelamarRegisterPage() {
 
               <div className="space-y-1">
                 <label htmlFor="password" className="block text-xs font-bold text-slate-700 dark:text-slate-300">
-                  Kata Sandi <span className="text-red-500">*</span>
+                  Password <span className="text-red-500">*</span>
                 </label>
                 <div className="relative flex items-center">
                   <Lock size={18} className="absolute left-4 text-slate-400 pointer-events-none" />
@@ -226,7 +226,7 @@ export default function PelamarRegisterPage() {
                 
                 {/* Password Strength Indicator */}
                 <div className="mt-3 bg-slate-50 dark:bg-slate-800/50 p-3 rounded-xl border border-slate-100 dark:border-slate-700/50">
-                  <p className="text-[10px] font-bold text-slate-500 dark:text-slate-400 mb-2">Persyaratan Kata Sandi:</p>
+                  <p className="text-[10px] font-bold text-slate-500 dark:text-slate-400 mb-2">Password Requirements:</p>
                   <div className="grid grid-cols-2 gap-2 text-[10px]">
                     <div className={`flex items-center gap-1.5 ${strength.length ? 'text-green-600 dark:text-green-400 font-bold' : 'text-slate-500 dark:text-slate-400'}`}>
                       {strength.length ? <CheckCircle2 size={12} /> : <div className="w-3 h-3 rounded-full border border-slate-300 dark:border-slate-600" />}
@@ -254,7 +254,7 @@ export default function PelamarRegisterPage() {
 
               <div className="space-y-1 mt-4">
                 <label htmlFor="confirmPassword" className="block text-xs font-bold text-slate-700 dark:text-slate-300">
-                  Konfirmasi Kata Sandi <span className="text-red-500">*</span>
+                  Confirm Password <span className="text-red-500">*</span>
                 </label>
                 <div className="relative flex items-center">
                   <KeyRound size={18} className="absolute left-4 text-slate-400 pointer-events-none" />

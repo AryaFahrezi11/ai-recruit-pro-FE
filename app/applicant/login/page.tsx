@@ -107,7 +107,7 @@ export default function PelamarLoginPage() {
               <div className="flex items-center justify-between text-xs font-bold text-slate-700 dark:text-slate-300">
                 <label htmlFor="email">{t.pelamar.auth.emailLabel}</label>
                 <button type="button" className="text-[#1b7b9e] dark:text-cyan-400 hover:underline flex items-center gap-1">
-                  <HelpCircle size={14} /> Bantuan
+                  <HelpCircle size={14} /> Help
                 </button>
               </div>
 
@@ -123,7 +123,7 @@ export default function PelamarLoginPage() {
 
             <div className="space-y-1">
               <label htmlFor="password" className="block text-xs font-bold text-slate-700 dark:text-slate-300">
-                Kata Sandi
+                Password
               </label>
               <input
                 id="password"
@@ -146,7 +146,7 @@ export default function PelamarLoginPage() {
               disabled={isLoading}
               className="w-full py-3.5 rounded-full bg-[#1b7b9e] hover:bg-[#1D7FA1] text-white font-extrabold text-xs sm:text-sm shadow-md hover:shadow-lg transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer"
             >
-              <span>{isLoading ? 'Memproses Masuk...' : t.pelamar.auth.signIn}</span>
+              <span>{isLoading ? 'Processing...' : t.pelamar.auth.signIn}</span>
               <ArrowRight size={16} />
             </button>
           </form>

@@ -1,7 +1,8 @@
 'use client';
 
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, Suspense } from 'react';
 import Link from 'next/link';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useAppStore } from '@/lib/store/useAppStore';
 import { useTranslation } from '@/hooks/useTranslation';
 import { getBaseUrl } from '@/lib/api';
@@ -67,82 +68,84 @@ interface Job {
   openingsCount: number;
 }
 
-export default function PerfectlyNeatLandingPage() {
+function LandingPageContent() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const { theme, toggleTheme, language, setLanguage } = useAppStore();
   const { t } = useTranslation();
   const [mounted, setMounted] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const lang = t.landing || {
-    findJob: 'Cari Kerja',
-    categories: 'Bidang Pekerjaan',
-    poFitJobs: 'Lowongan Tersedia',
-    aiFeatures: 'Fitur Unggulan',
-    successStories: 'Kisah Sukses',
-    companyPortal: 'Untuk Perusahaan',
-    applicantPortal: 'Masuk',
-    heroTag: 'Platform Cari Kerja Mudah & Transparan',
-    heroTitleLine1: 'Temukan Pekerjaan Yang',
-    heroTitleLine2: 'Pas Untuk Anda',
-    heroSubtitle: 'Kami bantu Anda menemukan karir yang sesuai dengan kemampuan dan minat Anda dengan proses yang adil dan transparan.',
-    accuracyStat: 'Tingkat Kecocokan',
-    successfulApplicants: 'Pengguna Sukses',
-    screeningProcessTime: 'Proses Cepat',
-    searchPlaceholder: 'Posisi atau Nama Perusahaan',
-    locationPlaceholder: 'Lokasi (misal: Jakarta, Remote)',
-    trending: 'Populer:',
-    searchBtn: 'Cari Sekarang',
-    poFitMatchResult: 'Tingkat Kecocokan Anda',
-    dualVectorAnalysis: 'Analisis Cerdas',
-    matched82: '92% Cocok',
-    biasFree: 'Penilaian Objektif',
-    biasFreeDesc: 'Lamaran Anda dinilai murni berdasarkan kemampuan Anda, tanpa melihat latar belakang pribadi.',
-    topEmployersTitle: 'Perusahaan Populer',
-    activePartners: '500+ Mitra Terpercaya',
-    pillarsTag: 'Mengapa Memilih Kami',
-    pillarsTitle: 'Cara Baru Mendapatkan Pekerjaan',
-    pillarsSub: '3 langkah mudah yang memastikan Anda mendapatkan pekerjaan di tempat yang tepat.',
-    pillar1Title: '1. Pencocokan CV Otomatis',
-    pillar1Desc: 'Sistem kami membaca CV Anda dan langsung mencocokkannya dengan lowongan yang paling pas.',
-    pillar2Title: '2. Wawancara Video Praktis',
-    pillar2Desc: 'Rekam video perkenalan singkat untuk menunjukkan kepribadian dan cara Anda berkomunikasi.',
-    pillar3Title: '3. Keputusan yang Adil',
-    pillar3Desc: 'Tim rekrutmen akan melihat rangkuman profil Anda secara utuh, sehingga keputusan lebih adil dan tepat sasaran.',
-    exploreCategoriesTitle: 'Kategori Pekerjaan Pilihan',
-    exploreCategoriesSub: 'Pilih kategori yang sesuai dengan minat dan keahlian Anda',
-    showAllCategories: 'Lihat Semua Kategori',
-    highPrecisionJobsTitle: 'Lowongan Pekerjaan Terbaru',
-    activeJobsCount: 'Menampilkan',
-    activeJobsSuffix: 'lowongan kerja',
-    resetFilters: 'Hapus Semua Filter',
-    workSystem: 'Sistem Kerja:',
-    experienceLevel: 'Pengalaman:',
-    all: 'Semua',
-    noJobsFound: 'Tidak Ada Lowongan Yang Sesuai',
-    resetFilterBtn: 'Hapus Filter',
-    estimatedScoreTitle: 'Perkiraan Kecocokan',
-    skillAlignment: 'Kecocokan Keahlian',
-    commVideoResponse: 'Cara Komunikasi',
-    cultureFitMatch: 'Kecocokan Budaya',
-    roleDescription: 'Deskripsi Pekerjaan:',
-    keyResponsibilities: 'Tanggung Jawab Utama:',
-    keyQualifications: 'Persyaratan Utama:',
-    startPoFitSelection: 'Lamar Pekerjaan Ini →',
-    successStoriesTag: 'Kisah Pengguna',
-    hiredInDaysTitle: 'Dapat Kerja Dalam Hitungan Hari',
-    hiredInDaysSub: 'Dengarkan cerita mereka yang berhasil menemukan pekerjaan impian melalui platform kami.',
-    faqTag: 'Pertanyaan Umum',
-    faqTitle: 'Informasi Untuk Anda',
-    footerDesc: 'Platform cari kerja yang menghubungkan Anda dengan perusahaan terbaik secara adil dan transparan.',
-    copyright: 'AI-Recruit Pro. Seluruh hak cipta dilindungi.',
-    jobDetailsModalTitle: 'Perkiraan Kecocokan Profil:',
-    closeModal: 'Tutup',
+    findJob: 'Explore Jobs',
+    categories: 'Job Categories',
+    poFitJobs: 'Latest Openings',
+    aiFeatures: 'Top Features',
+    successStories: 'Success Stories',
+    companyPortal: 'For Employers',
+    applicantPortal: 'Login',
+    heroTag: 'Platform Cari Kerja Seamless & Transparan',
+    heroTitleLine1: 'Temukan Job Impian',
+    heroTitleLine2: 'Tanpa Drama',
+    heroSubtitle: 'Kita bantu Anda find career yang paling fit dengan skill dan interest melalui proses AI yang fair dan transparan.',
+    accuracyStat: 'Match Rate',
+    successfulApplicants: 'Successful Hires',
+    screeningProcessTime: 'Fast Screening',
+    searchPlaceholder: 'Job Title, Skill, atau Company',
+    locationPlaceholder: 'Location (e.g., Jakarta, Remote)',
+    trending: 'Trending:',
+    searchBtn: 'Search Jobs',
+    poFitMatchResult: 'Your Match Score',
+    dualVectorAnalysis: 'Smart Matching System',
+    matched82: '92% Match',
+    biasFree: 'Bias-Free Selection',
+    biasFreeDesc: 'CV Anda di-review pure berdasarkan skill, no bias against background personal.',
+    topEmployersTitle: 'Top Employers',
+    activePartners: '500+ Hiring Partners',
+    pillarsTag: 'Why AI-Recruit?',
+    pillarsTitle: 'The New Way to Apply Job',
+    pillarsSub: '3 simple steps untuk secure role yang paling fit buat Anda.',
+    pillar1Title: '1. Auto-Match CV',
+    pillar1Desc: 'Sistem akan scanning CV Anda dan provide job match recommendations yang paling precise.',
+    pillar2Title: '2. Short Video Intro',
+    pillar2Desc: 'Cukup record short video untuk showcase skill komunikasi dan personality Anda.',
+    pillar3Title: '3. 100% Fair Assessment',
+    pillar3Desc: 'Tim HR akan terima profiling summary yang objektif sebagai baseline untuk final decision.',
+    exploreCategoriesTitle: 'Explore Job Categories',
+    exploreCategoriesSub: 'Pilih kategori dan filter posisi sesuai expertise Anda',
+    showAllCategories: 'Show All Categories',
+    highPrecisionJobsTitle: 'Latest Job Openings',
+    activeJobsCount: 'Showing',
+    activeJobsSuffix: 'active jobs',
+    resetFilters: 'Reset Filters',
+    workSystem: 'Work System:',
+    experienceLevel: 'Experience:',
+    all: 'All',
+    noJobsFound: 'Belum ada job yang match nih',
+    resetFilterBtn: 'Clear Filter',
+    estimatedScoreTitle: 'Estimated Match',
+    skillAlignment: 'Skill Alignment',
+    commVideoResponse: 'Communication & Video',
+    cultureFitMatch: 'Culture Fit',
+    roleDescription: 'Role Summary:',
+    keyResponsibilities: 'Key Responsibilities:',
+    keyQualifications: 'Requirements:',
+    startPoFitSelection: 'Apply Now →',
+    successStoriesTag: 'Success Stories',
+    hiredInDaysTitle: 'Hired in Days',
+    hiredInDaysSub: 'Dengarkan experience mereka yang sukses secure dream job via platform ini.',
+    faqTag: 'FAQ',
+    faqTitle: 'Candidate Information',
+    footerDesc: 'Job platform yang connect Anda dengan top tech companies secara fair dan transparan.',
+    copyright: 'AI-Recruit Pro. All rights reserved.',
+    jobDetailsModalTitle: 'Estimated Profile Match:',
+    closeModal: 'Close',
   };
 
   useEffect(() => {
     setMounted(true);
     fetchRealData();
-  }, []);
+  }, [searchParams]);
 
   const [realJobs, setRealJobs] = useState<Job[]>([]);
   const [realCompanies, setRealCompanies] = useState<any[]>([]);
@@ -150,8 +153,24 @@ export default function PerfectlyNeatLandingPage() {
   const fetchRealData = async () => {
     try {
       const baseUrl = getBaseUrl();
-      // Fetch Jobs
-      const resJobs = await fetch(`${baseUrl}/jobs/`);
+      // Fetch Jobs with Query Params
+      const apiParams = new URLSearchParams();
+      const kw = searchParams.get('keyword');
+      const loc = searchParams.get('location');
+      const cat = searchParams.get('category');
+      const type = searchParams.get('workType');
+      const exp = searchParams.get('expLevel');
+      
+      if (kw) apiParams.append('keyword', kw);
+      if (loc) apiParams.append('location', loc);
+      if (cat && cat !== 'Semua' && cat !== 'All') apiParams.append('category', cat);
+      if (type && type !== 'Semua' && type !== 'All') apiParams.append('tipe_pekerjaan', type);
+      if (exp && exp !== 'Semua' && exp !== 'All') apiParams.append('experience_level', exp);
+
+      const qs = apiParams.toString();
+      const fetchUrl = qs ? `${baseUrl}/jobs/?${qs}` : `${baseUrl}/jobs/`;
+
+      const resJobs = await fetch(fetchUrl);
       if (resJobs.ok) {
         const jobsData = await resJobs.json();
         // Map to Job interface
@@ -247,11 +266,23 @@ export default function PerfectlyNeatLandingPage() {
     }
   }, [theme]);
 
-  const [keyword, setKeyword] = useState('');
-  const [location, setLocation] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('Semua');
-  const [selectedWorkType, setSelectedWorkType] = useState('Semua');
-  const [selectedExpLevel, setSelectedExpLevel] = useState('Semua');
+  const [keyword, setKeyword] = useState(searchParams.get('keyword') || '');
+  const [location, setLocation] = useState(searchParams.get('location') || '');
+  const [selectedCategory, setSelectedCategory] = useState(searchParams.get('category') || 'Semua');
+  const [selectedWorkType, setSelectedWorkType] = useState(searchParams.get('workType') || 'Semua');
+  const [selectedExpLevel, setSelectedExpLevel] = useState(searchParams.get('expLevel') || 'Semua');
+
+  const updateUrlParams = (updates: Record<string, string>) => {
+    const params = new URLSearchParams(searchParams.toString());
+    Object.entries(updates).forEach(([key, value]) => {
+      if (value && value !== 'Semua' && value !== 'All') {
+        params.set(key, value);
+      } else {
+        params.delete(key);
+      }
+    });
+    router.push(`/?${params.toString()}`, { scroll: false });
+  };
   const [savedJobs, setSavedJobs] = useState<(number | string)[]>([]);
   const [previewJobId, setPreviewJobId] = useState<number | string>(1);
   const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(0);
@@ -517,6 +548,7 @@ export default function PerfectlyNeatLandingPage() {
             <form 
               onSubmit={(e) => {
                 e.preventDefault();
+                updateUrlParams({ keyword, location });
                 document.getElementById('job-feed-section')?.scrollIntoView({ behavior: 'smooth' });
               }}
               className="bg-white dark:bg-slate-900 rounded-3xl p-5 sm:p-7 shadow-2xl border border-slate-100 dark:border-slate-800 text-[#1b7b9e] dark:text-cyan-400 space-y-4"
@@ -567,7 +599,9 @@ export default function PerfectlyNeatLandingPage() {
                     <button
                       key={idx}
                       type="button"
-                      onClick={() => setKeyword(tag)}
+                      onClick={() => {
+                        setKeyword(tag);
+                      }}
                       className="px-3.5 py-1 rounded-full bg-[#E0F1F7] dark:bg-slate-800 text-[#1b7b9e] dark:text-cyan-300 hover:bg-[#B8E1ED] dark:hover:bg-slate-700 text-xs font-bold transition-colors whitespace-nowrap cursor-pointer"
                     >
                       #{tag}
@@ -741,7 +775,9 @@ export default function PerfectlyNeatLandingPage() {
             <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400">{lang.exploreCategoriesSub}</p>
           </div>
           <button
-            onClick={() => setSelectedCategory('Semua')}
+            onClick={() => {
+              setSelectedCategory('Semua');
+            }}
             className="text-xs sm:text-sm font-bold text-[#1b7b9e] dark:text-cyan-400 hover:underline cursor-pointer"
           >
             {lang.showAllCategories}
@@ -755,7 +791,10 @@ export default function PerfectlyNeatLandingPage() {
             return (
               <button
                 key={idx}
-                onClick={() => setSelectedCategory(isSelected ? 'Semua' : cat.name)}
+                onClick={() => {
+                  const newCat = isSelected ? 'Semua' : cat.name;
+                  setSelectedCategory(newCat);
+                }}
                 className={`p-5 rounded-3xl border text-left flex flex-col justify-between space-y-4 transition-all duration-200 group cursor-pointer ${isSelected
                   ? 'bg-[#1b7b9e] text-white border-[#1b7b9e] shadow-lg ring-2 ring-cyan-500/20'
                   : 'bg-white dark:bg-slate-900 border-[#C2E5EF] dark:border-slate-800 hover:border-[#1b7b9e] dark:hover:border-cyan-500 hover:shadow-md'
@@ -805,7 +844,12 @@ export default function PerfectlyNeatLandingPage() {
 
             {(selectedCategory !== 'Semua' || selectedWorkType !== 'Semua' || selectedExpLevel !== 'Semua') && (
               <button
-                onClick={() => { setSelectedCategory('Semua'); setSelectedWorkType('Semua'); setSelectedExpLevel('Semua'); }}
+                onClick={() => { 
+                  setSelectedCategory('Semua'); 
+                  setSelectedWorkType('Semua'); 
+                  setSelectedExpLevel('Semua'); 
+                  updateUrlParams({ category: 'Semua', workType: 'Semua', expLevel: 'Semua' });
+                }}
                 className="text-xs font-bold text-slate-500 dark:text-slate-400 hover:text-[#1b7b9e] dark:hover:text-cyan-300 underline cursor-pointer"
               >
                 {lang.resetFilters}
@@ -818,7 +862,9 @@ export default function PerfectlyNeatLandingPage() {
             {['Semua', 'Remote', 'Hybrid', 'On-site'].map((wt) => (
               <button
                 key={wt}
-                onClick={() => setSelectedWorkType(wt)}
+                onClick={() => {
+                  setSelectedWorkType(wt);
+                }}
                 className={`px-4 py-1.5 rounded-full transition-colors cursor-pointer ${selectedWorkType === wt
                   ? 'bg-[#1b7b9e] text-white shadow-xs'
                   : 'bg-[#F0F8FB] dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-[#E0F1F7] dark:hover:bg-slate-700 border border-[#C2E5EF] dark:border-slate-700'
@@ -834,7 +880,9 @@ export default function PerfectlyNeatLandingPage() {
             {['Semua', 'Senior Level', 'Mid Level'].map((exp) => (
               <button
                 key={exp}
-                onClick={() => setSelectedExpLevel(exp)}
+                onClick={() => {
+                  setSelectedExpLevel(exp);
+                }}
                 className={`px-4 py-1.5 rounded-full transition-colors cursor-pointer ${selectedExpLevel === exp
                   ? 'bg-[#1b7b9e] text-white shadow-xs'
                   : 'bg-[#F0F8FB] dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-[#E0F1F7] dark:hover:bg-slate-700 border border-[#C2E5EF] dark:border-slate-700'
@@ -843,6 +891,13 @@ export default function PerfectlyNeatLandingPage() {
                 {exp === 'Semua' && language === 'en' ? 'All' : exp}
               </button>
             ))}
+
+            <button
+              onClick={() => updateUrlParams({ category: selectedCategory, workType: selectedWorkType, expLevel: selectedExpLevel })}
+              className="ml-auto px-5 py-1.5 rounded-full bg-[#1b7b9e] hover:bg-[#1D7FA1] text-white font-bold shadow-md transition-all cursor-pointer"
+            >
+              Terapkan Filter
+            </button>
           </div>
         </div>
 
@@ -1169,5 +1224,13 @@ export default function PerfectlyNeatLandingPage() {
       </footer>
 
     </div>
+  );
+}
+
+export default function PerfectlyNeatLandingPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center bg-[#F0F8FB] dark:bg-slate-950"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#1b7b9e]"></div></div>}>
+      <LandingPageContent />
+    </Suspense>
   );
 }

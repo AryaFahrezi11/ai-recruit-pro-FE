@@ -104,7 +104,7 @@ export default function CompanyLoginPage() {
               AI-Recruit <span className="text-[#1D7FA1]">Pro</span>
             </span>
             <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest mt-0.5">
-              Portal Perusahaan (HRD)
+              Employer Portal (HRD)
             </span>
           </div>
         </Link>
@@ -113,7 +113,7 @@ export default function CompanyLoginPage() {
           href="/applicant/login"
           className="text-xs sm:text-sm font-bold text-[#1b7b9e] hover:underline flex items-center gap-1.5"
         >
-          Portal Pelamar Kerja &rarr;
+          Applicant Portal &rarr;
         </Link>
       </header>
 
@@ -123,11 +123,11 @@ export default function CompanyLoginPage() {
 
           <div className="space-y-2">
             <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-[#E0F1F7] text-[#1b7b9e] text-xs font-extrabold border border-[#B8E1ED]">
-              <Building2 size={14} /> Khusus Rekruter &amp; HRD Perusahaan
+              <Building2 size={14} /> For Recruiters &amp; HR
             </div>
-            <h1 className="text-3xl font-black text-[#1b7b9e]">Masuk Portal Perusahaan</h1>
+            <h1 className="text-3xl font-black text-[#1b7b9e]">Login to Employer Portal</h1>
             <p className="text-xs sm:text-sm text-slate-500">
-              Kelola proses rekrutmen, kandidat PO-FIT, dan evaluasi hasil analisis AI.
+              Kelola proses hiring, kandidat PO-FIT, dan AI screening.
             </p>
           </div>
 
@@ -137,7 +137,7 @@ export default function CompanyLoginPage() {
             {/* Email Input */}
             <div className="space-y-1">
               <label htmlFor="company-email" className="block text-xs font-bold text-slate-700">
-                Email Perusahaan Resmi
+                Official Company Email
               </label>
               <div className="relative flex items-center">
                 <Mail size={18} className="absolute left-4 text-slate-400 pointer-events-none" />
@@ -189,7 +189,7 @@ export default function CompanyLoginPage() {
               className="w-full py-3.5 rounded-full bg-[#1b7b9e] hover:bg-[#1D7FA1] text-white font-extrabold text-xs sm:text-sm shadow-md hover:shadow-lg transition-all duration-200 flex items-center justify-center gap-2"
             >
               {isLoading ? (
-                <span>Memproses Masuk...</span>
+                <span>{isLoading ? 'Processing...' : 'Sign In'}</span>
               ) : (
                 <>
                   <span>Masuk ke Dashboard HR</span>
@@ -203,7 +203,7 @@ export default function CompanyLoginPage() {
             <div className="text-xs text-slate-600 font-medium">
               Perusahaan Anda belum terdaftar?{' '}
               <Link href="/register" className="font-extrabold text-[#1b7b9e] hover:underline block sm:inline mt-1 sm:mt-0">
-                Daftar &amp; Verifikasi Legalitas &rarr;
+                Register &amp; Verifikasi Legalitas &rarr;
               </Link>
             </div>
           </div>

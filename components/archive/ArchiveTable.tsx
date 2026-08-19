@@ -6,7 +6,7 @@ import { ChevronLeft, ChevronRight, FileText } from 'lucide-react';
 import { fetchAuth } from '@/lib/api/auth';
 import toast from 'react-hot-toast';
 
-export function ArchiveTable() {
+export function ArchiveTable({ search, jobFilter, date }: any) {
   const { t } = useTranslation();
   
   const [applications, setApplications] = useState<any[]>([]);
@@ -53,17 +53,41 @@ export function ArchiveTable() {
     }).format(new Date(dateStr));
   };
 
+  const filteredApplications = applications.filter((app) => {
+    // Search filter
+    if (search) {
+      const searchLower = search.toLowerCase();
+      const matchName = (app.pelamar?.nama_lengkap || '').toLowerCase().includes(searchLower);
+      const matchJob = (app.job?.judul_posisi || '').toLowerCase().includes(searchLower);
+      const matchUniv = (app.pelamar?.institusi_pendidikan || app.cvData?.education?.[0]?.school || '').toLowerCase().includes(searchLower);
+      if (!matchName && !matchJob && !matchUniv) return false;
+    }
+
+    // Job filter
+    if (jobFilter && app.job?.id !== jobFilter) {
+      return false;
+    }
+
+    // Date filter
+    if (date) {
+      const appDate = (app.updated_at || app.applied_at || '').substring(0, 10);
+      if (appDate !== date) return false;
+    }
+
+    return true;
+  });
+
   return (
     <div className="bg-card text-card-foreground border border-border border-t-0 rounded-b-xl overflow-hidden shadow-sm">
       <div className="overflow-x-auto">
         <table className="w-full text-left text-sm">
           <thead className="bg-muted/50 text-muted-foreground font-semibold text-xs uppercase tracking-wider border-b border-border">
             <tr>
-              <th className="px-6 py-4">Kandidat</th>
-              <th className="px-6 py-4">Posisi Dilamar</th>
+              <th className="px-6 py-4">{t.archive?.candidate || 'CANDIDATE'}</th>
+              <th className="px-6 py-4">{t.archive?.role || 'ROLE'}</th>
               <th className="px-6 py-4">Pendidikan</th>
-              <th className="px-6 py-4">Tanggal Arsip</th>
-              <th className="px-6 py-4">Keputusan</th>
+              <th className="px-6 py-4">{t.archive?.dateClosed || 'DATE CLOSED'}</th>
+              <th className="px-6 py-4">{t.archive?.outcome || 'OUTCOME'}</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-border">
@@ -73,20 +97,20 @@ export function ArchiveTable() {
                   <div className="flex justify-center mb-4">
                     <div className="w-8 h-8 border-2 border-primary/30 border-t-primary rounded-full animate-spin"></div>
                   </div>
-                  Memuat data arsip...
+                  {t.archive?.loadingArchive || 'Loading data arsip...'}
                 </td>
               </tr>
-            ) : applications.length === 0 ? (
+            ) : filteredApplications.length === 0 ? (
               <tr>
                 <td colSpan={5} className="px-6 py-12 text-center text-muted-foreground">
                   <div className="flex justify-center mb-2">
                     <FileText size={32} className="text-muted/50" />
                   </div>
-                  Belum ada kandidat di arsip.
+                  {t.archive?.emptyArchive || 'Belum ada kandidat di arsip.'}
                 </td>
               </tr>
             ) : (
-              applications.map((row) => (
+              filteredApplications.map((row) => (
                 <tr key={row.id} className="hover:bg-muted/30 transition-colors">
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-3">
@@ -110,11 +134,11 @@ export function ArchiveTable() {
                   <td className="px-6 py-4">
                     {row.status === 'Lolos' ? (
                       <span className="px-3 py-1 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 text-xs font-medium rounded-full border border-transparent">
-                        Diterima / Lolos
+                        {t.archive?.hired || 'Hired / Diterima'}
                       </span>
                     ) : (
                       <span className="px-3 py-1 bg-rose-100 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400 text-xs font-medium rounded-full border border-transparent">
-                        Ditolak / Diskualifikasi
+                        {t.archive?.rejected || 'Rejected / Ditolak'}
                       </span>
                     )}
                   </td>
@@ -126,10 +150,10 @@ export function ArchiveTable() {
       </div>
 
       {/* Pagination Footer */}
-      {!loading && applications.length > 0 && (
+      {!loading && filteredApplications.length > 0 && (
         <div className="px-6 py-4 border-t border-border flex items-center justify-between">
           <p className="text-sm text-muted-foreground">
-            {t.archive?.showing} <strong>1</strong> {t.archive?.to} <strong>{applications.length}</strong> {t.archive?.of} <strong>{applications.length}</strong> {t.archive?.results}
+            {t.archive?.showing} <strong>1</strong> {t.archive?.to} <strong>{filteredApplications.length}</strong> {t.archive?.of} <strong>{filteredApplications.length}</strong> {t.archive?.results}
           </p>
         </div>
       )}

@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { toast } from 'react-hot-toast';
 import { useTranslation } from '@/hooks/useTranslation';
 import { 
@@ -41,11 +42,25 @@ interface StudentItem {
   applications: ApplicationHistory[];
 }
 
-export default function KampusMahasiswaPage() {
+function KampusMahasiswaContent() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const { t } = useTranslation();
-  const [searchQuery, setSearchQuery] = useState('');
-  const [majorFilter, setMajorFilter] = useState('All');
-  const [statusFilter, setStatusFilter] = useState<'all' | 'hired' | 'in_progress' | 'rejected'>('all');
+  const [searchQuery, setSearchQuery] = useState(searchParams.get('keyword') || '');
+  const [majorFilter, setMajorFilter] = useState(searchParams.get('major') || 'All');
+  const [statusFilter, setStatusFilter] = useState<'all' | 'hired' | 'in_progress' | 'rejected'>((searchParams.get('status') as any) || 'all');
+
+  const updateUrlParams = (updates: Record<string, string>) => {
+    const params = new URLSearchParams(searchParams.toString());
+    Object.entries(updates).forEach(([key, value]) => {
+      if (value && value !== 'all' && value !== 'All') {
+        params.set(key, value);
+      } else {
+        params.delete(key);
+      }
+    });
+    router.push(`?${params.toString()}`, { scroll: false });
+  };
   const [selectedStudent, setSelectedStudent] = useState<StudentItem | null>(null);
   const [modalTab, setModalTab] = useState<'applications' | 'cv' | 'video'>('applications');
   const [isPlayingVideo, setIsPlayingVideo] = useState(false);
@@ -207,7 +222,10 @@ export default function KampusMahasiswaPage() {
               return (
                 <button
                   key={tab.id}
-                  onClick={() => setStatusFilter(tab.id as typeof statusFilter)}
+                  onClick={() => {
+                    setStatusFilter(tab.id as typeof statusFilter);
+                    updateUrlParams({ status: tab.id });
+                  }}
                   className={`px-4 py-2 rounded-lg text-xs font-bold transition-all whitespace-nowrap flex items-center gap-2 ${
                     isActive 
                       ? 'bg-violet-600 text-white shadow-sm' 
@@ -226,7 +244,13 @@ export default function KampusMahasiswaPage() {
           </div>
 
           {/* Search & Major Filters */}
-          <div className="flex items-center gap-3 w-full sm:w-auto">
+          <form 
+            className="flex items-center gap-3 w-full sm:w-auto"
+            onSubmit={(e) => {
+              e.preventDefault();
+              updateUrlParams({ keyword: searchQuery, major: majorFilter, status: statusFilter });
+            }}
+          >
             <div className="relative flex-1 sm:w-64">
               <Search className="absolute left-3 top-2.5 text-muted-foreground" size={16} />
               <input 
@@ -240,7 +264,9 @@ export default function KampusMahasiswaPage() {
 
             <select 
               value={majorFilter}
-              onChange={(e) => setMajorFilter(e.target.value)}
+              onChange={(e) => {
+                setMajorFilter(e.target.value);
+              }}
               className="px-3.5 py-2 bg-muted/30 border border-border rounded-lg text-xs font-semibold text-foreground focus:outline-none focus:border-violet-600 cursor-pointer"
             >
               <option value="All">Semua Jurusan</option>
@@ -248,7 +274,14 @@ export default function KampusMahasiswaPage() {
               <option value="Sistem Informasi">Sistem Informasi</option>
               <option value="Desain Komunikasi Visual">DKV</option>
             </select>
-          </div>
+            
+            <button
+              type="submit"
+              className="px-4 py-2 bg-violet-600 hover:bg-violet-700 text-white rounded-lg text-xs font-bold shadow-sm transition-colors cursor-pointer"
+            >
+              Cari
+            </button>
+          </form>
 
         </div>
 
@@ -581,5 +614,13 @@ export default function KampusMahasiswaPage() {
       )}
 
     </div>
+  );
+}
+
+export default function KampusMahasiswaPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center bg-white dark:bg-slate-950"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-violet-600"></div></div>}>
+      <KampusMahasiswaContent />
+    </Suspense>
   );
 }
