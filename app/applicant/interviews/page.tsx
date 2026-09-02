@@ -1,9 +1,10 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useTranslation } from '@/hooks/useTranslation';
+import api from '@/lib/api';
 import {
   Video,
   VideoOff,
@@ -31,6 +32,11 @@ export default function WawancaraVideoPage() {
   const [recordingSeconds, setRecordingSeconds] = useState(0);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [showDeviceModal, setShowDeviceModal] = useState(false);
+
+  // States untuk fitur Upload (Alternative)
+  const [selectedVideo, setSelectedVideo] = useState<File | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const questions = [
     {
@@ -73,6 +79,34 @@ export default function WawancaraVideoPage() {
 
   const handleFinishAssessment = () => {
     router.push('/applicant/status');
+  };
+
+  const handleUploadSubmit = async () => {
+    if (!selectedVideo) {
+      alert("Pilih file video .mp4 terlebih dahulu!");
+      return;
+    }
+
+    const isConfirmed = window.confirm("Apakah Anda yakin ingin menggunakan video ini?\n\nPerhatian: Anda hanya dapat mengunggah video SATU KALI untuk lamaran ini. Pastikan video yang Anda pilih sudah benar.");
+    if (!isConfirmed) {
+      return;
+    }
+
+    try {
+      setIsUploading(true);
+      const formData = new FormData();
+      formData.append('video', selectedVideo);
+
+      const appId = localStorage.getItem('current_application_id') || 'DUMMY_ID';
+      await api.post(`/applications/${appId}/upload-video`, formData);
+      alert("Video Anda berhasil diunggah! Data Anda telah dikirim dan akan segera direview oleh tim rekrutmen perusahaan.");
+      router.push('/applicant/status');
+    } catch (error) {
+      console.error(error);
+      alert("Terjadi kesalahan saat mengunggah video.");
+    } finally {
+      setIsUploading(false);
+    }
   };
 
   return (
@@ -126,13 +160,24 @@ export default function WawancaraVideoPage() {
             {isCameraOn ? (
               <div className="relative w-full h-full bg-gradient-to-t from-slate-900 to-slate-800 flex items-center justify-center">
                 <div className="relative flex flex-col items-center justify-center space-y-4">
-                  <div className="w-32 h-32 rounded-full bg-slate-800 border-4 border-slate-700/80 flex items-center justify-center shadow-lg relative">
-                    <UserCheck className="w-16 h-16 text-slate-400" />
-                    <span className="absolute bottom-1 right-1 w-5 h-5 rounded-full bg-emerald-500 border-2 border-slate-900"></span>
-                  </div>
-                  <span className="text-xs sm:text-sm font-semibold text-slate-300 bg-slate-900/80 px-4 py-1.5 rounded-full border border-slate-700">
-                    {t.pelamar.wawancara.cameraReady} (Budi Pratama)
-                  </span>
+                  {selectedVideo ? (
+                    <div className="flex flex-col items-center space-y-3 z-10 bg-slate-900/80 p-4 rounded-xl backdrop-blur-sm border border-emerald-500/30">
+                      <CheckCircle2 className="w-12 h-12 text-emerald-400" />
+                      <span className="text-sm font-semibold text-emerald-300 text-center">
+                        File Siap Diupload:<br />{selectedVideo.name}
+                      </span>
+                    </div>
+                  ) : (
+                    <>
+                      <div className="w-32 h-32 rounded-full bg-slate-800 border-4 border-slate-700/80 flex items-center justify-center shadow-lg relative">
+                        <UserCheck className="w-16 h-16 text-slate-400" />
+                        <span className="absolute bottom-1 right-1 w-5 h-5 rounded-full bg-emerald-500 border-2 border-slate-900"></span>
+                      </div>
+                      <span className="text-xs sm:text-sm font-semibold text-slate-300 bg-slate-900/80 px-4 py-1.5 rounded-full border border-slate-700">
+                        {t.pelamar.wawancara.cameraReady} (Budi Pratama)
+                      </span>
+                    </>
+                  )}
                 </div>
               </div>
             ) : (
@@ -207,31 +252,67 @@ export default function WawancaraVideoPage() {
             </div>
 
             <div className="flex items-center gap-2 w-full sm:w-auto">
-              {!isRecording ? (
+              {/* Opsi 1: Fitur Rekam Langsung (Mendatang) */}
+              <div className="flex items-center gap-2 border-r border-slate-200 dark:border-slate-700 pr-3">
+                {!isRecording ? (
+                  <button
+                    onClick={() => setIsRecording(true)}
+                    className="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-5 py-3 rounded-full bg-red-600 hover:bg-red-700 text-white text-xs sm:text-sm font-bold shadow-sm transition-all cursor-pointer"
+                  >
+                    <Video className="w-4 h-4" />
+                    {t.pelamar.wawancara.startRecording}
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => setIsRecording(false)}
+                    className="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-5 py-3 rounded-full bg-slate-800 hover:bg-slate-900 text-white text-xs sm:text-sm font-bold shadow-sm transition-all cursor-pointer"
+                  >
+                    <Square className="w-4 h-4 fill-white" />
+                    {t.pelamar.wawancara.stopRecording}
+                  </button>
+                )}
+
                 <button
-                  onClick={() => setIsRecording(true)}
-                  className="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-6 py-3 rounded-full bg-red-600 hover:bg-red-700 text-white text-xs sm:text-sm font-bold shadow-sm transition-all cursor-pointer"
+                  onClick={handleFinishAssessment}
+                  className="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-5 py-3 rounded-full bg-slate-200 hover:bg-slate-300 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 text-xs font-bold transition-all cursor-pointer"
+                >
+                  Kirim Rekaman
+                </button>
+              </div>
+
+              {/* Opsi 2: Fitur Upload Alternatif */}
+              <div className="flex items-center gap-2 pl-1">
+                <input
+                  type="file"
+                  accept="video/mp4"
+                  className="hidden"
+                  ref={fileInputRef}
+                  onChange={(e) => setSelectedVideo(e.target.files?.[0] || null)}
+                />
+                <button
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={isUploading}
+                  className="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-4 py-3 rounded-full border border-slate-300 dark:border-slate-600 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 text-xs sm:text-sm font-bold shadow-sm transition-all cursor-pointer"
                 >
                   <Video className="w-4 h-4" />
-                  {t.pelamar.wawancara.startRecording}
+                  Pilih Video (.mp4)
                 </button>
-              ) : (
-                <button
-                  onClick={() => setIsRecording(false)}
-                  className="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-6 py-3 rounded-full bg-slate-800 hover:bg-slate-900 text-white text-xs sm:text-sm font-bold shadow-sm transition-all cursor-pointer"
-                >
-                  <Square className="w-4 h-4 fill-white" />
-                  {t.pelamar.wawancara.stopRecording}
-                </button>
-              )}
 
-              <button
-                onClick={handleFinishAssessment}
-                className="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-7 py-3 rounded-full bg-[#1b7b9e] hover:bg-[#1D7FA1] text-white text-xs sm:text-sm font-bold shadow-md transition-all cursor-pointer"
-              >
-                <Send className="w-4 h-4 text-[#E0F1F7]" />
-                {t.pelamar.wawancara.finishSubmit}
-              </button>
+                {selectedVideo && (
+                  <button
+                    onClick={handleUploadSubmit}
+                    disabled={isUploading}
+                    className="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-6 py-3 rounded-full bg-[#1b7b9e] hover:bg-[#1D7FA1] text-white text-xs sm:text-sm font-bold shadow-md transition-all cursor-pointer disabled:opacity-50"
+                  >
+                    {isUploading ? (
+                      <Sparkles className="w-4 h-4 animate-spin text-[#E0F1F7]" />
+                    ) : (
+                      <Send className="w-4 h-4 text-[#E0F1F7]" />
+                    )}
+                    {isUploading ? "Mengunggah..." : "Submit Upload"}
+                  </button>
+                )}
+              </div>
             </div>
           </div>
         </div>

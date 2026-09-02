@@ -542,15 +542,37 @@ function StatusValidasiContent() {
 
                       {/* SPECIAL ACTION BUTTON FOR SCENARIO 5: UPLOAD VIRTUAL INTERVIEW */}
                       {app.currentStageIndex === 3 && app.status === 'Dalam Proses' && (
-                        <div className="pt-2">
-                          <Link
-                            href="/applicant/interviews"
-                            className="inline-flex items-center gap-2.5 px-6 py-3 rounded-full bg-[#2596be] hover:bg-[#1D7FA1] text-white font-black text-xs sm:text-sm shadow-md hover:shadow-lg transition-all animate-bounce cursor-pointer"
+                        <div className="pt-2 flex flex-wrap items-center gap-4">
+                          <label className="inline-flex items-center gap-2.5 px-6 py-3 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs sm:text-sm shadow-md hover:shadow-lg transition-all cursor-pointer">
+                            <input type="file" accept="video/*" className="hidden" onChange={async (e) => {
+                              const file = e.target.files?.[0];
+                              if (file) {
+                                const formData = new FormData();
+                                formData.append('video', file);
+                                
+                                const uploadPromise = api.post(`/applications/${app.id}/upload-video`, formData);
+                                
+                                toast.promise(uploadPromise, {
+                                  loading: 'Sedang mengunggah video wawancara...',
+                                  success: (res: any) => res.message || 'Video berhasil diunggah dan sedang diproses AI.',
+                                  error: (err: any) => parseErrorMessage(err) || 'Gagal mengunggah video.'
+                                }).then(() => {
+                                  // Refresh data after successful upload (optional, but good UX)
+                                  setTimeout(() => window.location.reload(), 2000);
+                                }).catch(() => {});
+                              }
+                            }} />
+                            <Video size={18} className="text-emerald-200" />
+                            <span>Upload Video Wawancara</span>
+                          </label>
+
+                          <button
+                            disabled
+                            className="inline-flex items-center gap-2.5 px-6 py-3 rounded-full bg-slate-200 text-slate-500 font-black text-xs sm:text-sm cursor-not-allowed"
                           >
-                            <Video size={18} className="text-cyan-200" />
-                            <span>{t.pelamar.status.startInterview}</span>
-                            <ArrowRight size={16} />
-                          </Link>
+                            <Bot size={18} className="text-slate-400" />
+                            <span>{t.pelamar.status.startInterview} (Coming Soon)</span>
+                          </button>
                         </div>
                       )}
 

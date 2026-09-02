@@ -32,6 +32,8 @@ interface CandidateModalProps {
       attitude: number;
       emotionalIntelligence: number;
     };
+    aiResult?: any;
+    videoUrl?: string;
     cvData?: any;
     cvDocument?: any;
     jobData?: any;
@@ -118,17 +120,23 @@ export function CandidateModal({ candidate, onClose }: CandidateModalProps) {
     setActiveTab(getInitialTab(stage));
   }, [stage]);
 
-  const isVideoUploaded = candidate.videoUploaded !== undefined
+  const parsePercent = (val: any) => {
+    if (typeof val === 'string') return parseFloat(val.replace('%', ''));
+    if (typeof val === 'number') return val;
+    return 0;
+  };
+  const aiResult = candidate.aiResult;
+  const isVideoUploaded = (candidate.videoUploaded !== undefined
     ? candidate.videoUploaded
-    : (candidate.status === 'video_uploaded' || candidate.name.includes('David'));
+    : (candidate.status === 'video_uploaded' || candidate.name.includes('David'))) || !!candidate.videoUrl;
 
   // Radar Chart data
   const radarData = [
-    { subject: t.modal.ability, A: candidate.videoScores?.ability || 85, fullMark: 100 },
-    { subject: t.modal.intelligent, A: candidate.videoScores?.intelligent || 92, fullMark: 100 },
-    { subject: t.modal.personality, A: candidate.videoScores?.personality || 78, fullMark: 100 },
-    { subject: t.modal.attitude, A: candidate.videoScores?.attitude || 88, fullMark: 100 },
-    { subject: t.modal.emotionalIntelligence, A: candidate.videoScores?.emotionalIntelligence || 60, fullMark: 100 },
+    { subject: t.modal.ability, A: aiResult?.dimensi_psikologis?.Ability ? parsePercent(aiResult.dimensi_psikologis.Ability) : (candidate.videoScores?.ability || 85), fullMark: 100 },
+    { subject: t.modal.intelligent, A: aiResult?.dimensi_psikologis?.Intelligent ? parsePercent(aiResult.dimensi_psikologis.Intelligent) : (candidate.videoScores?.intelligent || 92), fullMark: 100 },
+    { subject: t.modal.personality, A: aiResult?.dimensi_psikologis?.Personality ? parsePercent(aiResult.dimensi_psikologis.Personality) : (candidate.videoScores?.personality || 78), fullMark: 100 },
+    { subject: t.modal.attitude, A: aiResult?.dimensi_psikologis?.Attitude ? parsePercent(aiResult.dimensi_psikologis.Attitude) : (candidate.videoScores?.attitude || 88), fullMark: 100 },
+    { subject: t.modal.emotionalIntelligence, A: aiResult?.dimensi_psikologis?.['Emotional Intelligent'] ? parsePercent(aiResult.dimensi_psikologis['Emotional Intelligent']) : (candidate.videoScores?.emotionalIntelligence || 60), fullMark: 100 },
   ];
 
   // Video analysis parameters
@@ -700,34 +708,29 @@ export function CandidateModal({ candidate, onClose }: CandidateModalProps) {
                 {isVideoUploaded ? (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="relative rounded-xl overflow-hidden bg-slate-900 aspect-video border border-border group cursor-pointer shadow-md">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src="https://images.unsplash.com/photo-1560250097-0b93528c311a?w=600&q=80" alt="Video preview" className="w-full h-full object-cover opacity-90" />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex flex-col justify-between p-4">
-                        <span className="self-end px-2 py-1 bg-black/60 backdrop-blur-sm text-white text-[10px] font-mono rounded">
-                          00:15:32
-                        </span>
-                        <div className="flex items-center justify-between text-white">
-                          <button className="w-10 h-10 rounded-full bg-primary/90 flex items-center justify-center hover:scale-105 transition-transform">
-                            <Play size={20} fill="currentColor" className="ml-0.5" />
-                          </button>
-                          <span className="text-xs font-medium">Recorded on 2026-07-28 14:20</span>
+                      {candidate.videoUrl ? (
+                        <video controls src={candidate.videoUrl} className="w-full h-full object-contain bg-black" />
+                      ) : (
+                        <div className="w-full h-full flex flex-col items-center justify-center bg-slate-800 text-slate-400">
+                           <Video size={48} className="mb-2 opacity-50" />
+                           <p>Video tidak tersedia</p>
                         </div>
-                      </div>
+                      )}
                     </div>
 
                     <div className="space-y-4">
                       <div className="p-4 bg-muted/30 rounded-lg border border-border space-y-2 text-xs">
                         <div className="flex justify-between">
                           <span className="text-muted-foreground">{t.modal.durasiVideo}:</span>
-                          <span className="font-semibold text-foreground">{t.modal.durasiDemo}</span>
+                          <span className="font-semibold text-foreground">{candidate.aiResult?.durasi_teks || "Tersedia setelah analisis"}</span>
                         </div>
                         <div className="flex justify-between">
                           <span className="text-muted-foreground">Status:</span>
-                          <span className="font-semibold text-emerald-600 dark:text-emerald-400">{t.modal.pertanyaanSelesai}</span>
+                          <span className="font-semibold text-emerald-600 dark:text-emerald-400">{candidate.aiResult?.status_jawaban_teks || "Menunggu Analisis AI"}</span>
                         </div>
                         <div className="flex justify-between">
                           <span className="text-muted-foreground">Quality:</span>
-                          <span className="font-semibold text-foreground">{t.modal.kualitasMedia}</span>
+                          <span className="font-semibold text-foreground">{candidate.aiResult?.kualitas_teks || "Tersedia setelah analisis"}</span>
                         </div>
                       </div>
 
@@ -736,7 +739,7 @@ export function CandidateModal({ candidate, onClose }: CandidateModalProps) {
                           {t.modal.transcriptHighlight}
                         </p>
                         <p className="text-xs italic text-foreground/80 leading-relaxed">
-                          {t.modal.transkripCuplikan}
+                          {candidate.aiResult?.ringkasan_jawaban || "Transkrip masih diproses oleh AI..."}
                         </p>
                       </div>
                     </div>
@@ -766,6 +769,20 @@ export function CandidateModal({ candidate, onClose }: CandidateModalProps) {
                 </p>
               </div>
 
+              {aiResult && (
+                <div className="bg-primary/10 border border-primary/20 p-4 rounded-xl flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-full bg-primary flex items-center justify-center text-primary-foreground">
+                    <Sparkles size={24} />
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-lg text-primary">{aiResult.kategori_fit}</h3>
+                    <p className="text-sm text-foreground/80 mt-1 line-clamp-2" title={aiResult.ringkasan_jawaban}>
+                      {aiResult.ringkasan_jawaban || "Kandidat memiliki profil wawancara yang menjanjikan."}
+                    </p>
+                  </div>
+                </div>
+              )}
+              {aiResult ? (
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
 
                 {/* 5 Video Parameters */}
@@ -835,6 +852,13 @@ export function CandidateModal({ candidate, onClose }: CandidateModalProps) {
                 </div>
 
               </div>
+              ) : (
+                <div className="p-8 bg-amber-50/50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-900 rounded-xl text-center space-y-3">
+                  <Scan className="mx-auto text-amber-500" size={36} />
+                  <h4 className="font-bold text-base text-foreground">Proses Analisis</h4>
+                  <p className="text-xs text-muted-foreground max-w-md mx-auto">AI belum selesai melakukan analisis video.</p>
+                </div>
+              )}
             </div>
           )}
 
