@@ -269,18 +269,12 @@ function SavedJobsContent() {
   }, [masterJobs, savedJobIds, searchQuery, policyFilter]);
 
   return (
-    <div className="space-y-8 max-w-[1600px] mx-auto">
+    <div className="space-y-6 max-w-[1600px] mx-auto">
 
-      {/* HEADER BANNER */}
-      <div className="bg-gradient-to-r from-[#2596be] via-[#1b7b9e] to-[#0c2b3d] rounded-3xl p-6 sm:p-10 text-white shadow-xl flex flex-col md:flex-row md:items-center justify-between gap-6 relative overflow-hidden">
-        <div className="absolute right-0 top-0 translate-x-12 -translate-y-12 w-80 h-80 bg-white/10 rounded-full blur-3xl pointer-events-none"></div>
-
+      {/* HEADER BANNER (Matching Cari Lowongan Theme) */}
+      <div className="bg-[#1A4B9F] rounded-2xl p-6 sm:p-8 text-white shadow-md flex flex-col md:flex-row md:items-center justify-between gap-6 relative overflow-hidden">
         <div className="space-y-2 relative z-10">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-white/20 text-white text-xs font-extrabold backdrop-blur-md border border-white/20">
-            <Bookmark className="w-3.5 h-3.5 fill-current text-cyan-300" />
-            <span>{language === 'id' ? 'Lowongan Impian Anda' : 'Your Dream Jobs'}</span>
-          </div>
-          <h1 className="text-2xl sm:text-4xl font-black tracking-tight">
+          <h1 className="text-2xl sm:text-3xl font-black tracking-tight">
             {t.pelamar.tersimpan.title}
           </h1>
           <p className="text-white/80 text-xs sm:text-sm max-w-2xl leading-relaxed">
@@ -289,14 +283,14 @@ function SavedJobsContent() {
         </div>
 
         {/* Counter Badge */}
-        <div className="bg-white/10 backdrop-blur-md border border-white/20 p-5 rounded-3xl shrink-0 text-center space-y-1 self-start md:self-center">
+        <div className="bg-white/10 backdrop-blur-md border border-white/20 p-5 rounded-2xl shrink-0 text-center space-y-1 self-start md:self-center">
           <span className="text-3xl font-black text-white">{visibleSavedJobs.length}</span>
-          <span className="block text-xs font-bold text-cyan-200">{language === 'id' ? 'Total Lowongan Tersimpan' : 'Total Saved Jobs'}</span>
+          <span className="block text-xs font-bold text-blue-100">{language === 'id' ? 'Total Lowongan Tersimpan' : 'Total Saved Jobs'}</span>
         </div>
       </div>
 
       {/* SEARCH & FILTER CONTROLS BAR */}
-      <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 border border-slate-200 dark:border-slate-800 shadow-2xs space-y-4">
+      <div className="bg-white dark:bg-slate-900 rounded-2xl p-5 sm:p-6 border border-slate-200 dark:border-slate-800 shadow-2xs space-y-4">
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
 
           <form
@@ -313,14 +307,14 @@ function SavedJobsContent() {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder={language === 'id' ? "Cari dalam lowongan tersimpan..." : "Search in saved jobs..."}
-                className="w-full pl-11 pr-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100 rounded-2xl text-xs font-bold outline-none focus:ring-2 focus:ring-[#2596be]"
+                className="w-full pl-11 pr-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100 rounded-xl text-xs font-bold outline-none focus:ring-2 focus:ring-[#1A4B9F]"
               />
             </div>
 
             <select
               value={policyFilter}
               onChange={(e) => setPolicyFilter(e.target.value)}
-              className="w-full sm:w-auto px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 rounded-2xl text-xs font-bold outline-none cursor-pointer"
+              className="w-full sm:w-auto px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 rounded-xl text-xs font-bold outline-none cursor-pointer focus:ring-2 focus:ring-[#1A4B9F]"
             >
               <option value="Semua">{language === 'id' ? 'Semua Kebijakan Kerja' : 'All Work Policies'}</option>
               <option value="WFO">{language === 'id' ? 'Kerja dari Kantor (WFO)' : 'Work From Office (WFO)'}</option>
@@ -330,9 +324,10 @@ function SavedJobsContent() {
 
             <button
               type="submit"
-              className="w-full sm:w-auto px-5 py-2.5 rounded-2xl bg-[#2596be] hover:bg-[#1b7b9e] text-white font-bold text-xs transition-colors cursor-pointer shrink-0"
+              className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-[#1A4B9F] hover:bg-[#133878] text-white font-bold text-xs transition-colors cursor-pointer shrink-0 shadow-sm flex items-center justify-center gap-1.5"
             >
-              {language === 'id' ? 'Cari' : 'Search'}
+              <Search className="w-3.5 h-3.5" />
+              <span>{language === 'id' ? 'Cari' : 'Search'}</span>
             </button>
           </form>
 
@@ -341,7 +336,7 @@ function SavedJobsContent() {
             {visibleSavedJobs.length > 0 && (
               <button
                 onClick={handleClearAllSaved}
-                className="px-4 py-2.5 rounded-2xl border border-red-200 text-red-600 hover:bg-red-50 dark:hover:bg-red-950/40 font-bold text-xs transition-colors cursor-pointer flex items-center gap-1.5 shrink-0"
+                className="px-4 py-2.5 rounded-xl border border-red-200 text-red-600 hover:bg-red-50 dark:hover:bg-red-950/40 font-bold text-xs transition-colors cursor-pointer flex items-center gap-1.5 shrink-0"
               >
                 <Trash2 className="w-4 h-4" />
                 <span className="hidden sm:inline">{language === 'id' ? 'Hapus Semua' : 'Clear All'}</span>
@@ -355,8 +350,8 @@ function SavedJobsContent() {
       {/* SAVED JOBS LIST GRID */}
       {visibleSavedJobs.length === 0 ? (
         /* EMPTY STATE CARD */
-        <div className="bg-white dark:bg-slate-900 rounded-3xl p-12 text-center border border-slate-200 dark:border-slate-800 shadow-2xs space-y-4 max-w-2xl mx-auto my-12">
-          <div className="w-16 h-16 rounded-full bg-[#F0F8FB] dark:bg-slate-800 text-[#2596be] dark:text-cyan-400 flex items-center justify-center mx-auto shadow-inner">
+        <div className="bg-white dark:bg-slate-900 rounded-2xl p-12 text-center border border-slate-200 dark:border-slate-800 shadow-2xs space-y-4 max-w-2xl mx-auto my-12">
+          <div className="w-16 h-16 rounded-2xl bg-[#EFF6FF] dark:bg-slate-800 text-[#1A4B9F] dark:text-blue-400 flex items-center justify-center mx-auto shadow-inner">
             <Bookmark className="w-8 h-8" />
           </div>
           <div className="space-y-1">
@@ -369,7 +364,7 @@ function SavedJobsContent() {
           </div>
           <Link
             href="/applicant/dashboard"
-            className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-[#2596be] hover:bg-[#1D7FA1] text-white font-extrabold text-xs shadow-md transition-all cursor-pointer"
+            className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-[#1A4B9F] hover:bg-[#133878] text-white font-extrabold text-xs shadow-md transition-all cursor-pointer"
           >
             <span>{t.pelamar.tersimpan.startSearching}</span>
             <ArrowRight className="w-4 h-4" />
@@ -384,7 +379,7 @@ function SavedJobsContent() {
             return (
               <div
                 key={job.id}
-                className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 p-6 shadow-2xs hover:shadow-md transition-all flex flex-col justify-between space-y-5 relative group"
+                className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-6 shadow-2xs hover:shadow-md hover:border-[#1A4B9F]/40 transition-all flex flex-col justify-between space-y-5 relative group"
               >
                 {/* Top Company & Title */}
                 <div className="space-y-3">
@@ -408,11 +403,11 @@ function SavedJobsContent() {
                   <div>
                     <h3
                       onClick={() => setActiveJobModal(job)}
-                      className="text-lg font-extrabold text-slate-900 dark:text-white group-hover:text-[#2596be] transition-colors cursor-pointer line-clamp-1"
+                      className="text-lg font-extrabold text-slate-900 dark:text-white group-hover:text-[#1A4B9F] dark:group-hover:text-blue-400 transition-colors cursor-pointer line-clamp-1"
                     >
                       {job.title}
                     </h3>
-                    <p className="text-xs font-bold text-[#2596be] dark:text-cyan-400">
+                    <p className="text-xs font-bold text-[#1A4B9F] dark:text-blue-400">
                       {job.company}
                     </p>
                   </div>
@@ -420,19 +415,19 @@ function SavedJobsContent() {
                   {/* Bullet Infos */}
                   <div className="space-y-1.5 text-xs text-slate-600 dark:text-slate-300 font-medium">
                     <div className="flex items-center gap-2">
-                      <MapPin size={14} className="text-[#2596be] shrink-0" />
+                      <MapPin size={14} className="text-[#1A4B9F] dark:text-blue-400 shrink-0" />
                       <span className="truncate">{job.location}</span>
                     </div>
                     <div className="flex items-center gap-2">
-                      <GraduationCap size={14} className="text-[#2596be] shrink-0" />
+                      <GraduationCap size={14} className="text-[#1A4B9F] dark:text-blue-400 shrink-0" />
                       <span>{job.education}</span>
                     </div>
                     <div className="flex items-center gap-2">
-                      <Briefcase size={14} className="text-[#2596be] shrink-0" />
+                      <Briefcase size={14} className="text-[#1A4B9F] dark:text-blue-400 shrink-0" />
                       <span>{job.workPolicy}</span>
                     </div>
                     <div className="flex items-center gap-2">
-                      <DollarSign size={14} className="text-[#2596be] shrink-0" />
+                      <DollarSign size={14} className="text-[#1A4B9F] dark:text-blue-400 shrink-0" />
                       <span className="font-extrabold text-slate-800 dark:text-white">{job.salary}</span>
                     </div>
                   </div>
@@ -444,7 +439,7 @@ function SavedJobsContent() {
                     <span>{language === 'id' ? 'Disimpan pada:' : 'Saved on:'} {job.savedAt}</span>
                     <button
                       onClick={() => setActiveJobModal(job)}
-                      className="font-bold text-[#2596be] hover:underline cursor-pointer flex items-center gap-1"
+                      className="font-bold text-[#1A4B9F] dark:text-blue-400 hover:underline cursor-pointer flex items-center gap-1"
                     >
                       <span>{language === 'id' ? 'Detail' : 'Details'}</span>
                       <ChevronRight size={14} />
@@ -452,13 +447,13 @@ function SavedJobsContent() {
                   </div>
 
                   {isApplied ? (
-                    <div className="w-full py-3 rounded-2xl bg-emerald-100 text-emerald-800 font-bold text-xs flex items-center justify-center gap-2 border border-emerald-300">
+                    <div className="w-full py-2.5 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 font-bold text-xs flex items-center justify-center gap-2 border border-emerald-200 dark:border-emerald-800">
                       <CheckCircle2 size={16} /> {language === 'id' ? 'Lamaran & CV Terkirim' : 'Application & CV Sent'}
                     </div>
                   ) : (
                     <button
                       onClick={() => handleApplyWithCv(job.id, job.company, job.title)}
-                      className="w-full py-3 rounded-2xl bg-[#2596be] hover:bg-[#1D7FA1] text-white font-extrabold text-xs shadow-sm hover:shadow-md transition-all cursor-pointer flex items-center justify-center gap-2"
+                      className="w-full py-2.5 rounded-xl bg-[#1A4B9F] hover:bg-[#133878] text-white font-extrabold text-xs shadow-sm hover:shadow-md transition-all cursor-pointer flex items-center justify-center gap-2"
                     >
                       <Send size={15} />
                       <span>{t.pelamar.tersimpan.applyNow}</span>
@@ -474,7 +469,7 @@ function SavedJobsContent() {
       {/* JOB DETAIL MODAL (Matching Cari Lowongan Detail View 100%) */}
       {activeJobModal && (
         <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in">
-          <div className="bg-white dark:bg-slate-900 rounded-3xl max-w-2xl w-full shadow-2xl border border-slate-200 dark:border-slate-800 relative max-h-[90vh] flex flex-col overflow-hidden">
+          <div className="bg-white dark:bg-slate-900 rounded-2xl max-w-2xl w-full shadow-2xl border border-slate-200 dark:border-slate-800 relative max-h-[90vh] flex flex-col overflow-hidden">
 
             {/* Detail Header */}
             <div className="shrink-0 p-6 sm:p-8 pb-4 space-y-4 border-b border-slate-100 dark:border-slate-800">
@@ -487,17 +482,17 @@ function SavedJobsContent() {
                   />
                   <div className="space-y-1">
                     <div className="flex flex-wrap items-center gap-2">
-                      <span className="text-sm font-extrabold text-[#2596be] dark:text-cyan-400">{activeJobModal.company}</span>
+                      <span className="text-sm font-extrabold text-[#1A4B9F] dark:text-blue-400">{activeJobModal.company}</span>
                       {activeJobModal.isNew && (
                         <span className="px-2 py-0.5 rounded-md bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 font-extrabold text-[10px] border border-amber-200">{language === 'id' ? 'Loker Terbaru' : 'New Job'}</span>
                       )}
                       {activeJobModal.isPromoted && (
-                        <span className="px-2 py-0.5 rounded-md bg-cyan-100 dark:bg-cyan-950/60 text-cyan-800 dark:text-cyan-300 font-extrabold text-[10px]">{language === 'id' ? 'Dipromosikan' : 'Promoted'}</span>
+                        <span className="px-2 py-0.5 rounded-md bg-blue-100 dark:bg-blue-950/60 text-blue-800 dark:text-blue-300 font-extrabold text-[10px]">{language === 'id' ? 'Dipromosikan' : 'Promoted'}</span>
                       )}
                     </div>
                     <h3 className="font-black text-xl text-slate-900 dark:text-white leading-tight">{activeJobModal.title}</h3>
                     {activeJobModal.openingsCount > 0 && (
-                      <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#E0F1F7] dark:bg-slate-800 text-[#2596be] dark:text-cyan-400 text-xs font-extrabold border border-[#B8E1ED]">
+                      <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#EFF6FF] dark:bg-slate-800 text-[#1A4B9F] dark:text-blue-400 text-xs font-bold border border-[#DBEAFE] dark:border-slate-700">
                         {language === 'id' ? 'Kuota Terbuka:' : 'Openings:'} {activeJobModal.openingsCount} {language === 'id' ? 'Posisi' : 'Positions'}
                       </div>
                     )}
@@ -511,27 +506,27 @@ function SavedJobsContent() {
               {/* Info Grid */}
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-xs text-slate-700 dark:text-slate-300 font-semibold">
                 <div className="flex items-center gap-2 p-2.5 bg-slate-50 dark:bg-slate-800/60 rounded-xl">
-                  <MapPin size={14} className="text-[#2596be] shrink-0" />
+                  <MapPin size={14} className="text-[#1A4B9F] dark:text-blue-400 shrink-0" />
                   <div><p className="text-[10px] text-slate-400 uppercase font-bold">{language === 'id' ? 'Lokasi' : 'Location'}</p><p className="font-extrabold">{activeJobModal.location}</p></div>
                 </div>
                 <div className="flex items-center gap-2 p-2.5 bg-slate-50 dark:bg-slate-800/60 rounded-xl">
-                  <GraduationCap size={14} className="text-[#2596be] shrink-0" />
+                  <GraduationCap size={14} className="text-[#1A4B9F] dark:text-blue-400 shrink-0" />
                   <div><p className="text-[10px] text-slate-400 uppercase font-bold">{language === 'id' ? 'Min. Pendidikan' : 'Min. Education'}</p><p className="font-extrabold">{activeJobModal.educationLevel}</p></div>
                 </div>
                 <div className="flex items-center gap-2 p-2.5 bg-slate-50 dark:bg-slate-800/60 rounded-xl">
-                  <Briefcase size={14} className="text-[#2596be] shrink-0" />
+                  <Briefcase size={14} className="text-[#1A4B9F] dark:text-blue-400 shrink-0" />
                   <div><p className="text-[10px] text-slate-400 uppercase font-bold">{language === 'id' ? 'Tipe Kerja' : 'Work Type'}</p><p className="font-extrabold">{activeJobModal.workPolicy}</p></div>
                 </div>
                 <div className="flex items-center gap-2 p-2.5 bg-slate-50 dark:bg-slate-800/60 rounded-xl">
-                  <DollarSign size={14} className="text-[#2596be] shrink-0" />
-                  <div><p className="text-[10px] text-slate-400 uppercase font-bold">{language === 'id' ? 'Gaji' : 'Salary'}</p><p className="font-black text-[#2596be] dark:text-cyan-400">{activeJobModal.salary}</p></div>
+                  <DollarSign size={14} className="text-[#1A4B9F] dark:text-blue-400 shrink-0" />
+                  <div><p className="text-[10px] text-slate-400 uppercase font-bold">{language === 'id' ? 'Gaji' : 'Salary'}</p><p className="font-black text-[#1A4B9F] dark:text-blue-400">{activeJobModal.salary}</p></div>
                 </div>
                 <div className="flex items-center gap-2 p-2.5 bg-slate-50 dark:bg-slate-800/60 rounded-xl">
-                  <Clock size={14} className="text-[#2596be] shrink-0" />
+                  <Clock size={14} className="text-[#1A4B9F] dark:text-blue-400 shrink-0" />
                   <div><p className="text-[10px] text-slate-400 uppercase font-bold">{language === 'id' ? 'Batas Lamaran' : 'Deadline'}</p><p className="font-extrabold">{activeJobModal.applicationDeadline || (language === 'id' ? 'Tidak ditentukan' : 'Not specified')}</p></div>
                 </div>
                 <div className="flex items-center gap-2 p-2.5 bg-slate-50 dark:bg-slate-800/60 rounded-xl">
-                  <CheckCircle2 size={14} className="text-[#2596be] shrink-0" />
+                  <CheckCircle2 size={14} className="text-[#1A4B9F] dark:text-blue-400 shrink-0" />
                   <div><p className="text-[10px] text-slate-400 uppercase font-bold">{language === 'id' ? 'Pengalaman' : 'Experience'}</p><p className="font-extrabold">{activeJobModal.experienceLevel}</p></div>
                 </div>
               </div>
@@ -542,7 +537,7 @@ function SavedJobsContent() {
                   <p className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider">{language === 'id' ? 'Fasilitas & Benefit:' : 'Facilities & Benefits:'}</p>
                   <div className="flex flex-wrap gap-1.5">
                     {activeJobModal.benefits.map((b, i) => (
-                      <span key={i} className="px-2.5 py-0.5 rounded-full bg-[#F0F8FB] dark:bg-slate-800 text-[#2596be] dark:text-cyan-400 text-[11px] font-bold border border-[#C2E5EF]">✓ {b}</span>
+                      <span key={i} className="px-2.5 py-0.5 rounded-full bg-[#EFF6FF] dark:bg-slate-800 text-[#1A4B9F] dark:text-blue-400 text-[11px] font-bold border border-[#DBEAFE] dark:border-slate-700">✓ {b}</span>
                     ))}
                   </div>
                 </div>
@@ -592,13 +587,13 @@ function SavedJobsContent() {
             <div className="shrink-0 px-6 sm:px-8 py-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between gap-3">
               <button
                 onClick={() => { handleRemoveSaved(activeJobModal.id); setActiveJobModal(null); }}
-                className="px-4 py-2.5 rounded-full border border-red-200 text-red-600 font-bold text-xs hover:bg-red-50 cursor-pointer"
+                className="px-4 py-2.5 rounded-xl border border-red-200 text-red-600 font-bold text-xs hover:bg-red-50 dark:hover:bg-red-950/40 cursor-pointer"
               >
                 {t.pelamar.tersimpan.remove}
               </button>
               <button
                 onClick={() => { handleApplyWithCv(activeJobModal.id, activeJobModal.company, activeJobModal.title); setActiveJobModal(null); }}
-                className="px-6 py-2.5 rounded-full bg-[#2596be] hover:bg-[#1D7FA1] text-white font-bold text-xs shadow-sm cursor-pointer flex items-center gap-2"
+                className="px-6 py-2.5 rounded-xl bg-[#1A4B9F] hover:bg-[#133878] text-white font-bold text-xs shadow-sm cursor-pointer flex items-center gap-2"
               >
                 <Send size={15} />
                 <span>{t.pelamar.tersimpan.applyNow}</span>
@@ -614,7 +609,7 @@ function SavedJobsContent() {
 
 export default function SavedJobsPage() {
   return (
-    <Suspense fallback={<div className="min-h-screen flex items-center justify-center bg-white dark:bg-slate-950"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#1b7b9e]"></div></div>}>
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center bg-white dark:bg-slate-950"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#1A4B9F]"></div></div>}>
       <SavedJobsContent />
     </Suspense>
   );

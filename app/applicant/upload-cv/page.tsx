@@ -124,7 +124,7 @@ export default function AtsCvBuilderPage() {
           }
           if (parsedCv.certifications && Array.isArray(parsedCv.certifications) && parsedCv.certifications.length > 0) setCertifications(parsedCv.certifications);
         }
-      } catch (_) {}
+      } catch (_) { }
     }
 
     const fetchProfile = async () => {
@@ -144,7 +144,7 @@ export default function AtsCvBuilderPage() {
               try {
                 const parsedSl = typeof p.social_links === 'string' ? JSON.parse(p.social_links) : p.social_links;
                 if (Array.isArray(parsedSl) && parsedSl.length > 0) setSocialLinks(parsedSl);
-              } catch (_) {}
+              } catch (_) { }
             }
             if (p.ringkasan_diri) setSummary(p.ringkasan_diri);
             if (p.keahlian) {
@@ -173,14 +173,14 @@ export default function AtsCvBuilderPage() {
               try {
                 const parsedExp = typeof p.pengalaman_kerja === 'string' ? JSON.parse(p.pengalaman_kerja) : p.pengalaman_kerja;
                 if (Array.isArray(parsedExp) && parsedExp.length > 0) setExperiences(parsedExp);
-              } catch (_) {}
+              } catch (_) { }
             }
 
             if (p.riwayat_pendidikan) {
               try {
                 const parsedEdu = typeof p.riwayat_pendidikan === 'string' ? JSON.parse(p.riwayat_pendidikan) : p.riwayat_pendidikan;
                 if (Array.isArray(parsedEdu) && parsedEdu.length > 0) setEducation(parsedEdu);
-              } catch (_) {}
+              } catch (_) { }
             }
           }
         }
@@ -418,17 +418,17 @@ export default function AtsCvBuilderPage() {
       try {
         const formData = new FormData();
         formData.append('cv_file', file);
-        
+
         const response = await fetch('/api/parse-cv', {
           method: 'POST',
           body: formData,
         });
-        
+
         const result = await response.json();
-        
+
         if (result.success && result.data) {
           const { fullName: parsedName, email: parsedEmail, phone: parsedPhone, linkedinUrl: parsedLinkedin, skills: parsedSkills, rawText } = result.data;
-          
+
           if (parsedName) setFullName(parsedName);
           if (parsedEmail) setEmail(parsedEmail);
           if (parsedPhone) setPhone(parsedPhone);
@@ -441,7 +441,7 @@ export default function AtsCvBuilderPage() {
             ]);
           }
           if (rawText) setRawCvText(rawText);
-          
+
           toast.success('Berhasil membaca sebagian data CV!');
           setActiveTab('builder'); // Redirect to builder to show the raw text panel
         } else {
@@ -482,19 +482,15 @@ export default function AtsCvBuilderPage() {
   return (
     <div className="max-w-[1600px] w-full mx-auto space-y-8">
 
-      {/* Main Page Title Banner */}
-      <div className="no-print bg-white dark:bg-slate-900 p-8 sm:p-10 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs space-y-3">
-        <div className="flex items-center justify-between flex-wrap gap-4">
-          <div className="space-y-2">
-            <h1 className="text-2xl sm:text-4xl font-bold text-slate-900 dark:text-white">
-              {t.pelamar.uploadCv.title}
-            </h1>
-            <p className="text-slate-500 dark:text-slate-400 text-xs sm:text-base leading-relaxed max-w-3xl">
-              {t.pelamar.uploadCv.subtitle}
-            </p>
-          </div>
-
-
+      {/* Main Page Title Banner (Matching Enterprise Blue Theme) */}
+      <div className="no-print bg-[#1A4B9F] p-6 sm:p-8 rounded-2xl text-white shadow-md flex flex-col sm:flex-row sm:items-center justify-between gap-6 relative overflow-hidden">
+        <div className="space-y-2 relative z-10">
+          <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-white">
+            {t.pelamar.uploadCv.title}
+          </h1>
+          <p className="text-white/80 text-xs sm:text-sm leading-relaxed max-w-3xl font-medium">
+            {t.pelamar.uploadCv.subtitle}
+          </p>
         </div>
       </div>
 

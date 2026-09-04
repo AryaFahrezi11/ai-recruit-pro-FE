@@ -112,36 +112,36 @@ export default function WawancaraVideoPage() {
   return (
     <div className="max-w-[1600px] w-full mx-auto space-y-6">
       {/* Top Bar Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white dark:bg-slate-900 p-5 rounded-3xl border border-[#C2E5EF] dark:border-slate-800 shadow-xs">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-[#1A4B9F] p-5 rounded-2xl text-white shadow-md">
         <div className="flex items-center gap-4">
           <Link
-            href="/applicant/upload-cv"
-            className="p-2.5 rounded-xl text-slate-500 dark:text-slate-400 hover:text-[#1b7b9e] dark:hover:text-cyan-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+            href="/applicant/status"
+            className="p-2.5 rounded-xl text-white/80 hover:text-white hover:bg-white/10 transition-colors"
             title="Kembali"
           >
             <ChevronLeft className="w-6 h-6" />
           </Link>
           <div>
-            <h1 className="text-lg sm:text-xl font-bold text-[#1b7b9e] dark:text-cyan-400">
+            <h1 className="text-lg sm:text-xl font-bold text-white">
               {t.pelamar.wawancara.title}
             </h1>
-            <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400">
+            <p className="text-xs sm:text-sm text-white/80">
               {t.pelamar.wawancara.subtitle}
             </p>
           </div>
         </div>
 
         <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-[#E0F1F7] dark:bg-slate-800 border border-[#B8E1ED] dark:border-slate-700 text-[#1b7b9e] dark:text-cyan-400 text-xs sm:text-sm font-bold">
-            <Sparkles className="w-4 h-4 text-[#1b7b9e] dark:text-cyan-400" />
+          <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-white/15 border border-white/20 text-white text-xs sm:text-sm font-bold">
+            <Sparkles className="w-4 h-4 text-blue-200" />
             <span>{t.pelamar.wawancara.questionPrefix} {currentQuestionIndex + 1} {t.pelamar.wawancara.from} {questions.length}</span>
           </div>
 
           <button
             onClick={() => setShowDeviceModal(true)}
-            className="inline-flex items-center gap-2 px-5 py-2 rounded-full border border-slate-300 dark:border-slate-700 text-xs sm:text-sm font-bold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+            className="inline-flex items-center gap-2 px-5 py-2 rounded-full bg-white text-[#1A4B9F] text-xs sm:text-sm font-bold hover:bg-blue-50 transition-colors cursor-pointer shadow-sm"
           >
-            <Settings2 className="w-4 h-4 text-slate-500 dark:text-slate-400" />
+            <Settings2 className="w-4 h-4 text-[#1A4B9F]" />
             {t.pelamar.wawancara.testDevice}
           </button>
         </div>
@@ -217,7 +217,7 @@ export default function WawancaraVideoPage() {
           </div>
 
           {/* Controls Bar Below Camera */}
-          <div className="bg-white dark:bg-slate-900 p-5 rounded-3xl border border-[#C2E5EF] dark:border-slate-800 shadow-xs flex flex-wrap items-center justify-between gap-4">
+          <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs flex flex-wrap items-center justify-between gap-4">
 
             <div className="flex items-center gap-3">
               <button
@@ -302,12 +302,12 @@ export default function WawancaraVideoPage() {
                   <button
                     onClick={handleUploadSubmit}
                     disabled={isUploading}
-                    className="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-6 py-3 rounded-full bg-[#1b7b9e] hover:bg-[#1D7FA1] text-white text-xs sm:text-sm font-bold shadow-md transition-all cursor-pointer disabled:opacity-50"
+                    className="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-6 py-3 rounded-full bg-[#1A4B9F] hover:bg-[#133878] text-white text-xs sm:text-sm font-bold shadow-md transition-all cursor-pointer disabled:opacity-50"
                   >
                     {isUploading ? (
-                      <Sparkles className="w-4 h-4 animate-spin text-[#E0F1F7]" />
+                      <Sparkles className="w-4 h-4 animate-spin text-white" />
                     ) : (
-                      <Send className="w-4 h-4 text-[#E0F1F7]" />
+                      <Send className="w-4 h-4 text-white" />
                     )}
                     {isUploading ? "Mengunggah..." : "Submit Upload"}
                   </button>
@@ -317,33 +317,33 @@ export default function WawancaraVideoPage() {
           </div>
         </div>
 
-        {/* Right Side Panel: Soft Pastel Teal background showing interview question (5 cols) */}
+        {/* Right Side Panel: Soft Pastel Blue background showing interview question (5 cols) */}
         <div className="lg:col-span-5 flex flex-col">
-          <div className="bg-[#E0F1F7] dark:bg-slate-900 border border-[#B8E1ED] dark:border-slate-800 rounded-3xl p-7 sm:p-9 space-y-6 flex-1 flex flex-col justify-between shadow-xs">
+          <div className="bg-[#EFF6FF] dark:bg-slate-900 border border-[#DBEAFE] dark:border-slate-800 rounded-3xl p-7 sm:p-9 space-y-6 flex-1 flex flex-col justify-between shadow-xs">
 
             <div className="space-y-6">
-              <div className="flex items-center justify-between border-b border-[#B8E1ED] dark:border-slate-800 pb-4">
-                <span className="text-xs font-extrabold uppercase tracking-wider text-[#1b7b9e] dark:text-cyan-400 bg-white/80 dark:bg-slate-800 px-3.5 py-1.5 rounded-lg border border-[#B8E1ED] dark:border-slate-700">
+              <div className="flex items-center justify-between border-b border-[#DBEAFE] dark:border-slate-800 pb-4">
+                <span className="text-xs font-extrabold uppercase tracking-wider text-[#1A4B9F] dark:text-blue-400 bg-white dark:bg-slate-800 px-3.5 py-1.5 rounded-xl border border-[#DBEAFE] dark:border-slate-700 shadow-2xs">
                   {questions[currentQuestionIndex].category}
                 </span>
-                <span className="text-xs sm:text-sm font-bold text-[#1b7b9e] dark:text-cyan-400">
+                <span className="text-xs sm:text-sm font-bold text-[#1A4B9F] dark:text-blue-400">
                   {currentQuestionIndex + 1} / {questions.length}
                 </span>
               </div>
 
               <div className="space-y-3">
-                <h3 className="text-xs font-bold text-[#1b7b9e] dark:text-cyan-400 uppercase tracking-wide">
+                <h3 className="text-xs font-bold text-[#1A4B9F] dark:text-blue-400 uppercase tracking-wide">
                   {t.pelamar.wawancara.currentQuestion}
                 </h3>
-                <p className="text-base sm:text-xl font-bold text-[#1b7b9e] dark:text-white leading-relaxed">
+                <p className="text-base sm:text-xl font-bold text-slate-800 dark:text-white leading-relaxed">
                   "{questions[currentQuestionIndex].question}"
                 </p>
               </div>
 
               {/* Friendly Interview Tip Card */}
-              <div className="p-5 rounded-2xl bg-white/80 dark:bg-slate-800 border border-[#B8E1ED] dark:border-slate-700 space-y-2 text-xs sm:text-sm">
-                <div className="flex items-center gap-2 font-bold text-[#1b7b9e] dark:text-cyan-400">
-                  <HelpCircle className="w-5 h-5 text-[#1b7b9e] dark:text-cyan-400" />
+              <div className="p-5 rounded-2xl bg-white dark:bg-slate-800 border border-[#DBEAFE] dark:border-slate-700 space-y-2 text-xs sm:text-sm shadow-2xs">
+                <div className="flex items-center gap-2 font-bold text-[#1A4B9F] dark:text-blue-400">
+                  <HelpCircle className="w-5 h-5 text-[#1A4B9F] dark:text-blue-400" />
                   <span>{t.pelamar.wawancara.interviewTip}</span>
                 </div>
                 <p className="text-slate-600 dark:text-slate-300 leading-relaxed text-xs">
@@ -352,12 +352,12 @@ export default function WawancaraVideoPage() {
               </div>
             </div>
 
-            <div className="pt-6 border-t border-[#B8E1ED] dark:border-slate-800 space-y-4">
+            <div className="pt-6 border-t border-[#DBEAFE] dark:border-slate-800 space-y-4">
               <div className="flex items-center justify-between">
                 <button
                   disabled={currentQuestionIndex === 0}
                   onClick={() => setCurrentQuestionIndex((prev) => Math.max(0, prev - 1))}
-                  className="inline-flex items-center gap-1 text-xs sm:text-sm font-bold text-[#1b7b9e] dark:text-cyan-400 disabled:opacity-40 disabled:cursor-not-allowed hover:underline cursor-pointer"
+                  className="inline-flex items-center gap-1 text-xs sm:text-sm font-bold text-[#1A4B9F] dark:text-blue-400 disabled:opacity-40 disabled:cursor-not-allowed hover:underline cursor-pointer"
                 >
                   <ChevronLeft className="w-4 h-4" /> {t.pelamar.wawancara.prevQuestion}
                 </button>
@@ -365,7 +365,7 @@ export default function WawancaraVideoPage() {
                 <button
                   disabled={currentQuestionIndex === questions.length - 1}
                   onClick={() => setCurrentQuestionIndex((prev) => Math.min(questions.length - 1, prev + 1))}
-                  className="inline-flex items-center gap-1 text-xs sm:text-sm font-bold text-[#1b7b9e] dark:text-cyan-400 disabled:opacity-40 disabled:cursor-not-allowed hover:underline cursor-pointer"
+                  className="inline-flex items-center gap-1 text-xs sm:text-sm font-bold text-[#1A4B9F] dark:text-blue-400 disabled:opacity-40 disabled:cursor-not-allowed hover:underline cursor-pointer"
                 >
                   {t.pelamar.wawancara.nextQuestion} <ChevronRight className="w-4 h-4" />
                 </button>
@@ -376,7 +376,7 @@ export default function WawancaraVideoPage() {
                   <button
                     key={q.id}
                     onClick={() => setCurrentQuestionIndex(idx)}
-                    className={`h-2.5 rounded-full transition-all cursor-pointer ${idx === currentQuestionIndex ? 'w-8 bg-[#1b7b9e] dark:bg-cyan-400' : 'w-2.5 bg-[#1b7b9e]/30 dark:bg-cyan-400/30'
+                    className={`h-2.5 rounded-full transition-all cursor-pointer ${idx === currentQuestionIndex ? 'w-8 bg-[#1A4B9F] dark:bg-blue-400' : 'w-2.5 bg-[#1A4B9F]/30 dark:bg-blue-400/30'
                       }`}
                   />
                 ))}
@@ -391,7 +391,7 @@ export default function WawancaraVideoPage() {
         <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="bg-white dark:bg-slate-900 rounded-3xl max-w-lg w-full p-7 space-y-6 shadow-2xl border border-slate-200 dark:border-slate-800">
             <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-4">
-              <h3 className="font-bold text-[#1b7b9e] dark:text-cyan-400 text-lg">{t.pelamar.wawancara.deviceCheckTitle}</h3>
+              <h3 className="font-bold text-[#1A4B9F] dark:text-blue-400 text-lg">{t.pelamar.wawancara.deviceCheckTitle}</h3>
               <button
                 onClick={() => setShowDeviceModal(false)}
                 className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 font-bold text-sm cursor-pointer"
@@ -401,25 +401,25 @@ export default function WawancaraVideoPage() {
             </div>
 
             <div className="space-y-4 text-xs sm:text-sm">
-              <div className="p-4 rounded-2xl bg-[#F0F8FB] dark:bg-slate-800 border border-[#C2E5EF] dark:border-slate-700 space-y-1">
+              <div className="p-4 rounded-2xl bg-[#EFF6FF] dark:bg-slate-800 border border-[#DBEAFE] dark:border-slate-700 space-y-1">
                 <div className="flex justify-between items-center font-bold text-slate-700 dark:text-slate-300">
-                  <span className="flex items-center gap-2"><Video className="w-5 h-5 text-[#1b7b9e] dark:text-cyan-400" /> {t.pelamar.wawancara.webcamFeed}</span>
+                  <span className="flex items-center gap-2"><Video className="w-5 h-5 text-[#1A4B9F] dark:text-blue-400" /> {t.pelamar.wawancara.webcamFeed}</span>
                   <span className="text-emerald-600 flex items-center gap-1.5"><CheckCircle2 className="w-4 h-4" /> {t.pelamar.wawancara.readyToUse}</span>
                 </div>
                 <p className="text-slate-500 dark:text-slate-400 text-xs">Integrated HD Camera (1080p 30fps)</p>
               </div>
 
-              <div className="p-4 rounded-2xl bg-[#F0F8FB] dark:bg-slate-800 border border-[#C2E5EF] dark:border-slate-700 space-y-1">
+              <div className="p-4 rounded-2xl bg-[#EFF6FF] dark:bg-slate-800 border border-[#DBEAFE] dark:border-slate-700 space-y-1">
                 <div className="flex justify-between items-center font-bold text-slate-700 dark:text-slate-300">
-                  <span className="flex items-center gap-2"><Mic className="w-5 h-5 text-[#1b7b9e] dark:text-cyan-400" /> {t.pelamar.wawancara.micInput}</span>
+                  <span className="flex items-center gap-2"><Mic className="w-5 h-5 text-[#1A4B9F] dark:text-blue-400" /> {t.pelamar.wawancara.micInput}</span>
                   <span className="text-emerald-600 flex items-center gap-1.5"><CheckCircle2 className="w-4 h-4" /> {t.pelamar.wawancara.clearVoice}</span>
                 </div>
                 <p className="text-slate-500 dark:text-slate-400 text-xs">Default Audio Input Device (Sensitivitas Aktif)</p>
               </div>
 
-              <div className="p-4 rounded-2xl bg-[#F0F8FB] dark:bg-slate-800 border border-[#C2E5EF] dark:border-slate-700 space-y-1">
+              <div className="p-4 rounded-2xl bg-[#EFF6FF] dark:bg-slate-800 border border-[#DBEAFE] dark:border-slate-700 space-y-1">
                 <div className="flex justify-between items-center font-bold text-slate-700 dark:text-slate-300">
-                  <span className="flex items-center gap-2"><Volume2 className="w-5 h-5 text-[#1b7b9e] dark:text-cyan-400" /> {t.pelamar.wawancara.internetConnection}</span>
+                  <span className="flex items-center gap-2"><Volume2 className="w-5 h-5 text-[#1A4B9F] dark:text-blue-400" /> {t.pelamar.wawancara.internetConnection}</span>
                   <span className="text-emerald-600 font-bold">{t.pelamar.wawancara.stable}</span>
                 </div>
               </div>
@@ -427,7 +427,7 @@ export default function WawancaraVideoPage() {
 
             <button
               onClick={() => setShowDeviceModal(false)}
-              className="w-full py-3 rounded-full bg-[#1b7b9e] hover:bg-[#1D7FA1] text-white font-bold text-xs sm:text-sm shadow-xs transition-colors cursor-pointer"
+              className="w-full py-3 rounded-full bg-[#1A4B9F] hover:bg-[#133878] text-white font-bold text-xs sm:text-sm shadow-xs transition-colors cursor-pointer"
             >
               {t.pelamar.wawancara.closeAndStart}
             </button>

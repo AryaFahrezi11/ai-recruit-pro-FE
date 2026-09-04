@@ -318,20 +318,22 @@ function StatusValidasiContent() {
   });
 
   return (
-    <div className="max-w-[1600px] w-full mx-auto space-y-8">
+    <div className="max-w-[1600px] w-full mx-auto space-y-6">
 
-      {/* Main Title & Search Filter Bar */}
-      <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-8 border border-[#C2E5EF] dark:border-slate-800 shadow-xs space-y-6">
-        <div>
-          <h1 className="text-xl sm:text-2xl font-black text-[#1b7b9e] dark:text-cyan-400">{t.pelamar.status.title}</h1>
-          <p className="text-xs sm:text-sm font-semibold text-slate-500 dark:text-slate-400">
+      {/* Main Page Title Banner (Matching Enterprise Blue Theme) */}
+      <div className="bg-[#1A4B9F] p-6 sm:p-8 rounded-2xl text-white shadow-md space-y-2 relative overflow-hidden">
+        <div className="space-y-1.5 relative z-10">
+          <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-white">{t.pelamar.status.title}</h1>
+          <p className="text-white/80 text-xs sm:text-sm leading-relaxed max-w-3xl font-medium">
             {t.pelamar.status.subtitle}
           </p>
         </div>
+      </div>
 
-        {/* Search & Dropdown Filter Inputs */}
+      {/* Search & Dropdown Filter Inputs */}
+      <div className="bg-white dark:bg-slate-900 rounded-2xl p-5 sm:p-6 border border-slate-200 dark:border-slate-800 shadow-2xs space-y-4">
         <form
-          className="grid grid-cols-1 sm:grid-cols-12 gap-3 pt-2"
+          className="grid grid-cols-1 sm:grid-cols-12 gap-3"
           onSubmit={(e) => {
             e.preventDefault();
             updateUrlParams({ search: searchTerm, stage: stageFilter, status: statusFilter, platform: platformFilter });
@@ -345,7 +347,7 @@ function StatusValidasiContent() {
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               placeholder={t.pelamar.status.searchPlaceholder}
-              className="w-full pl-11 pr-4 py-2.5 bg-[#F0F8FB] dark:bg-slate-800 border border-[#C2E5EF] dark:border-slate-700 focus:border-[#2596be] rounded-2xl text-xs font-bold text-slate-700 dark:text-slate-200 outline-none"
+              className="w-full pl-11 pr-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 focus:border-[#1A4B9F] focus:ring-1 focus:ring-[#1A4B9F] rounded-xl text-xs font-bold text-slate-700 dark:text-slate-200 outline-none"
             />
           </div>
 
@@ -354,7 +356,7 @@ function StatusValidasiContent() {
             <select
               value={platformFilter}
               onChange={(e) => setPlatformFilter(e.target.value)}
-              className="w-full px-4 py-2.5 bg-[#F0F8FB] dark:bg-slate-800 border border-[#C2E5EF] dark:border-slate-700 focus:border-[#2596be] rounded-2xl text-xs font-bold text-slate-700 dark:text-slate-200 outline-none cursor-pointer"
+              className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 focus:border-[#1A4B9F] rounded-xl text-xs font-bold text-slate-700 dark:text-slate-200 outline-none cursor-pointer"
             >
               <option>{t.pelamar.status.allPlatform}</option>
               <option>WEBCAREER</option>
@@ -367,7 +369,7 @@ function StatusValidasiContent() {
             <select
               value={stageFilter}
               onChange={(e) => setStageFilter(e.target.value)}
-              className="w-full px-4 py-2.5 bg-[#F0F8FB] dark:bg-slate-800 border border-[#C2E5EF] dark:border-slate-700 focus:border-[#2596be] rounded-2xl text-xs font-bold text-slate-700 dark:text-slate-200 outline-none cursor-pointer"
+              className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 focus:border-[#1A4B9F] rounded-xl text-xs font-bold text-slate-700 dark:text-slate-200 outline-none cursor-pointer"
             >
               <option>{t.pelamar.status.allStages}</option>
               <option value="UPLOAD CV">1. UPLOAD CV</option>
@@ -383,7 +385,7 @@ function StatusValidasiContent() {
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
-              className="w-full px-4 py-2.5 bg-[#F0F8FB] dark:bg-slate-800 border border-[#C2E5EF] dark:border-slate-700 focus:border-[#2596be] rounded-2xl text-xs font-bold text-slate-700 dark:text-slate-200 outline-none cursor-pointer"
+              className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 focus:border-[#1A4B9F] rounded-xl text-xs font-bold text-slate-700 dark:text-slate-200 outline-none cursor-pointer"
             >
               <option>{t.pelamar.status.allStatus}</option>
               <option value="Dalam Proses">{t.pelamar.status.inProgress}</option>
@@ -396,7 +398,7 @@ function StatusValidasiContent() {
           <div className="sm:col-span-1">
             <button
               type="submit"
-              className="w-full py-2.5 bg-[#2596be] hover:bg-[#1D7FA1] text-white rounded-2xl font-bold text-xs shadow-xs transition-colors cursor-pointer"
+              className="w-full py-2.5 bg-[#1A4B9F] hover:bg-[#133878] text-white rounded-xl font-bold text-xs shadow-xs transition-colors cursor-pointer"
             >
               {t.pelamar.status.searchButton}
             </button>
@@ -412,7 +414,7 @@ function StatusValidasiContent() {
           return (
             <div
               key={app.id}
-              className="bg-white dark:bg-slate-900 rounded-3xl border border-[#C2E5EF] dark:border-slate-800 shadow-xs overflow-hidden transition-all duration-200"
+              className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs overflow-hidden transition-all duration-200"
             >
               {/* Card Summary Header */}
               <div className="p-6 sm:p-8 space-y-6">
@@ -423,10 +425,10 @@ function StatusValidasiContent() {
                     <img
                       src={app.logo}
                       alt={app.companyName}
-                      className="w-14 h-14 rounded-2xl object-cover border border-[#C2E5EF] dark:border-slate-700 shrink-0"
+                      className="w-14 h-14 rounded-2xl object-cover border border-slate-200 dark:border-slate-700 shrink-0"
                     />
                     <div className="space-y-1">
-                      <h2 className="text-lg sm:text-xl font-black text-[#2596be] dark:text-cyan-400">
+                      <h2 className="text-lg sm:text-xl font-black text-[#1A4B9F] dark:text-blue-400">
                         {app.jobTitle}
                       </h2>
                       <span className="text-xs font-bold text-slate-500 dark:text-slate-400 block">
@@ -447,14 +449,14 @@ function StatusValidasiContent() {
                     </div>
                     <div>
                       <span className="text-slate-400 block font-semibold">{t.pelamar.status.recruitmentStage}</span>
-                      <span className="font-bold text-[#2596be] dark:text-cyan-400">{app.tahapRekrutmen}</span>
+                      <span className="font-bold text-[#1A4B9F] dark:text-blue-400">{app.tahapRekrutmen}</span>
                     </div>
                     <div>
                       <span className="text-slate-400 block font-semibold">{t.pelamar.status.statusLabel}</span>
                       <span className={`font-extrabold px-3 py-1 rounded-full text-xs inline-block ${app.status === 'Lolos'
                           ? 'bg-emerald-100 text-emerald-800 border border-emerald-300'
                           : app.status === 'Dalam Proses'
-                            ? 'bg-cyan-100 text-[#2596be] border border-cyan-300'
+                            ? 'bg-blue-50 dark:bg-blue-950/40 text-[#1A4B9F] dark:text-blue-400 border border-blue-200 dark:border-blue-800'
                             : 'bg-red-100 text-red-800 border border-red-300'
                         }`}>
                         {app.status}
@@ -465,7 +467,7 @@ function StatusValidasiContent() {
                   {/* Right Action: Expand/Collapse Button */}
                   <button
                     onClick={() => toggleExpandJob(app.id)}
-                    className="text-xs font-extrabold text-[#2596be] hover:underline flex items-center gap-1.5 self-start md:self-center cursor-pointer"
+                    className="text-xs font-extrabold text-[#1A4B9F] dark:text-blue-400 hover:underline flex items-center gap-1.5 self-start md:self-center cursor-pointer"
                   >
                     <span>{isExpanded ? t.pelamar.status.hideDetails : t.pelamar.status.showDetails}</span>
                     {isExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
@@ -475,12 +477,12 @@ function StatusValidasiContent() {
 
                 {/* EXPANDED PIPELINE TRACKER & NOTIFICATION BOX */}
                 {isExpanded && (
-                  <div className="pt-6 border-t border-[#C2E5EF] dark:border-slate-800 space-y-8 animate-fadeIn">
+                  <div className="pt-6 border-t border-slate-100 dark:border-slate-800 space-y-8 animate-fadeIn">
 
                     {/* Interactive 5-Stage Pipeline Stepper */}
                     <div className="space-y-3">
                       <div className="flex items-center justify-between">
-                        <span className="text-xs font-black uppercase tracking-wider text-[#2596be] dark:text-cyan-400 flex items-center gap-2">
+                        <span className="text-xs font-black uppercase tracking-wider text-[#1A4B9F] dark:text-blue-400 flex items-center gap-2">
                           <BarChart3 size={16} /> {t.pelamar.status.pipelineTitle}
                         </span>
                       </div>
@@ -506,7 +508,7 @@ function StatusValidasiContent() {
                                 } ${isFailed
                                   ? 'bg-red-50 dark:bg-red-950/30 border-red-200 text-red-700 dark:text-red-300'
                                   : isCurrentStage
-                                    ? 'bg-[#E0F1F7] dark:bg-slate-800 border-[#B8E1ED] text-[#2596be] dark:text-cyan-400 ring-2 ring-[#2596be]'
+                                    ? 'bg-[#EFF6FF] dark:bg-slate-800 border-[#DBEAFE] dark:border-slate-700 text-[#1A4B9F] dark:text-blue-400 ring-2 ring-[#1A4B9F]'
                                     : isPassedStage
                                       ? 'bg-emerald-50 dark:bg-emerald-950/30 border-emerald-200 text-emerald-800 dark:text-emerald-300'
                                       : 'bg-slate-50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-800 text-slate-500'
@@ -520,7 +522,7 @@ function StatusValidasiContent() {
                               <div className="flex items-center justify-between text-[10px] font-bold uppercase tracking-wider opacity-80">
                                 <span>{t.pelamar.status.viewDetails}</span>
                                 {(isClickableCv || isClickableVideo) && (
-                                  <span className="px-2 py-0.5 rounded-full bg-white dark:bg-slate-800 text-[#2596be] dark:text-cyan-400 font-bold text-[9px] border border-[#B8E1ED] shadow-2xs">
+                                  <span className="px-2 py-0.5 rounded-full bg-white dark:bg-slate-800 text-[#1A4B9F] dark:text-blue-400 font-bold text-[9px] border border-[#DBEAFE] dark:border-slate-700 shadow-2xs">
                                     {t.pelamar.status.clickDetail}
                                   </span>
                                 )}
@@ -541,7 +543,7 @@ function StatusValidasiContent() {
                                 ) : isFailed ? (
                                   <XCircle size={16} className="text-red-600" />
                                 ) : (
-                                  <Clock size={16} className="text-[#2596be]" />
+                                  <Clock size={16} className="text-[#1A4B9F] dark:text-blue-400" />
                                 )}
                               </div>
                             </div>
@@ -551,11 +553,11 @@ function StatusValidasiContent() {
                     </div>
 
                     {/* Official Notification Message Box */}
-                    <div className={`p-6 rounded-3xl border text-xs sm:text-sm space-y-4 leading-relaxed ${app.status === 'Tidak Lolos' || app.status === 'Lowongan Telah Ditutup'
+                    <div className={`p-6 rounded-2xl border text-xs sm:text-sm space-y-4 leading-relaxed ${app.status === 'Tidak Lolos' || app.status === 'Lowongan Telah Ditutup'
                         ? 'bg-red-50/60 dark:bg-red-950/20 border-red-200 text-red-900 dark:text-red-200'
                         : app.status === 'Lolos'
                           ? 'bg-emerald-50 dark:bg-emerald-950/20 border-emerald-200 text-emerald-900 dark:text-emerald-200'
-                          : 'bg-[#F0F8FB] dark:bg-slate-800/80 border-[#C2E5EF] dark:border-slate-700 text-[#2596be] dark:text-cyan-300'
+                          : 'bg-blue-50/60 dark:bg-blue-950/20 border-blue-200 dark:border-blue-900 text-[#1A4B9F] dark:text-blue-300'
                       }`}>
                       <div className="flex items-center gap-2 font-black text-sm">
                         {app.status === 'Tidak Lolos' || app.status === 'Lowongan Telah Ditutup' ? (
@@ -570,7 +572,7 @@ function StatusValidasiContent() {
                           </>
                         ) : (
                           <>
-                            <CheckCircle2 size={18} className="text-[#2596be] shrink-0" />
+                            <CheckCircle2 size={18} className="text-[#1A4B9F] dark:text-blue-400 shrink-0" />
                             <span>{t.pelamar.status.progressLabel}</span>
                           </>
                         )}
@@ -582,7 +584,7 @@ function StatusValidasiContent() {
 
                       {/* DAFTAR PERTANYAAN WAWANCARA VIDEO DARI PERUSAHAAN */}
                       {app.currentStageIndex === 3 && (
-                        <div className="mt-3 p-5 rounded-2xl bg-white dark:bg-slate-900 border border-[#C2E5EF] dark:border-slate-700 shadow-2xs space-y-3">
+                        <div className="mt-3 p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 shadow-2xs space-y-3">
                           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2.5 border-b border-slate-100 dark:border-slate-800">
                             <div className="flex items-center gap-2">
                               <div className="p-1.5 rounded-lg bg-emerald-50 dark:bg-emerald-950 text-emerald-600 dark:text-emerald-400 shrink-0">
@@ -608,7 +610,7 @@ function StatusValidasiContent() {
                                 key={idx}
                                 className="flex items-start gap-3 p-3 rounded-xl bg-slate-50/80 dark:bg-slate-800/60 border border-slate-200/70 dark:border-slate-700/70 text-xs"
                               >
-                                <span className="w-5 h-5 rounded-full bg-[#2596be] text-white font-black text-[10px] flex items-center justify-center shrink-0 mt-0.5 shadow-2xs">
+                                <span className="w-5 h-5 rounded-full bg-[#1A4B9F] text-white font-black text-[10px] flex items-center justify-center shrink-0 mt-0.5 shadow-2xs">
                                   {idx + 1}
                                 </span>
                                 <p className="font-semibold text-slate-800 dark:text-slate-200 leading-relaxed">
@@ -666,7 +668,7 @@ function StatusValidasiContent() {
             {/* Header */}
             <div className="flex items-start justify-between border-b border-slate-100 dark:border-slate-800 pb-4">
               <div>
-                <span className="text-xs font-bold text-[#2596be] dark:text-cyan-400 uppercase tracking-wider block">
+                <span className="text-xs font-bold text-[#1A4B9F] dark:text-blue-400 uppercase tracking-wider block">
                   {t.pelamar.status.cvAnalysisTitle}
                 </span>
                 <h3 className="font-extrabold text-2xl text-slate-800 dark:text-slate-100 mt-0.5">
@@ -691,7 +693,7 @@ function StatusValidasiContent() {
               const isPassed = activeCvModalJob.cvScore >= activeCvModalJob.threshold && !isFailedEdu;
 
               return (
-                <div className="p-6 rounded-3xl bg-[#F0F8FB] dark:bg-slate-800/70 border border-[#C2E5EF] dark:border-slate-700 flex flex-col sm:flex-row items-center gap-6">
+                <div className="p-6 rounded-3xl bg-[#EFF6FF] dark:bg-slate-800/70 border border-[#DBEAFE] dark:border-slate-700 flex flex-col sm:flex-row items-center gap-6">
                   {/* Circle Score */}
                   <div className={`w-24 h-24 rounded-2xl flex flex-col items-center justify-center text-white shrink-0 shadow-md ${isPassed
                       ? 'bg-gradient-to-br from-emerald-500 to-teal-600 shadow-emerald-500/20'
@@ -739,9 +741,9 @@ function StatusValidasiContent() {
             {/* Real Data Breakdown Cards */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               {/* Card 1: Pengalaman */}
-              <div className="p-5 rounded-2xl bg-white dark:bg-slate-800 border border-[#C2E5EF] dark:border-slate-700 text-center space-y-2 shadow-2xs">
+              <div className="p-5 rounded-2xl bg-white dark:bg-slate-800 border border-[#DBEAFE] dark:border-slate-700 text-center space-y-2 shadow-2xs">
                 <span className="text-xs font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wide block">Kesesuaian Pengalaman</span>
-                <span className="text-3xl font-black text-[#2596be] dark:text-cyan-400 block">
+                <span className="text-3xl font-black text-[#1A4B9F] dark:text-blue-400 block">
                   {activeCvModalJob.hybridDetails?.sbert_score ?? activeCvModalJob.cvScore}%
                 </span>
                 <p className="text-[11px] text-slate-500 leading-snug">
@@ -750,12 +752,12 @@ function StatusValidasiContent() {
               </div>
 
               {/* Card 2: Keahlian */}
-              <div className="p-5 rounded-2xl bg-white dark:bg-slate-800 border border-[#C2E5EF] dark:border-slate-700 text-center space-y-2 shadow-2xs">
+              <div className="p-5 rounded-2xl bg-white dark:bg-slate-800 border border-[#DBEAFE] dark:border-slate-700 text-center space-y-2 shadow-2xs">
                 <span className="text-xs font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wide block">Kesesuaian Keahlian</span>
                 {!activeCvModalJob.hybridDetails?.keywords_total ? (
                   <span className="text-xl font-bold text-slate-400 block pt-1 pb-1">Sesuai Kriteria</span>
                 ) : (
-                  <span className="text-3xl font-black text-[#2596be] dark:text-cyan-400 block">
+                  <span className="text-3xl font-black text-[#1A4B9F] dark:text-blue-400 block">
                     {activeCvModalJob.hybridDetails.keyword_score}%
                   </span>
                 )}
@@ -765,12 +767,12 @@ function StatusValidasiContent() {
               </div>
 
               {/* Card 3: Syarat Terpenuhi */}
-              <div className="p-5 rounded-2xl bg-white dark:bg-slate-800 border border-[#C2E5EF] dark:border-slate-700 text-center space-y-2 shadow-2xs">
+              <div className="p-5 rounded-2xl bg-white dark:bg-slate-800 border border-[#DBEAFE] dark:border-slate-700 text-center space-y-2 shadow-2xs">
                 <span className="text-xs font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wide block">Keahlian Terpenuhi</span>
                 {!activeCvModalJob.hybridDetails?.keywords_total ? (
                   <span className="text-xl font-bold text-slate-400 block pt-1 pb-1">Terpenuhi</span>
                 ) : (
-                  <span className="text-3xl font-black text-[#2596be] dark:text-cyan-400 block">
+                  <span className="text-3xl font-black text-[#1A4B9F] dark:text-blue-400 block">
                     {activeCvModalJob.hybridDetails.keywords_found} <span className="text-sm font-semibold text-slate-400">dari {activeCvModalJob.hybridDetails.keywords_total}</span>
                   </span>
                 )}
@@ -781,8 +783,8 @@ function StatusValidasiContent() {
             </div>
 
             {/* AI Evaluation Notes */}
-            <div className="p-6 rounded-2xl bg-[#F0F8FB] dark:bg-slate-800/80 border border-[#C2E5EF] dark:border-slate-700 space-y-3.5 text-xs sm:text-sm text-slate-700 dark:text-slate-300">
-              <span className="font-extrabold text-[#2596be] dark:text-cyan-400 flex items-center gap-2 text-sm">
+            <div className="p-6 rounded-2xl bg-[#EFF6FF] dark:bg-slate-800/80 border border-[#DBEAFE] dark:border-slate-700 space-y-3.5 text-xs sm:text-sm text-slate-700 dark:text-slate-300">
+              <span className="font-extrabold text-[#1A4B9F] dark:text-blue-400 flex items-center gap-2 text-sm">
                 Catatan Hasil Evaluasi CV
               </span>
               <ul className="space-y-3">
@@ -802,7 +804,7 @@ function StatusValidasiContent() {
                 </li>
 
                 <li className="flex items-start gap-2.5">
-                  <div className="p-0.5 rounded-full bg-blue-100 dark:bg-blue-950 text-[#2596be] shrink-0 mt-0.5">
+                  <div className="p-0.5 rounded-full bg-blue-100 dark:bg-blue-950 text-[#1A4B9F] shrink-0 mt-0.5">
                     <Check size={14} />
                   </div>
                   <span>
@@ -832,7 +834,7 @@ function StatusValidasiContent() {
             <div className="pt-4 border-t border-slate-100 dark:border-slate-800 flex justify-end">
               <button
                 onClick={() => setActiveCvModalJob(null)}
-                className="px-6 py-2.5 rounded-full bg-[#2596be] hover:bg-[#1D7FA1] text-white font-bold text-xs cursor-pointer shadow-sm transition-colors"
+                className="px-6 py-2.5 rounded-full bg-[#1A4B9F] hover:bg-[#133878] text-white font-bold text-xs cursor-pointer shadow-sm transition-colors"
               >
                 {t.pelamar.status.backToList}
               </button>
@@ -850,10 +852,10 @@ function StatusValidasiContent() {
             {/* Header */}
             <div className="flex items-start justify-between border-b border-slate-100 dark:border-slate-800 pb-4">
               <div>
-                <span className="text-xs font-bold text-[#2596be] dark:text-cyan-400 uppercase tracking-wider block">
+                <span className="text-xs font-bold text-[#1A4B9F] dark:text-blue-400 uppercase tracking-wider block">
                   {t.pelamar.status.videoAnalysisTitle}
                 </span>
-                <h3 className="font-black text-2xl text-[#2596be] dark:text-cyan-400">
+                <h3 className="font-black text-2xl text-[#1A4B9F] dark:text-blue-400">
                   {t.pelamar.status.videoResultTitle}
                 </h3>
                 <p className="text-xs text-slate-500 dark:text-slate-400">
@@ -870,8 +872,8 @@ function StatusValidasiContent() {
             </div>
 
             {/* Score Banner */}
-            <div className="p-6 rounded-3xl bg-[#F0F8FB] dark:bg-slate-800 border border-[#C2E5EF] dark:border-slate-700 flex flex-col sm:flex-row items-center gap-6">
-              <div className={`w-24 h-24 rounded-full flex flex-col items-center justify-center text-white shrink-0 shadow-md ${activeVideoModalJob.videoScore >= 80 ? 'bg-[#2596be]' : 'bg-red-600'
+            <div className="p-6 rounded-3xl bg-[#EFF6FF] dark:bg-slate-800 border border-[#DBEAFE] dark:border-slate-700 flex flex-col sm:flex-row items-center gap-6">
+              <div className={`w-24 h-24 rounded-full flex flex-col items-center justify-center text-white shrink-0 shadow-md ${activeVideoModalJob.videoScore >= 80 ? 'bg-[#1A4B9F]' : 'bg-red-600'
                 }`}>
                 <span className="text-3xl font-black">{activeVideoModalJob.videoScore}%</span>
                 <span className="text-[10px] font-bold uppercase tracking-widest text-white/80">VIDEO SCORE</span>
@@ -888,46 +890,46 @@ function StatusValidasiContent() {
                   </div>
                 )}
 
-                <h4 className="text-lg font-black text-[#2596be] dark:text-cyan-400">
+                <h4 className="text-lg font-black text-[#1A4B9F] dark:text-blue-400">
                   {activeVideoModalJob.videoScore >= 80 ? t.pelamar.status.highMatchVideo : t.pelamar.status.lowMatchVideo}
                 </h4>
                 <p className="text-xs text-slate-600 dark:text-slate-300">
-                  {t.pelamar.status.algoInfoVideo}: <strong className="text-[#2596be] dark:text-cyan-400">{activeVideoModalJob.videoScore}% nilai komposit</strong>.
+                  {t.pelamar.status.algoInfoVideo}: <strong className="text-[#1A4B9F] dark:text-blue-400">{activeVideoModalJob.videoScore}% nilai komposit</strong>.
                 </p>
               </div>
             </div>
 
             {/* 5 Video Criteria Breakdown Grid */}
             <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
-              <div className="p-4 rounded-2xl bg-white dark:bg-slate-800 border border-[#C2E5EF] dark:border-slate-700 text-center space-y-1">
+              <div className="p-4 rounded-2xl bg-white dark:bg-slate-800 border border-[#DBEAFE] dark:border-slate-700 text-center space-y-1">
                 <span className="text-[10px] font-extrabold text-slate-500 uppercase block">Fluency &amp; Comm</span>
-                <span className="text-xl font-black text-[#2596be] dark:text-cyan-400">{activeVideoModalJob.videoBreakdown.fluency}%</span>
+                <span className="text-xl font-black text-[#1A4B9F] dark:text-blue-400">{activeVideoModalJob.videoBreakdown.fluency}%</span>
               </div>
 
-              <div className="p-4 rounded-2xl bg-white dark:bg-slate-800 border border-[#C2E5EF] dark:border-slate-700 text-center space-y-1">
+              <div className="p-4 rounded-2xl bg-white dark:bg-slate-800 border border-[#DBEAFE] dark:border-slate-700 text-center space-y-1">
                 <span className="text-[10px] font-extrabold text-slate-500 uppercase block">Confidence &amp; Posture</span>
-                <span className="text-xl font-black text-[#2596be] dark:text-cyan-400">{activeVideoModalJob.videoBreakdown.confidence}%</span>
+                <span className="text-xl font-black text-[#1A4B9F] dark:text-blue-400">{activeVideoModalJob.videoBreakdown.confidence}%</span>
               </div>
 
-              <div className="p-4 rounded-2xl bg-white dark:bg-slate-800 border border-[#C2E5EF] dark:border-slate-700 text-center space-y-1">
+              <div className="p-4 rounded-2xl bg-white dark:bg-slate-800 border border-[#DBEAFE] dark:border-slate-700 text-center space-y-1">
                 <span className="text-[10px] font-extrabold text-slate-500 uppercase block">Keyword Relevance</span>
-                <span className="text-xl font-black text-[#2596be] dark:text-cyan-400">{activeVideoModalJob.videoBreakdown.keywords}%</span>
+                <span className="text-xl font-black text-[#1A4B9F] dark:text-blue-400">{activeVideoModalJob.videoBreakdown.keywords}%</span>
               </div>
 
-              <div className="p-4 rounded-2xl bg-white dark:bg-slate-800 border border-[#C2E5EF] dark:border-slate-700 text-center space-y-1">
+              <div className="p-4 rounded-2xl bg-white dark:bg-slate-800 border border-[#DBEAFE] dark:border-slate-700 text-center space-y-1">
                 <span className="text-[10px] font-extrabold text-slate-500 uppercase block">Emotion &amp; Pitch Stability</span>
-                <span className="text-xl font-black text-[#2596be] dark:text-cyan-400">{activeVideoModalJob.videoBreakdown.emotion}%</span>
+                <span className="text-xl font-black text-[#1A4B9F] dark:text-blue-400">{activeVideoModalJob.videoBreakdown.emotion}%</span>
               </div>
 
-              <div className="p-4 rounded-2xl bg-white dark:bg-slate-800 border border-[#C2E5EF] dark:border-slate-700 text-center space-y-1">
+              <div className="p-4 rounded-2xl bg-white dark:bg-slate-800 border border-[#DBEAFE] dark:border-slate-700 text-center space-y-1">
                 <span className="text-[10px] font-extrabold text-slate-500 uppercase block">Problem Solving Logic</span>
-                <span className="text-xl font-black text-[#2596be] dark:text-cyan-400">{activeVideoModalJob.videoBreakdown.logic}%</span>
+                <span className="text-xl font-black text-[#1A4B9F] dark:text-blue-400">{activeVideoModalJob.videoBreakdown.logic}%</span>
               </div>
             </div>
 
             {/* AI Notes */}
-            <div className="p-5 rounded-2xl bg-[#F0F8FB] dark:bg-slate-800/80 border border-[#C2E5EF] dark:border-slate-700 space-y-3 text-xs sm:text-sm text-slate-700 dark:text-slate-300">
-              <span className="font-extrabold text-[#2596be] dark:text-cyan-400 flex items-center gap-2">
+            <div className="p-5 rounded-2xl bg-[#EFF6FF] dark:bg-slate-800/80 border border-[#DBEAFE] dark:border-slate-700 space-y-3 text-xs sm:text-sm text-slate-700 dark:text-slate-300">
+              <span className="font-extrabold text-[#1A4B9F] dark:text-blue-400 flex items-center gap-2">
                 <Bot size={16} /> Catatan Evaluasi AI Video Analysis:
               </span>
               <ul className="space-y-2">
@@ -943,7 +945,7 @@ function StatusValidasiContent() {
             <div className="pt-4 border-t border-slate-100 dark:border-slate-800 flex justify-end">
               <button
                 onClick={() => setActiveVideoModalJob(null)}
-                className="px-6 py-2.5 rounded-full bg-[#2596be] hover:bg-[#1D7FA1] text-white font-bold text-xs cursor-pointer"
+                className="px-6 py-2.5 rounded-full bg-[#1A4B9F] hover:bg-[#133878] text-white font-bold text-xs cursor-pointer shadow-sm transition-colors"
               >
                 {t.pelamar.status.backToList}
               </button>
@@ -959,7 +961,7 @@ function StatusValidasiContent() {
 
 export default function StatusValidasiPage() {
   return (
-    <Suspense fallback={<div className="min-h-screen flex items-center justify-center bg-white dark:bg-slate-950"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#1b7b9e]"></div></div>}>
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center bg-white dark:bg-slate-950"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#1A4B9F]"></div></div>}>
       <StatusValidasiContent />
     </Suspense>
   );
