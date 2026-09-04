@@ -479,9 +479,6 @@ function StatusValidasiContent() {
                         <span className="text-xs font-black uppercase tracking-wider text-[#2596be] dark:text-cyan-400 flex items-center gap-2">
                           <BarChart3 size={16} /> {t.pelamar.status.pipelineTitle}
                         </span>
-                        <span className="text-[11px] font-bold text-slate-400 italic">
-                          {t.pelamar.status.pipelineHint}
-                        </span>
                       </div>
 
                       {/* 5 Dynamic Pipeline Cards */}

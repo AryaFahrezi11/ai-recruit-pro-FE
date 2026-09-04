@@ -173,9 +173,9 @@ export function CandidateCard({
             ></div>
           </div>
           <div className="flex items-center justify-between mt-1">
-            <span className="text-[9px] font-semibold text-muted-foreground">Ambang Batas: {threshold}%</span>
+            <span className="text-[9px] font-semibold text-muted-foreground">Standar Kelulusan: {threshold}%</span>
             <span className={`text-[9px] font-bold ${cvScore >= threshold ? 'text-emerald-700 dark:text-emerald-400' : 'text-rose-700 dark:text-rose-400'}`}>
-              {cvScore >= threshold ? '✓ Lolos' : '✗ Dibawah Threshold'}
+              {cvScore >= threshold ? '✓ Lolos' : '✗ Tidak Memenuhi Standar'}
             </span>
           </div>
         </div>

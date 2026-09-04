@@ -38,6 +38,8 @@ interface CandidateModalProps {
     cvDocument?: any;
     jobData?: any;
     analisisCv?: any;
+    isPolling?: boolean;
+    pollProgress?: number;
   };
   onClose: () => void;
 }
@@ -908,6 +910,21 @@ export function CandidateModal({ candidate, onClose }: CandidateModalProps) {
                 </div>
 
               </div>
+              ) : candidate.isPolling ? (
+                <div className="p-8 bg-blue-50/50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-900 rounded-xl text-center space-y-4">
+                  <div className="w-12 h-12 mx-auto border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+                  <h4 className="font-bold text-base text-foreground">AI Sedang Menganalisis Video...</h4>
+                  <p className="text-xs text-muted-foreground max-w-md mx-auto">
+                    Ini akan memakan waktu sekitar 15-30 detik. Harap tunggu.
+                  </p>
+                  <div className="w-full max-w-md mx-auto bg-muted rounded-full h-3 overflow-hidden mt-4">
+                    <div
+                      className="bg-primary h-full transition-all duration-300"
+                      style={{ width: `${candidate.pollProgress || 0}%` }}
+                    ></div>
+                  </div>
+                  <p className="text-xs font-bold">{Math.round(candidate.pollProgress || 0)}%</p>
+                </div>
               ) : (
                 <div className="p-8 bg-amber-50/50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-900 rounded-xl text-center space-y-3">
                   <Scan className="mx-auto text-amber-500" size={36} />

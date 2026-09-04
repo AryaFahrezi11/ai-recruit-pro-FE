@@ -32,6 +32,8 @@ interface CandidateData {
   analisisCv?: any;
   aiResult?: any;
   videoUrl?: string;
+  isPolling?: boolean;
+  pollProgress?: number;
 }
 
 export default function PipelinePage() {
@@ -187,10 +189,8 @@ export default function PipelinePage() {
                 education={app.pelamar?.pendidikan_terakhir || (app as any).cvData?.education?.[0]?.degree}
                 university={app.pelamar?.institusi_pendidikan || (app as any).cvData?.education?.[0]?.school}
                 stage="upload_cv"
-                timeInfo={app.applied_at ? new Date(app.applied_at).toLocaleDateString() : 'Baru'}
-                actionLabel="Seleksi AI"
-                actionLoading={analyzingId === app.id}
-                onActionClick={() => handleAnalyze(app.id)}
+                status="processing"
+                timeInfo="Otomatis Memproses AI..."
                 onClick={() => setSelectedCandidate({ name: app.pelamar?.nama_lengkap || 'Kandidat', role: (app as any).cvData?.jobTitle || app.job?.judul_posisi || '', stage: "upload_cv", education: app.pelamar?.pendidikan_terakhir, university: app.pelamar?.institusi_pendidikan, cvData: (app as any).cvData, cvDocument: (app as any).cv_document, jobData: app.job })}
               />
             ))}
@@ -285,7 +285,7 @@ export default function PipelinePage() {
                 actionLabel="Jalankan Analisis Video"
                 actionLoading={analyzingId === app.id}
                 onActionClick={() => handleAnalyzeVideo(app.id)}
-                onClick={() => setSelectedCandidate({ name: app.pelamar?.nama_lengkap || 'Kandidat', role: (app as any).cvData?.jobTitle || app.job?.judul_posisi || '', stage: "ai_analysis", cvScore: Math.round(app.analisis_cv?.skor_kecocokan || 0), education: app.pelamar?.pendidikan_terakhir, university: app.pelamar?.institusi_pendidikan, cvData: (app as any).cvData, cvDocument: (app as any).cv_document, jobData: app.job, analisisCv: app.analisis_cv, aiResult: (app as any).ai_result, videoUrl: (app as any).video_url })}
+                onClick={() => setSelectedCandidate({ name: app.pelamar?.nama_lengkap || 'Kandidat', role: (app as any).cvData?.jobTitle || app.job?.judul_posisi || '', stage: "ai_analysis", cvScore: Math.round(app.analisis_cv?.skor_kecocokan || 0), education: app.pelamar?.pendidikan_terakhir, university: app.pelamar?.institusi_pendidikan, cvData: (app as any).cvData, cvDocument: (app as any).cv_document, jobData: app.job, analisisCv: app.analisis_cv, aiResult: (app as any).ai_result, videoUrl: (app as any).video_url, isPolling: pollingId === app.id, pollProgress: pollingId === app.id ? pollProgress : undefined })}
               />
             ))}
           </KanbanColumn>
@@ -309,23 +309,7 @@ export default function PipelinePage() {
         </div>
       </div>
 
-      {/* Polling Overlay */}
-      {pollingId && (
-        <div className="fixed inset-0 z-[100] bg-background/80 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-card w-full max-w-md p-6 rounded-xl shadow-2xl border border-border text-center space-y-4">
-            <div className="w-16 h-16 mx-auto border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
-            <h3 className="text-xl font-bold">AI Sedang Menganalisis Video...</h3>
-            <p className="text-sm text-muted-foreground">Ini akan memakan waktu sekitar 15-30 detik. Harap jangan tutup halaman ini.</p>
-            <div className="w-full bg-muted rounded-full h-3 overflow-hidden">
-              <div
-                className="bg-primary h-full transition-all duration-300"
-                style={{ width: `${pollProgress}%` }}
-              ></div>
-            </div>
-            <p className="text-xs font-bold">{Math.round(pollProgress)}%</p>
-          </div>
-        </div>
-      )}
+
 
       {/* Candidate Modal Render */}
       {selectedCandidate && (
