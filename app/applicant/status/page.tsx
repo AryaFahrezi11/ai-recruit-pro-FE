@@ -34,7 +34,7 @@ import {
 import { api, parseErrorMessage } from '@/lib/api';
 
 interface ApplicationItem {
-  id: number;
+  id: number | string;
   jobTitle: string;
   companyName: string;
   logo: string;
@@ -74,23 +74,27 @@ const DEFAULT_INTERVIEW_QUESTIONS = [
 
 const getJobVideoQuestions = (item: any): string[] => {
   const raw =
-    item.job?.video_questions_json ||
     item.job?.video_questions ||
-    item.video_questions_json ||
+    item.job?.video_questions_json ||
     item.video_questions ||
+    item.video_questions_json ||
     item.pertanyaan_wawancara;
 
   if (!raw) return [];
 
   if (Array.isArray(raw)) {
-    return raw.filter((q: any) => typeof q === 'string' && q.trim().length > 0);
+    return raw
+      .map((q: any) => (typeof q === 'string' ? q.trim() : ''))
+      .filter((q: string) => q.length > 0);
   }
 
   if (typeof raw === 'string' && raw.trim().length > 0) {
     try {
       const parsed = JSON.parse(raw);
       if (Array.isArray(parsed)) {
-        return parsed.filter((q: any) => typeof q === 'string' && q.trim().length > 0);
+        return parsed
+          .map((q: any) => (typeof q === 'string' ? q.trim() : ''))
+          .filter((q: string) => q.length > 0);
       }
     } catch {
       return raw.split(/\r?\n/).map((s: string) => s.trim()).filter(Boolean);
@@ -164,7 +168,7 @@ function StatusValidasiContent() {
   };
 
   // Expanded application cards state
-  const [expandedJobIds, setExpandedJobIds] = useState<number[]>([5, 4]);
+  const [expandedJobIds, setExpandedJobIds] = useState<(number | string)[]>([5, 4]);
 
   // Modal States
   const [activeCvModalJob, setActiveCvModalJob] = useState<ApplicationItem | null>(null);
@@ -271,7 +275,7 @@ function StatusValidasiContent() {
           });
 
           setApplications(mapped);
-          setExpandedJobIds(mapped.map((m) => Number(m.id)));
+          setExpandedJobIds(mapped.map((m) => m.id));
         } else {
           // Fallback mock scenarios if no applications in DB yet
           setApplications(initialMockApplications);
@@ -295,7 +299,7 @@ function StatusValidasiContent() {
     { number: 5, name: '5. HUMAN VALIDATION', key: 'human_validation' }
   ];
 
-  const toggleExpandJob = (id: number) => {
+  const toggleExpandJob = (id: number | string) => {
     if (expandedJobIds.includes(id)) {
       setExpandedJobIds(expandedJobIds.filter(jobId => jobId !== id));
     } else {

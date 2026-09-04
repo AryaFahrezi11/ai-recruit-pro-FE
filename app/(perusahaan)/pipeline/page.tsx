@@ -34,6 +34,7 @@ interface CandidateData {
   videoUrl?: string;
   isPolling?: boolean;
   pollProgress?: number;
+  pollMessage?: string;
 }
 
 export default function PipelinePage() {
@@ -44,6 +45,7 @@ export default function PipelinePage() {
   const [loading, setLoading] = useState(true);
   const [pollingId, setPollingId] = useState<string | null>(null);
   const [pollProgress, setPollProgress] = useState<number>(0);
+  const [pollMessage, setPollMessage] = useState<string>('');
   const [analyzingId, setAnalyzingId] = useState<string | null>(null);
 
   const loadApplications = async () => {
@@ -64,6 +66,73 @@ export default function PipelinePage() {
   useEffect(() => {
     loadApplications();
   }, []);
+
+  // Resume polling on page refresh if there is any pending video analysis
+  useEffect(() => {
+    if (!pollingId && applications.length > 0) {
+      const pendingApp = applications.find(a => a.status === 'video_analysis');
+      if (pendingApp) {
+        setPollingId(pendingApp.id);
+        setPollMessage('Memeriksa status antrean...');
+      }
+    }
+  }, [applications, pollingId]);
+
+  // Real-time backend progress polling
+  useEffect(() => {
+    if (!pollingId) return;
+
+    let isSubscribed = true;
+
+    const checkProgress = async () => {
+      try {
+        const res = await fetchAuth(`/api/applications/${pollingId}/video-progress`);
+        if (!res.ok || !isSubscribed) return;
+        const data = await res.json();
+
+        if (!isSubscribed) return;
+
+        if (data.status === 'completed' || (data.progress !== undefined && data.progress >= 100)) {
+          setPollProgress(100);
+          setPollMessage('Analisis AI Video Selesai!');
+          toast.success('Analisis Video Selesai!');
+          setTimeout(() => {
+            if (isSubscribed) {
+              setPollingId(null);
+              setPollMessage('');
+              setAnalyzingId(null);
+              loadApplications();
+            }
+          }, 800);
+        } else if (data.status === 'failed') {
+          toast.error(data.error || 'Analisis video gagal diproses.');
+          setPollingId(null);
+          setPollMessage('');
+          setAnalyzingId(null);
+          loadApplications();
+        } else {
+          // In-progress status
+          setPollProgress(data.progress || 0);
+          if (data.message) {
+            setPollMessage(data.message);
+          }
+        }
+      } catch (e) {
+        // ignore fetch error
+      }
+    };
+
+    // Panggil langsung sekali saat polling dimulai
+    checkProgress();
+
+    // Jalankan polling berkala setiap 2 detik
+    const pollBackend = setInterval(checkProgress, 2000);
+
+    return () => {
+      isSubscribed = false;
+      clearInterval(pollBackend);
+    };
+  }, [pollingId]);
 
   const handleUpdateStatus = async (applicationId: string, newStatus: string) => {
     try {
@@ -113,42 +182,10 @@ export default function PipelinePage() {
         throw new Error(errData.detail || 'Gagal menjalankan analisis AI Video');
       }
 
-      toast.success('Analisis AI Video dimulai. Mohon tunggu...');
-
-      // Start polling simulation
+      toast.success('Analisis AI Video dimasukkan ke antrean. Mohon tunggu...');
       setPollingId(applicationId);
       setPollProgress(0);
-
-      let currentProgress = 0;
-      const progressInterval = setInterval(() => {
-        currentProgress += Math.random() * 5 + 2;
-        if (currentProgress > 95) currentProgress = 95;
-        setPollProgress(currentProgress);
-      }, 1000);
-
-      // Polling the backend
-      const pollBackend = setInterval(async () => {
-        try {
-          const checkRes = await fetchAuth('/api/applications/', { method: 'GET' });
-          if (checkRes.ok) {
-            const data = await checkRes.json();
-            const app = data.data?.find((a: any) => a.id === applicationId);
-            if (app && app.status === 'human_validation') {
-              clearInterval(progressInterval);
-              clearInterval(pollBackend);
-              setPollProgress(100);
-              setTimeout(() => {
-                setPollingId(null);
-                setAnalyzingId(null);
-                loadApplications();
-                toast.success('Analisis Video Selesai!');
-              }, 500);
-            }
-          }
-        } catch (e) {
-          // ignore poll errors
-        }
-      }, 3000);
+      setPollMessage('Menunggu giliran antrean AI...');
 
     } catch (error: any) {
       toast.error(error.message || parseErrorMessage(error) || 'Gagal menjalankan analisis AI Video');
@@ -273,37 +310,89 @@ export default function PipelinePage() {
 
           {/* 4. AI VIDEO ANALYSIS */}
           <KanbanColumn title={t.pipeline.videoAnalysis} count={videoAnalysisApps.length}>
-            {videoAnalysisApps.map((app) => (
-              <CandidateCard
-                key={app.id}
-                name={app.pelamar?.nama_lengkap || 'Kandidat'}
-                role={(app as any).cvData?.jobTitle || app.job?.judul_posisi || 'Posisi'}
-                appliedJob={app.job?.judul_posisi}
-                stage="ai_analysis"
-                status="processing"
-                timeInfo="Menunggu Analisis AI"
-                actionLabel="Jalankan Analisis Video"
-                actionLoading={analyzingId === app.id}
-                onActionClick={() => handleAnalyzeVideo(app.id)}
-                onClick={() => setSelectedCandidate({ name: app.pelamar?.nama_lengkap || 'Kandidat', role: (app as any).cvData?.jobTitle || app.job?.judul_posisi || '', stage: "ai_analysis", cvScore: Math.round(app.analisis_cv?.skor_kecocokan || 0), education: app.pelamar?.pendidikan_terakhir, university: app.pelamar?.institusi_pendidikan, cvData: (app as any).cvData, cvDocument: (app as any).cv_document, jobData: app.job, analisisCv: app.analisis_cv, aiResult: (app as any).ai_result, videoUrl: (app as any).video_url, isPolling: pollingId === app.id, pollProgress: pollingId === app.id ? pollProgress : undefined })}
-              />
-            ))}
+            {videoAnalysisApps.map((app) => {
+              const isCurrentPolling = pollingId === app.id;
+              const isCurrentAnalyzing = analyzingId === app.id || isCurrentPolling;
+              
+              return (
+                <CandidateCard
+                  key={app.id}
+                  name={app.pelamar?.nama_lengkap || 'Kandidat'}
+                  role={(app as any).cvData?.jobTitle || app.job?.judul_posisi || 'Posisi'}
+                  appliedJob={app.job?.judul_posisi}
+                  stage="ai_analysis"
+                  status="processing"
+                  timeInfo={
+                    isCurrentPolling
+                      ? (pollMessage ? `${pollMessage} (${Math.round(pollProgress)}%)` : `Memproses AI (${Math.round(pollProgress)}%)...`)
+                      : "Menunggu Analisis AI"
+                  }
+                  actionLabel={isCurrentPolling ? `${Math.round(pollProgress)}% Memproses` : "Jalankan Analisis Video"}
+                  actionLoading={isCurrentAnalyzing}
+                  onActionClick={() => handleAnalyzeVideo(app.id)}
+                  onClick={() => setSelectedCandidate({
+                    name: app.pelamar?.nama_lengkap || 'Kandidat',
+                    role: (app as any).cvData?.jobTitle || app.job?.judul_posisi || '',
+                    stage: "ai_analysis",
+                    cvScore: Math.round(app.analisis_cv?.skor_kecocokan || 0),
+                    education: app.pelamar?.pendidikan_terakhir,
+                    university: app.pelamar?.institusi_pendidikan,
+                    cvData: (app as any).cvData,
+                    cvDocument: (app as any).cv_document,
+                    jobData: app.job,
+                    analisisCv: app.analisis_cv,
+                    aiResult: (app as any).ai_result,
+                    videoUrl: (app as any).video_url,
+                    isPolling: isCurrentPolling,
+                    pollProgress: isCurrentPolling ? pollProgress : undefined,
+                    pollMessage: isCurrentPolling ? pollMessage : undefined,
+                  })}
+                />
+              );
+            })}
           </KanbanColumn>
 
           {/* 5. HUMAN VALIDATION */}
           <KanbanColumn title={t.pipeline.humanValidation} count={humanValidationApps.length}>
-            {humanValidationApps.map((app) => (
-              <CandidateCard
-                key={app.id}
-                name={app.pelamar?.nama_lengkap || 'Kandidat'}
-                role={(app as any).cvData?.jobTitle || app.job?.judul_posisi || 'Posisi'}
-                appliedJob={app.job?.judul_posisi}
-                stage="human_validation"
-                status="needs_approval"
-                timeInfo="Menunggu Keputusan"
-                onClick={() => setSelectedCandidate({ name: app.pelamar?.nama_lengkap || 'Kandidat', role: (app as any).cvData?.jobTitle || app.job?.judul_posisi || '', stage: "human_validation", cvScore: Math.round(app.analisis_cv?.skor_kecocokan || 0), education: app.pelamar?.pendidikan_terakhir, university: app.pelamar?.institusi_pendidikan, cvData: (app as any).cvData, cvDocument: (app as any).cv_document, jobData: app.job, analisisCv: app.analisis_cv, aiResult: (app as any).ai_result, videoUrl: (app as any).video_url })}
-              />
-            ))}
+            {humanValidationApps.map((app) => {
+              const appAi = (app as any).ai_result;
+              const parsePct = (val: any) => typeof val === 'string' ? parseFloat(val.replace('%', '')) : (typeof val === 'number' ? val : 0);
+              const dynamicVideoScores = appAi?.dimensi_psikologis ? {
+                ability: Math.round(parsePct(appAi.dimensi_psikologis.Ability)),
+                intelligent: Math.round(parsePct(appAi.dimensi_psikologis.Intelligent)),
+                personality: Math.round(parsePct(appAi.dimensi_psikologis.Personality)),
+                attitude: Math.round(parsePct(appAi.dimensi_psikologis.Attitude)),
+                emotionalIntelligence: Math.round(parsePct(appAi.dimensi_psikologis['Emotional Intelligent'])),
+              } : undefined;
+
+              return (
+                <CandidateCard
+                  key={app.id}
+                  name={app.pelamar?.nama_lengkap || 'Kandidat'}
+                  role={(app as any).cvData?.jobTitle || app.job?.judul_posisi || 'Posisi'}
+                  appliedJob={app.job?.judul_posisi}
+                  stage="human_validation"
+                  status="needs_approval"
+                  timeInfo="Menunggu Keputusan"
+                  videoScores={dynamicVideoScores}
+                  onClick={() => setSelectedCandidate({
+                    name: app.pelamar?.nama_lengkap || 'Kandidat',
+                    role: (app as any).cvData?.jobTitle || app.job?.judul_posisi || '',
+                    stage: "human_validation",
+                    cvScore: Math.round(app.analisis_cv?.skor_kecocokan || 0),
+                    education: app.pelamar?.pendidikan_terakhir,
+                    university: app.pelamar?.institusi_pendidikan,
+                    cvData: (app as any).cvData,
+                    cvDocument: (app as any).cv_document,
+                    jobData: app.job,
+                    analisisCv: app.analisis_cv,
+                    aiResult: (app as any).ai_result,
+                    videoUrl: (app as any).video_url,
+                    videoScores: dynamicVideoScores,
+                  })}
+                />
+              );
+            })}
           </KanbanColumn>
 
         </div>

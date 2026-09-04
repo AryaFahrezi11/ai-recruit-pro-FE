@@ -185,11 +185,11 @@ export function CandidateCard({
       {videoScores && (
         <div className="mb-3 space-y-1 p-2 bg-muted/40 rounded-lg border border-border/80">
           {[
-            { label: 'Ability', value: videoScores.ability },
-            { label: 'Intelligent', value: videoScores.intelligent },
-            { label: 'Personality', value: videoScores.personality },
-            { label: 'Attitude', value: videoScores.attitude },
-            { label: 'Emotional Eq.', value: videoScores.emotionalIntelligence },
+            { label: 'Komunikasi', value: videoScores.ability },
+            { label: 'Pemahaman', value: videoScores.intelligent },
+            { label: 'Percaya Diri', value: videoScores.personality },
+            { label: 'Sikap Kerja', value: videoScores.attitude },
+            { label: 'Ketenangan', value: videoScores.emotionalIntelligence },
           ].map((item) => (
             <div key={item.label} className="flex items-center justify-between text-[10px]">
               <span className="text-slate-600 dark:text-slate-400 font-medium">{item.label}</span>

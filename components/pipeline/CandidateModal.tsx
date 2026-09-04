@@ -3,11 +3,13 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useTranslation } from '@/hooks/useTranslation';
+import toast from 'react-hot-toast';
 import {
   X, Play, CheckCircle2, XCircle,
   Check, Lightbulb, FileText, Video, BarChart3,
   Upload, Brain, UserCheck, Scan, Download, ExternalLink,
-  Clock, AlertCircle, Sparkles, Briefcase, Mail, Phone, Lock, Archive, GraduationCap, Building2
+  Clock, AlertCircle, Sparkles, Briefcase, Mail, Phone, Lock, Archive, GraduationCap, Building2, ArrowRight,
+  HelpCircle
 } from 'lucide-react';
 import { ParseSkills } from '@/components/ui/ParseSkills';
 import {
@@ -40,6 +42,7 @@ interface CandidateModalProps {
     analisisCv?: any;
     isPolling?: boolean;
     pollProgress?: number;
+    pollMessage?: string;
   };
   onClose: () => void;
 }
@@ -100,7 +103,7 @@ export function CandidateModal({ candidate, onClose }: CandidateModalProps) {
   const threshold = candidate.analisisCv?.threshold_digunakan ?? candidate.jobData?.cv_threshold ?? 60;
 
   // Archive feedback banner state
-  const [archiveStatus, setArchiveStatus] = useState<'idle' | 'hired' | 'rejected'>('idle');
+  const [archiveStatus, setArchiveStatus] = useState<'idle' | 'hired' | 'rejected' | 'interview_lanjutan'>('idle');
 
   // Determine initial active tab based on stage
   const getInitialTab = (stg: string) => {
@@ -131,31 +134,109 @@ export function CandidateModal({ candidate, onClose }: CandidateModalProps) {
   const isVideoUploaded = (candidate.videoUploaded !== undefined
     ? candidate.videoUploaded
     : (candidate.status === 'video_uploaded' || candidate.name.includes('David'))) || !!candidate.videoUrl;
+  const isVideoAnalysisCompleted = stageIndex >= 4 || candidate.stage === 'human_validation' || !!(aiResult && (aiResult.status === 'SUKSES' || aiResult.skor_keseluruhan !== undefined));
 
-  // Radar Chart data
+  // Extract individual psychological scores from real AI result
+  const abilityScore = aiResult?.dimensi_psikologis?.Ability ? parsePercent(aiResult.dimensi_psikologis.Ability) : (candidate.videoScores?.ability || 85);
+  const intelligentScore = aiResult?.dimensi_psikologis?.Intelligent ? parsePercent(aiResult.dimensi_psikologis.Intelligent) : (candidate.videoScores?.intelligent || 92);
+  const personalityScore = aiResult?.dimensi_psikologis?.Personality ? parsePercent(aiResult.dimensi_psikologis.Personality) : (candidate.videoScores?.personality || 78);
+  const attitudeScore = aiResult?.dimensi_psikologis?.Attitude ? parsePercent(aiResult.dimensi_psikologis.Attitude) : (candidate.videoScores?.attitude || 88);
+  const emotionalIntelligenceScore = aiResult?.dimensi_psikologis?.['Emotional Intelligent'] ? parsePercent(aiResult.dimensi_psikologis['Emotional Intelligent']) : (candidate.videoScores?.emotionalIntelligence || 60);
+
+  // Overall Score (Rata-rata 5 Dimensi atau dari skor_keseluruhan AI)
+  const overallVideoScore = aiResult?.skor_keseluruhan !== undefined
+    ? Number(aiResult.skor_keseluruhan).toFixed(1)
+    : ((abilityScore + intelligentScore + personalityScore + attitudeScore + emotionalIntelligenceScore) / 5).toFixed(1);
+
+  // Video Duration formatted
+  const videoDurationDisplay = aiResult?.durasi_formatted || aiResult?.durasi_teks || "00:00";
+
+  // Daftar pertanyaan wawancara dari lowongan pekerjaan yang dilamar
+  const candidateQuestions: string[] = (() => {
+    const raw =
+      candidate.jobData?.video_questions ||
+      candidate.jobData?.video_questions_json;
+    if (!raw) return [];
+    if (Array.isArray(raw)) {
+      return raw.map((q: any) => (typeof q === 'string' ? q.trim() : '')).filter((q: string) => q.length > 0);
+    }
+    if (typeof raw === 'string' && raw.trim().length > 0) {
+      try {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed)) {
+          return parsed.map((q: any) => (typeof q === 'string' ? q.trim() : '')).filter((q: string) => q.length > 0);
+        }
+      } catch {
+        return raw.split(/\r?\n/).map((s: string) => s.trim()).filter(Boolean);
+      }
+    }
+    return [];
+  })();
+
+  // Radar Chart data (Istilah umum kompetensi kerja)
   const radarData = [
-    { subject: t.modal.ability, A: aiResult?.dimensi_psikologis?.Ability ? parsePercent(aiResult.dimensi_psikologis.Ability) : (candidate.videoScores?.ability || 85), fullMark: 100 },
-    { subject: t.modal.intelligent, A: aiResult?.dimensi_psikologis?.Intelligent ? parsePercent(aiResult.dimensi_psikologis.Intelligent) : (candidate.videoScores?.intelligent || 92), fullMark: 100 },
-    { subject: t.modal.personality, A: aiResult?.dimensi_psikologis?.Personality ? parsePercent(aiResult.dimensi_psikologis.Personality) : (candidate.videoScores?.personality || 78), fullMark: 100 },
-    { subject: t.modal.attitude, A: aiResult?.dimensi_psikologis?.Attitude ? parsePercent(aiResult.dimensi_psikologis.Attitude) : (candidate.videoScores?.attitude || 88), fullMark: 100 },
-    { subject: t.modal.emotionalIntelligence, A: aiResult?.dimensi_psikologis?.['Emotional Intelligent'] ? parsePercent(aiResult.dimensi_psikologis['Emotional Intelligent']) : (candidate.videoScores?.emotionalIntelligence || 60), fullMark: 100 },
+    { subject: 'Komunikasi', A: abilityScore, fullMark: 100 },
+    { subject: 'Pemahaman', A: intelligentScore, fullMark: 100 },
+    { subject: 'Percaya Diri', A: personalityScore, fullMark: 100 },
+    { subject: 'Sikap Kerja', A: attitudeScore, fullMark: 100 },
+    { subject: 'Ketenangan', A: emotionalIntelligenceScore, fullMark: 100 },
   ];
 
-  // Video analysis parameters
-  const videoParams = [
-    { label: t.modal.gerakanTangan, value: 78, color: 'bg-blue-500' },
-    { label: t.modal.gerakanBadan, value: 85, color: 'bg-violet-500' },
-    { label: t.modal.gerakanKepala, value: 72, color: 'bg-amber-500' },
-    { label: t.modal.interaksiMata, value: 90, color: 'bg-emerald-500' },
-    { label: t.modal.wordPerSecond, value: 82, color: 'bg-cyan-500' },
+  // Observasi Sikap & Bahasa Tubuh (Gabungan kualitatif deskriptif + persentase konsistensi)
+  const eyeContactVal = aiResult?.parameter_analisis?.kontak_mata !== undefined ? Math.round(aiResult.parameter_analisis.kontak_mata) : 90;
+  const postureVal = aiResult?.parameter_analisis?.gerakan_badan !== undefined ? Math.round(aiResult.parameter_analisis.gerakan_badan) : 85;
+  const speechVal = aiResult?.parameter_analisis?.word_per_second_percent !== undefined ? Math.round(aiResult.parameter_analisis.word_per_second_percent) : 82;
+  const gestureVal = aiResult?.parameter_analisis?.gerakan_tangan !== undefined ? Math.round(aiResult.parameter_analisis.gerakan_tangan) : 78;
+  const headVal = aiResult?.parameter_analisis?.gerakan_kepala !== undefined ? Math.round(aiResult.parameter_analisis.gerakan_kepala) : 72;
+
+  const videoObservations = [
+    {
+      label: 'Fokus & Kontak Mata',
+      statusText: eyeContactVal >= 75 ? 'Sangat Terfokus ke Kamera' : eyeContactVal >= 50 ? 'Cukup Fokus & Interaktif' : 'Kurang Menatap Kamera',
+      value: eyeContactVal,
+      badgeColor: eyeContactVal >= 70 ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20' : 'bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20',
+      dotColor: eyeContactVal >= 70 ? 'bg-emerald-500' : 'bg-blue-500'
+    },
+    {
+      label: 'Kerapian & Postur Duduk',
+      statusText: postureVal >= 75 ? 'Tegap & Sangat Stabil' : postureVal >= 50 ? 'Cukup Tenang & Wajar' : 'Banyak Pergerakan Duduk',
+      value: postureVal,
+      badgeColor: postureVal >= 70 ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20' : 'bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20',
+      dotColor: postureVal >= 70 ? 'bg-emerald-500' : 'bg-blue-500'
+    },
+    {
+      label: 'Kelancaran & Kecepatan Bicara',
+      statusText: speechVal >= 70 ? 'Lancar & Teratur' : speechVal >= 50 ? 'Tempo Wajar & Cukup Jelas' : 'Tempo Kurang Teratur',
+      value: speechVal,
+      badgeColor: speechVal >= 70 ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20' : 'bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20',
+      dotColor: speechVal >= 70 ? 'bg-emerald-500' : 'bg-blue-500'
+    },
+    {
+      label: 'Gestur Tangan & Keaktifan',
+      statusText: gestureVal >= 60 ? 'Alami & Mendukung Penjelasan' : gestureVal >= 30 ? 'Cukup Wajar' : 'Minim Gestur Tangan',
+      value: gestureVal,
+      badgeColor: gestureVal >= 60 ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20' : 'bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20',
+      dotColor: gestureVal >= 60 ? 'bg-emerald-500' : 'bg-blue-500'
+    },
+    {
+      label: 'Respon Wajah & Anggukan',
+      statusText: headVal >= 60 ? 'Responsif & Ekspresif' : headVal >= 40 ? 'Tenang & Terkendali' : 'Cenderung Kaku',
+      value: headVal,
+      badgeColor: headVal >= 60 ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20' : 'bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20',
+      dotColor: headVal >= 60 ? 'bg-emerald-500' : 'bg-blue-500'
+    },
   ];
 
-  // Handle Decision (Hire / Reject) -> Move to Archive
-  const handleDecision = (outcome: 'hired' | 'rejected') => {
+  // Handle Decision (Hire / Reject / Interview Lanjutan) -> Move to Archive
+  const handleDecision = (outcome: 'hired' | 'rejected' | 'interview_lanjutan') => {
     setArchiveStatus(outcome);
     setTimeout(() => {
       onClose();
-      router.push('/archive');
+      if (outcome === 'hired' || outcome === 'rejected') {
+        router.push('/archive');
+      } else {
+        toast.success('Undangan wawancara langsung berhasil dijadwalkan!');
+      }
     }, 1800);
   };
 
@@ -185,16 +266,31 @@ export function CandidateModal({ candidate, onClose }: CandidateModalProps) {
         {/* Archive Feedback Overlay Banner */}
         {archiveStatus !== 'idle' && (
           <div className="absolute inset-0 z-50 bg-background/95 backdrop-blur-md flex flex-col items-center justify-center p-6 text-center animate-in fade-in zoom-in-95 duration-300">
-            <div className={`w-16 h-16 rounded-full flex items-center justify-center mb-4 ${archiveStatus === 'hired' ? 'bg-emerald-500/10 text-emerald-500' : 'bg-rose-500/10 text-rose-500'
-              }`}>
-              {archiveStatus === 'hired' ? <CheckCircle2 size={36} /> : <XCircle size={36} />}
+            <div className={`w-16 h-16 rounded-full flex items-center justify-center mb-4 ${
+              archiveStatus === 'hired'
+                ? 'bg-emerald-500/10 text-emerald-500'
+                : archiveStatus === 'interview_lanjutan'
+                ? 'bg-indigo-500/10 text-indigo-500'
+                : 'bg-rose-500/10 text-rose-500'
+            }`}>
+              {archiveStatus === 'hired' && <CheckCircle2 size={36} />}
+              {archiveStatus === 'rejected' && <XCircle size={36} />}
+              {archiveStatus === 'interview_lanjutan' && <Video size={36} />}
             </div>
             <h3 className="text-xl font-bold text-foreground mb-1">
-              {archiveStatus === 'hired' ? t.modal.kandidatDiterima : t.modal.kandidatDitolak}
+              {archiveStatus === 'hired' && 'Kandidat Diterima'}
+              {archiveStatus === 'rejected' && 'Lamaran Ditolak'}
+              {archiveStatus === 'interview_lanjutan' && 'Wawancara Langsung Dijadwalkan'}
             </h3>
             <p className="text-sm text-muted-foreground mb-6 flex items-center gap-2">
-              <Archive size={16} />
-              {t.modal.dipindahkanArchive}
+              {archiveStatus === 'interview_lanjutan' ? (
+                <span>Undangan wawancara langsung telah disiapkan untuk kandidat...</span>
+              ) : (
+                <>
+                  <Archive size={16} />
+                  {t.modal.dipindahkanArchive}
+                </>
+              )}
             </p>
             <div className="w-48 bg-muted rounded-full h-1.5 overflow-hidden">
               <div className="h-full bg-primary animate-pulse w-full"></div>
@@ -209,7 +305,7 @@ export function CandidateModal({ candidate, onClose }: CandidateModalProps) {
         <div className="flex items-center justify-between px-6 py-4 border-b border-border bg-muted/30">
           <div className="flex gap-2 sm:gap-4 overflow-x-auto custom-scrollbar">
             {modalTabs.map((tab) => {
-              const isAccessible = stageIndex >= tab.minStageIndex;
+              const isAccessible = stageIndex >= tab.minStageIndex || (tab.id === 'full_validation' && (stageIndex >= 4 || isVideoAnalysisCompleted));
 
               if (!isAccessible) {
                 return (
@@ -757,62 +853,83 @@ export function CandidateModal({ candidate, onClose }: CandidateModalProps) {
                   <div>
                     <h3 className="font-bold text-lg text-foreground flex items-center gap-2">
                       <Video size={20} className="text-primary" />
-                      {t.modal.statusVideoWawancara}
+                      Status Pengunggahan Video Wawancara
                     </h3>
                   </div>
                 </div>
 
                 {/* If Video IS Uploaded */}
                 {isVideoUploaded ? (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="relative rounded-xl overflow-hidden bg-slate-900 aspect-video border border-border group cursor-pointer shadow-md">
-                      {candidate.videoUrl ? (
-                        <video controls src={candidate.videoUrl} className="w-full h-full object-contain bg-black" />
-                      ) : (
-                        <div className="w-full h-full flex flex-col items-center justify-center bg-slate-800 text-slate-400">
-                           <Video size={48} className="mb-2 opacity-50" />
-                           <p>Video tidak tersedia</p>
-                        </div>
-                      )}
-                    </div>
-
-                    <div className="space-y-4">
-                      <div className="p-4 bg-muted/30 rounded-lg border border-border space-y-2 text-xs">
-                        <div className="flex justify-between">
-                          <span className="text-muted-foreground">{t.modal.durasiVideo}:</span>
-                          <span className="font-semibold text-foreground">{candidate.aiResult?.durasi_teks || "Tersedia setelah analisis"}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-muted-foreground">Status:</span>
-                          <span className="font-semibold text-emerald-600 dark:text-emerald-400">{candidate.aiResult?.status_jawaban_teks || "Menunggu Analisis AI"}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-muted-foreground">Quality:</span>
-                          <span className="font-semibold text-foreground">{candidate.aiResult?.kualitas_teks || "Tersedia setelah analisis"}</span>
-                        </div>
+                  <div className="p-6 bg-emerald-50/60 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-900 rounded-xl space-y-4">
+                    <div className="flex items-start gap-4">
+                      <div className="p-3 bg-emerald-100 dark:bg-emerald-900/50 rounded-xl text-emerald-600 dark:text-emerald-400 shrink-0">
+                        <CheckCircle2 size={32} />
                       </div>
-
-                      <div className="p-4 bg-blue-50/50 dark:bg-blue-950/20 border border-blue-100 dark:border-blue-900 rounded-lg">
-                        <p className="text-[10px] font-bold text-blue-600 dark:text-blue-400 uppercase tracking-wider mb-1">
-                          {t.modal.transcriptHighlight}
-                        </p>
-                        <p className="text-xs italic text-foreground/80 leading-relaxed">
-                          {candidate.aiResult?.ringkasan_jawaban || "Transkrip masih diproses oleh AI..."}
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <h4 className="font-bold text-base text-foreground">Video Wawancara Telah Diunggah</h4>
+                          <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-900/60 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-700">
+                            Sudah Upload
+                          </span>
+                        </div>
+                        <p className="text-xs text-muted-foreground leading-relaxed">
+                          Kandidat telah menyelesaikan perekaman dan mengunggah video wawancara virtual sesuai instruksi. Rekaman video telah berhasil disimpan di sistem dan siap untuk dievaluasi pada tahap selanjutnya.
                         </p>
                       </div>
                     </div>
                   </div>
                 ) : (
                   /* If Video IS NOT Uploaded Yet */
-                  <div className="p-8 bg-amber-50/50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-900 rounded-xl text-center space-y-3">
-                    <AlertCircle className="mx-auto text-amber-500" size={36} />
-                    <h4 className="font-bold text-base text-foreground">{t.modal.videoBelumDiunggah}</h4>
-                    <p className="text-xs text-muted-foreground max-w-md mx-auto">
-                      {t.modal.undanganTerkirim}
-                    </p>
+                  <div className="p-6 bg-amber-50/60 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-900 rounded-xl space-y-4">
+                    <div className="flex items-start gap-4">
+                      <div className="p-3 bg-amber-100 dark:bg-amber-900/50 rounded-xl text-amber-600 dark:text-amber-400 shrink-0">
+                        <Clock size={32} />
+                      </div>
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <h4 className="font-bold text-base text-foreground">Menunggu Video Wawancara</h4>
+                          <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-800 dark:bg-amber-900/60 dark:text-amber-300 border border-amber-300 dark:border-amber-700">
+                            Menunggu
+                          </span>
+                        </div>
+                        <p className="text-xs text-muted-foreground leading-relaxed">
+                          Tautan wawancara virtual telah dikirimkan ke email kandidat ({candidate.cvData?.email || 'email kandidat'}). Sistem sedang menunggu kandidat menyelesaikan sesi rekaman wawancara.
+                        </p>
+                      </div>
+                    </div>
                   </div>
                 )}
               </div>
+
+              {/* Daftar Pertanyaan Wawancara Posisi Ini */}
+              {candidateQuestions.length > 0 && (
+                <div className="bg-card p-6 rounded-xl border border-border shadow-sm space-y-3">
+                  <div className="flex items-center justify-between pb-2 border-b border-border">
+                    <h4 className="font-bold text-sm text-foreground flex items-center gap-2">
+                      <HelpCircle size={17} className="text-primary" />
+                      <span>Pertanyaan Wawancara untuk Posisi Ini</span>
+                    </h4>
+                    <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20">
+                      {candidateQuestions.length} Pertanyaan
+                    </span>
+                  </div>
+                  <div className="space-y-2 pt-1">
+                    {candidateQuestions.map((q, idx) => (
+                      <div
+                        key={idx}
+                        className="flex items-start gap-3 p-3 rounded-lg bg-muted/30 border border-border/60 text-xs"
+                      >
+                        <span className="w-5 h-5 rounded-full bg-primary text-primary-foreground font-bold text-[10px] flex items-center justify-center shrink-0 mt-0.5 shadow-2xs">
+                          {idx + 1}
+                        </span>
+                        <p className="font-medium text-foreground leading-relaxed">
+                          {q}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
 
             </div>
           )}
@@ -821,115 +938,116 @@ export function CandidateModal({ candidate, onClose }: CandidateModalProps) {
           {activeTab === 'video_analysis' && stageIndex >= 3 && (
             <div className="max-w-5xl mx-auto py-2 animate-in fade-in duration-300 space-y-6">
               <div>
-                <h2 className="text-xl font-bold mb-1">{t.modal.parameterAnalisis}</h2>
-                <p className="text-sm text-muted-foreground">
-                  {t.modal.deskripsiVideo}
-                </p>
+                <h2 className="text-xl font-bold mb-1">Status Analisis Video</h2>
               </div>
 
-              {aiResult && (
-                <div className="bg-primary/10 border border-primary/20 p-4 rounded-xl flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-full bg-primary flex items-center justify-center text-primary-foreground">
-                    <Sparkles size={24} />
-                  </div>
-                  <div>
-                    <h3 className="font-bold text-lg text-primary">{aiResult.kategori_fit}</h3>
-                    <p className="text-sm text-foreground/80 mt-1 line-clamp-2" title={aiResult.ringkasan_jawaban}>
-                      {aiResult.ringkasan_jawaban || "Kandidat memiliki profil wawancara yang menjanjikan."}
-                    </p>
-                  </div>
-                </div>
-              )}
-              {aiResult ? (
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-
-                {/* 5 Video Parameters */}
-                <div className="bg-card p-5 rounded-xl border border-border shadow-sm space-y-4">
-                  <h3 className="text-sm font-bold text-foreground flex items-center gap-2">
-                    <Scan size={18} className="text-primary" />
-                    {t.modal.parameterAnalisis}
-                  </h3>
-
-                  <div className="space-y-4">
-                    {videoParams.map((param, index) => (
-                      <div key={index} className="space-y-1.5">
-                        <div className="flex justify-between items-center text-xs">
-                          <span className="font-medium text-foreground">{param.label}</span>
-                          <span className="font-bold text-primary">{param.value}%</span>
-                        </div>
-                        <div className="w-full bg-muted rounded-full h-2 overflow-hidden">
-                          <div
-                            className={`h-full rounded-full transition-all duration-700 ${param.color}`}
-                            style={{ width: `${param.value}%` }}
-                          ></div>
-                        </div>
+              {/* KONDISI 1: SUDAH SELESAI */}
+              {isVideoAnalysisCompleted ? (
+                <div className="p-6 sm:p-8 bg-emerald-50/50 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-900 rounded-xl space-y-5">
+                  <div className="flex items-start gap-4">
+                    <div className="p-3 bg-emerald-100 dark:bg-emerald-900/50 rounded-xl text-emerald-600 dark:text-emerald-400 shrink-0">
+                      <CheckCircle2 size={32} />
+                    </div>
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <h3 className="font-bold text-lg text-foreground">Analisis Video Selesai</h3>
+                        <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-900/60 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-700">
+                          Sudah Selesai
+                        </span>
                       </div>
-                    ))}
+                      <p className="text-xs text-muted-foreground leading-relaxed">
+                        Sistem telah selesai mengevaluasi rekaman wawancara kandidat ini. Seluruh ringkasan kompetensi, grafik penilaian, video wawancara, dan opsi keputusan pelamar dapat Anda lihat secara lengkap pada tahap Validasi HR.
+                      </p>
+                    </div>
+                  </div>
+                  <div className="pt-2 flex justify-start">
+                    <button
+                      onClick={() => setActiveTab('full_validation')}
+                      className="px-5 py-2.5 bg-primary hover:bg-primary/90 text-primary-foreground font-semibold text-xs sm:text-sm rounded-lg transition-all flex items-center gap-2 shadow-sm active:scale-95"
+                    >
+                      <span>Lihat Hasil Lengkap di Validasi HR</span>
+                      <ArrowRight size={16} />
+                    </button>
                   </div>
                 </div>
-
-                {/* 5 Output Scores & Radar Chart */}
-                <div className="bg-card p-5 rounded-xl border border-border shadow-sm space-y-4">
-                  <h3 className="text-sm font-bold text-foreground flex items-center gap-2">
-                    <BarChart3 size={18} className="text-primary" />
-                    {t.modal.nilaiOutput}
-                  </h3>
-
-                  <div className="min-h-[220px] w-full">
-                    <ResponsiveContainer width="100%" height={220}>
-                      <RadarChart cx="50%" cy="50%" outerRadius="65%" data={radarData}>
-                        <PolarGrid stroke="currentColor" className="text-border" />
-                        <PolarAngleAxis dataKey="subject" tick={{ fill: 'currentColor', fontSize: 10 }} className="text-muted-foreground" />
-                        <Radar name="Candidate" dataKey="A" stroke="#6366f1" fill="#6366f1" fillOpacity={0.3} />
-                      </RadarChart>
-                    </ResponsiveContainer>
-                  </div>
-
-                  <div className="grid grid-cols-3 gap-2 text-center text-xs">
-                    <div className="p-2 bg-muted/30 rounded border border-border">
-                      <p className="text-[10px] text-muted-foreground">{t.modal.ability}</p>
-                      <p className="font-bold text-blue-600 dark:text-blue-400">{candidate.videoScores?.ability || 85}</p>
-                    </div>
-                    <div className="p-2 bg-muted/30 rounded border border-border">
-                      <p className="text-[10px] text-muted-foreground">{t.modal.intelligent}</p>
-                      <p className="font-bold text-violet-600 dark:text-violet-400">{candidate.videoScores?.intelligent || 92}</p>
-                    </div>
-                    <div className="p-2 bg-muted/30 rounded border border-border">
-                      <p className="text-[10px] text-muted-foreground">{t.modal.personality}</p>
-                      <p className="font-bold text-amber-600 dark:text-amber-400">{candidate.videoScores?.personality || 78}</p>
-                    </div>
-                    <div className="p-2 bg-muted/30 rounded border border-border">
-                      <p className="text-[10px] text-muted-foreground">{t.modal.attitude}</p>
-                      <p className="font-bold text-emerald-600 dark:text-emerald-400">{candidate.videoScores?.attitude || 88}</p>
-                    </div>
-                    <div className="p-2 bg-muted/30 rounded border border-border col-span-2">
-                      <p className="text-[10px] text-muted-foreground">{t.modal.emotionalIntelligence}</p>
-                      <p className="font-bold text-cyan-600 dark:text-cyan-400">{candidate.videoScores?.emotionalIntelligence || 60}</p>
-                    </div>
-                  </div>
-                </div>
-
-              </div>
               ) : candidate.isPolling ? (
-                <div className="p-8 bg-blue-50/50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-900 rounded-xl text-center space-y-4">
-                  <div className="w-12 h-12 mx-auto border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
-                  <h4 className="font-bold text-base text-foreground">AI Sedang Menganalisis Video...</h4>
-                  <p className="text-xs text-muted-foreground max-w-md mx-auto">
-                    Ini akan memakan waktu sekitar 15-30 detik. Harap tunggu.
-                  </p>
-                  <div className="w-full max-w-md mx-auto bg-muted rounded-full h-3 overflow-hidden mt-4">
-                    <div
-                      className="bg-primary h-full transition-all duration-300"
-                      style={{ width: `${candidate.pollProgress || 0}%` }}
-                    ></div>
+                /* KONDISI 2: SEDANG DI-SCREENING */
+                <div className="p-8 bg-blue-50/50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-900 rounded-xl space-y-5">
+                  <div className="flex items-start gap-4">
+                    <div className="p-3 bg-blue-100 dark:bg-blue-900/50 rounded-xl text-primary shrink-0">
+                      <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
+                    </div>
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <h3 className="font-bold text-lg text-foreground">Sedang Melakukan Evaluasi Wawancara</h3>
+                        <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900/60 dark:text-blue-300 border border-blue-300 dark:border-blue-700">
+                          Sedang di-Screening
+                        </span>
+                      </div>
+                      <p className="text-xs text-muted-foreground leading-relaxed">
+                        Sistem sedang mengevaluasi respon jawaban, gaya berbicara, dan ketenangan kandidat. Proses ini berjalan secara otomatis.
+                      </p>
+                    </div>
                   </div>
-                  <p className="text-xs font-bold">{Math.round(candidate.pollProgress || 0)}%</p>
+
+                  <div className="space-y-2 pt-2">
+                    <div className="w-full bg-muted rounded-full h-3 overflow-hidden">
+                      <div
+                        className="bg-primary h-full transition-all duration-300"
+                        style={{ width: `${candidate.pollProgress || 0}%` }}
+                      ></div>
+                    </div>
+                    <div className="flex justify-between items-center text-xs font-semibold px-1">
+                      <span className="text-muted-foreground text-[11px] truncate max-w-[80%]">
+                        {candidate.pollMessage || "Sedang memproses rekaman..."}
+                      </span>
+                      <span className="text-primary font-bold">{Math.round(candidate.pollProgress || 0)}%</span>
+                    </div>
+                  </div>
+
+                  <div className="p-3 bg-card/80 border border-border/80 rounded-lg text-xs text-muted-foreground">
+                    💡 <strong>Info:</strong> Anda dapat menutup jendela ini dan melanjutkan pekerjaan lain. Penilaian tetap berjalan di latar belakang dan status akan otomatis diperbarui setelah selesai.
+                  </div>
+                </div>
+              ) : isVideoUploaded ? (
+                /* KONDISI 3: DALAM ANTREAN */
+                <div className="p-8 bg-amber-50/50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-900 rounded-xl space-y-5">
+                  <div className="flex items-start gap-4">
+                    <div className="p-3 bg-amber-100 dark:bg-amber-900/50 rounded-xl text-amber-600 dark:text-amber-400 shrink-0">
+                      <Clock size={32} />
+                    </div>
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <h3 className="font-bold text-lg text-foreground">Video Siap Dievaluasi</h3>
+                        <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-800 dark:bg-amber-900/60 dark:text-amber-300 border border-amber-300 dark:border-amber-700">
+                          Dalam Antrean
+                        </span>
+                      </div>
+                      <p className="text-xs text-muted-foreground leading-relaxed">
+                        Rekaman wawancara telah diterima dan siap untuk dievaluasi. Untuk memulai proses evaluasi kandidat ini, silakan tekan tombol <strong>"Jalankan Analisis Video"</strong> pada daftar pelamar di halaman utama.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-3 border-t border-amber-200/60 dark:border-amber-800/40 text-xs">
+                    <div className="bg-card/80 p-3 rounded-lg border border-border/80">
+                      <span className="text-muted-foreground block text-[11px]">Status Saat Ini</span>
+                      <span className="font-semibold text-amber-600 dark:text-amber-400">Menunggu Antrean Analisis</span>
+                    </div>
+                    <div className="bg-card/80 p-3 rounded-lg border border-border/80">
+                      <span className="text-muted-foreground block text-[11px]">Durasi Video</span>
+                      <span className="font-semibold text-foreground">{videoDurationDisplay}</span>
+                    </div>
+                  </div>
                 </div>
               ) : (
-                <div className="p-8 bg-amber-50/50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-900 rounded-xl text-center space-y-3">
-                  <Scan className="mx-auto text-amber-500" size={36} />
-                  <h4 className="font-bold text-base text-foreground">Proses Analisis</h4>
-                  <p className="text-xs text-muted-foreground max-w-md mx-auto">AI belum selesai melakukan analisis video.</p>
+                /* KONDISI 4: BELUM ADA VIDEO */
+                <div className="p-8 bg-muted/40 border border-border rounded-xl text-center space-y-3">
+                  <AlertCircle className="mx-auto text-muted-foreground" size={36} />
+                  <h4 className="font-bold text-base text-foreground">Belum Ada Rekaman Video</h4>
+                  <p className="text-xs text-muted-foreground max-w-md mx-auto">
+                    Kandidat belum mengunggah rekaman video wawancara. Analisis akan siap setelah video selesai diunggah.
+                  </p>
                 </div>
               )}
             </div>
@@ -944,143 +1062,374 @@ export function CandidateModal({ candidate, onClose }: CandidateModalProps) {
                   <UserCheck size={22} className="text-primary" />
                   {t.modal.semuaHasilAI}
                 </h2>
-                <p className="text-xs text-muted-foreground">
-                  {t.modal.deskripsiHumanValidation}
-                </p>
               </div>
 
               {/* Overview Summary Bar */}
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div className="p-4 bg-card rounded-xl border border-border shadow-sm flex items-center justify-between">
                   <div>
-                    <p className="text-xs text-muted-foreground font-medium">{t.modal.cvAnalysis}</p>
-                    <p className="text-xl font-bold text-emerald-600 dark:text-emerald-400">{candidate.cvScore || 0}% Match</p>
-                    <span className="text-[10px] text-emerald-600 font-semibold">✓ Threshold ≥60%</span>
+                    <p className="text-xs text-muted-foreground font-medium">Kesesuaian Berkas CV</p>
+                    <p className="text-xl font-bold text-emerald-600 dark:text-emerald-400">{candidate.cvScore || 0}% Cocok</p>
+                    <span className="text-[10px] text-emerald-600 font-semibold">✓ Memenuhi Standar Kualifikasi</span>
                   </div>
                   <FileText className="text-emerald-500" size={28} />
                 </div>
 
                 <div className="p-4 bg-card rounded-xl border border-border shadow-sm flex items-center justify-between">
                   <div>
-                    <p className="text-xs text-muted-foreground font-medium">{t.modal.videoAnalysis}</p>
-                    <p className="text-xl font-bold text-blue-600 dark:text-blue-400">84.6 / 100</p>
-                    <span className="text-[10px] text-blue-600 font-semibold">5 Metrics</span>
+                    <p className="text-xs text-muted-foreground font-medium">Skor Evaluasi Wawancara</p>
+                    <p className="text-xl font-bold text-blue-600 dark:text-blue-400">{overallVideoScore} / 100</p>
+                    <span className="text-[10px] text-blue-600 font-semibold">{aiResult?.kategori_fit || 'Hasil Analisis AI'}</span>
                   </div>
                   <BarChart3 className="text-blue-500" size={28} />
                 </div>
 
                 <div className="p-4 bg-card rounded-xl border border-border shadow-sm flex items-center justify-between">
                   <div>
-                    <p className="text-xs text-muted-foreground font-medium">{t.modal.statusVideoWawancara}</p>
-                    <p className="text-sm font-bold text-foreground mt-1">15:32</p>
-                    <span className="text-[10px] text-emerald-600 font-semibold">✓ Complete</span>
+                    <p className="text-xs text-muted-foreground font-medium">Rekaman Wawancara</p>
+                    <p className="text-sm font-bold text-foreground mt-0.5">{videoDurationDisplay}</p>
+                    <span className="text-[10px] text-emerald-600 font-semibold">
+                      ✓ {candidate.aiResult?.kualitas_teks || 'Kualitas Audio & Video Jelas'}
+                    </span>
                   </div>
                   <Video className="text-violet-500" size={28} />
                 </div>
               </div>
 
-              {/* Combined Grid: Video + Radar + Sliders */}
+              {/* Banner Rangkuman & Kategori Fit (dari Analisis Video) */}
+              {aiResult && (
+                <div className="bg-primary/10 border border-primary/20 p-4 rounded-xl flex items-start gap-4">
+                  <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-primary-foreground shrink-0 mt-0.5">
+                    <Sparkles size={20} />
+                  </div>
+                  <div className="space-y-1 flex-1">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <h3 className="font-bold text-base text-primary">
+                        {aiResult.kategori_fit || 'Kandidat Memenuhi Kriteria'}
+                      </h3>
+                      <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-primary/15 text-primary border border-primary/25">
+                        Rekomendasi Evaluasi
+                      </span>
+                    </div>
+                    <p className="text-xs text-foreground/85 leading-relaxed whitespace-pre-line">
+                      {aiResult.ringkasan_jawaban || "Kandidat menunjukkan profil kompetensi yang solid dan memenuhi kriteria awal posisi ini."}
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {/* Combined Grid: Kolom Kiri (Video & Observasi Sikap) & Kolom Kanan (Radar, Aspek Kompetensi & Keputusan) */}
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
 
-                {/* Left Side: Video Preview & Radar */}
+                {/* Left Side: Video Player, Info Rekaman & 5 Parameter Observasi */}
                 <div className="space-y-4">
+                  {/* Kartu Video Wawancara & Detail Rekaman */}
                   <div className="p-4 bg-card rounded-xl border border-border shadow-sm space-y-3">
-                    <h4 className="font-bold text-sm text-foreground flex items-center justify-between">
-                      <span>Video & Radar Score</span>
-                      <span className="text-xs font-normal text-muted-foreground">00:15:32</span>
-                    </h4>
+                    <div className="flex items-center justify-between">
+                      <h4 className="font-bold text-sm text-foreground flex items-center gap-2">
+                        <Video size={16} className="text-primary" />
+                        <span>Rekaman Video Wawancara</span>
+                      </h4>
+                      <span className="text-xs font-semibold px-2 py-0.5 rounded bg-muted text-muted-foreground">
+                        {videoDurationDisplay}
+                      </span>
+                    </div>
 
                     {/* Mini Video */}
                     <div className="relative rounded-lg overflow-hidden bg-slate-900 aspect-video border border-border">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src="https://images.unsplash.com/photo-1560250097-0b93528c311a?w=400&q=80" alt="Video thumbnail" className="w-full h-full object-cover opacity-80" />
-                      <div className="absolute inset-0 flex items-center justify-center">
-                        <button className="w-10 h-10 rounded-full bg-primary/90 text-white flex items-center justify-center">
-                          <Play size={18} fill="currentColor" className="ml-0.5" />
-                        </button>
+                      {candidate.videoUrl ? (
+                        <video controls src={candidate.videoUrl} className="w-full h-full object-contain bg-black" />
+                      ) : (
+                        <div className="w-full h-full flex flex-col items-center justify-center bg-slate-800 text-slate-400">
+                          <Video size={36} className="mb-2 opacity-50" />
+                          <p className="text-xs">Video wawancara tidak tersedia</p>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Info Tambahan Rekaman Video (Sebelumnya di Tab 3) */}
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 pt-2 border-t border-border/70 text-xs">
+                      <div className="p-2.5 bg-muted/40 rounded-lg border border-border/60">
+                        <span className="text-muted-foreground block text-[10px]">Status Jawaban</span>
+                        <span className="font-bold text-emerald-600 dark:text-emerald-400 text-xs truncate block">
+                          {candidate.aiResult?.status_jawaban_teks || 'Lengkap Terjawab'}
+                        </span>
+                      </div>
+                      <div className="p-2.5 bg-muted/40 rounded-lg border border-border/60">
+                        <span className="text-muted-foreground block text-[10px]">Kualitas Media</span>
+                        <span className="font-semibold text-foreground text-xs truncate block">
+                          {candidate.aiResult?.kualitas_teks || '1080p / Jelas'}
+                        </span>
                       </div>
                     </div>
 
-                    {/* Radar Chart */}
-                    <div className="h-[180px] w-full">
-                      <ResponsiveContainer width="100%" height="100%">
-                        <RadarChart cx="50%" cy="50%" outerRadius="60%" data={radarData}>
-                          <PolarGrid stroke="currentColor" className="text-border" />
-                          <PolarAngleAxis dataKey="subject" tick={{ fill: 'currentColor', fontSize: 9 }} className="text-muted-foreground" />
-                          <Radar name="Candidate" dataKey="A" stroke="#1b7b9e" fill="#1b7b9e" fillOpacity={0.3} />
-                        </RadarChart>
-                      </ResponsiveContainer>
+                    {/* Evaluasi & Rangkuman Jawaban Tiap Soal Wawancara */}
+                    {candidateQuestions.length > 0 && (
+                      <div className="pt-3 border-t border-border/70 space-y-2.5">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-1.5">
+                            <HelpCircle size={14} className="text-primary" />
+                            <span className="text-[11px] font-bold text-foreground uppercase tracking-wider block">
+                              Evaluasi & Rangkuman Tiap Soal
+                            </span>
+                          </div>
+                          <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20">
+                            {candidate.aiResult?.status_jawaban_teks || `${candidateQuestions.length} Pertanyaan`}
+                          </span>
+                        </div>
+                        <div className="space-y-2.5">
+                          {candidateQuestions.map((q, idx) => {
+                            const detail = (candidate.aiResult?.analisis_pertanyaan || []).find(
+                              (p: any) => p.nomor === idx + 1 || (p.pertanyaan && p.pertanyaan.toLowerCase().trim() === q.toLowerCase().trim())
+                            );
+                            const status = detail?.status || (candidate.aiResult ? "Terjawab" : "Menunggu Evaluasi");
+                            const isAnswered = status === "Terjawab";
+                            const isPartial = status === "Terjawab Sebagian";
+                            const isUnanswered = status === "Tidak Terjawab";
+
+                            return (
+                              <div
+                                key={idx}
+                                className={`p-3 rounded-lg border text-xs transition-all ${
+                                  isAnswered
+                                    ? "bg-card border-border/80 hover:border-emerald-500/40"
+                                    : isPartial
+                                    ? "bg-amber-500/5 border-amber-500/30"
+                                    : isUnanswered
+                                    ? "bg-rose-500/5 border-rose-500/30"
+                                    : "bg-muted/30 border-border/50"
+                                }`}
+                              >
+                                <div className="flex items-start justify-between gap-2">
+                                  <div className="flex items-start gap-2 flex-1">
+                                    <span className="w-5 h-5 rounded-full bg-primary text-primary-foreground font-bold text-[10px] flex items-center justify-center shrink-0 mt-0.5 shadow-2xs">
+                                      {idx + 1}
+                                    </span>
+                                    <span className="text-foreground font-semibold leading-relaxed">
+                                      {q}
+                                    </span>
+                                  </div>
+                                  <div className="flex items-center gap-1.5 shrink-0">
+                                    {detail?.skor_relevansi !== undefined && detail.skor_relevansi > 0 && (
+                                      <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-muted text-muted-foreground border border-border">
+                                        {detail.skor_relevansi}% Relevan
+                                      </span>
+                                    )}
+                                    <span
+                                      className={`text-[10px] font-bold px-2 py-0.5 rounded-full border flex items-center gap-1 ${
+                                        isAnswered
+                                          ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/30 dark:text-emerald-400"
+                                          : isPartial
+                                          ? "bg-amber-500/10 text-amber-600 border-amber-500/30 dark:text-amber-400"
+                                          : isUnanswered
+                                          ? "bg-rose-500/10 text-rose-600 border-rose-500/30 dark:text-rose-400"
+                                          : "bg-muted text-muted-foreground border-border"
+                                      }`}
+                                    >
+                                      {isAnswered ? (
+                                        <>
+                                          <CheckCircle2 size={11} />
+                                          <span>Terjawab</span>
+                                        </>
+                                      ) : isPartial ? (
+                                        <>
+                                          <AlertCircle size={11} />
+                                          <span>Terjawab Sebagian</span>
+                                        </>
+                                      ) : isUnanswered ? (
+                                        <>
+                                          <XCircle size={11} />
+                                          <span>Tidak Terjawab</span>
+                                        </>
+                                      ) : (
+                                        status
+                                      )}
+                                    </span>
+                                  </div>
+                                </div>
+
+                                {/* Ringkasan Jawaban AI untuk soal ini */}
+                                {detail?.ringkasan && (
+                                  <div className="mt-2.5 pt-2 border-t border-border/50 space-y-1.5">
+                                    <div className="flex items-center gap-1 text-[10px] font-semibold text-primary">
+                                      <Sparkles size={11} />
+                                      <span>Rangkuman Jawaban Kandidat:</span>
+                                    </div>
+                                    <p className="text-[11px] text-foreground/85 leading-relaxed bg-muted/40 p-2.5 rounded-md border border-border/40">
+                                      {detail.ringkasan}
+                                    </p>
+                                    {detail.kutipan && (
+                                      <div className="text-[10px] text-muted-foreground italic leading-relaxed pl-1 pt-0.5">
+                                        &ldquo;{detail.kutipan}&rdquo;
+                                      </div>
+                                    )}
+                                  </div>
+                                )}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Observasi Perilaku & Gaya Komunikasi (Gabungan Opsi A & B) */}
+                  <div className="p-4 bg-card rounded-xl border border-border shadow-sm space-y-3">
+                    <div>
+                      <h4 className="font-bold text-sm text-foreground flex items-center gap-2">
+                        <Scan size={16} className="text-primary" />
+                        <span>Observasi Sikap & Bahasa Tubuh Rekaman</span>
+                      </h4>
+                      <p className="text-[11px] text-muted-foreground mt-0.5">
+                        Catatan pengamatan fisik rekaman video yang menjadi dasar pertimbangan nilai kompetensi di samping.
+                      </p>
+                    </div>
+
+                    <div className="space-y-2 pt-1">
+                      {videoObservations.map((item, index) => (
+                        <div key={index} className="p-2.5 bg-muted/30 hover:bg-muted/50 transition-colors rounded-lg border border-border/70 flex items-center justify-between gap-3">
+                          <div className="min-w-0 flex-1">
+                            <span className="text-xs font-semibold text-foreground block truncate">
+                              {item.label}
+                            </span>
+                            <span className="text-[11px] text-muted-foreground flex items-center gap-1.5 mt-0.5 font-medium">
+                              <span className={`w-1.5 h-1.5 rounded-full ${item.dotColor}`} />
+                              {item.statusText}
+                            </span>
+                          </div>
+                          <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md border shrink-0 ${item.badgeColor}`}>
+                            {item.value}% Konsisten
+                          </span>
+                        </div>
+                      ))}
                     </div>
                   </div>
                 </div>
 
-                {/* Right Side: Human Validation Form & Decision Buttons */}
-                <div className="p-6 bg-card rounded-xl border border-border shadow-sm flex flex-col justify-between space-y-6">
-                  <div>
-                    <h3 className="font-bold text-base text-foreground mb-4 flex items-center gap-2">
-                      <UserCheck size={18} className="text-primary" />
-                      {t.modal.penilaianManual}
-                    </h3>
+                {/* Right Side: Radar Chart, 5 Aspek Kompetensi & Decision Buttons */}
+                <div className="space-y-4">
+                  {/* Radar Chart & 5 Dimensi Kompetensi (Sebelumnya di Tab 4) */}
+                  <div className="p-4 bg-card rounded-xl border border-border shadow-sm space-y-3">
+                    <h4 className="font-bold text-sm text-foreground flex items-center justify-between">
+                      <span className="flex items-center gap-2">
+                        <BarChart3 size={16} className="text-primary" />
+                        Pemetaan 5 Dimensi Kompetensi
+                      </span>
+                      <span className="text-xs font-bold text-primary">Rata-rata: {overallVideoScore}/100</span>
+                    </h4>
 
-                    {/* Sliders */}
-                    <div className="space-y-4">
-                      {[
-                        { label: t.modal.ability, score: Math.round((candidate.videoScores?.ability || 85) / 10) },
-                        { label: t.modal.intelligent, score: Math.round((candidate.videoScores?.intelligent || 92) / 10) },
-                        { label: t.modal.personality, score: Math.round((candidate.videoScores?.personality || 78) / 10) },
-                        { label: t.modal.attitude, score: Math.round((candidate.videoScores?.attitude || 88) / 10) },
-                        { label: t.modal.emotionalIntelligence, score: Math.round((candidate.videoScores?.emotionalIntelligence || 60) / 10) },
-                      ].map((item, i) => (
-                        <div key={i}>
-                          <div className="flex justify-between items-center mb-1 text-xs font-medium">
-                            <span>{item.label}</span>
-                            <span className="font-bold text-primary">{item.score} / 10</span>
-                          </div>
-                          <input
-                            type="range"
-                            min="0"
-                            max="10"
-                            defaultValue={item.score}
-                            className="w-full h-1.5 bg-muted rounded-lg appearance-none cursor-pointer accent-primary"
-                          />
-                        </div>
-                      ))}
+                    {/* Radar Chart */}
+                    <div className="h-[200px] w-full">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <RadarChart cx="50%" cy="50%" outerRadius="65%" data={radarData}>
+                          <PolarGrid stroke="currentColor" className="text-border" />
+                          <PolarAngleAxis dataKey="subject" tick={{ fill: 'currentColor', fontSize: 10 }} className="text-muted-foreground" />
+                          <Radar name="Candidate" dataKey="A" stroke="#1b7b9e" fill="#1b7b9e" fillOpacity={0.3} />
+                        </RadarChart>
+                      </ResponsiveContainer>
                     </div>
 
-                    {/* Notes textarea */}
-                    <div className="mt-5">
-                      <label className="block text-xs font-semibold text-foreground mb-1.5">
-                        {t.modal.catatanHR}
-                      </label>
-                      <textarea
-                        className="w-full p-3 bg-muted/30 border border-border rounded-lg text-xs resize-none h-20 focus:outline-none focus:border-primary transition-all"
-                        placeholder={t.modal.masukkanCatatan}
-                      ></textarea>
+                    {/* 5 Skor Output Mini Cards (Sebelumnya di Tab 4) */}
+                    <div className="grid grid-cols-3 gap-2 text-center text-xs">
+                      <div className="p-2 bg-muted/30 rounded-lg border border-border/70">
+                        <p className="text-[10px] text-muted-foreground">Komunikasi</p>
+                        <p className="font-bold text-blue-600 dark:text-blue-400">{Math.round(abilityScore)}</p>
+                      </div>
+                      <div className="p-2 bg-muted/30 rounded-lg border border-border/70">
+                        <p className="text-[10px] text-muted-foreground">Pemahaman</p>
+                        <p className="font-bold text-violet-600 dark:text-violet-400">{Math.round(intelligentScore)}</p>
+                      </div>
+                      <div className="p-2 bg-muted/30 rounded-lg border border-border/70">
+                        <p className="text-[10px] text-muted-foreground">Percaya Diri</p>
+                        <p className="font-bold text-amber-600 dark:text-amber-400">{Math.round(personalityScore)}</p>
+                      </div>
+                      <div className="p-2 bg-muted/30 rounded-lg border border-border/70">
+                        <p className="text-[10px] text-muted-foreground">Sikap Kerja</p>
+                        <p className="font-bold text-emerald-600 dark:text-emerald-400">{Math.round(attitudeScore)}</p>
+                      </div>
+                      <div className="p-2 bg-muted/30 rounded-lg border border-border/70 col-span-2">
+                        <p className="text-[10px] text-muted-foreground">Ketenangan</p>
+                        <p className="font-bold text-cyan-600 dark:text-cyan-400">{Math.round(emotionalIntelligenceScore)}</p>
+                      </div>
                     </div>
                   </div>
 
-                  {/* Decision Buttons (Triggers Archive Transfer) */}
-                  <div className="space-y-2 pt-2">
-                    <div className="flex gap-2">
+                  {/* Evaluasi Aspek Kompetensi & Keputusan Akhir HR */}
+                  <div className="p-5 bg-card rounded-xl border border-border shadow-sm space-y-4">
+                    <div>
+                      <h3 className="font-bold text-sm text-foreground mb-1 flex items-center gap-2">
+                        <UserCheck size={16} className="text-primary" />
+                        Rincian Nilai Aspek Kandidat (Tetap)
+                      </h3>
+                      <p className="text-[11px] text-muted-foreground mb-3">
+                        Hasil evaluasi otomatis dari analisis video kandidat (bersifat tetap).
+                      </p>
+
+                      {/* Read-Only Competency Bars (Tidak Dapat Diubah) */}
+                      <div className="space-y-2.5">
+                        {[
+                          { label: 'Kemampuan Komunikasi & Artikulasi', score: Math.round(abilityScore), color: 'bg-blue-600' },
+                          { label: 'Pemahaman & Kedalaman Respon', score: Math.round(intelligentScore), color: 'bg-indigo-600' },
+                          { label: 'Kepercayaan Diri & Bahasa Tubuh', score: Math.round(personalityScore), color: 'bg-amber-600' },
+                          { label: 'Sikap Kerja & Profesionalisme', score: Math.round(attitudeScore), color: 'bg-emerald-600' },
+                          { label: 'Ketenangan & Pengendalian Emosi', score: Math.round(emotionalIntelligenceScore), color: 'bg-cyan-600' },
+                        ].map((item, i) => (
+                          <div key={i} className="p-2 bg-muted/30 rounded-lg border border-border/70 space-y-1">
+                            <div className="flex justify-between items-center text-xs">
+                              <span className="font-medium text-foreground">{item.label}</span>
+                              <span className="font-bold text-primary">{item.score} / 100</span>
+                            </div>
+                            <div className="w-full bg-slate-200 dark:bg-slate-800 rounded-full h-1.5 overflow-hidden">
+                              <div
+                                className={`h-full rounded-full transition-all duration-500 ${item.color}`}
+                                style={{ width: `${item.score}%` }}
+                              ></div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+
+                      {/* Catatan Pertimbangan HR */}
+                      <div className="mt-4">
+                        <label className="block text-xs font-semibold text-foreground mb-1.5">
+                          {t.modal.catatanHR}
+                        </label>
+                        <textarea
+                          className="w-full p-2.5 bg-muted/30 border border-border rounded-lg text-xs resize-none h-16 focus:outline-none focus:border-primary transition-all"
+                          placeholder="Tuliskan catatan observasi atau pertimbangan internal HR di sini..."
+                        ></textarea>
+                      </div>
+                    </div>
+
+                    {/* Decision Buttons (Terima, Tolak, Wawancara Langsung) */}
+                    <div className="space-y-2 pt-2 border-t border-border/70">
+                      <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
+                        Keputusan Akhir HR
+                      </p>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => handleDecision('hired')}
+                          className="flex-1 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-lg text-xs transition-colors flex items-center justify-center gap-1.5 shadow-sm active:scale-95"
+                        >
+                          <CheckCircle2 size={16} />
+                          Terima Kandidat
+                        </button>
+                        <button
+                          onClick={() => handleDecision('rejected')}
+                          className="flex-1 py-2.5 bg-rose-600 hover:bg-rose-700 text-white font-semibold rounded-lg text-xs transition-colors flex items-center justify-center gap-1.5 shadow-sm active:scale-95"
+                        >
+                          <XCircle size={16} />
+                          Tolak Lamaran
+                        </button>
+                      </div>
                       <button
-                        onClick={() => handleDecision('hired')}
-                        className="flex-1 py-2.5 bg-emerald-500 hover:bg-emerald-600 text-white font-semibold rounded-lg text-xs transition-colors flex items-center justify-center gap-1.5 shadow-sm active:scale-95"
+                        onClick={() => handleDecision('interview_lanjutan')}
+                        className="w-full py-2.5 bg-indigo-50 dark:bg-indigo-950/40 border border-indigo-200 dark:border-indigo-800 hover:bg-indigo-100 dark:hover:bg-indigo-950/70 text-indigo-700 dark:text-indigo-300 font-semibold text-xs rounded-lg transition-colors flex items-center justify-center gap-1.5 active:scale-98 shadow-2xs"
                       >
-                        <CheckCircle2 size={16} />
-                        {t.modal.terima}
-                      </button>
-                      <button
-                        onClick={() => handleDecision('rejected')}
-                        className="flex-1 py-2.5 bg-rose-500 hover:bg-rose-600 text-white font-semibold rounded-lg text-xs transition-colors flex items-center justify-center gap-1.5 shadow-sm active:scale-95"
-                      >
-                        <XCircle size={16} />
-                        {t.modal.tolak}
+                        <Video size={15} />
+                        Jadwalkan Wawancara Tatap Muka / Langsung
                       </button>
                     </div>
-                    <button className="w-full py-2 bg-card border border-border hover:bg-muted font-medium text-xs rounded-lg transition-colors flex items-center justify-center gap-1.5 text-foreground">
-                      <Video size={14} />
-                      {t.modal.interviewTambahan}
-                    </button>
                   </div>
                 </div>
 
