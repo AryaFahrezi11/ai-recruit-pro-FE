@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
+import Image from 'next/image';
 import { useTranslation } from '@/hooks/useTranslation';
 import { useAppStore } from '@/lib/store/useAppStore';
 import { toast } from 'react-hot-toast';
@@ -63,14 +64,10 @@ export function Sidebar() {
       >
         <div className="p-5 overflow-y-auto custom-scrollbar flex-1 space-y-6">
           
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-primary text-primary-foreground rounded-xl flex items-center justify-center font-bold text-xl shrink-0 shadow-md shadow-primary/20">
-              RP
-            </div>
-            <div>
-              <h1 className="font-bold text-base leading-tight">{t.sidebar.recruitmentPortal}</h1>
-              <p className="text-xs text-muted-foreground">{t.sidebar.hrValidationSuite}</p>
-            </div>
+          <div className="flex items-center gap-2 mb-2 px-1 cursor-default">
+            <span className="font-bold text-xl tracking-tight text-[#0D3880] dark:text-white leading-none">
+              AI-RecruitPro
+            </span>
           </div>
 
 

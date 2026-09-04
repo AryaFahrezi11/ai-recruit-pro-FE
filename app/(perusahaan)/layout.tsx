@@ -8,7 +8,7 @@ import { Sidebar } from '@/components/dashboard/Sidebar';
 import { useAppStore } from '@/lib/store/useAppStore';
 import { useTranslation } from '@/hooks/useTranslation';
 import { 
-  Sun, Moon, Globe, Search, Bell, HelpCircle, Menu, 
+  Globe, Search, Bell, HelpCircle, Menu, 
   CheckCircle2, Video, FileText, User, Settings, LogOut, X, ArrowRight 
 } from 'lucide-react';
 
@@ -18,7 +18,7 @@ export default function PerusahaanLayout({
   children: React.ReactNode;
 }) {
   const router = useRouter();
-  const { theme, toggleTheme, language, setLanguage, toggleMobileSidebar, logout } = useAppStore();
+  const { language, setLanguage, toggleMobileSidebar, logout } = useAppStore();
   const { t } = useTranslation();
   const [mounted, setMounted] = useState(false);
 
@@ -97,11 +97,12 @@ export default function PerusahaanLayout({
 
 
                 <button
-                  onClick={toggleTheme}
-                  className="w-9 h-9 rounded-full flex items-center justify-center hover:bg-muted transition-colors border border-border text-muted-foreground"
-                  title="Toggle Theme"
+                  onClick={() => setLanguage(language === 'id' ? 'en' : 'id')}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-full hover:bg-muted transition-colors border border-border text-muted-foreground font-bold text-xs"
+                  title="Toggle Language"
                 >
-                  {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
+                  <Globe size={16} />
+                  <span>{language.toUpperCase()}</span>
                 </button>
               </>
             )}

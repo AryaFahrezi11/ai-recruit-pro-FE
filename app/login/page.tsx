@@ -3,6 +3,8 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { useTranslation } from '@/hooks/useTranslation';
+import LanguageSwitcher from '@/components/LanguageSwitcher';
 import { useAppStore } from '@/lib/store/useAppStore';
 import { loginUser } from '@/lib/api/auth';
 import { toast } from 'react-hot-toast';
@@ -24,6 +26,7 @@ export default function CompanyLoginPage() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const { t } = useTranslation();
 
   const setToken = useAppStore((state) => state.setToken);
   const setUser = useAppStore((state) => state.setUser);
@@ -37,18 +40,18 @@ export default function CompanyLoginPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email || !email.includes('@')) {
-      setError('Masukkan alamat email perusahaan yang valid.');
+      setError(t.employerAuth.errorInvalidEmail);
       return;
     }
 
     const domain = email.split('@')[1]?.toLowerCase();
     if (freeEmailDomains.includes(domain)) {
-      setError('Akses ditolak. Portal Perusahaan wajib menggunakan Email Resmi Perusahaan (contoh: hrd@tokopedia.com, recruitment@bankmandiri.co.id), bukan email pribadi (Gmail/Yahoo).');
+      setError(t.employerAuth.errorFreeEmail);
       return;
     }
 
     if (!password) {
-      setError('Masukkan kata sandi akun Anda.');
+      setError(t.employerAuth.errorNoPassword);
       return;
     }
 
@@ -60,7 +63,7 @@ export default function CompanyLoginPage() {
       
       // Strict role check
       if (response.user.role !== 'perusahaan') {
-        setError('Akses ditolak. Akun Anda bukan akun perusahaan.');
+        setError(t.employerAuth.errorNotCorporate);
         setIsLoading(false);
         return;
       }
@@ -76,14 +79,14 @@ export default function CompanyLoginPage() {
         localStorage.setItem('isPerusahaanLoggedIn', 'true');
       }
 
-      toast.success('Login Perusahaan Berhasil');
+      toast.success(t.employerAuth.loginSuccess);
       
       // Jika Anda menggunakan app/(perusahaan)/dashboard atau app/dashboard
       router.push('/dashboard');
     } catch (err: any) {
       const errorMsg = err.message === 'Failed to fetch' 
-        ? 'Tidak dapat terhubung ke server. Periksa koneksi internet Anda.' 
-        : (err.message || 'Gagal login. Periksa kembali email dan kata sandi.');
+        ? t.employerAuth.errorNetwork
+        : (err.message || t.employerAuth.errorGeneric);
       setError(errorMsg);
     } finally {
       setIsLoading(false);
@@ -91,43 +94,40 @@ export default function CompanyLoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#F0F8FB] text-[#1b7b9e] flex flex-col justify-between font-sans antialiased">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 flex flex-col justify-between font-sans antialiased transition-colors duration-300">
 
       {/* Top Header */}
       <header className="py-6 px-6 sm:px-12 max-w-[1600px] w-full mx-auto flex items-center justify-between">
-        <Link href="/" className="flex items-center gap-3 group">
-          <div className="w-10 h-10 bg-[#1b7b9e] text-white rounded-xl flex items-center justify-center font-black text-lg shadow-md group-hover:scale-105 transition-transform">
-            RP
-          </div>
+        <Link href="/" className="flex items-center gap-2 group">
           <div className="flex flex-col">
-            <span className="font-black text-xl tracking-tight text-[#0c2b3d] leading-none">
-              AI-Recruit <span className="text-[#1D7FA1]">Pro</span>
+            <span className="font-bold text-2xl tracking-tight text-slate-900 dark:text-white leading-none">
+              AI-RecruitPro
             </span>
-            <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest mt-0.5">
-              Employer Portal (HRD)
+            <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest mt-1">
+              {t.employerAuth.loginTitle}
             </span>
           </div>
         </Link>
 
-        <Link
-          href="/applicant/login"
-          className="text-xs sm:text-sm font-bold text-[#1b7b9e] hover:underline flex items-center gap-1.5"
-        >
-          Applicant Portal &rarr;
-        </Link>
+        <div className="flex items-center gap-6">
+          <LanguageSwitcher />
+          <Link
+            href="/applicant/login"
+            className="text-xs sm:text-sm font-semibold text-[#1A4B9F] hover:underline flex items-center gap-1.5"
+          >
+            {t.employerAuth.applicantPortal}
+          </Link>
+        </div>
       </header>
 
       {/* Main Form Container */}
       <main className="flex-1 flex items-center justify-center px-4 py-8">
-        <div className="w-full max-w-md bg-white rounded-3xl p-8 sm:p-10 shadow-2xl border border-[#C2E5EF] space-y-7 relative">
+        <div className="w-full max-w-md bg-white dark:bg-slate-900 rounded-3xl p-8 sm:p-10 shadow-2xl border border-slate-200 dark:border-slate-800 space-y-7 relative">
 
           <div className="space-y-2">
-            <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-[#E0F1F7] text-[#1b7b9e] text-xs font-extrabold border border-[#B8E1ED]">
-              <Building2 size={14} /> For Recruiters &amp; HR
-            </div>
-            <h1 className="text-3xl font-black text-[#1b7b9e]">Login to Employer Portal</h1>
-            <p className="text-xs sm:text-sm text-slate-500">
-              Kelola proses hiring, kandidat PO-FIT, dan AI screening.
+            <h1 className="text-2xl font-bold text-slate-900 dark:text-white">{t.employerAuth.loginTitle}</h1>
+            <p className="text-sm text-slate-500 dark:text-slate-400">
+              {t.employerAuth.loginSubtitle}
             </p>
           </div>
 
@@ -136,8 +136,8 @@ export default function CompanyLoginPage() {
 
             {/* Email Input */}
             <div className="space-y-1">
-              <label htmlFor="company-email" className="block text-xs font-bold text-slate-700">
-                Official Company Email
+              <label htmlFor="company-email" className="block text-xs font-semibold text-slate-700 dark:text-slate-300">
+                {t.employerAuth.emailLabel}
               </label>
               <div className="relative flex items-center">
                 <Mail size={18} className="absolute left-4 text-slate-400 pointer-events-none" />
@@ -146,21 +146,21 @@ export default function CompanyLoginPage() {
                   type="email"
                   value={email}
                   onChange={(e) => { setEmail(e.target.value); setError(''); }}
-                  placeholder="hrd@namaperusahaan.com"
-                  className={`w-full pl-12 pr-4 py-3 bg-white border-2 rounded-2xl text-sm outline-none transition-all ${error ? 'border-red-500 focus:ring-2 focus:ring-red-200' : 'border-slate-300 focus:border-[#1b7b9e] focus:ring-2 focus:ring-cyan-100'
+                  placeholder={t.employerAuth.emailPlaceholder}
+                  className={`w-full pl-12 pr-4 py-3 bg-white dark:bg-slate-950 text-slate-900 dark:text-white border-2 rounded-2xl text-sm outline-none transition-all ${error ? 'border-red-500 focus:ring-2 focus:ring-red-200' : 'border-slate-300 dark:border-slate-700 focus:border-[#1A4B9F] focus:ring-2 focus:ring-blue-100 dark:focus:ring-blue-900'
                     }`}
                 />
               </div>
               <span className="text-[11px] text-slate-400 block pt-0.5">
-                Contoh: hrd@tokopedia.com, recruitment@bankmandiri.co.id
+                {t.employerAuth.emailHelp}
               </span>
             </div>
 
             {/* Password Input */}
             <div className="space-y-1">
-              <div className="flex items-center justify-between text-xs font-bold text-slate-700">
-                <label htmlFor="company-password">Kata Sandi</label>
-                <a href="#forgot" className="text-[#1b7b9e] hover:underline text-[11px]">Lupa Sandi?</a>
+              <div className="flex items-center justify-between text-xs font-semibold text-slate-700 dark:text-slate-300">
+                <label htmlFor="company-password">{t.employerAuth.passwordLabel}</label>
+                <a href="#forgot" className="text-[#1A4B9F] hover:underline text-[11px]">{t.employerAuth.forgotPassword}</a>
               </div>
               <div className="relative flex items-center">
                 <Lock size={18} className="absolute left-4 text-slate-400 pointer-events-none" />
@@ -170,7 +170,7 @@ export default function CompanyLoginPage() {
                   value={password}
                   onChange={(e) => { setPassword(e.target.value); setError(''); }}
                   placeholder="••••••••"
-                  className="w-full pl-12 pr-4 py-3 bg-white border-2 border-slate-300 focus:border-[#1b7b9e] focus:ring-2 focus:ring-cyan-100 rounded-2xl text-sm outline-none transition-all"
+                  className="w-full pl-12 pr-4 py-3 bg-white dark:bg-slate-950 text-slate-900 dark:text-white border-2 border-slate-300 dark:border-slate-700 focus:border-[#1A4B9F] focus:ring-2 focus:ring-blue-100 dark:focus:ring-blue-900 rounded-2xl text-sm outline-none transition-all"
                 />
               </div>
             </div>
@@ -186,24 +186,24 @@ export default function CompanyLoginPage() {
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full py-3.5 rounded-full bg-[#1b7b9e] hover:bg-[#1D7FA1] text-white font-extrabold text-xs sm:text-sm shadow-md hover:shadow-lg transition-all duration-200 flex items-center justify-center gap-2"
+              className="w-full py-3 rounded-full bg-[#1A4B9F] hover:bg-[#133878] text-white font-semibold text-sm shadow-sm transition-all duration-200 flex items-center justify-center gap-2"
             >
               {isLoading ? (
-                <span>{isLoading ? 'Processing...' : 'Sign In'}</span>
+                <span>{t.employerAuth.processing}</span>
               ) : (
                 <>
-                  <span>Masuk ke Dashboard HR</span>
+                  <span>{t.employerAuth.signIn}</span>
                   <ArrowRight size={16} />
                 </>
               )}
             </button>
           </form>
 
-          <div className="pt-4 border-t border-slate-100 text-center space-y-3">
-            <div className="text-xs text-slate-600 font-medium">
-              Perusahaan Anda belum terdaftar?{' '}
-              <Link href="/register" className="font-extrabold text-[#1b7b9e] hover:underline block sm:inline mt-1 sm:mt-0">
-                Register &amp; Verifikasi Legalitas &rarr;
+          <div className="pt-4 border-t border-slate-100 dark:border-slate-800 text-center space-y-3">
+            <div className="text-xs text-slate-600 dark:text-slate-400 font-medium">
+              {t.employerAuth.noAccount}{' '}
+              <Link href="/register" className="font-semibold text-[#1A4B9F] hover:underline block sm:inline mt-1 sm:mt-0">
+                {t.employerAuth.registerNow}
               </Link>
             </div>
           </div>
@@ -212,8 +212,8 @@ export default function CompanyLoginPage() {
       </main>
 
       {/* Footer */}
-      <footer className="py-6 border-t border-[#C2E5EF] bg-white text-center text-xs text-slate-400">
-        &copy; {new Date().getFullYear()} AI-Recruit Pro Corporate Engine. Verified Business Authentication.
+      <footer className="py-6 border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-center text-xs text-slate-400">
+        {t.employerAuth.footerText.replace('{year}', new Date().getFullYear().toString())}
       </footer>
 
     </div>
