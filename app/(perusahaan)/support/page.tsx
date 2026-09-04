@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { useTranslation } from '@/hooks/useTranslation';
-import { 
+import {
   HelpCircle, Sparkles, BookOpen, MessageSquare, Send, CheckCircle2,
   ChevronDown, ChevronUp, Bot, FileText, Video, ShieldCheck, Mail, Headphones
 } from 'lucide-react';
@@ -55,7 +55,7 @@ export default function SupportPage() {
 
   return (
     <div className="max-w-6xl mx-auto pb-16 animate-in fade-in duration-300 space-y-8">
-      
+
       {/* Toast Notification */}
       {toastMessage && (
         <div className="fixed top-6 right-6 z-50 bg-slate-900 text-white dark:bg-card dark:text-card-foreground border border-border px-4 py-3 rounded-xl shadow-2xl flex items-center gap-3 animate-in fade-in slide-in-from-top-4 duration-200">
@@ -87,7 +87,7 @@ export default function SupportPage() {
           <div className="p-4 bg-muted/30 border border-border rounded-xl space-y-2">
             <div className="flex items-center gap-2 text-primary font-bold text-sm">
               <FileText size={16} />
-              1. Seleksi CV (PO-FIT)
+              1. Seleksi CV
             </div>
             <p className="text-xs text-muted-foreground leading-relaxed">
               Membandingkan Vektor Kata CV dengan Deskripsi Pekerjaan menggunakan algoritma <strong>Cosine Similarity</strong>. Menghasilkan persentase skor kecocokan (60% = Ambang Batas Lolos).
@@ -129,7 +129,7 @@ export default function SupportPage() {
           {faqs.map((faq, index) => {
             const isOpen = openFaq === index;
             return (
-              <div 
+              <div
                 key={index}
                 className="border border-border rounded-xl overflow-hidden transition-all"
               >
@@ -164,7 +164,7 @@ export default function SupportPage() {
             <label className="block text-xs font-semibold text-foreground mb-1.5">
               Subjek Kendala / Pertanyaan <span className="text-rose-500">*</span>
             </label>
-            <input 
+            <input
               type="text"
               required
               value={ticketSubject}
@@ -178,7 +178,7 @@ export default function SupportPage() {
             <label className="block text-xs font-semibold text-foreground mb-1.5">
               Rincian Pesan & Kendala Teknis <span className="text-rose-500">*</span>
             </label>
-            <textarea 
+            <textarea
               rows={4}
               required
               value={ticketMessage}
@@ -189,7 +189,7 @@ export default function SupportPage() {
           </div>
 
           <div className="flex justify-end">
-            <button 
+            <button
               type="submit"
               className="px-6 py-2.5 bg-primary hover:bg-primary/90 text-primary-foreground font-semibold text-xs rounded-lg transition-colors flex items-center gap-2 shadow-sm active:scale-95"
             >

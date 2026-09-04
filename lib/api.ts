@@ -1,12 +1,32 @@
 export const getBaseUrl = () => {
   if (process.env.NEXT_PUBLIC_API_URL) return process.env.NEXT_PUBLIC_API_URL;
   if (typeof window !== 'undefined') {
-    return `http://${window.location.hostname}:8000/api`;
+    return `http://${window.location.hostname}:8080/api`;
   }
-  return 'http://127.0.0.1:8000/api';
+  return 'http://127.0.0.1:8080/api';
 };
 
-const BASE_URL = getBaseUrl();
+export const getMediaUrl = (path?: string) => {
+  if (!path) return '';
+  if (path.startsWith('http')) return path;
+  
+  const baseUrl = getBaseUrl().replace(/\/api$/, '');
+  const cleanPath = path.startsWith('/') ? path : `/${path}`;
+  return `${baseUrl}${cleanPath}`;
+};
+
+/**
+ * Returns the correct API base URL depending on context:
+ * - Client-side (browser): uses Next.js proxy `/api/proxy` to avoid CORS
+ * - Server-side (SSR): calls backend directly
+ */
+export const getApiUrl = (endpoint: string) => {
+  const cleanEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
+  if (typeof window !== 'undefined') {
+    return `/api/proxy${cleanEndpoint}`;
+  }
+  return `${getBaseUrl()}${cleanEndpoint}`;
+};
 
 export interface ApiErrorResponse {
   detail?: string | Array<{ msg: string; loc: string[] }>;
@@ -82,8 +102,7 @@ export async function apiRequest<T = any>(
     headers['Authorization'] = `Bearer ${token}`;
   }
 
-  const cleanEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
-  const url = `${BASE_URL}${cleanEndpoint}`;
+  const url = getApiUrl(endpoint);
 
   try {
     const response = await fetch(url, {
@@ -96,7 +115,7 @@ export async function apiRequest<T = any>(
       if (typeof window !== 'undefined' && !window.location.pathname.includes('/login')) {
         const isPelamar = window.location.pathname.startsWith('/applicant');
         const isAdmin = window.location.pathname.startsWith('/admin');
-        
+
         if (isAdmin) {
           window.location.href = '/admin/login';
         } else if (isPelamar) {
@@ -130,6 +149,7 @@ export async function apiRequest<T = any>(
     if (err instanceof ApiError) {
       throw err;
     }
+    console.error('[apiRequest] Fetch failed:', { endpoint: url, error: err.message, stack: err.stack });
     throw new ApiError(err.message || 'Gagal terhubung ke server', 0);
   }
 }
@@ -161,3 +181,5 @@ export const api = {
   delete: <T = any>(endpoint: string, options?: RequestInit) =>
     apiRequest<T>(endpoint, { ...options, method: 'DELETE' }),
 };
+
+export default api;

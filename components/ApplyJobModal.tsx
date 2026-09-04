@@ -129,27 +129,7 @@ export function ApplyJobModal({ job, cvData, onClose, onSuccess }: ApplyJobModal
                 <h4 className="text-xl font-black text-slate-800 dark:text-slate-100">
                   Lamaran Berhasil Terkirim
                 </h4>
-
-                <p className="text-xs text-slate-500 dark:text-slate-400">
-                  CV profil Anda telah masuk ke dalam pipeline rekrutmen. Tim HRD akan segera meninjau dan melakukan proses seleksi AI.
-                </p>
               </div>
-
-              {/* Status Badge */}
-              <div className="p-4 rounded-2xl bg-[#F0F8FB] dark:bg-slate-800/80 border border-[#C2E5EF] dark:border-slate-700 flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <Clock size={24} className="text-amber-500 shrink-0" />
-                  <div>
-                    <span className="text-xs font-bold text-slate-700 dark:text-slate-300 block">
-                      Status Lamaran
-                    </span>
-                    <span className="text-[11px] text-slate-500 capitalize">
-                      <strong>Menunggu Seleksi HR</strong>
-                    </span>
-                  </div>
-                </div>
-              </div>
-
               <div className="flex flex-col sm:flex-row gap-3 mt-6">
                 <button
                   onClick={onClose}
@@ -168,7 +148,7 @@ export function ApplyJobModal({ job, cvData, onClose, onSuccess }: ApplyJobModal
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="flex flex-col flex-1 overflow-hidden">
-            
+
             <div className="p-6 space-y-5 overflow-y-auto custom-scrollbar flex-1">
               {/* Review CV Profile */}
               <div className="space-y-1.5">
@@ -185,7 +165,7 @@ export function ApplyJobModal({ job, cvData, onClose, onSuccess }: ApplyJobModal
                       <p className="text-xs text-slate-500 dark:text-slate-400">{cvData?.jobTitle || 'Kandidat Profesional'}</p>
                     </div>
                   </div>
-                  
+
                   <div className="pt-2 border-t border-slate-200 dark:border-slate-700 text-xs text-slate-600 dark:text-slate-300 space-y-1">
                     <div className="flex items-center justify-between">
                       <p><span className="font-semibold text-slate-500">Keahlian Utama:</span> {cvData?.skills ? renderSkillsText(cvData.skills).substring(0, 40) + (renderSkillsText(cvData.skills).length > 40 ? '...' : '') : 'Tidak ada skill tercantum'}</p>
@@ -202,11 +182,11 @@ export function ApplyJobModal({ job, cvData, onClose, onSuccess }: ApplyJobModal
                       </button>
                     </div>
                   </div>
-                  
+
                   {showCvDetail && (
                     <div className="pt-4 border-t border-slate-200 dark:border-slate-700 mt-2 animate-in slide-in-from-top-2">
                       <div className="bg-white p-8 sm:p-10 rounded-lg border border-slate-300 shadow-sm text-slate-800 space-y-6 font-serif max-h-[60vh] overflow-y-auto custom-scrollbar">
-                        
+
                         {/* ATS Header */}
                         <div className="border-b-2 border-slate-800 pb-4 space-y-1 text-center font-sans">
                           <h2 className="text-2xl font-black uppercase tracking-tight text-slate-900">
@@ -338,10 +318,10 @@ export function ApplyJobModal({ job, cvData, onClose, onSuccess }: ApplyJobModal
                       </div>
                     </div>
                   )}
-                  
+
                   <div className="p-2 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 rounded-lg text-[10px] font-bold flex items-center gap-1.5 mt-2">
                     <CheckCircle2 size={12} />
-                    Profil ini akan dinilai secara otomatis oleh AI (PO-FIT)
+                    Profil ini akan dinilai secara otomatis oleh AI
                   </div>
                 </div>
               </div>

@@ -4,7 +4,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useTranslation } from '@/hooks/useTranslation';
-import api from '@/lib/api';
+import { api } from '@/lib/api';
 import {
   Video,
   VideoOff,

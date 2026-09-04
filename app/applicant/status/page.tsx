@@ -54,6 +54,7 @@ interface ApplicationItem {
     keywords_found: number;
     keywords_total: number;
   };
+  videoQuestions?: string[];
   videoScore: number;
   videoBreakdown: {
     fluency: number;
@@ -64,6 +65,40 @@ interface ApplicationItem {
     notes: string[];
   };
 }
+
+const DEFAULT_INTERVIEW_QUESTIONS = [
+  'Ceritakan tentang diri Anda, latar belakang pengalaman, dan keahlian utama yang relevan dengan posisi ini.',
+  'Jelaskan pencapaian atau tantangan terbesar yang pernah Anda selesaikan dalam pekerjaan atau proyek sebelumnya.',
+  'Mengapa Anda tertarik untuk bergabung dengan perusahaan ini dan apa kontribusi yang ingin Anda berikan?'
+];
+
+const getJobVideoQuestions = (item: any): string[] => {
+  const raw =
+    item.job?.video_questions_json ||
+    item.job?.video_questions ||
+    item.video_questions_json ||
+    item.video_questions ||
+    item.pertanyaan_wawancara;
+
+  if (!raw) return [];
+
+  if (Array.isArray(raw)) {
+    return raw.filter((q: any) => typeof q === 'string' && q.trim().length > 0);
+  }
+
+  if (typeof raw === 'string' && raw.trim().length > 0) {
+    try {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) {
+        return parsed.filter((q: any) => typeof q === 'string' && q.trim().length > 0);
+      }
+    } catch {
+      return raw.split(/\r?\n/).map((s: string) => s.trim()).filter(Boolean);
+    }
+  }
+
+  return [];
+};
 
 const initialMockApplications: ApplicationItem[] = [
   {
@@ -87,6 +122,11 @@ const initialMockApplications: ApplicationItem[] = [
       keywords_found: 8,
       keywords_total: 10
     },
+    videoQuestions: [
+      'Ceritakan tentang diri Anda dan pengalaman relevan Anda dalam pengembangan aplikasi web modern.',
+      'Bagaimana pendekatan Anda dalam memecahkan masalah teknis atau arsitektur sistem yang kompleks?',
+      'Mengapa Anda tertarik melamar posisi ini di PT Tech Inovasi Nusantara?'
+    ],
     videoScore: 0,
     videoBreakdown: {
       fluency: 0,
@@ -105,7 +145,7 @@ function StatusValidasiContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { t } = useTranslation();
-  
+
   const [searchTerm, setSearchTerm] = useState(searchParams.get('search') || '');
   const [platformFilter, setPlatformFilter] = useState(searchParams.get('platform') || t.pelamar.status.allPlatform);
   const [stageFilter, setStageFilter] = useState(searchParams.get('stage') || t.pelamar.status.allStages);
@@ -154,26 +194,26 @@ function StatusValidasiContent() {
           const mapped: ApplicationItem[] = rawList.map((item: any, idx: number) => {
             const cvScore = Math.round(item.analisis_cv?.skor_kecocokan || item.cv_score || 0);
             const threshold = item.analisis_cv?.threshold_digunakan || item.job?.cv_threshold || 60;
-            
+
             let stageIndex = 1;
             let statusLabel: 'Dalam Proses' | 'Lolos' | 'Tidak Lolos' | 'Lowongan Telah Ditutup' = 'Dalam Proses';
             let tahapName = 'Stage 1: UPLOAD CV';
             let msg = 'Profil CV Anda telah masuk pipeline. Menunggu proses seleksi AI.';
-            
+
             const s = item.status || 'upload_cv';
-            
+
             if (s === 'upload_cv' || s === 'dikirim') {
               stageIndex = 1;
               tahapName = 'Stage 1: UPLOAD CV';
               msg = 'Profil CV Anda telah masuk pipeline. Menunggu HR Perusahaan untuk memicu proses seleksi AI.';
             } else if (s === 'cv_screening') {
               stageIndex = 2;
-              tahapName = 'Stage 2: CV SCREENING (PO-FIT)';
-              msg = 'CV Anda sedang dalam tahap evaluasi kecocokan (PO-FIT) oleh AI.';
+              tahapName = 'Stage 2: CV SCREENING ';
+              msg = 'CV Anda sedang dalam tahap evaluasi kecocokan  oleh AI.';
             } else if (s === 'lolos_cv' || s === 'virtual_interview') {
               stageIndex = 3;
               tahapName = 'Stage 3: VIRTUAL INTERVIEW';
-              msg = `Selamat! CV Anda telah LOLOS screening AI (PO-FIT) dengan skor kecocokan ${cvScore}%. Silakan lakukan perekaman Wawancara Video Singkat.`;
+              msg = `Selamat! CV Anda telah LOLOS screening AI  dengan skor kecocokan ${cvScore}%. Silakan lakukan perekaman Wawancara Video Singkat.`;
             } else if (s === 'ditolak_sistem' || s === 'ditolak') {
               stageIndex = 2;
               tahapName = 'Stage 2: CV SCREENING (Ditolak)';
@@ -199,6 +239,8 @@ function StatusValidasiContent() {
               msg = 'Mohon maaf, Anda belum lolos seleksi kali ini.';
             }
 
+            const customQuestions = getJobVideoQuestions(item);
+
             return {
               id: item.id || idx + 1,
               jobTitle: item.job?.judul_posisi || item.judul_posisi || 'Lowongan Pekerjaan',
@@ -215,6 +257,7 @@ function StatusValidasiContent() {
               threshold: threshold,
               kategori: item.analisis_cv?.kategori,
               hybridDetails: item.analisis_cv?.hybrid_details,
+              videoQuestions: customQuestions.length > 0 ? customQuestions : DEFAULT_INTERVIEW_QUESTIONS,
               videoScore: 0,
               videoBreakdown: {
                 fluency: 0,
@@ -246,7 +289,7 @@ function StatusValidasiContent() {
 
   const pipelineStagesList = [
     { number: 1, name: '1. UPLOAD CV', key: 'cv_upload' },
-    { number: 2, name: '2. CV SCREENING (PO-FIT)', key: 'cv_screening' },
+    { number: 2, name: '2. CV SCREENING ', key: 'cv_screening' },
     { number: 3, name: '3. VIRTUAL INTERVIEW', key: 'virtual_interview' },
     { number: 4, name: '4. AI VIDEO ANALYSIS', key: 'video_analysis' },
     { number: 5, name: '5. HUMAN VALIDATION', key: 'human_validation' }
@@ -283,7 +326,7 @@ function StatusValidasiContent() {
         </div>
 
         {/* Search & Dropdown Filter Inputs */}
-        <form 
+        <form
           className="grid grid-cols-1 sm:grid-cols-12 gap-3 pt-2"
           onSubmit={(e) => {
             e.preventDefault();
@@ -324,7 +367,7 @@ function StatusValidasiContent() {
             >
               <option>{t.pelamar.status.allStages}</option>
               <option value="UPLOAD CV">1. UPLOAD CV</option>
-              <option value="CV SCREENING">2. CV SCREENING (PO-FIT)</option>
+              <option value="CV SCREENING">2. CV SCREENING </option>
               <option value="VIRTUAL INTERVIEW">3. VIRTUAL INTERVIEW</option>
               <option value="VIDEO ANALYSIS">4. AI VIDEO ANALYSIS</option>
               <option value="HUMAN VALIDATION">5. HUMAN VALIDATION</option>
@@ -404,13 +447,12 @@ function StatusValidasiContent() {
                     </div>
                     <div>
                       <span className="text-slate-400 block font-semibold">{t.pelamar.status.statusLabel}</span>
-                      <span className={`font-extrabold px-3 py-1 rounded-full text-xs inline-block ${
-                        app.status === 'Lolos'
+                      <span className={`font-extrabold px-3 py-1 rounded-full text-xs inline-block ${app.status === 'Lolos'
                           ? 'bg-emerald-100 text-emerald-800 border border-emerald-300'
                           : app.status === 'Dalam Proses'
-                          ? 'bg-cyan-100 text-[#2596be] border border-cyan-300'
-                          : 'bg-red-100 text-red-800 border border-red-300'
-                      }`}>
+                            ? 'bg-cyan-100 text-[#2596be] border border-cyan-300'
+                            : 'bg-red-100 text-red-800 border border-red-300'
+                        }`}>
                         {app.status}
                       </span>
                     </div>
@@ -459,17 +501,15 @@ function StatusValidasiContent() {
                                 if (isClickableCv) setActiveCvModalJob(app);
                                 if (isClickableVideo) setActiveVideoModalJob(app);
                               }}
-                              className={`p-4 rounded-2xl border space-y-2 transition-all relative group ${
-                                isClickableCv || isClickableVideo ? 'hover:shadow-md hover:scale-[1.02] cursor-pointer' : ''
-                              } ${
-                                isFailed
+                              className={`p-4 rounded-2xl border space-y-2 transition-all relative group ${isClickableCv || isClickableVideo ? 'hover:shadow-md hover:scale-[1.02] cursor-pointer' : ''
+                                } ${isFailed
                                   ? 'bg-red-50 dark:bg-red-950/30 border-red-200 text-red-700 dark:text-red-300'
                                   : isCurrentStage
-                                  ? 'bg-[#E0F1F7] dark:bg-slate-800 border-[#B8E1ED] text-[#2596be] dark:text-cyan-400 ring-2 ring-[#2596be]'
-                                  : isPassedStage
-                                  ? 'bg-emerald-50 dark:bg-emerald-950/30 border-emerald-200 text-emerald-800 dark:text-emerald-300'
-                                  : 'bg-slate-50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-800 text-slate-500'
-                              }`}
+                                    ? 'bg-[#E0F1F7] dark:bg-slate-800 border-[#B8E1ED] text-[#2596be] dark:text-cyan-400 ring-2 ring-[#2596be]'
+                                    : isPassedStage
+                                      ? 'bg-emerald-50 dark:bg-emerald-950/30 border-emerald-200 text-emerald-800 dark:text-emerald-300'
+                                      : 'bg-slate-50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-800 text-slate-500'
+                                }`}
                             >
                               <div className="flex flex-col gap-1.5 pb-2 mb-2 border-b border-black/5 dark:border-white/5">
                                 <span className="text-[10px] sm:text-[11px] font-black uppercase tracking-wider leading-tight">
@@ -490,10 +530,10 @@ function StatusValidasiContent() {
                                   {isFailed
                                     ? t.pelamar.status.failed
                                     : isCurrentStage
-                                    ? app.status === 'Dalam Proses' ? t.pelamar.status.inProgress : t.pelamar.status.active
-                                    : isPassedStage
-                                    ? t.pelamar.status.passed
-                                    : t.pelamar.status.waiting}
+                                      ? app.status === 'Dalam Proses' ? t.pelamar.status.inProgress : t.pelamar.status.active
+                                      : isPassedStage
+                                        ? t.pelamar.status.passed
+                                        : t.pelamar.status.waiting}
                                 </span>
                                 {isPassedStage ? (
                                   <CheckCircle2 size={16} className="text-emerald-600" />
@@ -510,13 +550,12 @@ function StatusValidasiContent() {
                     </div>
 
                     {/* Official Notification Message Box */}
-                    <div className={`p-6 rounded-3xl border text-xs sm:text-sm space-y-4 leading-relaxed ${
-                      app.status === 'Tidak Lolos' || app.status === 'Lowongan Telah Ditutup'
+                    <div className={`p-6 rounded-3xl border text-xs sm:text-sm space-y-4 leading-relaxed ${app.status === 'Tidak Lolos' || app.status === 'Lowongan Telah Ditutup'
                         ? 'bg-red-50/60 dark:bg-red-950/20 border-red-200 text-red-900 dark:text-red-200'
                         : app.status === 'Lolos'
-                        ? 'bg-emerald-50 dark:bg-emerald-950/20 border-emerald-200 text-emerald-900 dark:text-emerald-200'
-                        : 'bg-[#F0F8FB] dark:bg-slate-800/80 border-[#C2E5EF] dark:border-slate-700 text-[#2596be] dark:text-cyan-300'
-                    }`}>
+                          ? 'bg-emerald-50 dark:bg-emerald-950/20 border-emerald-200 text-emerald-900 dark:text-emerald-200'
+                          : 'bg-[#F0F8FB] dark:bg-slate-800/80 border-[#C2E5EF] dark:border-slate-700 text-[#2596be] dark:text-cyan-300'
+                      }`}>
                       <div className="flex items-center gap-2 font-black text-sm">
                         {app.status === 'Tidak Lolos' || app.status === 'Lowongan Telah Ditutup' ? (
                           <>
@@ -540,6 +579,46 @@ function StatusValidasiContent() {
                         {app.statusMessage}
                       </p>
 
+                      {/* DAFTAR PERTANYAAN WAWANCARA VIDEO DARI PERUSAHAAN */}
+                      {app.currentStageIndex === 3 && (
+                        <div className="mt-3 p-5 rounded-2xl bg-white dark:bg-slate-900 border border-[#C2E5EF] dark:border-slate-700 shadow-2xs space-y-3">
+                          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2.5 border-b border-slate-100 dark:border-slate-800">
+                            <div className="flex items-center gap-2">
+                              <div className="p-1.5 rounded-lg bg-emerald-50 dark:bg-emerald-950 text-emerald-600 dark:text-emerald-400 shrink-0">
+                                <HelpCircle size={17} />
+                              </div>
+                              <div>
+                                <h5 className="font-bold text-xs sm:text-sm text-slate-800 dark:text-slate-100">
+                                  Pertanyaan Wawancara Wajib Dijawab
+                                </h5>
+                                <p className="text-[11px] text-slate-500">
+                                  Pastikan rekaman video Anda menjawab pertanyaan berikut dari <strong>{app.companyName}</strong>:
+                                </p>
+                              </div>
+                            </div>
+                            <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-900/50 text-emerald-800 dark:text-emerald-300 w-fit shrink-0">
+                              {(app.videoQuestions || DEFAULT_INTERVIEW_QUESTIONS).length} Pertanyaan
+                            </span>
+                          </div>
+
+                          <div className="space-y-2.5 pt-1">
+                            {(app.videoQuestions || DEFAULT_INTERVIEW_QUESTIONS).map((q, idx) => (
+                              <div
+                                key={idx}
+                                className="flex items-start gap-3 p-3 rounded-xl bg-slate-50/80 dark:bg-slate-800/60 border border-slate-200/70 dark:border-slate-700/70 text-xs"
+                              >
+                                <span className="w-5 h-5 rounded-full bg-[#2596be] text-white font-black text-[10px] flex items-center justify-center shrink-0 mt-0.5 shadow-2xs">
+                                  {idx + 1}
+                                </span>
+                                <p className="font-semibold text-slate-800 dark:text-slate-200 leading-relaxed">
+                                  {q}
+                                </p>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
                       {/* SPECIAL ACTION BUTTON FOR SCENARIO 5: UPLOAD VIRTUAL INTERVIEW */}
                       {app.currentStageIndex === 3 && app.status === 'Dalam Proses' && (
                         <div className="pt-2 flex flex-wrap items-center gap-4">
@@ -549,9 +628,9 @@ function StatusValidasiContent() {
                               if (file) {
                                 const formData = new FormData();
                                 formData.append('video', file);
-                                
+
                                 const uploadPromise = api.post(`/applications/${app.id}/upload-video`, formData);
-                                
+
                                 toast.promise(uploadPromise, {
                                   loading: 'Sedang mengunggah video wawancara...',
                                   success: (res: any) => res.message || 'Video berhasil diunggah dan sedang diproses AI.',
@@ -559,55 +638,14 @@ function StatusValidasiContent() {
                                 }).then(() => {
                                   // Refresh data after successful upload (optional, but good UX)
                                   setTimeout(() => window.location.reload(), 2000);
-                                }).catch(() => {});
+                                }).catch(() => { });
                               }
                             }} />
                             <Video size={18} className="text-emerald-200" />
                             <span>Upload Video Wawancara</span>
                           </label>
-
-                          <button
-                            disabled
-                            className="inline-flex items-center gap-2.5 px-6 py-3 rounded-full bg-slate-200 text-slate-500 font-black text-xs sm:text-sm cursor-not-allowed"
-                          >
-                            <Bot size={18} className="text-slate-400" />
-                            <span>{t.pelamar.status.startInterview} (Coming Soon)</span>
-                          </button>
                         </div>
                       )}
-
-                      <div className="pt-3 border-t border-slate-200/60 dark:border-slate-700/60 flex flex-wrap items-center justify-between gap-3 text-xs">
-                        <div className="flex items-center gap-2 text-slate-500 dark:text-slate-400 font-medium">
-                          <span>{t.pelamar.status.noUpdate}</span>
-                          <button
-                            onClick={() => toast('Customer Support HR Developer AI-Recruit Pro: support@airecruitpro.com / WhatsApp: 0812-9900-8800', { duration: 5000, icon: '📞' })}
-                            className="font-bold text-[#2596be] dark:text-cyan-400 hover:underline cursor-pointer"
-                          >
-                            {t.pelamar.status.contactSupport}
-                          </button>
-                        </div>
-
-                        {/* Direct Button Trigger for Stage 2 & 4 Modal Inspection */}
-                        <div className="flex items-center gap-2">
-                          {app.cvScore > 0 && (
-                            <button
-                              onClick={() => setActiveCvModalJob(app)}
-                              className="px-4 py-1.5 rounded-full bg-white dark:bg-slate-800 text-[#2596be] dark:text-cyan-400 font-bold border border-[#B8E1ED] dark:border-slate-700 hover:bg-[#E0F1F7] transition-colors shadow-2xs cursor-pointer"
-                            >
-                              {t.pelamar.status.cvScoreDetails} ({app.cvScore}%)
-                            </button>
-                          )}
-
-                          {app.videoScore > 0 && (
-                            <button
-                              onClick={() => setActiveVideoModalJob(app)}
-                              className="px-4 py-1.5 rounded-full bg-[#2596be] hover:bg-[#1D7FA1] text-white font-bold transition-colors shadow-2xs cursor-pointer"
-                            >
-                              {t.pelamar.status.videoAnalysisDetails} ({app.videoScore}%)
-                            </button>
-                          )}
-                        </div>
-                      </div>
                     </div>
 
                   </div>
@@ -630,102 +668,170 @@ function StatusValidasiContent() {
                 <span className="text-xs font-bold text-[#2596be] dark:text-cyan-400 uppercase tracking-wider block">
                   {t.pelamar.status.cvAnalysisTitle}
                 </span>
-                <h3 className="font-black text-2xl text-[#2596be] dark:text-cyan-400">
+                <h3 className="font-extrabold text-2xl text-slate-800 dark:text-slate-100 mt-0.5">
                   {t.pelamar.status.cvResultTitle}
                 </h3>
-                <p className="text-xs text-slate-500 dark:text-slate-400">
-                  {activeCvModalJob.jobTitle} — {activeCvModalJob.companyName}
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                  {activeCvModalJob.jobTitle} &bull; {activeCvModalJob.companyName}
                 </p>
               </div>
 
               <button
                 onClick={() => setActiveCvModalJob(null)}
-                className="p-2 text-slate-400 hover:text-slate-600 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"
+                className="p-2 text-slate-400 hover:text-slate-600 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer transition-colors"
               >
-                <X size={24} />
+                <X size={22} />
               </button>
             </div>
 
             {/* Score Banner */}
-            <div className="p-6 rounded-3xl bg-[#F0F8FB] dark:bg-slate-800 border border-[#C2E5EF] dark:border-slate-700 flex flex-col sm:flex-row items-center gap-6">
-              <div className={`w-24 h-24 rounded-full flex flex-col items-center justify-center text-white shrink-0 shadow-md ${activeCvModalJob.cvScore >= activeCvModalJob.threshold ? 'bg-[#2596be]' : 'bg-red-600'
-                }`}>
-                <span className="text-3xl font-black">{activeCvModalJob.cvScore}%</span>
-                <span className="text-[10px] font-bold uppercase tracking-widest text-white/80">SCORE</span>
+            {(() => {
+              const isFailedEdu = activeCvModalJob.kategori === 'tidak_memenuhi_syarat_pendidikan';
+              const isPassed = activeCvModalJob.cvScore >= activeCvModalJob.threshold && !isFailedEdu;
+
+              return (
+                <div className="p-6 rounded-3xl bg-[#F0F8FB] dark:bg-slate-800/70 border border-[#C2E5EF] dark:border-slate-700 flex flex-col sm:flex-row items-center gap-6">
+                  {/* Circle Score */}
+                  <div className={`w-24 h-24 rounded-2xl flex flex-col items-center justify-center text-white shrink-0 shadow-md ${isPassed
+                      ? 'bg-gradient-to-br from-emerald-500 to-teal-600 shadow-emerald-500/20'
+                      : 'bg-gradient-to-br from-rose-500 to-red-600 shadow-rose-500/20'
+                    }`}>
+                    <span className="text-3xl font-black">{activeCvModalJob.cvScore}%</span>
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-white/90 mt-0.5">Kecocokan</span>
+                  </div>
+
+                  {/* Verdict Info */}
+                  <div className="space-y-2 text-center sm:text-left flex-1">
+                    <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border">
+                      {isPassed ? <CheckCircle2 size={15} className="text-emerald-600 dark:text-emerald-400" /> : <XCircle size={15} className="text-rose-600 dark:text-rose-400" />}
+                      <span className={isPassed ? 'text-emerald-700 dark:text-emerald-300' : 'text-rose-700 dark:text-rose-300'}>
+                        {isFailedEdu
+                          ? 'Belum Memenuhi Syarat Minimal Pendidikan'
+                          : isPassed
+                            ? `Memenuhi Standar Kelulusan (≥ ${activeCvModalJob.threshold}%)`
+                            : `Di Bawah Standar Kelulusan (< ${activeCvModalJob.threshold}%)`}
+                      </span>
+                    </div>
+
+                    <h4 className="text-lg font-bold text-slate-800 dark:text-slate-100">
+                      {isFailedEdu
+                        ? 'Pendidikan Belum Memenuhi Ketentuan Posisi'
+                        : isPassed
+                          ? 'Profil Anda Sangat Cocok dengan Kriteria Lowongan'
+                          : 'Profil Belum Mencapai Standar Nilai Minimal'}
+                    </h4>
+
+                    <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+                      {isFailedEdu ? (
+                        <>Tingkat pendidikan pada profil Anda belum memenuhi kualifikasi minimal yang disyaratkan untuk posisi ini.</>
+                      ) : isPassed ? (
+                        <>Kualifikasi profil dan keahlian Anda dinilai <strong>cocok ({activeCvModalJob.cvScore}%)</strong> dengan kriteria lowongan dan telah melampaui batas minimal kelulusan perusahaan (<strong>{activeCvModalJob.threshold}%</strong>).</>
+                      ) : (
+                        <>Tingkat kecocokan profil Anda saat ini sebesar <strong>{activeCvModalJob.cvScore}%</strong>, belum mencapai standar nilai kelulusan minimal yang ditentukan perusahaan (<strong>{activeCvModalJob.threshold}%</strong>).</>
+                      )}
+                    </p>
+                  </div>
+                </div>
+              );
+            })()}
+
+            {/* Real Data Breakdown Cards */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              {/* Card 1: Pengalaman */}
+              <div className="p-5 rounded-2xl bg-white dark:bg-slate-800 border border-[#C2E5EF] dark:border-slate-700 text-center space-y-2 shadow-2xs">
+                <span className="text-xs font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wide block">Kesesuaian Pengalaman</span>
+                <span className="text-3xl font-black text-[#2596be] dark:text-cyan-400 block">
+                  {activeCvModalJob.hybridDetails?.sbert_score ?? activeCvModalJob.cvScore}%
+                </span>
+                <p className="text-[11px] text-slate-500 leading-snug">
+                  Relevansi riwayat kerja & tugas (Porsi 60%)
+                </p>
               </div>
 
-              <div className="space-y-2 text-center sm:text-left">
-                {activeCvModalJob.cvScore >= activeCvModalJob.threshold ? (
-                  <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-emerald-100 text-emerald-800 text-xs font-extrabold border border-emerald-300">
-                    <CheckCircle2 size={16} /> {t.pelamar.status.passedThreshold}
-                  </div>
+              {/* Card 2: Keahlian */}
+              <div className="p-5 rounded-2xl bg-white dark:bg-slate-800 border border-[#C2E5EF] dark:border-slate-700 text-center space-y-2 shadow-2xs">
+                <span className="text-xs font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wide block">Kesesuaian Keahlian</span>
+                {!activeCvModalJob.hybridDetails?.keywords_total ? (
+                  <span className="text-xl font-bold text-slate-400 block pt-1 pb-1">Sesuai Kriteria</span>
                 ) : (
-                  <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-red-100 text-red-800 text-xs font-extrabold border border-red-300">
-                    <XCircle size={16} /> {t.pelamar.status.failedThreshold}
-                  </div>
+                  <span className="text-3xl font-black text-[#2596be] dark:text-cyan-400 block">
+                    {activeCvModalJob.hybridDetails.keyword_score}%
+                  </span>
                 )}
+                <p className="text-[11px] text-slate-500 leading-snug">
+                  Kecocokan keterampilan khusus (Porsi 40%)
+                </p>
+              </div>
 
-                <h4 className="text-lg font-black text-[#2596be] dark:text-cyan-400">
-                  {activeCvModalJob.cvScore >= activeCvModalJob.threshold ? t.pelamar.status.highMatch : t.pelamar.status.lowMatch}
-                </h4>
-                <p className="text-xs text-slate-600 dark:text-slate-300">
-                  {t.pelamar.status.algoInfo}: <strong className="text-[#2596be] dark:text-cyan-400">{activeCvModalJob.cvScore}% match</strong>.
+              {/* Card 3: Syarat Terpenuhi */}
+              <div className="p-5 rounded-2xl bg-white dark:bg-slate-800 border border-[#C2E5EF] dark:border-slate-700 text-center space-y-2 shadow-2xs">
+                <span className="text-xs font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wide block">Keahlian Terpenuhi</span>
+                {!activeCvModalJob.hybridDetails?.keywords_total ? (
+                  <span className="text-xl font-bold text-slate-400 block pt-1 pb-1">Terpenuhi</span>
+                ) : (
+                  <span className="text-3xl font-black text-[#2596be] dark:text-cyan-400 block">
+                    {activeCvModalJob.hybridDetails.keywords_found} <span className="text-sm font-semibold text-slate-400">dari {activeCvModalJob.hybridDetails.keywords_total}</span>
+                  </span>
+                )}
+                <p className="text-[11px] text-slate-500 leading-snug">
+                  Keahlian wajib yang ditemukan di CV
                 </p>
               </div>
             </div>
 
-            {/* Real AI Data Breakdown */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <div className="p-5 rounded-2xl bg-white dark:bg-slate-800 border border-[#C2E5EF] dark:border-slate-700 text-center space-y-2">
-                <span className="text-xs font-extrabold text-slate-500 uppercase block">Kesesuaian Profil</span>
-                <span className="text-3xl font-black text-[#2596be] dark:text-cyan-400">{activeCvModalJob.hybridDetails?.sbert_score ?? activeCvModalJob.cvScore}%</span>
-                <p className="text-[10px] text-slate-500">Kesesuaian pengalaman dan latar belakang</p>
-              </div>
-
-              <div className="p-5 rounded-2xl bg-white dark:bg-slate-800 border border-[#C2E5EF] dark:border-slate-700 text-center space-y-2">
-                <span className="text-xs font-extrabold text-slate-500 uppercase block">Kecocokan Kriteria Utama</span>
-                {!activeCvModalJob.hybridDetails?.keywords_total ? (
-                  <span className="text-xl font-bold text-slate-400 block pt-1 pb-1">Tidak Diatur</span>
-                ) : (
-                  <span className="text-3xl font-black text-[#2596be] dark:text-cyan-400">{activeCvModalJob.hybridDetails?.keyword_score ?? 0}%</span>
-                )}
-                <p className="text-[10px] text-slate-500">Berdasarkan syarat spesifik lowongan</p>
-              </div>
-
-              <div className="p-5 rounded-2xl bg-white dark:bg-slate-800 border border-[#C2E5EF] dark:border-slate-700 text-center space-y-2">
-                <span className="text-xs font-extrabold text-slate-500 uppercase block">Kriteria Terpenuhi</span>
-                {!activeCvModalJob.hybridDetails?.keywords_total ? (
-                  <span className="text-xl font-bold text-slate-400 block pt-1 pb-1">-</span>
-                ) : (
-                  <span className="text-3xl font-black text-[#2596be] dark:text-cyan-400">
-                    {activeCvModalJob.hybridDetails?.keywords_found ?? 0} <span className="text-lg text-slate-400">/ {activeCvModalJob.hybridDetails?.keywords_total}</span>
-                  </span>
-                )}
-                <p className="text-[10px] text-slate-500">Jumlah syarat yang terpenuhi di CV</p>
-              </div>
-            </div>
-
-            {/* AI Notes */}
-            <div className="p-5 rounded-2xl bg-[#F0F8FB] dark:bg-slate-800/80 border border-[#C2E5EF] dark:border-slate-700 space-y-3 text-xs sm:text-sm text-slate-700 dark:text-slate-300">
-              <span className="font-extrabold text-[#2596be] dark:text-cyan-400 flex items-center gap-2">
-                <Sparkles size={16} /> {t.pelamar.status.cvNotes}
+            {/* AI Evaluation Notes */}
+            <div className="p-6 rounded-2xl bg-[#F0F8FB] dark:bg-slate-800/80 border border-[#C2E5EF] dark:border-slate-700 space-y-3.5 text-xs sm:text-sm text-slate-700 dark:text-slate-300">
+              <span className="font-extrabold text-[#2596be] dark:text-cyan-400 flex items-center gap-2 text-sm">
+                Catatan Hasil Evaluasi CV
               </span>
-              <ul className="space-y-2">
-                <li className="flex items-start gap-2 text-slate-700 dark:text-slate-300">
-                  <Check size={16} className="text-emerald-600 shrink-0 mt-0.5" />
-                  <span>Kategori Kecocokan: <strong className="uppercase">{activeCvModalJob.kategori ? activeCvModalJob.kategori.replace('_', ' ') : '-'}</strong></span>
+              <ul className="space-y-3">
+                <li className="flex items-start gap-2.5">
+                  <div className="p-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5">
+                    <Check size={14} />
+                  </div>
+                  <span>
+                    Kategori Kesesuaian: <strong className="font-bold text-slate-800 dark:text-slate-100 uppercase">
+                      {activeCvModalJob.kategori === 'tidak_memenuhi_syarat_pendidikan'
+                        ? 'Pendidikan Belum Memenuhi Syarat'
+                        : activeCvModalJob.kategori
+                          ? activeCvModalJob.kategori.replaceAll('_', ' ')
+                          : (activeCvModalJob.cvScore >= activeCvModalJob.threshold ? 'Cocok' : 'Kurang Cocok')}
+                    </strong>
+                  </span>
                 </li>
-                <li className="flex items-start gap-2 text-slate-700 dark:text-slate-300">
-                  <Check size={16} className="text-emerald-600 shrink-0 mt-0.5" />
-                  <span>Skor akhir adalah gabungan dari kesesuaian profil keseluruhan dan pemenuhan kriteria wajib perusahaan.</span>
+
+                <li className="flex items-start gap-2.5">
+                  <div className="p-0.5 rounded-full bg-blue-100 dark:bg-blue-950 text-[#2596be] shrink-0 mt-0.5">
+                    <Check size={14} />
+                  </div>
+                  <span>
+                    Nilai akhir diperoleh dari gabungan <strong>Kesesuaian Pengalaman (bobot 60%)</strong> dan <strong>Pemenuhan Keahlian (bobot 40%)</strong> terhadap standar minimal kelulusan perusahaan (<strong>{activeCvModalJob.threshold}%</strong>).
+                  </span>
                 </li>
+
+                {activeCvModalJob.kategori === 'tidak_memenuhi_syarat_pendidikan' ? (
+                  <li className="flex items-start gap-2.5 text-rose-600 dark:text-rose-400 font-medium bg-rose-50 dark:bg-rose-950/40 p-3 rounded-xl border border-rose-200 dark:border-rose-900/50">
+                    <AlertCircle size={16} className="shrink-0 mt-0.5" />
+                    <span>Tingkat pendidikan pada profil/CV Anda belum memenuhi syarat minimal untuk posisi ini. Anda dapat memperbarui data pendidikan di profil Anda atau melamar posisi lain.</span>
+                  </li>
+                ) : activeCvModalJob.cvScore >= activeCvModalJob.threshold ? (
+                  <li className="flex items-start gap-2.5 text-emerald-800 dark:text-emerald-300 font-medium bg-emerald-50 dark:bg-emerald-950/40 p-3 rounded-xl border border-emerald-200 dark:border-emerald-800/50">
+                    <CheckCircle2 size={16} className="shrink-0 mt-0.5 text-emerald-600" />
+                    <span>Selamat! Profil Anda dinyatakan <strong>Lolos Seleksi Screening CV</strong>. Silakan pantau linimasa status lamaran untuk mengikuti tahap berikutnya (Wawancara Video).</span>
+                  </li>
+                ) : (
+                  <li className="flex items-start gap-2.5 text-amber-800 dark:text-amber-300 font-medium bg-amber-50 dark:bg-amber-950/40 p-3 rounded-xl border border-amber-200 dark:border-amber-800/50">
+                    <AlertCircle size={16} className="shrink-0 mt-0.5 text-amber-600" />
+                    <span>Nilai kesesuaian berkas Anda saat ini belum mencapai standar minimal kelulusan ({activeCvModalJob.threshold}%). Anda tetap dapat mengeksplorasi dan melamar lowongan lain yang cocok dengan keahlian Anda.</span>
+                  </li>
+                )}
               </ul>
             </div>
 
             <div className="pt-4 border-t border-slate-100 dark:border-slate-800 flex justify-end">
               <button
                 onClick={() => setActiveCvModalJob(null)}
-                className="px-6 py-2.5 rounded-full bg-[#2596be] hover:bg-[#1D7FA1] text-white font-bold text-xs cursor-pointer"
+                className="px-6 py-2.5 rounded-full bg-[#2596be] hover:bg-[#1D7FA1] text-white font-bold text-xs cursor-pointer shadow-sm transition-colors"
               >
                 {t.pelamar.status.backToList}
               </button>

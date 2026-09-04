@@ -30,12 +30,14 @@ interface CandidateData {
   cvDocument?: any;
   jobData?: any;
   analisisCv?: any;
+  aiResult?: any;
+  videoUrl?: string;
 }
 
 export default function PipelinePage() {
   const { t } = useTranslation();
   const [selectedCandidate, setSelectedCandidate] = useState<CandidateData | null>(null);
-  
+
   const [applications, setApplications] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [pollingId, setPollingId] = useState<string | null>(null);
@@ -84,7 +86,7 @@ export default function PipelinePage() {
     try {
       setAnalyzingId(applicationId);
       const res = await fetchAuth(`/api/applications/${applicationId}/analyze`, { method: 'POST' });
-      
+
       if (!res.ok) {
         const errData = await res.json().catch(() => ({}));
         throw new Error(errData.detail || 'Gagal menjalankan analisis AI');
@@ -103,18 +105,18 @@ export default function PipelinePage() {
     try {
       setAnalyzingId(applicationId);
       const res = await fetchAuth(`/api/applications/${applicationId}/analyze-video`, { method: 'POST' });
-      
+
       if (!res.ok) {
         const errData = await res.json().catch(() => ({}));
         throw new Error(errData.detail || 'Gagal menjalankan analisis AI Video');
       }
 
       toast.success('Analisis AI Video dimulai. Mohon tunggu...');
-      
+
       // Start polling simulation
       setPollingId(applicationId);
       setPollProgress(0);
-      
+
       let currentProgress = 0;
       const progressInterval = setInterval(() => {
         currentProgress += Math.random() * 5 + 2;
@@ -125,7 +127,7 @@ export default function PipelinePage() {
       // Polling the backend
       const pollBackend = setInterval(async () => {
         try {
-          const checkRes = await fetchAuth(`/api/applications`, { method: 'GET' });
+          const checkRes = await fetchAuth('/api/applications/', { method: 'GET' });
           if (checkRes.ok) {
             const data = await checkRes.json();
             const app = data.data?.find((a: any) => a.id === applicationId);
@@ -173,11 +175,11 @@ export default function PipelinePage() {
       {/* Kanban Board Area — 5 Columns matching flowchart */}
       <div className="flex-1 overflow-x-auto pb-4 custom-scrollbar">
         <div className="flex gap-6 items-start min-w-max h-full">
-          
+
           {/* 1. UPLOAD CV */}
           <KanbanColumn title={t.pipeline.uploadCV} count={uploadCvApps.length}>
             {uploadCvApps.map((app) => (
-              <CandidateCard 
+              <CandidateCard
                 key={app.id}
                 name={app.pelamar?.nama_lengkap || 'Kandidat'}
                 role={(app as any).cvData?.jobTitle || app.job?.judul_posisi || 'Posisi'}
@@ -192,16 +194,17 @@ export default function PipelinePage() {
                 onClick={() => setSelectedCandidate({ name: app.pelamar?.nama_lengkap || 'Kandidat', role: (app as any).cvData?.jobTitle || app.job?.judul_posisi || '', stage: "upload_cv", education: app.pelamar?.pendidikan_terakhir, university: app.pelamar?.institusi_pendidikan, cvData: (app as any).cvData, cvDocument: (app as any).cv_document, jobData: app.job })}
               />
             ))}
-            
+
           </KanbanColumn>
 
-          {/* 2. CV SCREENING (PO-FIT) */}
+          {/* 2. CV SCREENING  */}
           <KanbanColumn title={t.pipeline.cvScreening} count={screeningApps.length}>
             {screeningApps.map((app) => {
               const cvScore = Math.round(app.analisis_cv?.skor_kecocokan || 0);
               const threshold = app.analisis_cv?.threshold_digunakan || app.job?.cv_threshold || 60;
               const isAiProcessed = cvScore > 0 || app.analisis_cv;
-              const isPassed = cvScore >= threshold;
+              const isFailedEdu = app.analisis_cv?.kategori === 'tidak_memenuhi_syarat_pendidikan';
+              const isPassed = cvScore >= threshold && !isFailedEdu;
 
               const actionButtons = isAiProcessed ? (
                 <div className="flex items-center gap-1.5">
@@ -233,7 +236,7 @@ export default function PipelinePage() {
               ) : undefined;
 
               return (
-                <CandidateCard 
+                <CandidateCard
                   key={app.id}
                   name={app.pelamar?.nama_lengkap || 'Kandidat'}
                   role={(app as any).cvData?.jobTitle || app.job?.judul_posisi || 'Posisi'}
@@ -246,7 +249,7 @@ export default function PipelinePage() {
                   status={app.status === 'lolos_cv' ? undefined : (app.status === 'ditolak_sistem' ? undefined : 'processing')}
                   timeInfo={t.pipeline.cosineSimilarity}
                   customActions={actionButtons}
-                  onClick={() => setSelectedCandidate({ name: app.pelamar?.nama_lengkap || 'Kandidat', role: (app as any).cvData?.jobTitle || app.job?.judul_posisi || '', stage: "cv_screening", cvScore: cvScore, education: app.pelamar?.pendidikan_terakhir, university: app.pelamar?.institusi_pendidikan, cvData: (app as any).cvData, cvDocument: (app as any).cv_document, jobData: app.job, analisisCv: app.analisis_cv, aiResult: (app as any).ai_result, videoUrl: (app as any).video_url })}
+                  onClick={() => setSelectedCandidate({ name: app.pelamar?.nama_lengkap || 'Kandidat', role: (app as any).cvData?.jobTitle || app.job?.judul_posisi || '', stage: "cv_screening", cvScore: cvScore, status: app.status, education: (app as any).cv_document?.pendidikan_tertinggi || app.pelamar?.pendidikan_terakhir, university: app.pelamar?.institusi_pendidikan, cvData: (app as any).cvData, cvDocument: (app as any).cv_document, jobData: app.job, analisisCv: app.analisis_cv, aiResult: (app as any).ai_result, videoUrl: (app as any).video_url })}
                 />
               );
             })}
@@ -255,7 +258,7 @@ export default function PipelinePage() {
           {/* 3. VIRTUAL INTERVIEW */}
           <KanbanColumn title={t.pipeline.virtualInterview} count={virtualInterviewApps.length}>
             {virtualInterviewApps.map((app) => (
-              <CandidateCard 
+              <CandidateCard
                 key={app.id}
                 name={app.pelamar?.nama_lengkap || 'Kandidat'}
                 role={(app as any).cvData?.jobTitle || app.job?.judul_posisi || 'Posisi'}
@@ -271,7 +274,7 @@ export default function PipelinePage() {
           {/* 4. AI VIDEO ANALYSIS */}
           <KanbanColumn title={t.pipeline.videoAnalysis} count={videoAnalysisApps.length}>
             {videoAnalysisApps.map((app) => (
-              <CandidateCard 
+              <CandidateCard
                 key={app.id}
                 name={app.pelamar?.nama_lengkap || 'Kandidat'}
                 role={(app as any).cvData?.jobTitle || app.job?.judul_posisi || 'Posisi'}
@@ -290,7 +293,7 @@ export default function PipelinePage() {
           {/* 5. HUMAN VALIDATION */}
           <KanbanColumn title={t.pipeline.humanValidation} count={humanValidationApps.length}>
             {humanValidationApps.map((app) => (
-              <CandidateCard 
+              <CandidateCard
                 key={app.id}
                 name={app.pelamar?.nama_lengkap || 'Kandidat'}
                 role={(app as any).cvData?.jobTitle || app.job?.judul_posisi || 'Posisi'}
@@ -305,7 +308,7 @@ export default function PipelinePage() {
 
         </div>
       </div>
-      
+
       {/* Polling Overlay */}
       {pollingId && (
         <div className="fixed inset-0 z-[100] bg-background/80 backdrop-blur-sm flex items-center justify-center p-4">
@@ -314,7 +317,7 @@ export default function PipelinePage() {
             <h3 className="text-xl font-bold">AI Sedang Menganalisis Video...</h3>
             <p className="text-sm text-muted-foreground">Ini akan memakan waktu sekitar 15-30 detik. Harap jangan tutup halaman ini.</p>
             <div className="w-full bg-muted rounded-full h-3 overflow-hidden">
-              <div 
+              <div
                 className="bg-primary h-full transition-all duration-300"
                 style={{ width: `${pollProgress}%` }}
               ></div>
@@ -326,9 +329,9 @@ export default function PipelinePage() {
 
       {/* Candidate Modal Render */}
       {selectedCandidate && (
-        <CandidateModal 
-          candidate={selectedCandidate} 
-          onClose={() => setSelectedCandidate(null)} 
+        <CandidateModal
+          candidate={selectedCandidate}
+          onClose={() => setSelectedCandidate(null)}
         />
       )}
     </div>

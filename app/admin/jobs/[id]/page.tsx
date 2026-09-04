@@ -3,7 +3,7 @@
 import React, { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
 import { useRouter, useParams } from 'next/navigation';
-import { 
+import {
   ArrowLeft, Briefcase, Building2, MapPin, Clock, DollarSign,
   Sparkles, Sliders, FileText, Check, Globe, X, Video, Calendar
 } from 'lucide-react';
@@ -19,14 +19,14 @@ function AdminJobDetailView() {
   // Form State
   const [jobTitle, setJobTitle] = useState('');
   const [categoryId, setCategoryId] = useState('');
-  const [categories, setCategories] = useState<{id: string, nama_kategori: string}[]>([]);
+  const [categories, setCategories] = useState<{ id: string, nama_kategori: string }[]>([]);
   const [employmentType, setEmploymentType] = useState('Full-time');
   const [workMode, setWorkMode] = useState('hybrid');
   const [location, setLocation] = useState('');
   const [experienceLevel, setExperienceLevel] = useState('Entry Level');
   const [pendidikanMin, setPendidikanMin] = useState('');
   const [companyName, setCompanyName] = useState('');
-  
+
   // Job Description & AI Keywords
   const [summary, setSummary] = useState('');
   const [responsibilities, setResponsibilities] = useState<string[]>([]);
@@ -117,11 +117,11 @@ function AdminJobDetailView() {
 
   return (
     <div className="max-w-4xl mx-auto pb-24">
-      
+
       {/* Top Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
         <div>
-          <button 
+          <button
             type="button"
             onClick={() => router.push('/admin/jobs')}
             className="inline-flex items-center gap-1.5 text-xs text-slate-500 hover:text-slate-800 transition-colors mb-3"
@@ -139,7 +139,7 @@ function AdminJobDetailView() {
       </div>
 
       <div className="space-y-6">
-        
+
         {/* ==================== SECTION 1: BASIC INFO ==================== */}
         <div className="bg-white p-6 sm:p-8 rounded-xl border border-slate-200 shadow-sm space-y-6">
           <div className="flex items-center gap-2 border-b border-slate-100 pb-4">
@@ -152,7 +152,7 @@ function AdminJobDetailView() {
               <label className="block text-xs font-bold text-slate-700 mb-2">
                 Judul Posisi
               </label>
-              <input disabled 
+              <input disabled
                 type="text"
                 value={jobTitle}
                 className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-800"
@@ -163,7 +163,7 @@ function AdminJobDetailView() {
               <label className="block text-xs font-bold text-slate-700 mb-2">
                 Kategori Pekerjaan
               </label>
-              <select disabled 
+              <select disabled
                 value={categoryId}
                 className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-800"
               >
@@ -178,7 +178,7 @@ function AdminJobDetailView() {
               <label className="block text-xs font-bold text-slate-700 mb-2">
                 Tipe Pekerjaan
               </label>
-              <select disabled 
+              <select disabled
                 value={employmentType}
                 className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-800"
               >
@@ -195,7 +195,7 @@ function AdminJobDetailView() {
                 Lokasi & Model Kerja
               </label>
               <div className="flex gap-2">
-                <select disabled 
+                <select disabled
                   value={workMode}
                   className="w-1/3 px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-800"
                 >
@@ -203,7 +203,7 @@ function AdminJobDetailView() {
                   <option value="remote">Remote</option>
                   <option value="onsite">On-site</option>
                 </select>
-                <input disabled 
+                <input disabled
                   type="text"
                   value={location}
                   className="w-2/3 px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-800"
@@ -215,7 +215,7 @@ function AdminJobDetailView() {
               <label className="block text-xs font-bold text-slate-700 mb-2">
                 Level Pengalaman
               </label>
-              <select disabled 
+              <select disabled
                 value={experienceLevel}
                 className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-800"
               >
@@ -230,7 +230,7 @@ function AdminJobDetailView() {
               <label className="block text-xs font-bold text-slate-700 mb-2">
                 Minimal Pendidikan
               </label>
-              <select disabled 
+              <select disabled
                 value={pendidikanMin}
                 className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-800"
               >
@@ -258,7 +258,7 @@ function AdminJobDetailView() {
             <label className="block text-xs font-bold text-slate-700 mb-2">
               Ringkasan Pekerjaan
             </label>
-            <textarea disabled 
+            <textarea disabled
               rows={4}
               value={summary}
               className="w-full p-4 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-800 resize-none"
@@ -295,7 +295,7 @@ function AdminJobDetailView() {
 
           <div>
             <label className="block text-xs font-bold text-slate-700 mb-1">
-              Kata Kunci AI (PO-FIT)
+              Kata Kunci AI
             </label>
             <div className="p-3 bg-slate-50 border border-slate-200 rounded-lg flex flex-wrap gap-2 items-center min-h-[52px]">
               {aiKeywords.map((tag) => (
@@ -328,8 +328,8 @@ function AdminJobDetailView() {
               </span>
             </div>
 
-            <input disabled 
-              type="range" 
+            <input disabled
+              type="range"
               min="50" max="95" step="5"
               value={threshold}
               className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer"

@@ -14,11 +14,12 @@ const geistMono = Geist_Mono({
 });
 
 import MaintenanceProvider from '@/components/MaintenanceProvider';
+import { getBaseUrl } from '@/lib/api';
 
 export async function generateMetadata(): Promise<Metadata> {
   try {
     // Next.js fetch API can be used directly on the server side
-    const res = await fetch('http://127.0.0.1:8000/api/config/public', { next: { revalidate: 60 } });
+    const res = await fetch(`${getBaseUrl()}/config/public`, { next: { revalidate: 60 } });
     if (res.ok) {
       const config = await res.json();
       return {
@@ -29,7 +30,7 @@ export async function generateMetadata(): Promise<Metadata> {
   } catch (error) {
     console.error("Failed to fetch SEO metadata", error);
   }
-  
+
   return {
     title: "AI Recruit Pro",
     description: "Platform Rekrutmen Cerdas Berbasis AI",

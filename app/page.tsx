@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAppStore } from '@/lib/store/useAppStore';
 import { useTranslation } from '@/hooks/useTranslation';
-import { getBaseUrl } from '@/lib/api';
+import { getBaseUrl, getMediaUrl, getApiUrl } from '@/lib/api';
 import {
   Search,
   MapPin,
@@ -152,7 +152,6 @@ function LandingPageContent() {
 
   const fetchRealData = async () => {
     try {
-      const baseUrl = getBaseUrl();
       // Fetch Jobs with Query Params
       const apiParams = new URLSearchParams();
       const kw = searchParams.get('keyword');
@@ -160,7 +159,7 @@ function LandingPageContent() {
       const cat = searchParams.get('category');
       const type = searchParams.get('workType');
       const exp = searchParams.get('expLevel');
-      
+
       if (kw) apiParams.append('keyword', kw);
       if (loc) apiParams.append('location', loc);
       if (cat && cat !== 'Semua' && cat !== 'All') apiParams.append('category', cat);
@@ -168,7 +167,7 @@ function LandingPageContent() {
       if (exp && exp !== 'Semua' && exp !== 'All') apiParams.append('experience_level', exp);
 
       const qs = apiParams.toString();
-      const fetchUrl = qs ? `${baseUrl}/jobs/?${qs}` : `${baseUrl}/jobs/`;
+      const fetchUrl = qs ? getApiUrl(`/jobs/?${qs}`) : getApiUrl('/jobs/');
 
       const resJobs = await fetch(fetchUrl);
       if (resJobs.ok) {
@@ -178,16 +177,16 @@ function LandingPageContent() {
           id: j.id, // using numeric ID isn't quite right since it's UUID, but frontend uses number in Job interface. We'll change Job interface ID to number | string
           title: j.judul_posisi,
           company: j.perusahaan?.nama_perusahaan || 'Perusahaan',
-          logo: (j.perusahaan?.logo_url && j.perusahaan.logo_url !== '') 
-                ? (j.perusahaan.logo_url.startsWith('http') ? j.perusahaan.logo_url : `http://${typeof window !== 'undefined' ? window.location.hostname : '127.0.0.1'}:8000${j.perusahaan.logo_url}`)
-                : 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=120&auto=format&fit=crop&q=80',
+          logo: (j.perusahaan?.logo_url && j.perusahaan.logo_url !== '')
+            ? getMediaUrl(j.perusahaan.logo_url)
+            : 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=120&auto=format&fit=crop&q=80',
           location: j.kota || 'Remote',
           workType: (() => {
             const type = j.tipe_pekerjaan ? j.tipe_pekerjaan.split('_').map((w: string) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ') : 'Full Time';
             const loc = j.lokasi_kerja === 'remote' ? 'Remote' : j.lokasi_kerja === 'hybrid' ? 'Hybrid' : 'On-site';
             return `${type} (${loc})`;
           })(),
-          salary: (j.tampilkan_gaji && j.gaji_min && j.gaji_max) ? `Rp ${(j.gaji_min/1000000).toFixed(0)} Jt - Rp ${(j.gaji_max/1000000).toFixed(0)} Jt` : 'Gaji Dirahasiakan',
+          salary: (j.tampilkan_gaji && j.gaji_min && j.gaji_max) ? `Rp ${(j.gaji_min / 1000000).toFixed(0)} Jt - Rp ${(j.gaji_max / 1000000).toFixed(0)} Jt` : 'Gaji Dirahasiakan',
           category: j.kategori?.nama_kategori || 'Teknologi Informasi',
           experienceLevel: (() => {
             const el = j.experience_level;
@@ -198,7 +197,7 @@ function LandingPageContent() {
             return el || (j.pengalaman_min_tahun > 3 ? 'Senior Level (5+ Tahun)' : 'Mid Level (2 - 4 Tahun)');
           })(),
           educationLevel: j.pendidikan_min || '-',
-          benefits: (() => { try { return j.benefits_json ? JSON.parse(j.benefits_json) : []; } catch(e){ return []; } })(),
+          benefits: (() => { try { return j.benefits_json ? JSON.parse(j.benefits_json) : []; } catch (e) { return []; } })(),
           tags: [j.tipe_pekerjaan, j.lokasi_kerja === 'remote' ? 'Remote' : j.lokasi_kerja === 'hybrid' ? 'Hybrid' : 'On-site'].filter(Boolean),
           postedAgo: (() => {
             const created = j.tanggal_buka ? new Date(j.tanggal_buka) : (j.created_at ? new Date(j.created_at) : new Date());
@@ -230,21 +229,21 @@ function LandingPageContent() {
           })(),
           openingsCount: j.openings_count || 1,
           description: j.deskripsi_pekerjaan || '',
-          responsibilities: (() => { try { return j.tanggung_jawab ? JSON.parse(j.tanggung_jawab) : []; } catch(e){ return j.tanggung_jawab ? j.tanggung_jawab.split('\n').filter((k: string) => k.trim()) : []; } })(),
-          requirements: (() => { try { return j.kualifikasi ? JSON.parse(j.kualifikasi) : []; } catch(e){ return j.kualifikasi ? j.kualifikasi.split('\n').filter((k: string) => k.trim()) : []; } })(),
+          responsibilities: (() => { try { return j.tanggung_jawab ? JSON.parse(j.tanggung_jawab) : []; } catch (e) { return j.tanggung_jawab ? j.tanggung_jawab.split('\n').filter((k: string) => k.trim()) : []; } })(),
+          requirements: (() => { try { return j.kualifikasi ? JSON.parse(j.kualifikasi) : []; } catch (e) { return j.kualifikasi ? j.kualifikasi.split('\n').filter((k: string) => k.trim()) : []; } })(),
         }));
         setRealJobs(mappedJobs);
       }
-      
+
       // Fetch Companies
-      const resComp = await fetch(`${baseUrl}/perusahaan/verified`);
+      const resComp = await fetch(getApiUrl('/perusahaan/verified'));
       if (resComp.ok) {
         const compData = await resComp.json();
         const mappedComp = compData.map((c: any) => ({
           name: c.nama_perusahaan,
-          logo: (c.logo_url && c.logo_url !== '') 
-                ? (c.logo_url.startsWith('http') ? c.logo_url : `http://${typeof window !== 'undefined' ? window.location.hostname : '127.0.0.1'}:8000${c.logo_url}`)
-                : 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=120&auto=format&fit=crop&q=80',
+          logo: (c.logo_url && c.logo_url !== '')
+            ? getMediaUrl(c.logo_url)
+            : 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=120&auto=format&fit=crop&q=80',
           jobsCount: c.jobs_count || 0,
           rating: c.rating || 5.0
         }));
@@ -333,7 +332,7 @@ function LandingPageContent() {
   const combinedJobs = useMemo(() => {
     return realJobs;
   }, [realJobs, language]);
-  
+
   const combinedCompanies = useMemo(() => {
     return realCompanies.slice(0, 8); // maximum 8 companies
   }, [realCompanies]);
@@ -348,7 +347,7 @@ function LandingPageContent() {
         { name: language === 'en' ? 'Operations' : 'Operations', count: language === 'en' ? '0 Openings' : '0 Lowongan', icon: Activity, skills: 'Logistik, Manajemen Proyek' },
       ];
     }
-    
+
     const catMap = new Map();
     combinedJobs.forEach(job => {
       const cat = job.category || (language === 'en' ? 'General' : 'Umum');
@@ -489,7 +488,7 @@ function LandingPageContent() {
             <a href="#success-stories" onClick={() => setIsMobileMenuOpen(false)} className="text-slate-700 dark:text-slate-200 font-bold py-2 border-t border-slate-100 dark:border-slate-800">
               {lang.successStories}
             </a>
-            
+
             <div className="pt-4 border-t border-slate-100 dark:border-slate-800 flex flex-col gap-3 sm:hidden">
               <Link
                 href="/login"
@@ -545,7 +544,7 @@ function LandingPageContent() {
             </div>
 
             {/* Elevated Search Widget */}
-            <form 
+            <form
               onSubmit={(e) => {
                 e.preventDefault();
                 updateUrlParams({ keyword, location });
@@ -844,10 +843,10 @@ function LandingPageContent() {
 
             {(selectedCategory !== 'Semua' || selectedWorkType !== 'Semua' || selectedExpLevel !== 'Semua') && (
               <button
-                onClick={() => { 
-                  setSelectedCategory('Semua'); 
-                  setSelectedWorkType('Semua'); 
-                  setSelectedExpLevel('Semua'); 
+                onClick={() => {
+                  setSelectedCategory('Semua');
+                  setSelectedWorkType('Semua');
+                  setSelectedExpLevel('Semua');
                   updateUrlParams({ category: 'Semua', workType: 'Semua', expLevel: 'Semua' });
                 }}
                 className="text-xs font-bold text-slate-500 dark:text-slate-400 hover:text-[#1b7b9e] dark:hover:text-cyan-300 underline cursor-pointer"

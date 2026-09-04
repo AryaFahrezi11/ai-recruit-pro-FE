@@ -4,6 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { useAppStore } from '@/lib/store/useAppStore';
 import { ShieldAlert } from 'lucide-react';
 import { usePathname } from 'next/navigation';
+import { getApiUrl } from '@/lib/api';
 
 export default function MaintenanceProvider({ children }: { children: React.ReactNode }) {
   const [isMaintenance, setIsMaintenance] = useState(false);
@@ -14,7 +15,7 @@ export default function MaintenanceProvider({ children }: { children: React.Reac
   useEffect(() => {
     const checkMaintenance = async () => {
       try {
-        const res = await fetch('http://localhost:8000/api/config/public');
+        const res = await fetch(getApiUrl('/config/public'));
         if (res.ok) {
           const config = await res.json();
           if (config.maintenance_mode === true) {
@@ -35,7 +36,7 @@ export default function MaintenanceProvider({ children }: { children: React.Reac
   }, [pathname]);
 
   if (isLoading) {
-    return null; 
+    return null;
   }
 
   const isAdmin = user?.role === 'admin';

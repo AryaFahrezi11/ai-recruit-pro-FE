@@ -20,7 +20,7 @@ import {
   X,
   Clock
 } from 'lucide-react';
-import { api } from '@/lib/api';
+import { api, getMediaUrl } from '@/lib/api';
 
 interface SavedJob {
   id: number;
@@ -78,13 +78,13 @@ function SavedJobsContent() {
     // Load candidate CV data
     const savedCv = localStorage.getItem('candidateCvData');
     if (savedCv) {
-      try { setCvDetails(JSON.parse(savedCv)); } catch(e){}
+      try { setCvDetails(JSON.parse(savedCv)); } catch (e) { }
     }
 
     // Load applied jobs
     const savedApplied = localStorage.getItem('appliedJobsList');
     if (savedApplied) {
-      try { setAppliedJobs(JSON.parse(savedApplied)); } catch(e){}
+      try { setAppliedJobs(JSON.parse(savedApplied)); } catch (e) { }
     }
 
     // Load saved job IDs from localStorage
@@ -109,7 +109,7 @@ function SavedJobsContent() {
               setSavedJobIds((prev) => Array.from(new Set([...prev, ...backendSavedIds])));
             }
           }
-        } catch (e) {}
+        } catch (e) { }
 
         const apiParams = new URLSearchParams();
         const kw = searchParams.get('keyword');
@@ -121,7 +121,7 @@ function SavedJobsContent() {
         // 2. Fetch all jobs from backend API
         const resJobs = await api.get(qs ? `/jobs/?${qs}` : '/jobs/');
         const rawJobsList = Array.isArray(resJobs) ? resJobs : (resJobs?.data && Array.isArray(resJobs.data) ? resJobs.data : []);
-        
+
         if (rawJobsList.length > 0) {
           const safeParseArray = (val: any) => {
             if (!val) return [];
@@ -170,9 +170,9 @@ function SavedJobsContent() {
               id: j.id,
               title: j.judul_posisi,
               company: j.perusahaan?.nama_perusahaan || 'Perusahaan',
-              logo: (j.perusahaan?.logo_url && j.perusahaan.logo_url !== '') 
-                    ? (j.perusahaan.logo_url.startsWith('http') ? j.perusahaan.logo_url : `http://${typeof window !== 'undefined' ? window.location.hostname : '127.0.0.1'}:8000${j.perusahaan.logo_url}`)
-                    : 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=120&auto=format&fit=crop&q=80',
+              logo: (j.perusahaan?.logo_url && j.perusahaan.logo_url !== '')
+                ? getMediaUrl(j.perusahaan.logo_url)
+                : 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=120&auto=format&fit=crop&q=80',
               location: j.kota || (j.perusahaan?.kota ? j.perusahaan.kota : 'Remote'),
               education: j.pendidikan_min || safeParseArray(j.kualifikasi)[0] || 'Terbuka untuk umum',
               educationLevel: j.pendidikan_min || 'SMA/SMK/D3/S1',
@@ -184,7 +184,7 @@ function SavedJobsContent() {
                 const loc = j.lokasi_kerja === 'remote' ? 'Remote (WFH)' : j.lokasi_kerja === 'hybrid' ? 'Hybrid' : 'On-site';
                 return `${type} (${loc})`;
               })(),
-              salary: (j.tampilkan_gaji && j.gaji_min && j.gaji_max) ? `Rp ${(j.gaji_min/1000000).toFixed(0)} Jt - Rp ${(j.gaji_max/1000000).toFixed(0)} Jt` : 'Gaji Dirahasiakan',
+              salary: (j.tampilkan_gaji && j.gaji_min && j.gaji_max) ? `Rp ${(j.gaji_min / 1000000).toFixed(0)} Jt - Rp ${(j.gaji_max / 1000000).toFixed(0)} Jt` : 'Gaji Dirahasiakan',
               postedAgo: postedAgoText,
               publishDate: createdDate.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }),
               applicationDeadline: j.tanggal_tutup ? new Date(j.tanggal_tutup).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) : null,
@@ -215,7 +215,7 @@ function SavedJobsContent() {
     localStorage.setItem('candidateSavedJobsList', JSON.stringify(newSaved));
     try {
       await api.delete(`/saved-jobs/${jobId}`);
-    } catch (err) {}
+    } catch (err) { }
   };
 
   // Clear all saved jobs
@@ -297,7 +297,7 @@ function SavedJobsContent() {
       <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 border border-slate-200 dark:border-slate-800 shadow-2xs space-y-4">
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
 
-          <form 
+          <form
             className="flex flex-col sm:flex-row items-center gap-3 w-full"
             onSubmit={(e) => {
               e.preventDefault();

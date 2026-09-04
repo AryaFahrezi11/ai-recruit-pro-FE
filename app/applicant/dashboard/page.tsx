@@ -38,7 +38,7 @@ import {
   Globe
 } from 'lucide-react';
 import { ApplyJobModal } from '@/components/ApplyJobModal';
-import { api, parseErrorMessage } from '@/lib/api';
+import { api, parseErrorMessage, getMediaUrl } from '@/lib/api';
 
 interface Job {
   id: number | string;
@@ -146,12 +146,12 @@ function DashboardContent() {
 
     const savedApplied = localStorage.getItem('appliedJobsList');
     if (savedApplied) {
-      try { setAppliedJobs(JSON.parse(savedApplied)); } catch(e){}
+      try { setAppliedJobs(JSON.parse(savedApplied)); } catch (e) { }
     }
 
     const storedSaved = localStorage.getItem('candidateSavedJobsList');
     if (storedSaved) {
-      try { setSavedJobIds(JSON.parse(storedSaved)); } catch(e){}
+      try { setSavedJobIds(JSON.parse(storedSaved)); } catch (e) { }
     }
 
     fetchRealData();
@@ -167,7 +167,7 @@ function DashboardContent() {
       const edu = searchParams.get('education');
       const wp = searchParams.get('workPolicy');
       const ind = searchParams.get('industry');
-      
+
       if (kw) apiParams.append('keyword', kw);
       if (loc) apiParams.append('location', loc);
       if (edu && edu !== 'Semua') apiParams.append('pendidikan_min', edu);
@@ -185,12 +185,10 @@ function DashboardContent() {
       ]);
 
       if (resApps) {
-        const rawList = Array.isArray(resApps) ? resApps : resApps.data || [];
-        const appliedIds = rawList.map((app: any) => String(app.job_id || app.job?.id || ''));
-        if (appliedIds.length > 0) {
-          setAppliedJobs(appliedIds);
-          localStorage.setItem('appliedJobsList', JSON.stringify(appliedIds));
-        }
+        const rawList = Array.isArray(resApps) ? resApps : (resApps?.data || []);
+        const appliedIds = rawList.map((app: any) => String(app.job_id || app.job?.id || '')).filter(Boolean);
+        setAppliedJobs(appliedIds);
+        localStorage.setItem('appliedJobsList', JSON.stringify(appliedIds));
       }
 
       const rawJobsList = Array.isArray(resJobs) ? resJobs : (resJobs?.data && Array.isArray(resJobs.data) ? resJobs.data : []);
@@ -246,9 +244,9 @@ function DashboardContent() {
             id: j.id,
             title: j.judul_posisi,
             company: j.perusahaan?.nama_perusahaan || 'Perusahaan',
-            logo: (j.perusahaan?.logo_url && j.perusahaan.logo_url !== '') 
-                  ? (j.perusahaan.logo_url.startsWith('http') ? j.perusahaan.logo_url : `http://${typeof window !== 'undefined' ? window.location.hostname : '127.0.0.1'}:8000${j.perusahaan.logo_url}`)
-                  : 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=120&auto=format&fit=crop&q=80',
+            logo: (j.perusahaan?.logo_url && j.perusahaan.logo_url !== '')
+              ? getMediaUrl(j.perusahaan.logo_url)
+              : 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=120&auto=format&fit=crop&q=80',
             location: j.kota || (j.perusahaan?.kota ? j.perusahaan.kota : 'Remote'),
             education: j.pendidikan_min || safeParseArray(j.kualifikasi)[0] || 'Terbuka untuk umum',
             educationLevel: j.pendidikan_min || 'SMA/SMK/D3/S1',
@@ -260,9 +258,9 @@ function DashboardContent() {
               const loc = j.lokasi_kerja === 'remote' ? 'Remote (WFH)' : j.lokasi_kerja === 'hybrid' ? 'Hybrid' : 'On-site';
               return `${type} (${loc})`;
             })(),
-            salary: (j.tampilkan_gaji && j.gaji_min && j.gaji_max) 
-                    ? `Rp ${(j.gaji_min/1000000).toFixed(0)} Jt - Rp ${(j.gaji_max/1000000).toFixed(0)} Jt` 
-                    : 'Gaji Dirahasiakan',
+            salary: (j.tampilkan_gaji && j.gaji_min && j.gaji_max)
+              ? `Rp ${(j.gaji_min / 1000000).toFixed(0)} Jt - Rp ${(j.gaji_max / 1000000).toFixed(0)} Jt`
+              : 'Gaji Dirahasiakan',
             postedAgo: postedAgoText,
             publishDate: createdDate.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }),
             applicationDeadline: j.tanggal_tutup ? new Date(j.tanggal_tutup).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) : null,
@@ -292,9 +290,9 @@ function DashboardContent() {
         const mappedComp: Company[] = rawCompList.map((c: any) => ({
           id: c.id,
           name: c.nama_perusahaan,
-          logo: (c.logo_url && c.logo_url !== '') 
-                ? (c.logo_url.startsWith('http') ? c.logo_url : `http://${typeof window !== 'undefined' ? window.location.hostname : '127.0.0.1'}:8000${c.logo_url}`)
-                : 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=120&auto=format&fit=crop&q=80',
+          logo: (c.logo_url && c.logo_url !== '')
+            ? getMediaUrl(c.logo_url)
+            : 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=120&auto=format&fit=crop&q=80',
           industry: c.industri || 'Umum & Teknologi',
           location: c.kota || c.alamat || 'Indonesia',
           openJobsCount: c.jobs_count || c.open_jobs_count || 0,
@@ -305,21 +303,21 @@ function DashboardContent() {
 
       if (resProfile && resProfile.profil) {
         const p = resProfile.profil;
-        
+
         let parsedExp = [];
         if (p.pengalaman_kerja) {
           try {
             parsedExp = typeof p.pengalaman_kerja === 'string' ? JSON.parse(p.pengalaman_kerja) : p.pengalaman_kerja;
             if (!Array.isArray(parsedExp)) parsedExp = [];
-          } catch (_) {}
+          } catch (_) { }
         }
-        
+
         let parsedEdu = [];
         if (p.riwayat_pendidikan) {
           try {
             parsedEdu = typeof p.riwayat_pendidikan === 'string' ? JSON.parse(p.riwayat_pendidikan) : p.riwayat_pendidikan;
             if (!Array.isArray(parsedEdu)) parsedEdu = [];
-          } catch (_) {}
+          } catch (_) { }
         }
 
         let parsedCert = [];
@@ -337,7 +335,7 @@ function DashboardContent() {
           try {
             parsedSocial = typeof p.social_links === 'string' ? JSON.parse(p.social_links) : p.social_links;
             if (!Array.isArray(parsedSocial)) parsedSocial = [];
-          } catch (_) {}
+          } catch (_) { }
         }
 
         setCvDetails({
@@ -445,7 +443,7 @@ function DashboardContent() {
       const matchesSearch = !searchQuery ||
         comp.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         comp.industry.toLowerCase().includes(searchQuery.toLowerCase());
-      
+
       const matchesLocation = !locationQuery || comp.location.toLowerCase().includes(locationQuery.toLowerCase());
       const matchesIndustry = industryFilter === 'Semua' || comp.industry.toLowerCase().includes(industryFilter.toLowerCase());
 
@@ -466,8 +464,8 @@ function DashboardContent() {
         <form
           onSubmit={(e) => {
             e.preventDefault();
-            updateUrlParams({ 
-              keyword: searchQuery, 
+            updateUrlParams({
+              keyword: searchQuery,
               location: locationQuery,
               industry: industryFilter,
               education: educationFilter,
@@ -500,7 +498,7 @@ function DashboardContent() {
               className="w-full pl-12 pr-4 py-3.5 bg-white text-slate-800 rounded-2xl text-sm font-semibold placeholder:text-slate-400 outline-none focus:ring-2 focus:ring-[#2596be] shadow-inner"
             />
           </div>
-          
+
           {/* Search Button */}
           <div className="md:col-span-2">
             <button type="submit" className="w-full h-full py-3.5 bg-white/20 hover:bg-white/30 text-white rounded-2xl font-bold flex items-center justify-center gap-2 border border-white/30 transition-colors shadow-inner">
@@ -511,11 +509,11 @@ function DashboardContent() {
 
         <div className="flex flex-wrap items-center gap-2 pt-1 text-xs">
           <button
-            onClick={() => { 
-                setSearchQuery(''); setLocationQuery(''); 
-                setEducationFilter('Semua'); setWorkPolicyFilter('Semua'); 
-                setIndustryFilter('Semua');
-                updateUrlParams({ keyword: '', location: '', education: 'Semua', workPolicy: 'Semua', industry: 'Semua' });
+            onClick={() => {
+              setSearchQuery(''); setLocationQuery('');
+              setEducationFilter('Semua'); setWorkPolicyFilter('Semua');
+              setIndustryFilter('Semua');
+              updateUrlParams({ keyword: '', location: '', education: 'Semua', workPolicy: 'Semua', industry: 'Semua' });
             }}
             className="px-4 py-2 rounded-full bg-white/20 hover:bg-white/30 text-white font-bold border border-white/30 transition-all cursor-pointer flex items-center gap-1.5"
           >
@@ -541,8 +539,8 @@ function DashboardContent() {
             <>
               <select
                 value={educationFilter}
-                onChange={(e) => { 
-                  setEducationFilter(e.target.value); 
+                onChange={(e) => {
+                  setEducationFilter(e.target.value);
                 }}
                 className="px-4 py-2 rounded-full bg-white/15 hover:bg-white/25 text-white font-bold border border-white/30 outline-none cursor-pointer text-xs"
               >
@@ -555,8 +553,8 @@ function DashboardContent() {
 
               <select
                 value={workPolicyFilter}
-                onChange={(e) => { 
-                  setWorkPolicyFilter(e.target.value); 
+                onChange={(e) => {
+                  setWorkPolicyFilter(e.target.value);
                 }}
                 className="px-4 py-2 rounded-full bg-white/15 hover:bg-white/25 text-white font-bold border border-white/30 outline-none cursor-pointer text-xs"
               >
@@ -570,11 +568,10 @@ function DashboardContent() {
 
           <button
             onClick={() => setActiveTab('recommended')}
-            className={`px-4 py-2 rounded-full font-bold border transition-all cursor-pointer flex items-center gap-1.5 ${
-              activeTab !== 'companies'
+            className={`px-4 py-2 rounded-full font-bold border transition-all cursor-pointer flex items-center gap-1.5 ${activeTab !== 'companies'
                 ? 'bg-[#E0F1F7] text-[#2596be] border-[#B8E1ED] font-extrabold'
                 : 'bg-white/15 hover:bg-white/25 text-white border-white/30'
-            }`}
+              }`}
           >
             <Briefcase className="w-4 h-4" />
             <span>Job Listings</span>
@@ -582,11 +579,10 @@ function DashboardContent() {
 
           <button
             onClick={() => setActiveTab('companies')}
-            className={`px-4 py-2 rounded-full font-bold border transition-all cursor-pointer flex items-center gap-1.5 ${
-              activeTab === 'companies'
+            className={`px-4 py-2 rounded-full font-bold border transition-all cursor-pointer flex items-center gap-1.5 ${activeTab === 'companies'
                 ? 'bg-[#E0F1F7] text-[#2596be] border-[#B8E1ED] font-extrabold'
                 : 'bg-white/15 hover:bg-white/25 text-white border-white/30'
-            }`}
+              }`}
           >
             <Building2 className="w-4 h-4" />
             <span>Companies ({filteredCompanies.length})</span>
@@ -600,50 +596,50 @@ function DashboardContent() {
         <div className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
             {filteredCompanies.length === 0 ? (
-                <div className="col-span-full py-12 text-center">
-                    <p className="text-slate-500 font-semibold">Tidak ada perusahaan yang sesuai dengan pencarian Anda.</p>
-                </div>
+              <div className="col-span-full py-12 text-center">
+                <p className="text-slate-500 font-semibold">Tidak ada perusahaan yang sesuai dengan pencarian Anda.</p>
+              </div>
             ) : (
-                filteredCompanies.map((comp) => (
+              filteredCompanies.map((comp) => (
                 <div
-                key={comp.id}
-                onClick={() => router.push(`/applicant/companies/${comp.id}`)}
-                className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-2xs hover:shadow-md hover:border-[#2596be]/40 transition-all space-y-4 flex flex-col justify-between cursor-pointer group"
-              >
-                <div className="space-y-3">
-                  <div className="flex items-start justify-between gap-3">
-                    <img
-                      src={comp.logo}
-                      alt={comp.name}
-                      className="w-14 h-14 rounded-2xl object-cover border border-slate-200 dark:border-slate-700"
-                    />
-                    <span className="px-3 py-1 rounded-full bg-[#E0F1F7] dark:bg-slate-800 text-[#2596be] dark:text-cyan-400 font-black text-xs border border-[#B8E1ED] dark:border-slate-700">
-                      {comp.openJobsCount} Lowongan Buka
-                    </span>
-                  </div>
+                  key={comp.id}
+                  onClick={() => router.push(`/applicant/companies/${comp.id}`)}
+                  className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-2xs hover:shadow-md hover:border-[#2596be]/40 transition-all space-y-4 flex flex-col justify-between cursor-pointer group"
+                >
+                  <div className="space-y-3">
+                    <div className="flex items-start justify-between gap-3">
+                      <img
+                        src={comp.logo}
+                        alt={comp.name}
+                        className="w-14 h-14 rounded-2xl object-cover border border-slate-200 dark:border-slate-700"
+                      />
+                      <span className="px-3 py-1 rounded-full bg-[#E0F1F7] dark:bg-slate-800 text-[#2596be] dark:text-cyan-400 font-black text-xs border border-[#B8E1ED] dark:border-slate-700">
+                        {comp.openJobsCount} Lowongan Buka
+                      </span>
+                    </div>
 
-                  <div>
-                    <h4 className="font-black text-lg text-slate-800 dark:text-white group-hover:text-[#2596be] transition-colors">
-                      {comp.name}
-                    </h4>
-                    <p className="text-xs text-slate-500 font-bold">
-                      {comp.industry} • {comp.location}
+                    <div>
+                      <h4 className="font-black text-lg text-slate-800 dark:text-white group-hover:text-[#2596be] transition-colors">
+                        {comp.name}
+                      </h4>
+                      <p className="text-xs text-slate-500 font-bold">
+                        {comp.industry} • {comp.location}
+                      </p>
+                    </div>
+
+                    <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed line-clamp-2">
+                      {comp.description}
                     </p>
                   </div>
 
-                  <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed line-clamp-2">
-                    {comp.description}
-                  </p>
+                  <div
+                    className="w-full py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 group-hover:border-[#2596be] group-hover:text-[#2596be] group-hover:bg-[#F0F8FB] dark:group-hover:bg-slate-800 text-slate-600 dark:text-slate-400 text-xs font-bold transition-all flex items-center justify-center gap-2"
+                  >
+                    <span>Lihat {comp.openJobsCount} Lowongan Buka</span>
+                    <ChevronRight className="w-4 h-4" />
+                  </div>
                 </div>
-
-                <div
-                  className="w-full py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 group-hover:border-[#2596be] group-hover:text-[#2596be] group-hover:bg-[#F0F8FB] dark:group-hover:bg-slate-800 text-slate-600 dark:text-slate-400 text-xs font-bold transition-all flex items-center justify-center gap-2"
-                >
-                  <span>Lihat {comp.openJobsCount} Lowongan Buka</span>
-                  <ChevronRight className="w-4 h-4" />
-                </div>
-              </div>
-            )))}
+              )))}
           </div>
         </div>
       ) : (
@@ -654,7 +650,7 @@ function DashboardContent() {
           {shareJob && (
             <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fadeIn">
               <div className="bg-white dark:bg-slate-900 rounded-3xl w-full max-w-lg p-6 sm:p-8 shadow-2xl relative border border-slate-200 dark:border-slate-800 space-y-6">
-                
+
                 {/* Modal Header */}
                 <div className="flex items-start justify-between">
                   <div className="flex items-center gap-3">
@@ -772,7 +768,7 @@ function DashboardContent() {
 
           {/* LEFT COLUMN: SELECTABLE JOB CARDS LIST (~38% Width / 5 Cols) */}
           <div className="lg:col-span-5 space-y-4">
-            
+
             {/* Header info */}
             <div className="flex items-center justify-between px-1">
               <div>
@@ -787,7 +783,7 @@ function DashboardContent() {
 
               <div className="flex items-center gap-1 text-xs text-slate-500 font-bold">
                 <span>Urut berdasarkan:</span>
-                <select 
+                <select
                   value={sortOrder}
                   onChange={(e) => setSortOrder(e.target.value)}
                   className="text-[#2596be] font-extrabold cursor-pointer bg-transparent outline-none"
@@ -823,11 +819,10 @@ function DashboardContent() {
                     <div
                       key={job.id}
                       onClick={() => setSelectedJobId(job.id)}
-                      className={`p-5 rounded-3xl border transition-all cursor-pointer relative space-y-3 ${
-                        isSelected
+                      className={`p-5 rounded-3xl border transition-all cursor-pointer relative space-y-3 ${isSelected
                           ? 'bg-white dark:bg-slate-900 border-2 border-[#2596be] shadow-md ring-2 ring-[#2596be]/20'
                           : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 shadow-2xs'
-                      }`}
+                        }`}
                     >
                       {/* Top Header Card */}
                       <div className="flex items-start justify-between gap-3">
@@ -941,7 +936,7 @@ function DashboardContent() {
           <div className="lg:col-span-7 sticky top-28 h-[calc(100vh-130px)]">
             {selectedJob && (
               <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-md overflow-y-auto h-full custom-scrollbar">
-                
+
                 {/* Detail Header */}
                 <div className="p-6 sm:p-8 pb-4 space-y-4 border-b border-slate-100 dark:border-slate-800">
                   <div className="flex items-start gap-4">
@@ -1068,11 +1063,10 @@ function DashboardContent() {
                     {/* Bookmark */}
                     <button
                       onClick={() => toggleSaveJob(selectedJob.id)}
-                      className={`p-3 rounded-2xl border transition-colors cursor-pointer ${
-                        savedJobIds.some(id => String(id) === String(selectedJob.id))
+                      className={`p-3 rounded-2xl border transition-colors cursor-pointer ${savedJobIds.some(id => String(id) === String(selectedJob.id))
                           ? 'bg-cyan-50 border-[#2596be] text-[#2596be] dark:bg-slate-800'
                           : 'border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50'
-                      }`}
+                        }`}
                       title="Save Job"
                     >
                       <Bookmark size={18} className={savedJobIds.some(id => String(id) === String(selectedJob.id)) ? 'fill-current' : ''} />

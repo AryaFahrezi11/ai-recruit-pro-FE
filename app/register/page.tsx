@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { getApiUrl } from '@/lib/api';
 import {
   Building2,
   Lock,
@@ -103,23 +104,23 @@ export default function CompanyRegistrationFlow() {
     setIsLoading(true);
 
     try {
-      const res = await fetch('http://localhost:8000/api/auth/register', {
+      const res = await fetch(getApiUrl('/auth/register'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password, role: 'perusahaan' })
       });
-      
+
       const data = await res.json();
-      
+
       if (!res.ok) {
-        const errorMsg = typeof data.detail === 'string' 
-          ? data.detail 
+        const errorMsg = typeof data.detail === 'string'
+          ? data.detail
           : 'Terjadi kesalahan saat registrasi. Pastikan data valid.';
         setErrorStep1(errorMsg);
         setIsLoading(false);
         return;
       }
-      
+
       // Success, move to Step 2
       setIsLoading(false);
       setStep(2);
@@ -156,23 +157,23 @@ export default function CompanyRegistrationFlow() {
     setIsLoading(true);
 
     try {
-      const res = await fetch('http://localhost:8000/api/auth/verify-otp', {
+      const res = await fetch(getApiUrl('/auth/verify-otp'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, otp_code: enteredOtp })
       });
-      
+
       const data = await res.json();
-      
+
       if (!res.ok) {
-        const errorMsg = typeof data.detail === 'string' 
-          ? data.detail 
+        const errorMsg = typeof data.detail === 'string'
+          ? data.detail
           : 'Kode OTP tidak valid atau sudah kadaluarsa.';
         setErrorStep2(errorMsg);
         setIsLoading(false);
         return;
       }
-      
+
       // Store token
       localStorage.setItem('access_token', data.access_token);
       setIsLoading(false);
@@ -243,20 +244,20 @@ export default function CompanyRegistrationFlow() {
       formData.append('alamat', companyAddress);
       formData.append('nib_number', nibNpwpNumber);
       if (nibFile) formData.append('nib_file', nibFile);
-      
+
       formData.append('hr_name', hrFullName);
       formData.append('hr_whatsapp', whatsappNumber);
       formData.append('hr_position', hrPosition);
       if (idCardFile) formData.append('id_card_file', idCardFile);
 
-      const res = await fetch('http://localhost:8000/api/users/profile', {
+      const res = await fetch(getApiUrl('/users/profile'), {
         method: 'PUT',
-        headers: { 
+        headers: {
           'Authorization': `Bearer ${token}`
         },
         body: formData
       });
-      
+
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
         let errorMsg = 'Gagal menyimpan data profil perusahaan. Sesi mungkin kadaluarsa.';
@@ -400,7 +401,7 @@ export default function CompanyRegistrationFlow() {
                     className="w-full pl-12 pr-4 py-3.5 bg-white border-2 border-slate-300 focus:border-[#1b7b9e] focus:ring-2 focus:ring-cyan-100 rounded-2xl text-sm outline-none transition-all"
                   />
                 </div>
-                
+
                 {/* Password Strength Indicator */}
                 <div className="mt-3 bg-slate-50 p-3 rounded-xl border border-slate-100">
                   <p className="text-[10px] font-bold text-slate-500 mb-2">Persyaratan Kata Sandi:</p>

@@ -1,4 +1,4 @@
-import { getBaseUrl } from '@/lib/api';
+import { getApiUrl } from '@/lib/api';
 
 export const loginUser = async (email: string, password: string, role?: string) => {
   const bodyData: any = { email, password };
@@ -6,8 +6,7 @@ export const loginUser = async (email: string, password: string, role?: string) 
     bodyData.role = role;
   }
   
-  const baseUrl = getBaseUrl();
-  const res = await fetch(`${baseUrl}/auth/login`, {
+  const res = await fetch(getApiUrl('/auth/login'), {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -52,7 +51,6 @@ export const fetchAuth = async (url: string, options: RequestInit = {}) => {
     headers.set('Content-Type', 'application/json');
   }
 
-  const baseUrl = getBaseUrl();
   let cleanUrl = url;
   if (cleanUrl.startsWith('/api/')) {
     cleanUrl = cleanUrl.substring(4);
@@ -60,7 +58,7 @@ export const fetchAuth = async (url: string, options: RequestInit = {}) => {
     cleanUrl = '/' + cleanUrl;
   }
 
-  const res = await fetch(`${baseUrl}${cleanUrl}`, {
+  const res = await fetch(getApiUrl(cleanUrl), {
     ...options,
     headers,
   });

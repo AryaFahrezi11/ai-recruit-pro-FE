@@ -274,9 +274,6 @@ export function CandidateModal({ candidate, onClose }: CandidateModalProps) {
                 </div>
 
                 <div className="flex flex-row sm:flex-col items-center sm:items-end justify-between w-full sm:w-auto gap-2 pt-2 sm:pt-0 border-t sm:border-0 border-border">
-                  <span className="px-3 py-1 bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 text-[11px] sm:text-xs font-semibold rounded-full border border-blue-200 dark:border-blue-900">
-                    {t.modal.tahapUploadTitle}
-                  </span>
                   <span className="text-[10px] sm:text-xs text-muted-foreground">Baru Saja</span>
                 </div>
               </div>
@@ -589,92 +586,163 @@ export function CandidateModal({ candidate, onClose }: CandidateModalProps) {
           {/* ==================== TAB 2: CV SCREENING (Tahap 2) ==================== */}
           {activeTab === 'cv_analysis' && stageIndex >= 1 && (
             <div className="max-w-4xl mx-auto py-2 animate-in fade-in duration-300 space-y-6">
-              <div>
-                <h2 className="text-xl font-bold mb-1">{t.modal.hasilAnalisisCV}</h2>
-                <p className="text-sm text-muted-foreground">
-                  {t.modal.deskripsiScreening}
-                </p>
+              <div className="pb-2 border-b border-border">
+                <h2 className="text-xl font-bold mb-1 flex items-center gap-2">
+                  <FileText className="text-primary" size={22} />
+                  {t.modal.hasilAnalisisCV}
+                </h2>
               </div>
 
               {/* Main Score Card */}
-              <div className="bg-card p-6 rounded-xl border border-border shadow-sm flex flex-col sm:flex-row items-center gap-6">
-                <div className={`w-28 h-28 rounded-full flex flex-col items-center justify-center shrink-0 shadow-lg ${(candidate.cvScore || 0) >= threshold
-                  ? 'bg-emerald-500 shadow-emerald-500/20 text-white'
-                  : 'bg-rose-500 shadow-rose-500/20 text-white'
-                  }`}>
-                  <span className="text-3xl font-bold">{candidate.cvScore || 0}%</span>
-                  <span className="text-[10px] uppercase tracking-wider font-semibold opacity-90">Score</span>
-                </div>
+              {(() => {
+                const isFailedEducation = candidate.analisisCv?.kategori === 'tidak_memenuhi_syarat_pendidikan';
+                const isPassed = (candidate.cvScore || 0) >= threshold && !isFailedEducation;
 
-                <div className="flex-1 text-center sm:text-left space-y-2">
-                  <div className="flex items-center gap-2 justify-center sm:justify-start">
-                    <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold ${(candidate.cvScore || 0) >= threshold
-                      ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800'
-                      : 'bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-800'
-                      }`}>
-                      {(candidate.cvScore || 0) >= threshold ? <CheckCircle2 size={14} /> : <XCircle size={14} />}
-                      {(candidate.cvScore || 0) >= threshold ? t.modal.lolosAmbang.replace('60', threshold.toString()) : t.modal.gagalAmbang.replace('60', threshold.toString())}
-                    </span>
-                  </div>
+                return (
+                  <>
+                    <div className="bg-card p-6 rounded-2xl border border-border shadow-sm flex flex-col sm:flex-row items-center gap-6">
+                      <div className={`w-28 h-28 rounded-2xl flex flex-col items-center justify-center shrink-0 shadow-md ${isPassed
+                        ? 'bg-gradient-to-br from-emerald-500 to-teal-600 text-white shadow-emerald-500/20'
+                        : 'bg-gradient-to-br from-rose-500 to-red-600 text-white shadow-rose-500/20'
+                        }`}>
+                        <span className="text-3xl font-extrabold tracking-tight">{candidate.cvScore || 0}%</span>
+                        <span className="text-[11px] font-semibold opacity-90 tracking-wide mt-0.5">Kecocokan</span>
+                      </div>
 
-                  <h3 className="text-lg font-bold text-foreground">
-                    {(candidate.cvScore || 0) >= threshold ? t.modal.kecocokanTinggi : t.modal.kecocokanRendah}
-                  </h3>
-                  <p className="text-xs text-muted-foreground leading-relaxed">
-                    Sistem Analisis Kesesuaian: <strong>{candidate.cvScore || 0}%</strong> match.
-                  </p>
-                </div>
-              </div>
+                      <div className="flex-1 text-center sm:text-left space-y-2.5">
+                        <div className="flex items-center gap-2 justify-center sm:justify-start flex-wrap">
+                          <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold ${isPassed
+                            ? 'bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800'
+                            : 'bg-rose-50 dark:bg-rose-950/50 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-800'
+                            }`}>
+                            {isPassed ? <CheckCircle2 size={14} className="text-emerald-600 dark:text-emerald-400" /> : <XCircle size={14} className="text-rose-600 dark:text-rose-400" />}
+                            {isFailedEducation
+                              ? "Tidak Memenuhi Syarat Pendidikan Minimal"
+                              : isPassed 
+                                ? `Memenuhi Standar Kelulusan (≥ ${threshold}%)`
+                                : `Di Bawah Standar Kelulusan (< ${threshold}%)`}
+                          </span>
+                        </div>
 
-              {/* Progress Bar vs Threshold */}
-              <div className="bg-card p-5 rounded-xl border border-border shadow-sm">
-                <div className="flex justify-between items-center text-xs font-semibold mb-2">
-                  <span>Skor Kesesuaian Profil</span>
-                  <span className="text-primary">{candidate.cvScore || 0}% Match</span>
-                </div>
-                <div className="w-full bg-muted rounded-full h-3 overflow-hidden">
-                  <div
-                    className={`h-full rounded-full transition-all duration-700 ${(candidate.cvScore || 0) >= threshold ? 'bg-emerald-500' : 'bg-rose-500'}`}
-                    style={{ width: `${candidate.cvScore || 0}%` }}
-                  ></div>
-                </div>
-                <div className="flex justify-between items-center text-[10px] text-muted-foreground mt-1.5">
-                  <span>0%</span>
-                  <span className="font-bold text-rose-500">{t.modal.ambangBatasMin.replace('60', threshold.toString())}</span>
-                  <span>100%</span>
-                </div>
-              </div>
+                        <h3 className="text-lg font-bold text-foreground">
+                          {isFailedEducation
+                            ? "Kualifikasi Pendidikan Belum Memenuhi Ketentuan"
+                            : isPassed ? t.modal.kecocokanTinggi : t.modal.kecocokanRendah}
+                        </h3>
+                        <p className="text-xs text-muted-foreground leading-relaxed">
+                          {isFailedEducation ? (
+                            <>
+                              Pendidikan terakhir kandidat (<strong>{candidate.cvDocument?.pendidikan_tertinggi || candidate.education || 'Tidak tercantum'}</strong>) belum memenuhi syarat minimal yang ditentukan perusahaan (<strong>{candidate.jobData?.pendidikan_min || 'Sesuai Ketentuan'}</strong>).
+                            </>
+                          ) : isPassed ? (
+                            <>
+                              Profil, pengalaman kerja, dan keahlian kandidat dinilai <strong>cocok ({candidate.cvScore || 0}%)</strong> dengan kriteria lowongan dan telah melampaui batas minimal kelulusan (<strong>{threshold}%</strong>).
+                            </>
+                          ) : (
+                            <>
+                              Tingkat kecocokan profil kandidat saat ini sebesar <strong>{candidate.cvScore || 0}%</strong>, belum mencapai batas nilai minimal yang ditetapkan perusahaan yaitu <strong>{threshold}%</strong>.
+                            </>
+                          )}
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Progress Bar vs Threshold */}
+                    <div className="bg-card p-5 rounded-2xl border border-border shadow-sm space-y-3">
+                      <div className="flex justify-between items-center text-xs font-semibold">
+                        <span className="text-foreground">Tingkat Kecocokan dengan Kriteria Posisi</span>
+                        <span className={`font-bold text-sm ${isPassed ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}`}>
+                          {candidate.cvScore || 0}% Match
+                        </span>
+                      </div>
+                      <div className="relative w-full bg-slate-100 dark:bg-slate-800 rounded-full h-3.5 overflow-hidden">
+                        <div
+                          className={`h-full rounded-full transition-all duration-700 ${isPassed ? 'bg-emerald-500' : 'bg-rose-500'}`}
+                          style={{ width: `${Math.min(100, Math.max(0, candidate.cvScore || 0))}%` }}
+                        ></div>
+                      </div>
+                      <div className="flex justify-between items-center text-[11px] text-muted-foreground font-medium pt-0.5">
+                        <span>0% (Sangat Rendah)</span>
+                        <span className="font-semibold text-foreground flex items-center gap-1.5 bg-muted/60 px-2.5 py-0.5 rounded-md border border-border">
+                          <span className="w-2 h-2 rounded-full bg-primary inline-block"></span>
+                          Batas Minimal Kelulusan: <strong className="text-primary">{threshold}%</strong>
+                        </span>
+                        <span>100% (Sangat Cocok)</span>
+                      </div>
+                    </div>
+                  </>
+                );
+              })()}
 
               {/* Detail Evaluasi */}
-              <div className="bg-card p-5 rounded-xl border border-border shadow-sm">
-                <h3 className="font-extrabold text-[#2596be] dark:text-cyan-400 flex items-center gap-2">
-                  <Sparkles size={16} /> Keterangan Analisis
-                </h3>
-                <p className="text-slate-700 dark:text-slate-300 text-xs">
-                  Sistem telah membandingkan profil CV kandidat dengan kriteria pekerjaan menggunakan metode gabungan kesesuaian profil dan pemenuhan syarat spesifik. Hasil persentase di atas menunjukkan tingkat kemiripan dokumen terhadap standar yang Anda tetapkan (Ambang Batas: <strong>{threshold}%</strong>).
-                </p>
+              <div className="bg-card p-6 rounded-2xl border border-border shadow-sm space-y-4">
+                <div>
+                  <h3 className="font-bold text-foreground text-sm flex items-center gap-2">
+                    Rincian Penilaian Kualifikasi
+                  </h3>
+                  <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
+                    Sistem mengevaluasi profil kandidat secara transparan berdasarkan 2 komponen utama:
+                  </p>
+                </div>
 
-                {candidate.analisisCv?.hybrid_details && (
-                  <div className="mt-4 pt-4 border-t border-border/50 grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="bg-muted/30 p-3 rounded-lg border border-border">
-                      <p className="text-[11px] text-muted-foreground font-semibold uppercase tracking-wider mb-1">Skor Konteks (SBERT)</p>
-                      <p className="text-sm font-bold text-foreground">
-                        {candidate.analisisCv.hybrid_details.sbert_score}% <span className="text-xs font-normal text-muted-foreground ml-1">(Bobot 60%)</span>
-                      </p>
+                {candidate.analisisCv?.hybrid_details ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-1">
+                    {/* Aspek 1: Kesesuaian Pengalaman Kerja */}
+                    <div className="bg-slate-50/80 dark:bg-slate-800/40 p-4 rounded-xl border border-border/80 flex flex-col justify-between space-y-3">
+                      <div>
+                        <div className="flex items-center justify-between gap-2 mb-1.5">
+                          <span className="text-xs font-bold text-foreground flex items-center gap-1.5">
+                            <Briefcase size={14} className="text-primary shrink-0" />
+                            Kesesuaian Pengalaman Kerja
+                          </span>
+                          <span className="text-[10px] font-semibold px-2 py-0.5 rounded bg-primary/10 text-primary border border-primary/20">
+                            Porsi 60%
+                          </span>
+                        </div>
+                        <p className="text-[11px] text-muted-foreground leading-relaxed">
+                          Mengukur relevansi riwayat karier, deskripsi tugas, dan tanggung jawab kandidat sebelumnya terhadap kebutuhan posisi yang dilamar.
+                        </p>
+                      </div>
+                      <div className="pt-2 border-t border-border/60 flex items-baseline justify-between">
+                        <span className="text-xs text-muted-foreground">Nilai Relevansi:</span>
+                        <span className="text-base font-extrabold text-foreground">
+                          {candidate.analisisCv.hybrid_details.sbert_score}%
+                        </span>
+                      </div>
                     </div>
-                    <div className="bg-muted/30 p-3 rounded-lg border border-border">
-                      <p className="text-[11px] text-muted-foreground font-semibold uppercase tracking-wider mb-1">Skor Fakta (Keyword)</p>
-                      <p className="text-sm font-bold text-foreground">
-                        {candidate.analisisCv.hybrid_details.keyword_score}% <span className="text-xs font-normal text-muted-foreground ml-1">(Bobot 40%)</span>
-                      </p>
-                      <p className="text-[10px] text-muted-foreground mt-1">
-                        Ditemukan {candidate.analisisCv.hybrid_details.keywords_found} dari {candidate.analisisCv.hybrid_details.keywords_total} keahlian wajib.
-                      </p>
+
+                    {/* Aspek 2: Pemenuhan Keahlian Wajib */}
+                    <div className="bg-slate-50/80 dark:bg-slate-800/40 p-4 rounded-xl border border-border/80 flex flex-col justify-between space-y-3">
+                      <div>
+                        <div className="flex items-center justify-between gap-2 mb-1.5">
+                          <span className="text-xs font-bold text-foreground flex items-center gap-1.5">
+                            <CheckCircle2 size={14} className="text-emerald-600 dark:text-emerald-400 shrink-0" />
+                            Pemenuhan Keahlian Wajib
+                          </span>
+                          <span className="text-[10px] font-semibold px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+                            Porsi 40%
+                          </span>
+                        </div>
+                        <p className="text-[11px] text-muted-foreground leading-relaxed">
+                          Memeriksa langsung penguasaan keahlian dan keterampilan utama yang disyaratkan dalam kriteria lowongan pekerjaan.
+                        </p>
+                      </div>
+                      <div className="pt-2 border-t border-border/60 flex items-center justify-between flex-wrap gap-1">
+                        <span className="text-[11px] text-muted-foreground">
+                          Memenuhi <strong>{candidate.analisisCv.hybrid_details.keywords_found}</strong> dari <strong>{candidate.analisisCv.hybrid_details.keywords_total}</strong> keahlian wajib
+                        </span>
+                        <span className="text-base font-extrabold text-foreground">
+                          {candidate.analisisCv.hybrid_details.keyword_score}%
+                        </span>
+                      </div>
                     </div>
+                  </div>
+                ) : (
+                  <div className="bg-muted/30 p-4 rounded-xl border border-border text-xs text-muted-foreground leading-relaxed">
+                    Sistem membandingkan dokumen CV kandidat dengan uraian kualifikasi pekerjaan. Tingkat kesesuaian keseluruhan kandidat adalah <strong>{candidate.cvScore || 0}%</strong> terhadap batas ambang kelulusan <strong>{threshold}%</strong>.
                   </div>
                 )}
               </div>
-
             </div>
           )}
 
@@ -690,18 +758,6 @@ export function CandidateModal({ candidate, onClose }: CandidateModalProps) {
                       {t.modal.statusVideoWawancara}
                     </h3>
                   </div>
-
-                  {isVideoUploaded ? (
-                    <span className="px-3 py-1.5 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800 text-xs font-bold rounded-full flex items-center gap-1.5">
-                      <CheckCircle2 size={14} />
-                      {t.modal.videoSudahDiunggah}
-                    </span>
-                  ) : (
-                    <span className="px-3 py-1.5 bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 border border-amber-200 dark:border-amber-800 text-xs font-bold rounded-full flex items-center gap-1.5">
-                      <Clock size={14} />
-                      {t.modal.videoBelumDiunggah}
-                    </span>
-                  )}
                 </div>
 
                 {/* If Video IS Uploaded */}

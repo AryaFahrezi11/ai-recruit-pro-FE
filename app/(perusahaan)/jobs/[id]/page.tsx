@@ -4,13 +4,14 @@ import React, { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
 import { useRouter, useParams } from 'next/navigation';
 import { useTranslation } from '@/hooks/useTranslation';
-import { 
+import {
   ArrowLeft, Edit, Briefcase, Building2, MapPin, Clock, DollarSign,
   Sparkles, Sliders, FileText, Plus, Trash2, CheckCircle2,
   Calendar, Users, HelpCircle, Save, Send, Layers, Check, Globe, X, Video
 } from 'lucide-react';
 import { useAppStore } from '@/lib/store/useAppStore';
 import { fetchAuth } from '@/lib/api/auth';
+import { getApiUrl } from '@/lib/api';
 
 function JobDetailView() {
   const { t } = useTranslation();
@@ -22,16 +23,16 @@ function JobDetailView() {
   // Form State
   const [jobTitle, setJobTitle] = useState('');
   const [categoryId, setCategoryId] = useState('');
-  const [categories, setCategories] = useState<{id: string, nama_kategori: string}[]>([]);
+  const [categories, setCategories] = useState<{ id: string, nama_kategori: string }[]>([]);
   const [employmentType, setEmploymentType] = useState('Full-time');
   const [workMode, setWorkMode] = useState('hybrid');
   const [location, setLocation] = useState('');
   const [experienceLevel, setExperienceLevel] = useState('Entry Level');
   const [pendidikanMin, setPendidikanMin] = useState('');
-  
+
   // Job Description & AI Keywords
   const [summary, setSummary] = useState('');
-  
+
   // Dynamic Lists
   const [responsibilities, setResponsibilities] = useState<string[]>([]);
   const [newResp, setNewResp] = useState('');
@@ -135,7 +136,7 @@ function JobDetailView() {
     // Fetch categories
     const fetchCategories = async () => {
       try {
-        const res = await fetch('http://localhost:8000/api/jobs/categories');
+        const res = await fetch(getApiUrl('/jobs/categories'));
         if (res.ok) {
           const data = await res.json();
           setCategories(data);
@@ -202,8 +203,8 @@ function JobDetailView() {
       tipe_pekerjaan: employmentType,
       lokasi_kerja: workMode,
       kota: location,
-      gaji_min: parseFloat(salaryMin.replace(/[^0-9.-]+/g,"")),
-      gaji_max: parseFloat(salaryMax.replace(/[^0-9.-]+/g,"")),
+      gaji_min: parseFloat(salaryMin.replace(/[^0-9.-]+/g, "")),
+      gaji_max: parseFloat(salaryMax.replace(/[^0-9.-]+/g, "")),
       tampilkan_gaji: showSalaryPublic,
       pengalaman_min_tahun: parseInt(experienceLevel) || 0, // Simplified for now
       cv_threshold: threshold,
@@ -221,10 +222,10 @@ function JobDetailView() {
     };
 
     try {
-      const url = jobId 
-        ? `http://localhost:8000/api/jobs/${jobId}` 
-        : 'http://localhost:8000/api/jobs/';
       const method = jobId ? 'PUT' : 'POST';
+      const url = jobId
+        ? getApiUrl(`/jobs/${jobId}`)
+        : getApiUrl('/jobs/');
 
       const res = await fetch(url, {
         method,
@@ -256,11 +257,11 @@ function JobDetailView() {
 
   return (
     <div className="max-w-5xl mx-auto pb-24 animate-in fade-in duration-300">
-      
+
       {/* Top Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
         <div>
-          <button 
+          <button
             type="button"
             onClick={() => router.back()}
             className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors mb-3"
@@ -278,7 +279,7 @@ function JobDetailView() {
       </div>
 
       <div className="space-y-8">
-        
+
         {/* ==================== SECTION 1: BASIC INFO ==================== */}
         <div className="bg-card p-6 sm:p-8 rounded-xl border border-border shadow-sm space-y-6">
           <div className="flex items-center gap-2 border-b border-border pb-4">
@@ -292,11 +293,11 @@ function JobDetailView() {
               <label className="block text-xs font-semibold text-foreground mb-2">
                 {t.jobs.jobTitle} <span className="text-rose-500">*</span>
               </label>
-              <input disabled 
+              <input disabled
                 type="text"
                 required
                 value={jobTitle}
-                
+
                 placeholder={t.jobs.jobTitlePlaceholder}
                 className="w-full px-4 py-2.5 bg-muted/30 border border-border rounded-lg text-sm text-foreground focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all"
               />
@@ -307,9 +308,9 @@ function JobDetailView() {
               <label className="block text-xs font-semibold text-foreground mb-2">
                 Kategori Pekerjaan <span className="text-rose-500">*</span>
               </label>
-              <select disabled 
+              <select disabled
                 value={categoryId}
-                
+
                 className="w-full px-4 py-2.5 bg-muted/30 border border-border rounded-lg text-sm text-foreground focus:outline-none focus:border-primary transition-all"
               >
                 <option value="" disabled>-- Pilih Kategori --</option>
@@ -324,9 +325,9 @@ function JobDetailView() {
               <label className="block text-xs font-semibold text-foreground mb-2">
                 {t.jobs.employmentType} <span className="text-rose-500">*</span>
               </label>
-              <select disabled 
+              <select disabled
                 value={employmentType}
-                
+
                 className="w-full px-4 py-2.5 bg-muted/30 border border-border rounded-lg text-sm text-foreground focus:outline-none focus:border-primary transition-all"
               >
                 <option value="Full-time">Full-time (Tetap)</option>
@@ -343,19 +344,19 @@ function JobDetailView() {
                 {t.jobs.workLocation} <span className="text-rose-500">*</span>
               </label>
               <div className="flex gap-2">
-                <select disabled 
+                <select disabled
                   value={workMode}
-                  
+
                   className="w-1/3 px-3 py-2.5 bg-muted/30 border border-border rounded-lg text-sm text-foreground focus:outline-none focus:border-primary transition-all"
                 >
                   <option value="hybrid">Hybrid</option>
                   <option value="remote">Remote</option>
                   <option value="onsite">On-site</option>
                 </select>
-                <input disabled 
+                <input disabled
                   type="text"
                   value={location}
-                  
+
                   placeholder="Misal: Jakarta, Indonesia"
                   className="w-2/3 px-4 py-2.5 bg-muted/30 border border-border rounded-lg text-sm text-foreground focus:outline-none focus:border-primary transition-all"
                 />
@@ -367,9 +368,9 @@ function JobDetailView() {
               <label className="block text-xs font-semibold text-foreground mb-2">
                 {t.jobs.experienceLevel} <span className="text-rose-500">*</span>
               </label>
-              <select disabled 
+              <select disabled
                 value={experienceLevel}
-                
+
                 className="w-full px-4 py-2.5 bg-muted/30 border border-border rounded-lg text-sm text-foreground focus:outline-none focus:border-primary transition-all"
               >
                 <option value="Entry Level">Entry Level (0 - 1 Tahun)</option>
@@ -384,9 +385,9 @@ function JobDetailView() {
               <label className="block text-xs font-semibold text-foreground mb-2">
                 Minimal Pendidikan
               </label>
-              <select disabled 
+              <select disabled
                 value={pendidikanMin}
-                
+
                 className="w-full px-4 py-2.5 bg-muted/30 border border-border rounded-lg text-sm text-foreground focus:outline-none focus:border-primary transition-all"
               >
                 <option value="" disabled>-- Pilih Pendidikan --</option>
@@ -414,11 +415,11 @@ function JobDetailView() {
             <label className="block text-xs font-semibold text-foreground mb-2">
               {t.jobs.roleSummary} <span className="text-rose-500">*</span>
             </label>
-            <textarea disabled 
+            <textarea disabled
               rows={4}
               required
               value={summary}
-              
+
               placeholder={t.jobs.roleSummaryPlaceholder}
               className="w-full p-4 bg-muted/30 border border-border rounded-lg text-sm text-foreground focus:outline-none focus:border-primary transition-all resize-none"
             ></textarea>
@@ -436,8 +437,8 @@ function JobDetailView() {
                     <span className="w-1.5 h-1.5 rounded-full bg-primary shrink-0"></span>
                     {resp}
                   </span>
-                  <button 
-                    type="button" 
+                  <button
+                    type="button"
                     onClick={() => handleRemoveResponsibility(i)}
                     className="text-muted-foreground hover:text-rose-500 transition-colors p-1"
                   >
@@ -447,8 +448,8 @@ function JobDetailView() {
               ))}
             </ul>
             <div className="flex gap-2">
-              
-              
+
+
             </div>
           </div>
 
@@ -464,8 +465,8 @@ function JobDetailView() {
                     <Check size={14} className="text-emerald-500 shrink-0" />
                     {req}
                   </span>
-                  <button 
-                    type="button" 
+                  <button
+                    type="button"
                     onClick={() => handleRemoveRequirement(i)}
                     className="text-muted-foreground hover:text-rose-500 transition-colors p-1"
                   >
@@ -475,8 +476,8 @@ function JobDetailView() {
               ))}
             </ul>
             <div className="flex gap-2">
-              
-              
+
+
             </div>
           </div>
 
@@ -488,15 +489,15 @@ function JobDetailView() {
             <p className="text-[11px] text-muted-foreground mb-3">
               Keahlian ini akan ditambahkan sebagai bobot utama perhitungan AI saat membandingkan kecocokan dengan CV kandidat.
             </p>
-            
+
             <div className="p-3 bg-muted/30 border border-border rounded-lg flex flex-wrap gap-2 items-center min-h-[52px]">
               {aiKeywords.map((tag) => (
                 <span key={tag} className="inline-flex items-center gap-1 px-2.5 py-1 bg-primary/10 text-primary text-xs font-semibold rounded-md border border-primary/20">
                   #{tag}
-                  
+
                 </span>
               ))}
-              
+
             </div>
           </div>
         </div>
@@ -527,16 +528,16 @@ function JobDetailView() {
               </span>
             </div>
 
-            <input disabled 
-              type="range" 
-              min="50" 
-              max="95" 
+            <input disabled
+              type="range"
+              min="50"
+              max="95"
               step="5"
               value={threshold}
-              
+
               className="w-full h-2 bg-muted rounded-lg appearance-none cursor-pointer accent-primary"
             />
-            
+
             <div className="flex justify-between text-[10px] text-muted-foreground font-mono">
               <span>30% (Longgar)</span>
               <span className="font-bold text-emerald-600 dark:text-emerald-400">60% (Rekomendasi AI)</span>
@@ -563,7 +564,7 @@ function JobDetailView() {
                     Q{i + 1}
                   </span>
                   <p className="flex-1 font-medium text-foreground leading-relaxed">{q}</p>
-                  <button 
+                  <button
                     type="button"
                     onClick={() => handleRemoveQuestion(i)}
                     className="text-muted-foreground hover:text-rose-500 p-1 transition-colors shrink-0"
@@ -576,8 +577,8 @@ function JobDetailView() {
 
             {videoQuestions.length < 5 && (
               <div className="flex gap-2">
-                
-                
+
+
               </div>
             )}
           </div>
@@ -597,18 +598,18 @@ function JobDetailView() {
                 {t.jobs.salaryMin}
               </label>
               <div className="flex gap-2">
-                <select disabled 
+                <select disabled
                   value={currency}
-                  
+
                   className="w-24 px-3 py-2.5 bg-muted/30 border border-border rounded-lg text-sm text-foreground focus:outline-none focus:border-primary"
                 >
                   <option value="IDR">IDR (Rp)</option>
                   <option value="USD">USD ($)</option>
                 </select>
-                <input disabled 
+                <input disabled
                   type="text"
                   value={salaryMin}
-                  
+
                   placeholder="Misal: 8.000.000"
                   className="flex-1 px-4 py-2.5 bg-muted/30 border border-border rounded-lg text-sm text-foreground focus:outline-none focus:border-primary"
                 />
@@ -620,21 +621,21 @@ function JobDetailView() {
               <label className="block text-xs font-semibold text-foreground mb-2">
                 {t.jobs.salaryMax}
               </label>
-              <input disabled 
+              <input disabled
                 type="text"
                 value={salaryMax}
-                
+
                 placeholder="Misal: 15.000.000"
                 className="w-full px-4 py-2.5 bg-muted/30 border border-border rounded-lg text-sm text-foreground focus:outline-none focus:border-primary"
               />
             </div>
 
             <div className="col-span-2 flex items-center gap-2">
-              <input disabled 
+              <input disabled
                 type="checkbox"
                 id="showSalary"
                 checked={showSalaryPublic}
-                
+
                 className="rounded border-border text-primary focus:ring-primary"
               />
               <label htmlFor="showSalary" className="text-xs text-foreground font-medium cursor-pointer">
@@ -684,10 +685,10 @@ function JobDetailView() {
               <label className="block text-xs font-semibold text-foreground mb-2">
                 {t.jobs.deadline}
               </label>
-              <input disabled 
+              <input disabled
                 type="date"
                 value={deadline}
-                
+
                 className="w-full px-4 py-2.5 bg-muted/30 border border-border rounded-lg text-sm text-foreground focus:outline-none focus:border-primary"
               />
             </div>
@@ -696,12 +697,12 @@ function JobDetailView() {
               <label className="block text-xs font-semibold text-foreground mb-2">
                 {t.jobs.openingsCount}
               </label>
-              <input disabled 
+              <input disabled
                 type="number"
                 min="1"
                 max="50"
                 value={openingsCount}
-                
+
                 className="w-full px-4 py-2.5 bg-muted/30 border border-border rounded-lg text-sm text-foreground focus:outline-none focus:border-primary"
               />
             </div>
@@ -710,9 +711,9 @@ function JobDetailView() {
               <label className="block text-xs font-semibold text-foreground mb-2">
                 Visibilitas Lowongan
               </label>
-              <select disabled 
+              <select disabled
                 value={visibility}
-                
+
                 className="w-full px-4 py-2.5 bg-muted/30 border border-border rounded-lg text-sm text-foreground focus:outline-none focus:border-primary"
               >
                 <option value="Public">Publik di Portal Rekrutmen</option>
@@ -723,10 +724,10 @@ function JobDetailView() {
           </div>
         </div>
 
-                {/* Sticky Action Footer Bar */}
+        {/* Sticky Action Footer Bar */}
         <div className="fixed bottom-0 left-0 right-0 z-40 bg-card/90 backdrop-blur-md border-t border-border py-4 px-6 shadow-xl">
           <div className="max-w-5xl mx-auto flex items-center justify-between">
-            <button 
+            <button
               type="button"
               onClick={() => router.push('/jobs')}
               className="px-4 py-2.5 border border-border hover:bg-muted text-foreground text-xs font-semibold rounded-lg transition-colors flex items-center gap-2"
@@ -735,7 +736,7 @@ function JobDetailView() {
               Kembali
             </button>
 
-            <Link 
+            <Link
               href={`/jobs/new?edit=${jobId}`}
               className="px-6 py-2.5 bg-primary hover:bg-primary/90 text-primary-foreground text-xs font-semibold rounded-lg transition-colors flex items-center gap-2 shadow-md"
             >

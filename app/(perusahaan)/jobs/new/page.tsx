@@ -4,13 +4,14 @@ import React, { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useTranslation } from '@/hooks/useTranslation';
-import { 
+import {
   ArrowLeft, Briefcase, Building2, MapPin, Clock, DollarSign,
   Sparkles, Sliders, FileText, Plus, Trash2, CheckCircle2,
   Calendar, Users, HelpCircle, Save, Send, Layers, Check, Globe, X, Video
 } from 'lucide-react';
 import { useAppStore } from '@/lib/store/useAppStore';
 import { fetchAuth } from '@/lib/api/auth';
+import { getApiUrl } from '@/lib/api';
 
 function CreateJobForm() {
   const { t } = useTranslation();
@@ -22,16 +23,16 @@ function CreateJobForm() {
   // Form State
   const [jobTitle, setJobTitle] = useState('');
   const [categoryId, setCategoryId] = useState('');
-  const [categories, setCategories] = useState<{id: string, nama_kategori: string}[]>([]);
+  const [categories, setCategories] = useState<{ id: string, nama_kategori: string }[]>([]);
   const [employmentType, setEmploymentType] = useState('Full-time');
   const [workMode, setWorkMode] = useState('hybrid');
   const [location, setLocation] = useState('');
   const [experienceLevel, setExperienceLevel] = useState('Entry Level');
   const [pendidikanMin, setPendidikanMin] = useState('');
-  
+
   // Job Description & AI Keywords
   const [summary, setSummary] = useState('');
-  
+
   // Dynamic Lists
   const [responsibilities, setResponsibilities] = useState<string[]>([]);
   const [newResp, setNewResp] = useState('');
@@ -135,7 +136,7 @@ function CreateJobForm() {
     // Fetch categories
     const fetchCategories = async () => {
       try {
-        const res = await fetch('http://localhost:8000/api/jobs/categories');
+        const res = await fetch(getApiUrl('/jobs/categories'));
         if (res.ok) {
           const data = await res.json();
           setCategories(data);
@@ -202,8 +203,8 @@ function CreateJobForm() {
       tipe_pekerjaan: employmentType,
       lokasi_kerja: workMode,
       kota: location,
-      gaji_min: parseFloat(salaryMin.replace(/[^0-9.-]+/g,"")),
-      gaji_max: parseFloat(salaryMax.replace(/[^0-9.-]+/g,"")),
+      gaji_min: parseFloat(salaryMin.replace(/[^0-9.-]+/g, "")),
+      gaji_max: parseFloat(salaryMax.replace(/[^0-9.-]+/g, "")),
       tampilkan_gaji: showSalaryPublic,
       pengalaman_min_tahun: parseInt(experienceLevel) || 0, // Simplified for now
       cv_threshold: threshold,
@@ -221,9 +222,9 @@ function CreateJobForm() {
     };
 
     try {
-      const url = editId 
-        ? `http://localhost:8000/api/jobs/${editId}` 
-        : 'http://localhost:8000/api/jobs/';
+      const url = editId
+        ? getApiUrl(`/jobs/${editId}`)
+        : getApiUrl('/jobs/');
       const method = editId ? 'PUT' : 'POST';
 
       const res = await fetch(url, {
@@ -256,11 +257,11 @@ function CreateJobForm() {
 
   return (
     <div className="max-w-5xl mx-auto pb-24 animate-in fade-in duration-300">
-      
+
       {/* Top Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
         <div>
-          <button 
+          <button
             type="button"
             onClick={() => router.back()}
             className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors mb-3"
@@ -278,7 +279,7 @@ function CreateJobForm() {
       </div>
 
       <form onSubmit={handlePublish} className="space-y-8">
-        
+
         {/* ==================== SECTION 1: BASIC INFO ==================== */}
         <div className="bg-card p-6 sm:p-8 rounded-xl border border-border shadow-sm space-y-6">
           <div className="flex items-center gap-2 border-b border-border pb-4">
@@ -292,7 +293,7 @@ function CreateJobForm() {
               <label className="block text-xs font-semibold text-foreground mb-2">
                 {t.jobs.jobTitle} <span className="text-rose-500">*</span>
               </label>
-              <input 
+              <input
                 type="text"
                 required
                 value={jobTitle}
@@ -307,7 +308,7 @@ function CreateJobForm() {
               <label className="block text-xs font-semibold text-foreground mb-2">
                 Kategori Pekerjaan <span className="text-rose-500">*</span>
               </label>
-              <select 
+              <select
                 value={categoryId}
                 onChange={(e) => setCategoryId(e.target.value)}
                 className="w-full px-4 py-2.5 bg-muted/30 border border-border rounded-lg text-sm text-foreground focus:outline-none focus:border-primary transition-all"
@@ -324,7 +325,7 @@ function CreateJobForm() {
               <label className="block text-xs font-semibold text-foreground mb-2">
                 {t.jobs.employmentType} <span className="text-rose-500">*</span>
               </label>
-              <select 
+              <select
                 value={employmentType}
                 onChange={(e) => setEmploymentType(e.target.value)}
                 className="w-full px-4 py-2.5 bg-muted/30 border border-border rounded-lg text-sm text-foreground focus:outline-none focus:border-primary transition-all"
@@ -343,7 +344,7 @@ function CreateJobForm() {
                 {t.jobs.workLocation} <span className="text-rose-500">*</span>
               </label>
               <div className="flex gap-2">
-                <select 
+                <select
                   value={workMode}
                   onChange={(e) => setWorkMode(e.target.value)}
                   className="w-1/3 px-3 py-2.5 bg-muted/30 border border-border rounded-lg text-sm text-foreground focus:outline-none focus:border-primary transition-all"
@@ -352,7 +353,7 @@ function CreateJobForm() {
                   <option value="remote">Remote</option>
                   <option value="onsite">On-site</option>
                 </select>
-                <input 
+                <input
                   type="text"
                   value={location}
                   onChange={(e) => setLocation(e.target.value)}
@@ -367,7 +368,7 @@ function CreateJobForm() {
               <label className="block text-xs font-semibold text-foreground mb-2">
                 {t.jobs.experienceLevel} <span className="text-rose-500">*</span>
               </label>
-              <select 
+              <select
                 value={experienceLevel}
                 onChange={(e) => setExperienceLevel(e.target.value)}
                 className="w-full px-4 py-2.5 bg-muted/30 border border-border rounded-lg text-sm text-foreground focus:outline-none focus:border-primary transition-all"
@@ -384,7 +385,7 @@ function CreateJobForm() {
               <label className="block text-xs font-semibold text-foreground mb-2">
                 Minimal Pendidikan
               </label>
-              <select 
+              <select
                 value={pendidikanMin}
                 onChange={(e) => setPendidikanMin(e.target.value)}
                 className="w-full px-4 py-2.5 bg-muted/30 border border-border rounded-lg text-sm text-foreground focus:outline-none focus:border-primary transition-all"
@@ -414,7 +415,7 @@ function CreateJobForm() {
             <label className="block text-xs font-semibold text-foreground mb-2">
               {t.jobs.roleSummary} <span className="text-rose-500">*</span>
             </label>
-            <textarea 
+            <textarea
               rows={4}
               required
               value={summary}
@@ -436,8 +437,8 @@ function CreateJobForm() {
                     <span className="w-1.5 h-1.5 rounded-full bg-primary shrink-0"></span>
                     {resp}
                   </span>
-                  <button 
-                    type="button" 
+                  <button
+                    type="button"
                     onClick={() => handleRemoveResponsibility(i)}
                     className="text-muted-foreground hover:text-rose-500 transition-colors p-1"
                   >
@@ -447,7 +448,7 @@ function CreateJobForm() {
               ))}
             </ul>
             <div className="flex gap-2">
-              <input 
+              <input
                 type="text"
                 value={newResp}
                 onChange={(e) => setNewResp(e.target.value)}
@@ -455,8 +456,8 @@ function CreateJobForm() {
                 className="flex-1 px-4 py-2 bg-muted/30 border border-border rounded-lg text-xs text-foreground focus:outline-none focus:border-primary"
                 onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddResponsibility())}
               />
-              <button 
-                type="button" 
+              <button
+                type="button"
                 onClick={handleAddResponsibility}
                 className="px-3 py-2 bg-muted hover:bg-muted/80 text-foreground text-xs font-medium rounded-lg transition-colors flex items-center gap-1"
               >
@@ -478,8 +479,8 @@ function CreateJobForm() {
                     <Check size={14} className="text-emerald-500 shrink-0" />
                     {req}
                   </span>
-                  <button 
-                    type="button" 
+                  <button
+                    type="button"
                     onClick={() => handleRemoveRequirement(i)}
                     className="text-muted-foreground hover:text-rose-500 transition-colors p-1"
                   >
@@ -489,7 +490,7 @@ function CreateJobForm() {
               ))}
             </ul>
             <div className="flex gap-2">
-              <input 
+              <input
                 type="text"
                 value={newReq}
                 onChange={(e) => setNewReq(e.target.value)}
@@ -497,8 +498,8 @@ function CreateJobForm() {
                 className="flex-1 px-4 py-2 bg-muted/30 border border-border rounded-lg text-xs text-foreground focus:outline-none focus:border-primary"
                 onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddRequirement())}
               />
-              <button 
-                type="button" 
+              <button
+                type="button"
                 onClick={handleAddRequirement}
                 className="px-3 py-2 bg-muted hover:bg-muted/80 text-foreground text-xs font-medium rounded-lg transition-colors flex items-center gap-1"
               >
@@ -516,13 +517,13 @@ function CreateJobForm() {
             <p className="text-[11px] text-muted-foreground mb-3">
               Keahlian ini akan ditambahkan sebagai bobot utama perhitungan AI saat membandingkan kecocokan dengan CV kandidat.
             </p>
-            
+
             <div className="p-3 bg-muted/30 border border-border rounded-lg flex flex-wrap gap-2 items-center min-h-[52px]">
               {aiKeywords.map((tag) => (
                 <span key={tag} className="inline-flex items-center gap-1 px-2.5 py-1 bg-primary/10 text-primary text-xs font-semibold rounded-md border border-primary/20">
                   #{tag}
-                  <button 
-                    type="button" 
+                  <button
+                    type="button"
                     onClick={() => handleRemoveKeyword(tag)}
                     className="hover:text-rose-500 transition-colors ml-0.5"
                   >
@@ -530,7 +531,7 @@ function CreateJobForm() {
                   </button>
                 </span>
               ))}
-              <input 
+              <input
                 type="text"
                 value={keywordInput}
                 onChange={(e) => setKeywordInput(e.target.value)}
@@ -568,16 +569,16 @@ function CreateJobForm() {
               </span>
             </div>
 
-            <input 
-              type="range" 
-              min="50" 
-              max="95" 
+            <input
+              type="range"
+              min="50"
+              max="95"
               step="5"
               value={threshold}
               onChange={(e) => setThreshold(Number(e.target.value))}
               className="w-full h-2 bg-muted rounded-lg appearance-none cursor-pointer accent-primary"
             />
-            
+
             <div className="flex justify-between text-[10px] text-muted-foreground font-mono">
               <span>30% (Longgar)</span>
               <span className="font-bold text-emerald-600 dark:text-emerald-400">60% (Rekomendasi AI)</span>
@@ -604,7 +605,7 @@ function CreateJobForm() {
                     Q{i + 1}
                   </span>
                   <p className="flex-1 font-medium text-foreground leading-relaxed">{q}</p>
-                  <button 
+                  <button
                     type="button"
                     onClick={() => handleRemoveQuestion(i)}
                     className="text-muted-foreground hover:text-rose-500 p-1 transition-colors shrink-0"
@@ -617,7 +618,7 @@ function CreateJobForm() {
 
             {videoQuestions.length < 5 && (
               <div className="flex gap-2">
-                <input 
+                <input
                   type="text"
                   value={newQuestion}
                   onChange={(e) => setNewQuestion(e.target.value)}
@@ -625,8 +626,8 @@ function CreateJobForm() {
                   className="flex-1 px-4 py-2 bg-muted/30 border border-border rounded-lg text-xs text-foreground focus:outline-none focus:border-primary"
                   onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddQuestion())}
                 />
-                <button 
-                  type="button" 
+                <button
+                  type="button"
                   onClick={handleAddQuestion}
                   className="px-4 py-2 bg-primary text-primary-foreground hover:bg-primary/90 text-xs font-medium rounded-lg transition-colors flex items-center gap-1 shrink-0"
                 >
@@ -652,7 +653,7 @@ function CreateJobForm() {
                 {t.jobs.salaryMin}
               </label>
               <div className="flex gap-2">
-                <select 
+                <select
                   value={currency}
                   onChange={(e) => setCurrency(e.target.value)}
                   className="w-24 px-3 py-2.5 bg-muted/30 border border-border rounded-lg text-sm text-foreground focus:outline-none focus:border-primary"
@@ -660,7 +661,7 @@ function CreateJobForm() {
                   <option value="IDR">IDR (Rp)</option>
                   <option value="USD">USD ($)</option>
                 </select>
-                <input 
+                <input
                   type="text"
                   value={salaryMin}
                   onChange={(e) => setSalaryMin(e.target.value)}
@@ -675,7 +676,7 @@ function CreateJobForm() {
               <label className="block text-xs font-semibold text-foreground mb-2">
                 {t.jobs.salaryMax}
               </label>
-              <input 
+              <input
                 type="text"
                 value={salaryMax}
                 onChange={(e) => setSalaryMax(e.target.value)}
@@ -685,7 +686,7 @@ function CreateJobForm() {
             </div>
 
             <div className="col-span-2 flex items-center gap-2">
-              <input 
+              <input
                 type="checkbox"
                 id="showSalary"
                 checked={showSalaryPublic}
@@ -721,11 +722,10 @@ function CreateJobForm() {
                     key={benefit}
                     type="button"
                     onClick={() => toggleBenefit(benefit)}
-                    className={`p-3 rounded-lg border text-left text-xs font-medium transition-all flex items-center justify-between ${
-                      isSelected 
-                        ? 'bg-primary/10 border-primary text-primary shadow-sm' 
+                    className={`p-3 rounded-lg border text-left text-xs font-medium transition-all flex items-center justify-between ${isSelected
+                        ? 'bg-primary/10 border-primary text-primary shadow-sm'
                         : 'bg-muted/20 border-border text-muted-foreground hover:text-foreground'
-                    }`}
+                      }`}
                   >
                     <span>{benefit}</span>
                     {isSelected && <Check size={14} className="shrink-0 ml-1" />}
@@ -748,7 +748,7 @@ function CreateJobForm() {
               <label className="block text-xs font-semibold text-foreground mb-2">
                 {t.jobs.deadline}
               </label>
-              <input 
+              <input
                 type="date"
                 value={deadline}
                 onChange={(e) => setDeadline(e.target.value)}
@@ -760,7 +760,7 @@ function CreateJobForm() {
               <label className="block text-xs font-semibold text-foreground mb-2">
                 {t.jobs.openingsCount}
               </label>
-              <input 
+              <input
                 type="number"
                 min="1"
                 max="50"
@@ -774,7 +774,7 @@ function CreateJobForm() {
               <label className="block text-xs font-semibold text-foreground mb-2">
                 Visibilitas Lowongan
               </label>
-              <select 
+              <select
                 value={visibility}
                 onChange={(e) => setVisibility(e.target.value)}
                 className="w-full px-4 py-2.5 bg-muted/30 border border-border rounded-lg text-sm text-foreground focus:outline-none focus:border-primary"
@@ -790,7 +790,7 @@ function CreateJobForm() {
         {/* Sticky Action Footer Bar */}
         <div className="fixed bottom-0 left-0 right-0 z-40 bg-card/90 backdrop-blur-md border-t border-border py-4 px-6 shadow-xl">
           <div className="max-w-5xl mx-auto flex items-center justify-between">
-            <button 
+            <button
               type="button"
               onClick={() => router.back()}
               className="px-4 py-2.5 border border-border hover:bg-muted text-foreground text-xs font-semibold rounded-lg transition-colors"
@@ -799,7 +799,7 @@ function CreateJobForm() {
             </button>
 
             <div className="flex items-center gap-3">
-              <button 
+              <button
                 type="button"
                 className="px-5 py-2.5 border border-border hover:bg-muted text-foreground text-xs font-semibold rounded-lg transition-colors flex items-center gap-2"
               >
@@ -807,7 +807,7 @@ function CreateJobForm() {
                 {t.jobs.saveDraft}
               </button>
 
-              <button 
+              <button
                 type="submit"
                 disabled={isSubmitting}
                 className="px-6 py-2.5 bg-primary hover:bg-primary/90 text-primary-foreground text-xs font-semibold rounded-lg transition-colors flex items-center gap-2 shadow-md disabled:opacity-50"
@@ -841,7 +841,7 @@ function CreateJobForm() {
             <p className="text-xs text-muted-foreground leading-relaxed">
               Lowongan <strong>{jobTitle}</strong> ({categories.find(c => c.id === categoryId)?.nama_kategori}) kini aktif dan siap menerima berkas pelamar dengan aturan seleksi AI (Threshold PO-FIT {threshold}%).
             </p>
-            <button 
+            <button
               onClick={handleSuccessClose}
               className="w-full py-3 bg-primary text-primary-foreground font-semibold rounded-lg text-xs hover:bg-primary/90 transition-colors mt-4"
             >
@@ -862,7 +862,7 @@ function CreateJobForm() {
             <p className="text-xs text-muted-foreground leading-relaxed">
               {errorMsg}
             </p>
-            <button 
+            <button
               onClick={() => setErrorMsg(null)}
               className="w-full py-3 bg-rose-600 text-white font-semibold rounded-lg text-xs hover:bg-rose-700 transition-colors mt-4"
             >
@@ -883,4 +883,4 @@ export default function CreateJobPage() {
     </Suspense>
   );
 }
- 
+
