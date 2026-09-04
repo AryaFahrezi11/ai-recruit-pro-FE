@@ -1,10 +1,10 @@
 'use client';
 
 import React, { useState } from 'react';
-import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useTranslation } from '@/hooks/useTranslation';
-import LanguageSwitcher from '@/components/LanguageSwitcher';
+import Footer from '@/components/Footer';
+
 import {
   HelpCircle,
   ArrowRight,
@@ -160,7 +160,7 @@ export default function PelamarRegisterPage() {
         </Link>
 
         <div className="flex items-center gap-6">
-          <LanguageSwitcher />
+
           <Link
             href="/login"
             className="text-xs sm:text-sm font-semibold text-[#1A4B9F] hover:underline flex items-center gap-1.5"
@@ -200,6 +200,12 @@ export default function PelamarRegisterPage() {
                     type="email"
                     value={email}
                     onChange={(e) => { setEmail(e.target.value); setError(''); }}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        document.getElementById('password')?.focus();
+                      }
+                    }}
                     placeholder={t.pelamar.auth.emailPlaceholder}
                     className="w-full pl-12 pr-4 py-3 bg-white dark:bg-slate-950 text-slate-900 dark:text-white border-2 border-slate-300 dark:border-slate-700 focus:border-[#1A4B9F] dark:focus:border-blue-400 focus:ring-2 focus:ring-blue-100 dark:focus:ring-blue-900 rounded-2xl text-sm outline-none transition-all"
                   />
@@ -217,6 +223,12 @@ export default function PelamarRegisterPage() {
                     type="password"
                     value={password}
                     onChange={(e) => { setPassword(e.target.value); setError(''); }}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        document.getElementById('confirmPassword')?.focus();
+                      }
+                    }}
                     placeholder="••••••••"
                     className="w-full pl-12 pr-4 py-3 bg-white dark:bg-slate-950 text-slate-900 dark:text-white border-2 border-slate-300 dark:border-slate-700 focus:border-[#1A4B9F] dark:focus:border-blue-400 focus:ring-2 focus:ring-blue-100 dark:focus:ring-blue-900 rounded-2xl text-sm outline-none transition-all"
                   />
@@ -261,6 +273,12 @@ export default function PelamarRegisterPage() {
                     type="password"
                     value={confirmPassword}
                     onChange={(e) => { setConfirmPassword(e.target.value); setError(''); }}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        document.getElementById('submit-btn')?.click();
+                      }
+                    }}
                     placeholder="••••••••"
                     className="w-full pl-12 pr-4 py-3 bg-white dark:bg-slate-950 text-slate-900 dark:text-white border-2 border-slate-300 dark:border-slate-700 focus:border-[#1A4B9F] dark:focus:border-blue-400 focus:ring-2 focus:ring-blue-100 dark:focus:ring-blue-900 rounded-2xl text-sm outline-none transition-all"
                   />
@@ -275,6 +293,7 @@ export default function PelamarRegisterPage() {
               )}
 
               <button
+                id="submit-btn"
                 type="submit"
                 disabled={isLoading}
                 className="w-full py-3 rounded-full bg-[#1A4B9F] hover:bg-[#133878] text-white font-semibold text-sm shadow-sm transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer"
@@ -360,10 +379,7 @@ export default function PelamarRegisterPage() {
 
       </main>
 
-      {/* Simple Footer */}
-      <footer className="py-6 border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-center text-xs text-slate-400">
-        &copy; {new Date().getFullYear()} AI-Recruit Pro Candidate Portal. Seluruh hak cipta dilindungi.
-      </footer>
+      <Footer />
 
     </div>
   );

@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
+import Footer from '@/components/Footer';
 import { useRouter } from 'next/navigation';
 import { getApiUrl } from '@/lib/api';
 import {
@@ -377,6 +378,12 @@ export default function CompanyRegistrationFlow() {
                     type="email"
                     value={email}
                     onChange={(e) => { setEmail(e.target.value); setErrorStep1(''); }}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        document.getElementById('password')?.focus();
+                      }
+                    }}
                     placeholder="Contoh: hrd@tokopedia.com, recruitment@bankmandiri.co.id"
                     className="w-full pl-12 pr-4 py-3.5 bg-white border-2 border-slate-300 focus:border-[#1b7b9e] focus:ring-2 focus:ring-cyan-100 rounded-2xl text-sm outline-none transition-all"
                   />
@@ -394,9 +401,16 @@ export default function CompanyRegistrationFlow() {
                 <div className="relative flex items-center">
                   <Lock size={18} className="absolute left-4 text-slate-400 pointer-events-none" />
                   <input
+                    id="password"
                     type="password"
                     value={password}
                     onChange={(e) => { setPassword(e.target.value); setErrorStep1(''); }}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        document.getElementById('confirmPassword')?.focus();
+                      }
+                    }}
                     placeholder="••••••••"
                     className="w-full pl-12 pr-4 py-3.5 bg-white border-2 border-slate-300 focus:border-[#1b7b9e] focus:ring-2 focus:ring-cyan-100 rounded-2xl text-sm outline-none transition-all"
                   />
@@ -438,9 +452,16 @@ export default function CompanyRegistrationFlow() {
                 <div className="relative flex items-center">
                   <Lock size={18} className="absolute left-4 text-slate-400 pointer-events-none" />
                   <input
+                    id="confirmPassword"
                     type="password"
                     value={confirmPassword}
                     onChange={(e) => { setConfirmPassword(e.target.value); setErrorStep1(''); }}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        document.getElementById('submit-btn')?.click();
+                      }
+                    }}
                     placeholder="Ulangi Kata Sandi"
                     className="w-full pl-12 pr-4 py-3.5 bg-white border-2 border-slate-300 focus:border-[#1b7b9e] focus:ring-2 focus:ring-cyan-100 rounded-2xl text-sm outline-none transition-all"
                   />
@@ -458,6 +479,7 @@ export default function CompanyRegistrationFlow() {
 
 
               <button
+                id="submit-btn"
                 type="submit"
                 disabled={isLoading}
                 className="w-full py-4 rounded-full bg-[#1b7b9e] hover:bg-[#1D7FA1] text-white font-black text-xs sm:text-sm shadow-md transition-all flex items-center justify-center gap-2"
@@ -824,10 +846,7 @@ export default function CompanyRegistrationFlow() {
 
       </main>
 
-      {/* Footer */}
-      <footer className="py-6 border-t border-[#C2E5EF] bg-white text-center text-xs text-slate-400 mt-12">
-        &copy; {new Date().getFullYear()} AI-Recruit Pro Corporate Legal Validation System.
-      </footer>
+      <Footer />
 
     </div>
   );

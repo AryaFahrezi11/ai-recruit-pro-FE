@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from '@/hooks/useTranslation';
 
 export const renderSkillsText = (skillsStr: string | undefined): string => {
   if (!skillsStr) return '';
@@ -11,8 +12,12 @@ export const renderSkillsText = (skillsStr: string | undefined): string => {
   return skillsStr;
 };
 
-export const ParseSkills = ({ skillsStr, fallbackText = 'Tidak ada skill tercantum' }: { skillsStr?: string, fallbackText?: string }) => {
-  if (!skillsStr) return <span className="text-slate-400 italic">{fallbackText}</span>;
+export const ParseSkills = ({ skillsStr, fallbackText }: { skillsStr?: string, fallbackText?: string }) => {
+  const { language } = useTranslation();
+  const defaultFallback = language === 'id' ? 'Tidak ada skill tercantum' : 'No skills listed';
+  const displayFallback = fallbackText || defaultFallback;
+
+  if (!skillsStr) return <span className="text-slate-400 italic">{displayFallback}</span>;
   
   try {
     const parsed = JSON.parse(skillsStr);

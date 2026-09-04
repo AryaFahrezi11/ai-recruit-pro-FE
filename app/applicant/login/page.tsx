@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useTranslation } from '@/hooks/useTranslation';
-import LanguageSwitcher from '@/components/LanguageSwitcher';
+import Footer from '@/components/Footer';
 import {
   HelpCircle,
   ArrowRight,
@@ -80,7 +80,6 @@ export default function PelamarLoginPage() {
         </Link>
 
         <div className="flex items-center gap-6">
-          <LanguageSwitcher />
           <Link
             href="/login"
             className="text-xs sm:text-sm font-semibold text-[#1A4B9F] hover:underline flex items-center gap-1.5"
@@ -163,10 +162,7 @@ export default function PelamarLoginPage() {
         </div>
       </main>
 
-      {/* Simple Footer */}
-      <footer className="py-6 border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-center text-xs text-slate-400">
-        &copy; {new Date().getFullYear()} AI-Recruit Pro Candidate Portal. Seluruh hak cipta dilindungi.
-      </footer>
+      <Footer />
 
     </div>
   );

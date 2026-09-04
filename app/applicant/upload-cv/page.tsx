@@ -494,27 +494,7 @@ export default function AtsCvBuilderPage() {
             </p>
           </div>
 
-          {/* Tab Switcher */}
-          <div className="flex items-center gap-2 bg-slate-50 dark:bg-slate-800 p-1.5 rounded-full border border-slate-200 dark:border-slate-700">
-            <button
-              onClick={() => setActiveTab('builder')}
-              className={`px-5 py-2 rounded-full text-xs font-bold transition-all ${activeTab === 'builder'
-                ? 'bg-[#1A4B9F] text-white shadow-2xs'
-                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-                }`}
-            >
-              {t.pelamar.uploadCv.orUseBuilder}
-            </button>
-            <button
-              onClick={() => setActiveTab('upload')}
-              className={`px-5 py-2 rounded-full text-xs font-bold transition-all ${activeTab === 'upload'
-                ? 'bg-[#1A4B9F] text-white shadow-2xs'
-                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-                }`}
-            >
-              {t.pelamar.uploadCv.uploadNew}
-            </button>
-          </div>
+
         </div>
       </div>
 
