@@ -8,7 +8,7 @@ import { useAppStore } from '@/lib/store/useAppStore';
 import { useTranslation } from '@/hooks/useTranslation';
 import { 
   GraduationCap, LayoutDashboard, Users, Settings, HelpCircle, 
-  Sun, Moon, Globe, Search, Bell, Menu, X, ArrowLeftRight, Building2,
+  Globe, Search, Bell, Menu, X, ArrowLeftRight, Building2,
   CheckCircle2, Video, FileText, ArrowRight, LogOut
 } from 'lucide-react';
 
@@ -18,7 +18,7 @@ export default function KampusLayout({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
-  const { theme, toggleTheme, language, setLanguage, isMobileSidebarOpen, toggleMobileSidebar } = useAppStore();
+  const { language, setLanguage, isMobileSidebarOpen, toggleMobileSidebar } = useAppStore();
   const { t } = useTranslation();
   const [mounted, setMounted] = useState(false);
 
@@ -177,13 +177,13 @@ export default function KampusLayout({
             {mounted && (
               <>
 
-
                 <button
-                  onClick={toggleTheme}
-                  className="w-9 h-9 rounded-full flex items-center justify-center hover:bg-muted transition-colors border border-border text-muted-foreground"
-                  title="Toggle Theme"
+                  onClick={() => setLanguage(language === 'id' ? 'en' : 'id')}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-full hover:bg-muted transition-colors border border-border text-muted-foreground font-bold text-xs"
+                  title="Toggle Language"
                 >
-                  {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
+                  <Globe size={16} />
+                  <span>{language.toUpperCase()}</span>
                 </button>
               </>
             )}

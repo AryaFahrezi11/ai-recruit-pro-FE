@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useTranslation } from '@/hooks/useTranslation';
+import LanguageSwitcher from '@/components/LanguageSwitcher';
 import {
   HelpCircle,
   ArrowRight,
@@ -143,31 +144,31 @@ export default function PelamarRegisterPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#F0F8FB] dark:bg-slate-950 text-[#1b7b9e] dark:text-cyan-400 flex flex-col justify-between font-sans antialiased">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 flex flex-col justify-between font-sans antialiased transition-colors duration-300">
 
       {/* Top Header */}
       <header className="py-6 px-6 sm:px-12 max-w-[1600px] w-full mx-auto flex items-center justify-between">
-        <Link href="/" className="flex items-center gap-3 group">
-          <div className="w-10 h-10 bg-[#2596be] text-white rounded-xl flex items-center justify-center font-black text-lg shadow-md group-hover:scale-105 transition-transform">
-            RP
-          </div>
+        <Link href="/" className="flex items-center gap-2 group">
           <div className="flex flex-col">
-            <span className="font-black text-xl tracking-tight text-[#2596be] leading-none">
-              AI-Recruit <span className="text-[#1D7FA1]">Pro</span>
+            <span className="font-bold text-2xl tracking-tight text-slate-900 dark:text-white leading-none">
+              AI-RecruitPro
             </span>
-            <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest mt-0.5">
+            <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest mt-1">
               {t.pelamar.header.portalName}
             </span>
           </div>
         </Link>
 
-        <Link
-          href="/login"
-          className="text-xs sm:text-sm font-bold text-[#1b7b9e] hover:underline flex items-center gap-1.5"
-        >
-          <Building2 size={16} />
-          {t.pelamar.header.forEmployers}
-        </Link>
+        <div className="flex items-center gap-6">
+          <LanguageSwitcher />
+          <Link
+            href="/login"
+            className="text-xs sm:text-sm font-semibold text-[#1A4B9F] hover:underline flex items-center gap-1.5"
+          >
+            <Building2 size={16} />
+            {t.pelamar.header.forEmployers}
+          </Link>
+        </div>
       </header>
 
       {/* Main Container */}
@@ -175,23 +176,20 @@ export default function PelamarRegisterPage() {
 
         {/* STEP 1: Registration Form */}
         {step === 1 && (
-          <div className="w-full max-w-md bg-white dark:bg-slate-900 rounded-3xl p-8 sm:p-10 shadow-2xl border border-[#C2E5EF] dark:border-slate-800 space-y-7 relative animate-in fade-in duration-200">
+          <div className="w-full max-w-md bg-white dark:bg-slate-900 rounded-3xl p-8 sm:p-10 shadow-2xl border border-slate-200 dark:border-slate-800 space-y-7 relative animate-in fade-in duration-200">
             <div className="space-y-2">
-              <span className="px-3 py-1 bg-[#E0F1F7] dark:bg-slate-800 text-[#1b7b9e] dark:text-cyan-400 rounded-full text-[11px] font-extrabold border border-[#B8E1ED] dark:border-slate-700 inline-block">
-                Step 1 of 2: Applicant Registration
-              </span>
-              <h1 className="text-3xl font-black text-[#1b7b9e] dark:text-cyan-400">{t.pelamar.auth.registerTitle}</h1>
-              <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400">
+              <h1 className="text-2xl font-bold text-slate-900 dark:text-white">{t.pelamar.auth.registerTitle}</h1>
+              <p className="text-sm text-slate-500 dark:text-slate-400">
                 {t.pelamar.auth.registerSubtitle}
               </p>
             </div>
 
             <form onSubmit={handleRegisterSubmit} className="space-y-4">
               <div className="space-y-1">
-                <div className="flex items-center justify-between text-xs font-bold text-slate-700 dark:text-slate-300">
+                <div className="flex items-center justify-between text-xs font-semibold text-slate-700 dark:text-slate-300">
                   <label htmlFor="email">{t.pelamar.auth.emailLabel}</label>
-                  <button type="button" className="text-[#1b7b9e] dark:text-cyan-400 hover:underline flex items-center gap-1">
-                    <HelpCircle size={14} /> Bantuan
+                  <button type="button" className="text-[#1A4B9F] dark:text-blue-400 hover:underline flex items-center gap-1">
+                    <HelpCircle size={14} /> {t.pelamar.auth.help}
                   </button>
                 </div>
 
@@ -202,15 +200,15 @@ export default function PelamarRegisterPage() {
                     type="email"
                     value={email}
                     onChange={(e) => { setEmail(e.target.value); setError(''); }}
-                    placeholder="nama@email.com"
-                    className="w-full pl-12 pr-4 py-3 bg-white dark:bg-slate-800 border-2 border-slate-300 dark:border-slate-700 focus:border-[#1b7b9e] dark:focus:border-cyan-400 focus:ring-2 focus:ring-cyan-100 dark:focus:ring-cyan-900 rounded-2xl text-sm outline-none transition-all dark:text-white"
+                    placeholder={t.pelamar.auth.emailPlaceholder}
+                    className="w-full pl-12 pr-4 py-3 bg-white dark:bg-slate-950 text-slate-900 dark:text-white border-2 border-slate-300 dark:border-slate-700 focus:border-[#1A4B9F] dark:focus:border-blue-400 focus:ring-2 focus:ring-blue-100 dark:focus:ring-blue-900 rounded-2xl text-sm outline-none transition-all"
                   />
                 </div>
               </div>
 
               <div className="space-y-1">
-                <label htmlFor="password" className="block text-xs font-bold text-slate-700 dark:text-slate-300">
-                  Password <span className="text-red-500">*</span>
+                <label htmlFor="password" className="block text-xs font-semibold text-slate-700 dark:text-slate-300">
+                  {t.pelamar.auth.passwordLabel} <span className="text-red-500">*</span>
                 </label>
                 <div className="relative flex items-center">
                   <Lock size={18} className="absolute left-4 text-slate-400 pointer-events-none" />
@@ -220,40 +218,40 @@ export default function PelamarRegisterPage() {
                     value={password}
                     onChange={(e) => { setPassword(e.target.value); setError(''); }}
                     placeholder="••••••••"
-                    className="w-full pl-12 pr-4 py-3 bg-white dark:bg-slate-800 border-2 border-slate-300 dark:border-slate-700 focus:border-[#1b7b9e] dark:focus:border-cyan-400 focus:ring-2 focus:ring-cyan-100 dark:focus:ring-cyan-900 rounded-2xl text-sm outline-none transition-all dark:text-white"
+                    className="w-full pl-12 pr-4 py-3 bg-white dark:bg-slate-950 text-slate-900 dark:text-white border-2 border-slate-300 dark:border-slate-700 focus:border-[#1A4B9F] dark:focus:border-blue-400 focus:ring-2 focus:ring-blue-100 dark:focus:ring-blue-900 rounded-2xl text-sm outline-none transition-all"
                   />
                 </div>
                 
                 {/* Password Strength Indicator */}
                 <div className="mt-3 bg-slate-50 dark:bg-slate-800/50 p-3 rounded-xl border border-slate-100 dark:border-slate-700/50">
-                  <p className="text-[10px] font-bold text-slate-500 dark:text-slate-400 mb-2">Password Requirements:</p>
+                  <p className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 mb-2">{t.pelamar.auth.passwordRequirements}</p>
                   <div className="grid grid-cols-2 gap-2 text-[10px]">
-                    <div className={`flex items-center gap-1.5 ${strength.length ? 'text-green-600 dark:text-green-400 font-bold' : 'text-slate-500 dark:text-slate-400'}`}>
+                    <div className={`flex items-center gap-1.5 ${strength.length ? 'text-green-600 dark:text-green-400 font-semibold' : 'text-slate-500 dark:text-slate-400'}`}>
                       {strength.length ? <CheckCircle2 size={12} /> : <div className="w-3 h-3 rounded-full border border-slate-300 dark:border-slate-600" />}
-                      Minimal 8 Karakter
+                      {t.pelamar.auth.min8Chars}
                     </div>
-                    <div className={`flex items-center gap-1.5 ${strength.uppercase ? 'text-green-600 dark:text-green-400 font-bold' : 'text-slate-500 dark:text-slate-400'}`}>
+                    <div className={`flex items-center gap-1.5 ${strength.uppercase ? 'text-green-600 dark:text-green-400 font-semibold' : 'text-slate-500 dark:text-slate-400'}`}>
                       {strength.uppercase ? <CheckCircle2 size={12} /> : <div className="w-3 h-3 rounded-full border border-slate-300 dark:border-slate-600" />}
-                      Huruf Kapital (A-Z)
+                      {t.pelamar.auth.uppercase}
                     </div>
-                    <div className={`flex items-center gap-1.5 ${strength.lowercase ? 'text-green-600 dark:text-green-400 font-bold' : 'text-slate-500 dark:text-slate-400'}`}>
+                    <div className={`flex items-center gap-1.5 ${strength.lowercase ? 'text-green-600 dark:text-green-400 font-semibold' : 'text-slate-500 dark:text-slate-400'}`}>
                       {strength.lowercase ? <CheckCircle2 size={12} /> : <div className="w-3 h-3 rounded-full border border-slate-300 dark:border-slate-600" />}
-                      Huruf Kecil (a-z)
+                      {t.pelamar.auth.lowercase}
                     </div>
-                    <div className={`flex items-center gap-1.5 ${strength.number ? 'text-green-600 dark:text-green-400 font-bold' : 'text-slate-500 dark:text-slate-400'}`}>
+                    <div className={`flex items-center gap-1.5 ${strength.number ? 'text-green-600 dark:text-green-400 font-semibold' : 'text-slate-500 dark:text-slate-400'}`}>
                       {strength.number ? <CheckCircle2 size={12} /> : <div className="w-3 h-3 rounded-full border border-slate-300 dark:border-slate-600" />}
-                      Angka (0-9)
+                      {t.pelamar.auth.number}
                     </div>
-                    <div className={`flex items-center gap-1.5 ${strength.special ? 'text-green-600 dark:text-green-400 font-bold' : 'text-slate-500 dark:text-slate-400'}`}>
+                    <div className={`flex items-center gap-1.5 ${strength.special ? 'text-green-600 dark:text-green-400 font-semibold' : 'text-slate-500 dark:text-slate-400'}`}>
                       {strength.special ? <CheckCircle2 size={12} /> : <div className="w-3 h-3 rounded-full border border-slate-300 dark:border-slate-600" />}
-                      Karakter Spesial
+                      {t.pelamar.auth.specialChar}
                     </div>
                   </div>
                 </div>
               </div>
 
               <div className="space-y-1 mt-4">
-                <label htmlFor="confirmPassword" className="block text-xs font-bold text-slate-700 dark:text-slate-300">
+                <label htmlFor="confirmPassword" className="block text-xs font-semibold text-slate-700 dark:text-slate-300">
                   Confirm Password <span className="text-red-500">*</span>
                 </label>
                 <div className="relative flex items-center">
@@ -264,7 +262,7 @@ export default function PelamarRegisterPage() {
                     value={confirmPassword}
                     onChange={(e) => { setConfirmPassword(e.target.value); setError(''); }}
                     placeholder="••••••••"
-                    className="w-full pl-12 pr-4 py-3 bg-white dark:bg-slate-800 border-2 border-slate-300 dark:border-slate-700 focus:border-[#1b7b9e] dark:focus:border-cyan-400 focus:ring-2 focus:ring-cyan-100 dark:focus:ring-cyan-900 rounded-2xl text-sm outline-none transition-all dark:text-white"
+                    className="w-full pl-12 pr-4 py-3 bg-white dark:bg-slate-950 text-slate-900 dark:text-white border-2 border-slate-300 dark:border-slate-700 focus:border-[#1A4B9F] dark:focus:border-blue-400 focus:ring-2 focus:ring-blue-100 dark:focus:ring-blue-900 rounded-2xl text-sm outline-none transition-all"
                   />
                 </div>
               </div>
@@ -279,16 +277,16 @@ export default function PelamarRegisterPage() {
               <button
                 type="submit"
                 disabled={isLoading}
-                className="w-full py-3.5 rounded-full bg-[#1b7b9e] hover:bg-[#1D7FA1] text-white font-extrabold text-xs sm:text-sm shadow-md hover:shadow-lg transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer"
+                className="w-full py-3 rounded-full bg-[#1A4B9F] hover:bg-[#133878] text-white font-semibold text-sm shadow-sm transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer"
               >
-                <span>{isLoading ? 'Mendaftarkan Akun...' : 'Daftar Sekarang & Kirim OTP'}</span>
+                <span>{isLoading ? t.pelamar.auth.processing : t.pelamar.auth.signUp}</span>
                 <ArrowRight size={16} />
               </button>
             </form>
 
             <div className="pt-2 text-center text-xs text-slate-600 dark:text-slate-400 font-medium">
               {t.pelamar.auth.hasAccount}{' '}
-              <Link href="/applicant/login" className="font-extrabold text-[#1b7b9e] dark:text-cyan-400 hover:underline">
+              <Link href="/applicant/login" className="font-semibold text-[#1A4B9F] dark:text-blue-400 hover:underline">
                 {t.pelamar.auth.loginNow}
               </Link>
             </div>
@@ -297,14 +295,14 @@ export default function PelamarRegisterPage() {
 
         {/* STEP 2: OTP Verification Popup/Card */}
         {step === 2 && (
-          <div className="w-full max-w-md bg-white dark:bg-slate-900 rounded-3xl p-8 sm:p-10 shadow-2xl border border-[#C2E5EF] dark:border-slate-800 space-y-7 relative animate-in zoom-in-95 duration-200">
+          <div className="w-full max-w-md bg-white dark:bg-slate-900 rounded-3xl p-8 sm:p-10 shadow-2xl border border-slate-200 dark:border-slate-800 space-y-7 relative animate-in zoom-in-95 duration-200">
             <div className="space-y-2 text-center">
-              <div className="w-14 h-14 bg-[#E0F1F7] dark:bg-slate-800 border border-[#B8E1ED] dark:border-slate-700 rounded-2xl flex items-center justify-center text-[#2596be] dark:text-cyan-400 mx-auto">
+              <div className="w-14 h-14 bg-blue-50 dark:bg-slate-800 border border-blue-100 dark:border-slate-700 rounded-2xl flex items-center justify-center text-[#1A4B9F] dark:text-blue-400 mx-auto">
                 <KeyRound size={28} />
               </div>
-              <h2 className="text-2xl font-black text-[#1b7b9e] dark:text-cyan-400">Verifikasi Kode OTP Email</h2>
-              <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 max-w-xs mx-auto leading-relaxed">
-                Kode verifikasi OTP 6-digit telah dikirimkan ke alamat email Anda: <strong className="text-[#2596be] dark:text-cyan-400">{email}</strong>.
+              <h2 className="text-xl font-bold text-slate-900 dark:text-white">Verifikasi Kode OTP Email</h2>
+              <p className="text-sm text-slate-500 dark:text-slate-400 max-w-xs mx-auto leading-relaxed">
+                Kode verifikasi OTP 6-digit telah dikirimkan ke alamat email Anda: <strong className="text-[#1A4B9F] dark:text-blue-400">{email}</strong>.
               </p>
             </div>
 
@@ -320,7 +318,7 @@ export default function PelamarRegisterPage() {
                     maxLength={1}
                     value={digit}
                     onChange={(e) => handleOtpChange(idx, e.target.value)}
-                    className="w-11 h-13 sm:w-12 sm:h-14 text-center text-xl font-black text-[#1b7b9e] dark:text-cyan-400 bg-[#F0F8FB] dark:bg-slate-800 border-2 border-[#C2E5EF] dark:border-slate-700 focus:border-[#1b7b9e] dark:focus:border-cyan-400 focus:bg-white dark:focus:bg-slate-900 rounded-2xl outline-none transition-all"
+                    className="w-11 h-13 sm:w-12 sm:h-14 text-center text-xl font-bold text-slate-900 dark:text-white bg-slate-50 dark:bg-slate-950 border-2 border-slate-200 dark:border-slate-700 focus:border-[#1A4B9F] dark:focus:border-blue-400 focus:bg-white dark:focus:bg-slate-900 rounded-2xl outline-none transition-all"
                   />
                 ))}
               </div>
@@ -343,7 +341,7 @@ export default function PelamarRegisterPage() {
                 <button
                   type="submit"
                   disabled={isLoading}
-                  className="flex-1 py-3.5 rounded-full bg-[#1b7b9e] hover:bg-[#1D7FA1] text-white font-extrabold text-xs sm:text-sm shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer"
+                  className="flex-1 py-3 rounded-full bg-[#1A4B9F] hover:bg-[#133878] text-white font-semibold text-sm shadow-sm transition-all flex items-center justify-center gap-2 cursor-pointer"
                 >
                   {isLoading ? (
                     <span>Memverifikasi...</span>
@@ -363,7 +361,7 @@ export default function PelamarRegisterPage() {
       </main>
 
       {/* Simple Footer */}
-      <footer className="py-6 border-t border-[#C4E3ED] dark:border-slate-800 bg-white dark:bg-slate-900 text-center text-xs text-slate-400">
+      <footer className="py-6 border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-center text-xs text-slate-400">
         &copy; {new Date().getFullYear()} AI-Recruit Pro Candidate Portal. Seluruh hak cipta dilindungi.
       </footer>
 

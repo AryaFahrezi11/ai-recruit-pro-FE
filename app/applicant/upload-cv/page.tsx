@@ -31,7 +31,7 @@ import { api, parseErrorMessage } from '@/lib/api';
 
 export default function AtsCvBuilderPage() {
   const router = useRouter();
-  const { t } = useTranslation();
+  const { t, language } = useTranslation();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [activeTab, setActiveTab] = useState<'builder' | 'upload'>('builder');
   const [uploadError, setUploadError] = useState('');
@@ -483,10 +483,10 @@ export default function AtsCvBuilderPage() {
     <div className="max-w-[1600px] w-full mx-auto space-y-8">
 
       {/* Main Page Title Banner */}
-      <div className="no-print bg-white dark:bg-slate-900 p-8 sm:p-10 rounded-3xl border border-[#C2E5EF] dark:border-slate-800 shadow-xs space-y-3">
+      <div className="no-print bg-white dark:bg-slate-900 p-8 sm:p-10 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs space-y-3">
         <div className="flex items-center justify-between flex-wrap gap-4">
           <div className="space-y-2">
-            <h1 className="text-2xl sm:text-4xl font-black text-[#1b7b9e] dark:text-cyan-400">
+            <h1 className="text-2xl sm:text-4xl font-bold text-slate-900 dark:text-white">
               {t.pelamar.uploadCv.title}
             </h1>
             <p className="text-slate-500 dark:text-slate-400 text-xs sm:text-base leading-relaxed max-w-3xl">
@@ -495,12 +495,12 @@ export default function AtsCvBuilderPage() {
           </div>
 
           {/* Tab Switcher */}
-          <div className="flex items-center gap-2 bg-[#F0F8FB] dark:bg-slate-800 p-1.5 rounded-full border border-[#C2E5EF] dark:border-slate-700">
+          <div className="flex items-center gap-2 bg-slate-50 dark:bg-slate-800 p-1.5 rounded-full border border-slate-200 dark:border-slate-700">
             <button
               onClick={() => setActiveTab('builder')}
               className={`px-5 py-2 rounded-full text-xs font-bold transition-all ${activeTab === 'builder'
-                ? 'bg-[#1b7b9e] text-white shadow-2xs'
-                : 'text-slate-600 dark:text-slate-400 hover:text-[#1b7b9e] dark:hover:text-cyan-400'
+                ? 'bg-[#1A4B9F] text-white shadow-2xs'
+                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
                 }`}
             >
               {t.pelamar.uploadCv.orUseBuilder}
@@ -508,8 +508,8 @@ export default function AtsCvBuilderPage() {
             <button
               onClick={() => setActiveTab('upload')}
               className={`px-5 py-2 rounded-full text-xs font-bold transition-all ${activeTab === 'upload'
-                ? 'bg-[#1b7b9e] text-white shadow-2xs'
-                : 'text-slate-600 dark:text-slate-400 hover:text-[#1b7b9e] dark:hover:text-cyan-400'
+                ? 'bg-[#1A4B9F] text-white shadow-2xs'
+                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
                 }`}
             >
               {t.pelamar.uploadCv.uploadNew}
@@ -523,9 +523,9 @@ export default function AtsCvBuilderPage() {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
 
           {/* Left Column: Input Form (7 Cols) */}
-          <div className="no-print lg:col-span-6 bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-8 border border-[#C2E5EF] dark:border-slate-800 shadow-xs space-y-6">
+          <div className="no-print lg:col-span-6 bg-white dark:bg-slate-900 rounded-2xl p-6 sm:p-8 border border-slate-200 dark:border-slate-800 shadow-xs space-y-6">
             {rawCvText && (
-              <div className="p-5 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-3xl space-y-3 mb-6 shadow-sm">
+              <div className="p-5 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-2xl space-y-3 mb-6 shadow-sm">
                 <div className="flex items-start gap-3">
                   <div className="w-8 h-8 rounded-full bg-amber-100 dark:bg-amber-900 flex items-center justify-center shrink-0">
                     <Info size={16} className="text-amber-600 dark:text-amber-400" />
@@ -546,7 +546,7 @@ export default function AtsCvBuilderPage() {
             )}
 
             <div className="border-b border-slate-100 dark:border-slate-800 pb-4">
-              <h2 className="text-xl font-black text-[#1b7b9e] dark:text-cyan-400">Biodata &amp; Riwayat Profesional</h2>
+              <h2 className="text-xl font-bold text-slate-900 dark:text-white">Biodata &amp; Riwayat Profesional</h2>
               <span className="text-xs text-slate-400">Setiap perubahan akan otomatis memperbarui tampilan CV ATS di sisi kanan.</span>
             </div>
 
@@ -554,7 +554,7 @@ export default function AtsCvBuilderPage() {
 
               {/* Section 1: Data Diri */}
               <div className="space-y-4">
-                <h3 className="text-xs font-black uppercase tracking-wider text-[#1b7b9e] dark:text-cyan-400 flex items-center gap-2">
+                <h3 className="text-xs font-bold uppercase tracking-wider text-slate-900 dark:text-white flex items-center gap-2">
                   <User size={16} /> 1. {t.pelamar.uploadCv.personalInfo}
                 </h3>
 
@@ -567,7 +567,7 @@ export default function AtsCvBuilderPage() {
                       onChange={(e) => setFullName(e.target.value)}
                       placeholder="Budi Santoso"
                       required
-                      className="w-full px-4 py-2.5 bg-[#F0F8FB] dark:bg-slate-800 border border-[#C2E5EF] dark:border-slate-700 focus:border-[#1b7b9e] dark:focus:border-cyan-400 rounded-xl text-xs font-bold outline-none dark:text-white"
+                      className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 focus:border-[#1A4B9F] dark:focus:border-blue-400 rounded-xl text-xs font-bold outline-none dark:text-white"
                     />
                   </div>
 
@@ -579,7 +579,7 @@ export default function AtsCvBuilderPage() {
                       onChange={(e) => setJobTitle(e.target.value)}
                       placeholder="Frontend Engineer / Staff Marketing"
                       required
-                      className="w-full px-4 py-2.5 bg-[#F0F8FB] dark:bg-slate-800 border border-[#C2E5EF] dark:border-slate-700 focus:border-[#1b7b9e] dark:focus:border-cyan-400 rounded-xl text-xs font-bold outline-none dark:text-white"
+                      className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 focus:border-[#1A4B9F] dark:focus:border-blue-400 rounded-xl text-xs font-bold outline-none dark:text-white"
                     />
                   </div>
                 </div>
@@ -593,7 +593,7 @@ export default function AtsCvBuilderPage() {
                       onChange={(e) => setEmail(e.target.value)}
                       placeholder="budi.santoso@email.com"
                       required
-                      className="w-full px-3 py-2 bg-[#F0F8FB] dark:bg-slate-800 border border-[#C2E5EF] dark:border-slate-700 focus:border-[#1b7b9e] dark:focus:border-cyan-400 rounded-xl text-xs outline-none dark:text-white"
+                      className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 focus:border-[#1A4B9F] dark:focus:border-blue-400 rounded-xl text-xs outline-none dark:text-white"
                     />
                   </div>
                   <div>
@@ -604,7 +604,7 @@ export default function AtsCvBuilderPage() {
                       onChange={(e) => setPhone(e.target.value)}
                       placeholder="081234567890"
                       required
-                      className="w-full px-3 py-2 bg-[#F0F8FB] dark:bg-slate-800 border border-[#C2E5EF] dark:border-slate-700 focus:border-[#1b7b9e] dark:focus:border-cyan-400 rounded-xl text-xs outline-none dark:text-white"
+                      className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 focus:border-[#1A4B9F] dark:focus:border-blue-400 rounded-xl text-xs outline-none dark:text-white"
                     />
                   </div>
                   <div>
@@ -615,7 +615,7 @@ export default function AtsCvBuilderPage() {
                       onChange={(e) => setLocation(e.target.value)}
                       placeholder="Jakarta Selatan, DKI Jakarta"
                       required
-                      className="w-full px-3 py-2 bg-[#F0F8FB] dark:bg-slate-800 border border-[#C2E5EF] dark:border-slate-700 focus:border-[#1b7b9e] dark:focus:border-cyan-400 rounded-xl text-xs outline-none dark:text-white"
+                      className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 focus:border-[#1A4B9F] dark:focus:border-blue-400 rounded-xl text-xs outline-none dark:text-white"
                     />
                   </div>
                 </div>
@@ -632,7 +632,7 @@ export default function AtsCvBuilderPage() {
                       onChange={(e) => setLinkedinUrl(e.target.value)}
                       placeholder="linkedin.com/in/username"
                       required
-                      className="w-full px-3.5 py-2 bg-[#F0F8FB] dark:bg-slate-800 border border-[#C2E5EF] dark:border-slate-700 focus:border-[#1b7b9e] dark:focus:border-cyan-400 rounded-xl text-xs font-bold outline-none dark:text-white"
+                      className="w-full px-3.5 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 focus:border-[#1A4B9F] dark:focus:border-blue-400 rounded-xl text-xs font-bold outline-none dark:text-white"
                     />
                   </div>
 
@@ -646,7 +646,7 @@ export default function AtsCvBuilderPage() {
                       onChange={(e) => setPortfolioUrl(e.target.value)}
                       placeholder="github.com/username atau portfolio.com"
                       required
-                      className="w-full px-3.5 py-2 bg-[#F0F8FB] dark:bg-slate-800 border border-[#C2E5EF] dark:border-slate-700 focus:border-[#1b7b9e] dark:focus:border-cyan-400 rounded-xl text-xs font-bold outline-none dark:text-white"
+                      className="w-full px-3.5 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 focus:border-[#1A4B9F] dark:focus:border-blue-400 rounded-xl text-xs font-bold outline-none dark:text-white"
                     />
                   </div>
                 </div>
@@ -658,7 +658,7 @@ export default function AtsCvBuilderPage() {
                     <button
                       type="button"
                       onClick={handleAddSocialLink}
-                      className="text-[#1b7b9e] dark:text-cyan-400 hover:underline text-[11px] font-bold flex items-center gap-1"
+                      className="text-slate-900 dark:text-white hover:underline text-[11px] font-bold flex items-center gap-1"
                     >
                       <Plus size={12} /> Tambah Tautan Lanjutan
                     </button>
@@ -670,14 +670,14 @@ export default function AtsCvBuilderPage() {
                         value={link.platform}
                         onChange={(e) => handleSocialLinkChange(idx, 'platform', e.target.value)}
                         placeholder="Platform (Dribbble, Behance, dll)"
-                        className="w-1/3 px-3 py-2 bg-[#F0F8FB] dark:bg-slate-800 border border-[#C2E5EF] dark:border-slate-700 focus:border-[#1b7b9e] dark:focus:border-cyan-400 rounded-xl text-xs outline-none dark:text-white"
+                        className="w-1/3 px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 focus:border-[#1A4B9F] dark:focus:border-blue-400 rounded-xl text-xs outline-none dark:text-white"
                       />
                       <input
                         type="text"
                         value={link.url}
                         onChange={(e) => handleSocialLinkChange(idx, 'url', e.target.value)}
                         placeholder="URL Tautan"
-                        className="w-2/3 px-3 py-2 bg-[#F0F8FB] dark:bg-slate-800 border border-[#C2E5EF] dark:border-slate-700 focus:border-[#1b7b9e] dark:focus:border-cyan-400 rounded-xl text-xs outline-none dark:text-white"
+                        className="w-2/3 px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 focus:border-[#1A4B9F] dark:focus:border-blue-400 rounded-xl text-xs outline-none dark:text-white"
                       />
                       {socialLinks.length > 0 && (
                         <button
@@ -695,7 +695,7 @@ export default function AtsCvBuilderPage() {
 
               {/* Section 2: Ringkasan Profesional */}
               <div className="space-y-2">
-                <h3 className="text-xs font-black uppercase tracking-wider text-[#1b7b9e] dark:text-cyan-400 flex items-center gap-2">
+                <h3 className="text-xs font-bold uppercase tracking-wider text-slate-900 dark:text-white flex items-center gap-2">
                   <FileText size={16} /> 2. Ringkasan Profesional (Executive Summary)
                 </h3>
                 <textarea
@@ -704,27 +704,27 @@ export default function AtsCvBuilderPage() {
                   onChange={(e) => setSummary(e.target.value)}
                   placeholder="Tuliskan ringkasan singkat mengenai latar belakang profesional, pencapaian utama, serta keahlian utama Anda di sini..."
                   required
-                  className="w-full px-4 py-3 bg-[#F0F8FB] dark:bg-slate-800 border border-[#C2E5EF] dark:border-slate-700 focus:border-[#1b7b9e] dark:focus:border-cyan-400 rounded-xl text-xs outline-none leading-relaxed dark:text-white"
+                  className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 focus:border-[#1A4B9F] dark:focus:border-blue-400 rounded-xl text-xs outline-none leading-relaxed dark:text-white"
                 />
               </div>
 
               {/* Section 3: Pengalaman Kerja */}
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <h3 className="text-xs font-black uppercase tracking-wider text-[#1b7b9e] dark:text-cyan-400 flex items-center gap-2">
+                  <h3 className="text-xs font-bold uppercase tracking-wider text-slate-900 dark:text-white flex items-center gap-2">
                     <Briefcase size={16} /> 3. {t.pelamar.uploadCv.workExperience}
                   </h3>
                   <button
                     type="button"
                     onClick={handleAddExperience}
-                    className="px-3.5 py-1.5 rounded-full bg-[#E0F1F7] dark:bg-slate-800 text-[#1b7b9e] dark:text-cyan-400 hover:bg-[#C2E5EF] dark:hover:bg-slate-700 text-xs font-bold border border-[#B8E1ED] dark:border-slate-700 flex items-center gap-1.5 transition-all shadow-2xs"
+                    className="px-3.5 py-1.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white hover:bg-slate-200 dark:hover:bg-slate-700 text-xs font-bold border border-slate-200 dark:border-slate-700 flex items-center gap-1.5 transition-all shadow-2xs"
                   >
                     <Plus size={14} /> Tambah Pengalaman
                   </button>
                 </div>
 
                 {experiences.map((exp, idx) => (
-                  <div key={idx} className="p-4 rounded-2xl bg-[#F0F8FB] dark:bg-slate-800 border border-[#C2E5EF] dark:border-slate-700 space-y-3 relative group">
+                  <div key={idx} className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 space-y-3 relative group">
                     <div className="flex items-center justify-between">
                       <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400">Pengalaman #{idx + 1}</span>
                       {experiences.length > 1 && (
@@ -746,7 +746,7 @@ export default function AtsCvBuilderPage() {
                         onChange={(e) => handleExperienceChange(idx, 'company', e.target.value)}
                         placeholder="PT Tech Inovasi Nusantara"
                         required
-                        className="px-3.5 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 focus:border-[#1b7b9e] dark:focus:border-cyan-400 rounded-xl text-xs font-bold outline-none dark:text-white"
+                        className="px-3.5 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 focus:border-[#1A4B9F] dark:focus:border-blue-400 rounded-xl text-xs font-bold outline-none dark:text-white"
                       />
                       <input
                         type="text"
@@ -754,7 +754,7 @@ export default function AtsCvBuilderPage() {
                         onChange={(e) => handleExperienceChange(idx, 'role', e.target.value)}
                         placeholder="Senior Frontend Engineer"
                         required
-                        className="px-3.5 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 focus:border-[#1b7b9e] dark:focus:border-cyan-400 rounded-xl text-xs font-bold outline-none dark:text-white"
+                        className="px-3.5 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 focus:border-[#1A4B9F] dark:focus:border-blue-400 rounded-xl text-xs font-bold outline-none dark:text-white"
                       />
                     </div>
 
@@ -765,7 +765,7 @@ export default function AtsCvBuilderPage() {
                         onChange={(e) => handleExperienceChange(idx, 'period', e.target.value)}
                         placeholder="2022 - Sekarang"
                         required
-                        className="w-full px-3.5 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 focus:border-[#1b7b9e] dark:focus:border-cyan-400 rounded-xl text-xs outline-none dark:text-white"
+                        className="w-full px-3.5 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 focus:border-[#1A4B9F] dark:focus:border-blue-400 rounded-xl text-xs outline-none dark:text-white"
                       />
                     </div>
 
@@ -775,7 +775,7 @@ export default function AtsCvBuilderPage() {
                       onChange={(e) => handleExperienceChange(idx, 'description', e.target.value)}
                       placeholder="Deskripsi pencapaian & tanggung jawab utama..."
                       required
-                      className="w-full px-3.5 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 focus:border-[#1b7b9e] dark:focus:border-cyan-400 rounded-xl text-xs outline-none leading-relaxed dark:text-white"
+                      className="w-full px-3.5 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 focus:border-[#1A4B9F] dark:focus:border-blue-400 rounded-xl text-xs outline-none leading-relaxed dark:text-white"
                     />
                   </div>
                 ))}
@@ -784,20 +784,20 @@ export default function AtsCvBuilderPage() {
               {/* Section 4: Riwayat Pendidikan */}
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <h3 className="text-xs font-black uppercase tracking-wider text-[#1b7b9e] dark:text-cyan-400 flex items-center gap-2">
+                  <h3 className="text-xs font-bold uppercase tracking-wider text-slate-900 dark:text-white flex items-center gap-2">
                     <GraduationCap size={16} /> 4. {t.pelamar.uploadCv.education}
                   </h3>
                   <button
                     type="button"
                     onClick={handleAddEducation}
-                    className="px-3.5 py-1.5 rounded-full bg-[#E0F1F7] dark:bg-slate-800 text-[#1b7b9e] dark:text-cyan-400 hover:bg-[#C2E5EF] dark:hover:bg-slate-700 text-xs font-bold border border-[#B8E1ED] dark:border-slate-700 flex items-center gap-1.5 transition-all shadow-2xs"
+                    className="px-3.5 py-1.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white hover:bg-slate-200 dark:hover:bg-slate-700 text-xs font-bold border border-slate-200 dark:border-slate-700 flex items-center gap-1.5 transition-all shadow-2xs"
                   >
                     <Plus size={14} /> Tambah Pendidikan
                   </button>
                 </div>
 
                 {education.map((edu, idx) => (
-                  <div key={idx} className="p-4 rounded-2xl bg-[#F0F8FB] dark:bg-slate-800 border border-[#C2E5EF] dark:border-slate-700 space-y-3 relative">
+                  <div key={idx} className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 space-y-3 relative">
                     <div className="flex items-center justify-between">
                       <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400">Pendidikan #{idx + 1}</span>
                       {education.length > 1 && (
@@ -819,7 +819,7 @@ export default function AtsCvBuilderPage() {
                         onChange={(e) => handleEducationChange(idx, 'school', e.target.value)}
                         placeholder="Universitas Indonesia"
                         required
-                        className="px-3.5 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 focus:border-[#1b7b9e] dark:focus:border-cyan-400 rounded-xl text-xs font-bold outline-none dark:text-white"
+                        className="px-3.5 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 focus:border-[#1A4B9F] dark:focus:border-blue-400 rounded-xl text-xs font-bold outline-none dark:text-white"
                       />
                       <input
                         type="text"
@@ -827,7 +827,7 @@ export default function AtsCvBuilderPage() {
                         onChange={(e) => handleEducationChange(idx, 'degree', e.target.value)}
                         placeholder="S1 Teknik Informatika"
                         required
-                        className="px-3.5 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 focus:border-[#1b7b9e] dark:focus:border-cyan-400 rounded-xl text-xs font-bold outline-none dark:text-white"
+                        className="px-3.5 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 focus:border-[#1A4B9F] dark:focus:border-blue-400 rounded-xl text-xs font-bold outline-none dark:text-white"
                       />
                     </div>
 
@@ -838,7 +838,7 @@ export default function AtsCvBuilderPage() {
                         onChange={(e) => handleEducationChange(idx, 'period', e.target.value)}
                         placeholder="2016 - 2020"
                         required
-                        className="px-3.5 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 focus:border-[#1b7b9e] dark:focus:border-cyan-400 rounded-xl text-xs outline-none dark:text-white"
+                        className="px-3.5 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 focus:border-[#1A4B9F] dark:focus:border-blue-400 rounded-xl text-xs outline-none dark:text-white"
                       />
                       <input
                         type="text"
@@ -846,7 +846,7 @@ export default function AtsCvBuilderPage() {
                         onChange={(e) => handleEducationChange(idx, 'gpa', e.target.value)}
                         placeholder="IPK 3.85 / 4.00"
                         required
-                        className="px-3.5 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 focus:border-[#1b7b9e] dark:focus:border-cyan-400 rounded-xl text-xs outline-none dark:text-white"
+                        className="px-3.5 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 focus:border-[#1A4B9F] dark:focus:border-blue-400 rounded-xl text-xs outline-none dark:text-white"
                       />
                     </div>
                   </div>
@@ -856,7 +856,7 @@ export default function AtsCvBuilderPage() {
               {/* Section 5: Keahlian Teknis & Sertifikasi */}
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <h3 className="text-xs font-black uppercase tracking-wider text-[#1b7b9e] dark:text-cyan-400 flex items-center gap-2">
+                  <h3 className="text-xs font-bold uppercase tracking-wider text-slate-900 dark:text-white flex items-center gap-2">
                     <Wrench size={16} /> 5. {t.pelamar.uploadCv.skills} & Sertifikat
                   </h3>
                 </div>
@@ -867,13 +867,13 @@ export default function AtsCvBuilderPage() {
                       <button
                         type="button"
                         onClick={() => setCategorizedSkills([...categorizedSkills, { category: '', items: '' }])}
-                        className="text-[#1b7b9e] dark:text-cyan-400 hover:underline text-[11px] font-bold flex items-center gap-1"
+                        className="text-slate-900 dark:text-white hover:underline text-[11px] font-bold flex items-center gap-1"
                       >
                         <Plus size={12} /> Tambah Kategori
                       </button>
                     </div>
                     {categorizedSkills.map((skill, idx) => (
-                      <div key={idx} className="p-3 rounded-xl bg-[#F0F8FB] dark:bg-slate-800 border border-[#C2E5EF] dark:border-slate-700 space-y-2">
+                      <div key={idx} className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 space-y-2">
                         <div className="flex items-center justify-between">
                           <span className="text-[10px] font-bold text-slate-400">Kategori #{idx + 1}</span>
                           {categorizedSkills.length > 1 && (
@@ -902,7 +902,7 @@ export default function AtsCvBuilderPage() {
                                 setCategorizedSkills(newSkills);
                               }}
                               placeholder="Cth: Programming Languages"
-                              className="w-full px-3 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 focus:border-[#1b7b9e] dark:focus:border-cyan-400 rounded-lg text-xs outline-none dark:text-white"
+                              className="w-full px-3 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 focus:border-[#1A4B9F] dark:focus:border-blue-400 rounded-lg text-xs outline-none dark:text-white"
                             />
                           </div>
                           <div className="md:col-span-2">
@@ -915,7 +915,7 @@ export default function AtsCvBuilderPage() {
                                 setCategorizedSkills(newSkills);
                               }}
                               placeholder="Cth: Dart, PHP, JavaScript"
-                              className="w-full px-3 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 focus:border-[#1b7b9e] dark:focus:border-cyan-400 rounded-lg text-xs outline-none dark:text-white"
+                              className="w-full px-3 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 focus:border-[#1A4B9F] dark:focus:border-blue-400 rounded-lg text-xs outline-none dark:text-white"
                             />
                           </div>
                         </div>
@@ -930,13 +930,13 @@ export default function AtsCvBuilderPage() {
                       <button
                         type="button"
                         onClick={handleAddCertification}
-                        className="text-[#1b7b9e] dark:text-cyan-400 hover:underline text-[11px] font-bold flex items-center gap-1"
+                        className="text-slate-900 dark:text-white hover:underline text-[11px] font-bold flex items-center gap-1"
                       >
                         <Plus size={12} /> Tambah Sertifikat
                       </button>
                     </div>
                     {certifications.map((cert, idx) => (
-                      <div key={idx} className="p-3 rounded-xl bg-[#F0F8FB] dark:bg-slate-800 border border-[#C2E5EF] dark:border-slate-700 space-y-2">
+                      <div key={idx} className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 space-y-2">
                         <div className="flex items-center justify-between">
                           <span className="text-[10px] font-bold text-slate-400">Sertifikat #{idx + 1}</span>
                           {certifications.length > 1 && (
@@ -955,14 +955,14 @@ export default function AtsCvBuilderPage() {
                           value={cert.name}
                           onChange={(e) => handleCertificationChange(idx, 'name', e.target.value)}
                           placeholder="AWS Certified Cloud Practitioner"
-                          className="w-full px-3.5 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 focus:border-[#1b7b9e] dark:focus:border-cyan-400 rounded-xl text-xs font-bold outline-none dark:text-white"
+                          className="w-full px-3.5 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 focus:border-[#1A4B9F] dark:focus:border-blue-400 rounded-xl text-xs font-bold outline-none dark:text-white"
                         />
                         <input
                           type="url"
                           value={cert.credentialUrl}
                           onChange={(e) => handleCertificationChange(idx, 'credentialUrl', e.target.value)}
                           placeholder="https://www.credly.com/badges/... atau link kredensial"
-                          className="w-full px-3.5 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 focus:border-[#1b7b9e] dark:focus:border-cyan-400 rounded-xl text-xs outline-none dark:text-white"
+                          className="w-full px-3.5 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 focus:border-[#1A4B9F] dark:focus:border-blue-400 rounded-xl text-xs outline-none dark:text-white"
                         />
                       </div>
                     ))}
@@ -976,7 +976,7 @@ export default function AtsCvBuilderPage() {
                     <CheckCircle2 size={18} className="text-emerald-500 shrink-0" />
                     <span>{dbSuccessMessage}</span>
                   </div>
-                  <span className="px-3 py-1 bg-emerald-600 text-white rounded-full text-[10px] uppercase font-black tracking-wider shrink-0">
+                  <span className="px-3 py-1 bg-emerald-600 text-white rounded-full text-[10px] uppercase font-bold tracking-wider shrink-0">
                     TERSIMPAN
                   </span>
                 </div>
@@ -987,10 +987,10 @@ export default function AtsCvBuilderPage() {
                 <button
                   type="submit"
                   disabled={isSavingDb}
-                  className="w-full py-4 rounded-full bg-[#1b7b9e] hover:bg-[#1D7FA1] text-white font-extrabold text-xs sm:text-sm shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer"
+                  className="w-full py-4 rounded-full bg-[#1A4B9F] hover:bg-[#133878] text-white font-semibold text-xs sm:text-sm shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer"
                 >
                   <CheckCircle2 className="w-5 h-5 text-emerald-300" />
-                  <span>{isSavingDb ? 'Menyimpan...' : 'Simpan CV'}</span>
+                  <span>{isSavingDb ? (language === 'id' ? 'Menyimpan...' : 'Saving...') : (language === 'id' ? 'Simpan CV' : 'Save CV')}</span>
                 </button>
               </div>
 
@@ -1000,13 +1000,13 @@ export default function AtsCvBuilderPage() {
           {/* Right Column: Live ATS PDF Preview Box (6 Cols) */}
           <div className="lg:col-span-6 space-y-4">
             <div className="no-print flex items-center justify-between px-2">
-              <span className="text-xs font-black text-[#1b7b9e] uppercase tracking-wider flex items-center gap-2">
+              <span className="text-xs font-bold text-slate-900 uppercase tracking-wider flex items-center gap-2">
                 <Printer size={16} /> {t.pelamar.uploadCv.previewCv}
               </span>
 
               <button
                 onClick={handleDownloadPdf}
-                className="px-4 py-1.5 rounded-full bg-[#1b7b9e] text-white text-xs font-bold hover:bg-[#1D7FA1] transition-colors flex items-center gap-1.5 shadow-2xs cursor-pointer"
+                className="px-4 py-1.5 rounded-full bg-[#1A4B9F] text-white text-xs font-bold hover:bg-[#133878] transition-colors flex items-center gap-1.5 shadow-2xs cursor-pointer"
               >
                 <Download size={14} /> {t.pelamar.uploadCv.generatePdf}
               </button>
@@ -1051,15 +1051,15 @@ export default function AtsCvBuilderPage() {
             `}</style>
 
             {/* Clean White ATS Template Render Card */}
-            <div id="printable-ats-cv" className="bg-white p-8 sm:p-10 rounded-3xl border border-slate-300 shadow-xl text-slate-800 space-y-6 font-serif">
+            <div id="printable-ats-cv" className="bg-white p-8 sm:p-10 rounded-2xl border border-slate-300 shadow-xl text-slate-800 space-y-6 font-serif">
 
               {/* ATS Header */}
               <div className="border-b-2 border-slate-800 pb-4 space-y-1 text-center font-sans">
-                <h2 className="text-2xl font-black uppercase tracking-tight text-slate-900">
+                <h2 className="text-2xl font-bold uppercase tracking-tight text-slate-900">
                   {fullName || <span className="text-slate-400 font-bold tracking-wider">CONTOH NAMA LENGKAP</span>}
                 </h2>
                 {jobTitle ? (
-                  <span className="text-sm font-bold text-[#1b7b9e] block">{jobTitle}</span>
+                  <span className="text-sm font-bold text-slate-900 block">{jobTitle}</span>
                 ) : (
                   <span className="text-xs italic text-slate-400 block font-normal">[Judul Posisi / Peran]</span>
                 )}
@@ -1068,11 +1068,11 @@ export default function AtsCvBuilderPage() {
                   <span>{phone || <span className="text-slate-400">0812xxxxxxxx</span>}</span> •{' '}
                   <span>{location || <span className="text-slate-400">Kota Domisili</span>}</span>
                   {linkedinUrl ? (
-                    <> • <span className="font-bold text-[#1b7b9e]">LinkedIn: {linkedinUrl}</span></>
+                    <> • <span className="font-bold text-slate-900">LinkedIn: {linkedinUrl}</span></>
                   ) : (
                     <span className="text-slate-400 italic"> • LinkedIn</span>
                   )}
-                  {portfolioUrl && <> • <span className="font-bold text-[#1b7b9e]">Portofolio: {portfolioUrl}</span></>}
+                  {portfolioUrl && <> • <span className="font-bold text-slate-900">Portofolio: {portfolioUrl}</span></>}
                   {socialLinks.length > 0 &&
                     socialLinks.map((link, idx) => (
                       <React.Fragment key={idx}>
@@ -1180,7 +1180,7 @@ export default function AtsCvBuilderPage() {
                           <span className="inline-block w-1.5 h-1.5 rounded-full bg-slate-400 shrink-0" />
                           <span>{cert.name}</span>
                           {cert.credentialUrl && (
-                            <a href={cert.credentialUrl} target="_blank" rel="noopener noreferrer" className="text-[#1b7b9e] font-bold underline text-[10px] ml-1">[Lihat Kredensial]</a>
+                            <a href={cert.credentialUrl} target="_blank" rel="noopener noreferrer" className="text-slate-900 font-bold underline text-[10px] ml-1">[Lihat Kredensial]</a>
                           )}
                         </li>
                       ))}
@@ -1199,7 +1199,7 @@ export default function AtsCvBuilderPage() {
 
       {/* TAB 2: PDF FILE UPLOAD */}
       {activeTab === 'upload' && (
-        <div className="bg-white dark:bg-slate-900 p-8 sm:p-12 rounded-3xl border border-[#C2E5EF] dark:border-slate-800 shadow-xs space-y-6">
+        <div className="bg-white dark:bg-slate-900 p-8 sm:p-12 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs space-y-6">
           <input
             ref={fileInputRef}
             type="file"
@@ -1210,25 +1210,25 @@ export default function AtsCvBuilderPage() {
 
           <div
             onClick={() => toast('Fitur Parsing PDF Otomatis Segera Hadir!', { icon: '🚀' })}
-            className="border-2 border-dashed border-slate-300 dark:border-slate-700 hover:border-[#1b7b9e] dark:hover:border-cyan-400 bg-[#F0F8FB] dark:bg-slate-800 hover:bg-[#E0F1F7]/50 dark:hover:bg-slate-700 rounded-3xl p-12 sm:p-16 text-center cursor-pointer transition-all duration-200 group relative overflow-hidden"
+            className="border-2 border-dashed border-slate-300 dark:border-slate-700 hover:border-[#1A4B9F] dark:hover:border-blue-400 bg-slate-50 dark:bg-slate-800 hover:bg-slate-100/50 dark:hover:bg-slate-700 rounded-2xl p-12 sm:p-16 text-center cursor-pointer transition-all duration-200 group relative overflow-hidden"
           >
             <div className="flex flex-col items-center justify-center space-y-5 max-w-lg mx-auto">
-              <div className="w-20 h-20 rounded-3xl bg-[#E0F1F7] dark:bg-slate-800 border border-[#B8E1ED] dark:border-slate-700 flex items-center justify-center text-[#1b7b9e] dark:text-cyan-400 group-hover:scale-110 transition-transform duration-200 shadow-2xs">
+              <div className="w-20 h-20 rounded-2xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-center text-slate-900 dark:text-white group-hover:scale-110 transition-transform duration-200 shadow-2xs">
                 {uploadState === 'completed' ? (
                   <FileCheck2 className="w-10 h-10 text-emerald-500" />
                 ) : (
-                  <UploadCloud className="w-10 h-10 text-[#1b7b9e] dark:text-cyan-400" />
+                  <UploadCloud className="w-10 h-10 text-slate-900 dark:text-white" />
                 )}
               </div>
 
               <div className="space-y-2">
-                <h3 className="text-lg sm:text-xl font-bold text-[#1b7b9e] dark:text-cyan-400">
-                  {selectedFile ? `File Terpilih: ${selectedFile.name}` : 'Klik untuk Memilih File CV ATS (PDF)'}
+                <h3 className="text-lg sm:text-xl font-bold text-slate-900 dark:text-white">
+                  {selectedFile ? (language === 'id' ? `File Terpilih: ${selectedFile.name}` : `Selected File: ${selectedFile.name}`) : (language === 'id' ? 'Klik untuk Memilih File CV ATS (PDF)' : 'Click to Select ATS CV File (PDF)')}
                 </h3>
                 <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400">
                   {selectedFile
-                    ? `Ukuran berkas: ${selectedFile.size} • Berkas valid dan siap digunakan`
-                    : 'Format dokumen: PDF (Maksimum 5 MB)'}
+                    ? (language === 'id' ? `Ukuran berkas: ${selectedFile.size} • Berkas valid dan siap digunakan` : `File size: ${selectedFile.size} • File is valid and ready to use`)
+                    : (language === 'id' ? 'Format dokumen: PDF (Maksimum 5 MB)' : 'Document format: PDF (Max 5 MB)')}
                 </p>
               </div>
 
@@ -1249,8 +1249,8 @@ export default function AtsCvBuilderPage() {
                   disabled={isParsing}
                   className={`inline-flex items-center gap-2 px-6 py-3 rounded-full text-xs sm:text-sm font-bold transition-colors border ${isParsing ? 'bg-slate-200 dark:bg-slate-700 text-slate-500 border-slate-200 dark:border-slate-700 cursor-not-allowed' : 'bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 cursor-pointer border-slate-300 dark:border-slate-700'}`}
                 >
-                  {isParsing ? <RefreshCw className="w-4 h-4 text-[#1b7b9e] animate-spin" /> : <FileText className="w-4 h-4 text-[#1b7b9e]" />}
-                  <span>{isParsing ? 'Mengekstrak Data...' : selectedFile ? 'Ganti Berkas PDF' : 'Pilih File CV (PDF)'}</span>
+                  {isParsing ? <RefreshCw className="w-4 h-4 text-slate-900 animate-spin" /> : <FileText className="w-4 h-4 text-slate-900" />}
+                  <span>{isParsing ? (language === 'id' ? 'Mengekstrak Data...' : 'Extracting Data...') : selectedFile ? (language === 'id' ? 'Ganti Berkas PDF' : 'Change PDF File') : (language === 'id' ? 'Pilih File CV (PDF)' : 'Select CV File (PDF)')}</span>
                 </button>
 
                 <button
@@ -1260,10 +1260,10 @@ export default function AtsCvBuilderPage() {
                     handleSaveCvToDatabase();
                   }}
                   disabled={isSavingDb}
-                  className="inline-flex items-center gap-2 px-7 py-3 rounded-full bg-[#1b7b9e] hover:bg-[#1D7FA1] text-white text-xs sm:text-sm font-extrabold shadow-md transition-all cursor-pointer"
+                  className="inline-flex items-center gap-2 px-7 py-3 rounded-full bg-[#1A4B9F] hover:bg-[#133878] text-white text-xs sm:text-sm font-semibold shadow-md transition-all cursor-pointer"
                 >
                   <CheckCircle2 className="w-5 h-5 text-emerald-300" />
-                  <span>{isSavingDb ? 'Menyimpan...' : 'Simpan CV'}</span>
+                  <span>{isSavingDb ? (language === 'id' ? 'Menyimpan...' : 'Saving...') : (language === 'id' ? 'Simpan CV' : 'Save CV')}</span>
                 </button>
               </div>
 
@@ -1272,19 +1272,19 @@ export default function AtsCvBuilderPage() {
 
           {/* Database Status Feedback Panel */}
           {dbSuccessMessage && (
-            <div className="p-5 rounded-3xl bg-emerald-50 dark:bg-emerald-950/40 border-2 border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-300 text-xs sm:text-sm font-bold flex items-center justify-between gap-4 animate-in fade-in">
+            <div className="p-5 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 border-2 border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-300 text-xs sm:text-sm font-bold flex items-center justify-between gap-4 animate-in fade-in">
               <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-2xl bg-emerald-500 text-white flex items-center justify-center font-black shrink-0">
+                <div className="w-9 h-9 rounded-2xl bg-emerald-500 text-white flex items-center justify-center font-bold shrink-0">
                   <CheckCircle2 size={22} />
                 </div>
                 <div>
-                  <h4 className="font-black text-emerald-900 dark:text-emerald-200">{dbSuccessMessage}</h4>
+                  <h4 className="font-bold text-emerald-900 dark:text-emerald-200">{dbSuccessMessage}</h4>
                   <p className="text-xs font-normal text-emerald-700 dark:text-emerald-400 mt-0.5">
                     Berkas CV dan profil Anda telah sukses terdaftar di sistem.
                   </p>
                 </div>
               </div>
-              <span className="px-3.5 py-1.5 bg-emerald-600 text-white rounded-full text-[10px] uppercase font-black tracking-wider shrink-0 shadow-xs">
+              <span className="px-3.5 py-1.5 bg-emerald-600 text-white rounded-full text-[10px] uppercase font-bold tracking-wider shrink-0 shadow-xs">
                 TERSIMPAN
               </span>
             </div>

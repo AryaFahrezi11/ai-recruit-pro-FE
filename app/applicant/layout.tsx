@@ -5,12 +5,11 @@ import Link from 'next/link';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useAppStore } from '@/lib/store/useAppStore';
 import { useTranslation } from '@/hooks/useTranslation';
+import LanguageSwitcher from '@/components/LanguageSwitcher';
 import {
   Search,
   Building2,
   Globe,
-  Sun,
-  Moon,
   User,
   Bookmark,
   ClockCheck,
@@ -29,7 +28,7 @@ function PelamarDesktopNav({ navItems, pathname }: { navItems: any[]; pathname: 
   const searchParams = useSearchParams();
 
   return (
-    <nav className="hidden lg:flex items-center gap-1">
+    <nav className="hidden lg:flex items-center gap-8">
       {navItems.map((item) => {
         const itemUrl = new URL(item.href, 'http://localhost');
         const isPathActive = pathname === itemUrl.pathname;
@@ -42,10 +41,10 @@ function PelamarDesktopNav({ navItems, pathname }: { navItems: any[]; pathname: 
           <Link
             key={item.name}
             href={item.href}
-            className={`px-4 py-2 rounded-xl text-sm font-bold transition-all relative ${
+            className={`text-sm font-semibold transition-colors relative ${
               isActive
-                ? 'text-[#2596be] dark:text-cyan-400 font-extrabold after:content-[""] after:absolute after:bottom-[-20px] after:left-0 after:right-0 after:h-0.5 after:bg-[#2596be]'
-                : 'text-slate-600 dark:text-slate-300 hover:text-[#2596be] dark:hover:text-cyan-400 hover:bg-slate-100 dark:hover:bg-slate-800'
+                ? 'text-[#1A4B9F] dark:text-blue-400 font-bold after:content-[""] after:absolute after:bottom-[-20px] after:left-0 after:right-0 after:h-[3px] after:bg-[#1A4B9F] dark:after:bg-blue-400'
+                : 'text-slate-600 dark:text-slate-300 hover:text-[#1A4B9F] dark:hover:text-blue-400'
             }`}
           >
             {item.name}
@@ -75,7 +74,7 @@ function PelamarMobileNav({ navItems, pathname }: { navItems: any[]; pathname: s
             key={item.name}
             href={item.href}
             className={`flex flex-col items-center gap-1 px-3 py-1.5 rounded-xl text-[11px] font-bold whitespace-nowrap ${
-              isActive ? 'text-[#2596be] bg-white dark:bg-slate-800 shadow-2xs' : 'text-slate-500 dark:text-slate-400'
+              isActive ? 'text-slate-900 dark:text-white bg-slate-200 dark:bg-slate-800 shadow-2xs' : 'text-slate-500 dark:text-slate-400'
             }`}
           >
             <Icon size={16} />
@@ -94,7 +93,7 @@ export default function PelamarPerfectLayout({
 }) {
   const pathname = usePathname();
   const router = useRouter();
-  const { theme, toggleTheme, language, setLanguage } = useAppStore();
+  const { language, setLanguage } = useAppStore();
   const { t } = useTranslation();
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
@@ -209,18 +208,10 @@ export default function PelamarPerfectLayout({
 
           {/* Left Side: Brand & Main Navigation Links */}
           <div className="flex items-center gap-8">
-            <Link href="/applicant/dashboard" className="flex items-center gap-3 group">
-              <div className="w-10 h-10 rounded-xl bg-[#2596be] flex items-center justify-center text-white font-black text-xl shadow-sm group-hover:scale-105 transition-transform duration-200">
-                RP
-              </div>
-              <div className="flex flex-col">
-                <span className="font-extrabold text-xl sm:text-2xl tracking-tight text-[#0c2b3d] dark:text-white leading-none">
-                  AI-Recruit <span className="text-[#2596be]">Pro</span>
-                </span>
-                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mt-0.5">
-                  {t.pelamar.header.portalName}
-                </span>
-              </div>
+            <Link href="/applicant/dashboard" className="flex items-center gap-2 group">
+              <span className="font-bold text-2xl tracking-tight text-slate-900 dark:text-white leading-none">
+                AI-RecruitPro
+              </span>
             </Link>
 
             {/* Navigation Tabs */}
@@ -233,14 +224,8 @@ export default function PelamarPerfectLayout({
           <div className="flex items-center gap-3 sm:gap-4">
 
 
-            {/* Toggle Theme Dark/Light Mode */}
-            <button
-              onClick={toggleTheme}
-              className="w-9 h-9 rounded-full flex items-center justify-center border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-[#2596be] dark:text-cyan-400 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors shadow-2xs cursor-pointer"
-              title="Ubah Tema (Gelap/Terang)"
-            >
-              {theme === 'dark' ? <Sun size={17} /> : <Moon size={17} />}
-            </button>
+            {/* Toggle Language */}
+            <LanguageSwitcher />
 
             <div className="h-6 w-[1px] bg-slate-200 dark:bg-slate-800 hidden sm:block"></div>
 
@@ -248,9 +233,9 @@ export default function PelamarPerfectLayout({
             <div className="relative" ref={dropdownRef}>
               <button
                 onClick={() => setIsProfileOpen(!isProfileOpen)}
-                className="flex items-center gap-2 p-1 rounded-full border-2 border-[#2596be]/30 hover:border-[#2596be] bg-white dark:bg-slate-800 transition-all cursor-pointer shadow-xs group"
+                className="flex items-center gap-2 p-1 rounded-full border-2 border-[#1A4B9F]/30 hover:border-[#1A4B9F] bg-white dark:bg-slate-800 transition-all cursor-pointer shadow-xs group"
               >
-                <div className="w-8 h-8 rounded-full bg-[#2596be] text-white flex items-center justify-center font-black text-sm shadow-inner">
+                <div className="w-8 h-8 rounded-full bg-[#1A4B9F] text-white flex items-center justify-center font-bold text-sm shadow-inner">
                   {userProfile.name ? userProfile.name.charAt(0).toUpperCase() : 'P'}
                 </div>
                 <ChevronDown size={15} className={`text-slate-500 transition-transform duration-200 ${isProfileOpen ? 'rotate-180' : ''}`} />
@@ -258,36 +243,36 @@ export default function PelamarPerfectLayout({
 
               {/* Profile Dropdown Menu */}
               {isProfileOpen && (
-                <div className="absolute right-0 mt-3 w-64 bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 p-3 space-y-1.5 z-50 animate-in fade-in slide-in-from-top-2">
+                <div className="absolute right-0 mt-3 w-64 bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 p-3 space-y-1.5 z-50 animate-in fade-in slide-in-from-top-2">
                   <div className="px-4 py-3 border-b border-slate-100 dark:border-slate-800 space-y-0.5">
-                    <p className="text-xs font-black text-[#2596be] dark:text-cyan-400">{userProfile.name}</p>
+                    <p className="text-xs font-bold text-[#1A4B9F] dark:text-blue-400">{userProfile.name}</p>
                     <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate">{userProfile.email}</p>
                   </div>
 
                   <Link
                     href="/applicant/upload-cv"
                     onClick={() => setIsProfileOpen(false)}
-                    className="flex items-center gap-3 px-4 py-2.5 rounded-2xl text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-[#F0F8FB] dark:hover:bg-slate-800 hover:text-[#2596be] transition-colors"
+                    className="flex items-center gap-3 px-4 py-2.5 rounded-2xl text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-[#EFF6FF] dark:hover:bg-slate-800 hover:text-[#1A4B9F] transition-colors"
                   >
-                    <User size={16} className="text-[#2596be]" />
+                    <User size={16} className="text-[#1A4B9F]" />
                     <span>{t.pelamar.profile.manageProfile}</span>
                   </Link>
 
                   <Link
                     href="/applicant/saved"
                     onClick={() => setIsProfileOpen(false)}
-                    className="flex items-center gap-3 px-4 py-2.5 rounded-2xl text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-[#F0F8FB] dark:hover:bg-slate-800 hover:text-[#2596be] transition-colors"
+                    className="flex items-center gap-3 px-4 py-2.5 rounded-2xl text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-[#EFF6FF] dark:hover:bg-slate-800 hover:text-[#1A4B9F] transition-colors"
                   >
-                    <Bookmark size={16} className="text-[#2596be]" />
+                    <Bookmark size={16} className="text-[#1A4B9F]" />
                     <span>{t.pelamar.profile.savedJobs}</span>
                   </Link>
 
                   <Link
                     href="/applicant/status"
                     onClick={() => setIsProfileOpen(false)}
-                    className="flex items-center gap-3 px-4 py-2.5 rounded-2xl text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-[#F0F8FB] dark:hover:bg-slate-800 hover:text-[#2596be] transition-colors"
+                    className="flex items-center gap-3 px-4 py-2.5 rounded-2xl text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-[#EFF6FF] dark:hover:bg-slate-800 hover:text-[#1A4B9F] transition-colors"
                   >
-                    <ClockCheck size={16} className="text-[#2596be]" />
+                    <ClockCheck size={16} className="text-[#1A4B9F]" />
                     <span>{t.pelamar.profile.applicationHistory}</span>
                   </Link>
 
@@ -323,12 +308,12 @@ export default function PelamarPerfectLayout({
       <footer className="no-print bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 py-8 mt-12">
         <div className="max-w-[1600px] mx-auto px-4 sm:px-8 lg:px-12 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs sm:text-sm text-slate-500 dark:text-slate-400">
           <div className="flex items-center gap-2">
-            <span className="font-extrabold text-[#2596be]">AI-Recruit Pro</span>
+            <span className="font-semibold text-slate-900 dark:text-white">AI-RecruitPro</span>
             <span>&copy; {new Date().getFullYear()} PO-FIT Recruitment Engine</span>
           </div>
           <div className="flex items-center gap-4">
-            <span className="inline-flex items-center gap-2 bg-[#F0F8FB] dark:bg-slate-800 text-[#2596be] dark:text-cyan-400 px-4 py-1.5 rounded-full font-bold text-xs border border-[#C2E5EF] dark:border-slate-700">
-              <span className="w-2 h-2 rounded-full bg-[#2596be] animate-pulse"></span>
+            <span className="inline-flex items-center gap-2 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 px-4 py-1.5 rounded-full font-bold text-xs border border-slate-200 dark:border-slate-700">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
               {t.pelamar.footer.systemActive}
             </span>
           </div>
@@ -338,13 +323,13 @@ export default function PelamarPerfectLayout({
       {/* LOGOUT CONFIRMATION MODAL */}
       {showLogoutModal && (
         <div className="fixed inset-0 z-[100] bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in">
-          <div className="bg-white dark:bg-slate-900 text-slate-900 dark:text-white border border-slate-200 dark:border-slate-800 w-full max-w-sm rounded-3xl shadow-2xl p-6 space-y-4">
+          <div className="bg-white dark:bg-slate-900 text-slate-900 dark:text-white border border-slate-200 dark:border-slate-800 w-full max-w-sm rounded-2xl shadow-2xl p-6 space-y-4">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-2xl bg-red-50 dark:bg-red-950/50 text-red-600 dark:text-red-400 flex items-center justify-center shrink-0">
                 <LogOut size={20} />
               </div>
               <div>
-                <h3 className="text-base font-black">Konfirmasi Keluar</h3>
+                <h3 className="text-base font-bold">Konfirmasi Keluar</h3>
                 <p className="text-xs text-slate-500 dark:text-slate-400">
                   Apakah Anda yakin ingin keluar?
                 </p>
@@ -362,7 +347,7 @@ export default function PelamarPerfectLayout({
               </button>
               <button 
                 onClick={confirmLogout}
-                className="px-5 py-2 rounded-full text-xs font-extrabold bg-red-600 hover:bg-red-700 text-white shadow-md transition-colors cursor-pointer"
+                className="px-5 py-2 rounded-full text-xs font-semibold bg-red-600 hover:bg-red-700 text-white shadow-md transition-colors cursor-pointer"
               >
                 Ya, Keluar
               </button>

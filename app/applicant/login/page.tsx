@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useTranslation } from '@/hooks/useTranslation';
+import LanguageSwitcher from '@/components/LanguageSwitcher';
 import {
   HelpCircle,
   ArrowRight,
@@ -63,40 +64,40 @@ export default function PelamarLoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#F0F8FB] dark:bg-slate-950 text-[#1b7b9e] dark:text-cyan-400 flex flex-col justify-between font-sans antialiased">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 flex flex-col justify-between font-sans antialiased transition-colors duration-300">
 
       {/* Top Header */}
       <header className="py-6 px-6 sm:px-12 max-w-[1600px] w-full mx-auto flex items-center justify-between">
-        <Link href="/" className="flex items-center gap-3 group">
-          <div className="w-10 h-10 bg-[#2596be] text-white rounded-xl flex items-center justify-center font-black text-lg shadow-md group-hover:scale-105 transition-transform">
-            RP
-          </div>
+        <Link href="/" className="flex items-center gap-2 group">
           <div className="flex flex-col">
-            <span className="font-black text-xl tracking-tight text-[#2596be] leading-none">
-              AI-Recruit <span className="text-[#1D7FA1]">Pro</span>
+            <span className="font-bold text-2xl tracking-tight text-slate-900 dark:text-white leading-none">
+              AI-RecruitPro
             </span>
-            <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest mt-0.5">
+            <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest mt-1">
               {t.pelamar.header.portalName}
             </span>
           </div>
         </Link>
 
-        <Link
-          href="/login"
-          className="text-xs sm:text-sm font-bold text-[#1b7b9e] hover:underline flex items-center gap-1.5"
-        >
-          <Building2 size={16} />
-          {t.pelamar.header.forEmployers}
-        </Link>
+        <div className="flex items-center gap-6">
+          <LanguageSwitcher />
+          <Link
+            href="/login"
+            className="text-xs sm:text-sm font-semibold text-[#1A4B9F] hover:underline flex items-center gap-1.5"
+          >
+            <Building2 size={16} />
+            {t.pelamar.header.forEmployers}
+          </Link>
+        </div>
       </header>
 
       {/* Main Centered Sign In Card */}
       <main className="flex-1 flex items-center justify-center px-4 py-8">
-        <div className="w-full max-w-md bg-white dark:bg-slate-900 rounded-3xl p-8 sm:p-10 shadow-2xl border border-[#C2E5EF] dark:border-slate-800 space-y-7 relative">
+        <div className="w-full max-w-md bg-white dark:bg-slate-900 rounded-3xl p-8 sm:p-10 shadow-2xl border border-slate-200 dark:border-slate-800 space-y-7 relative">
 
           <div className="space-y-2">
-            <h1 className="text-3xl font-black text-[#1b7b9e] dark:text-cyan-400">{t.pelamar.auth.loginTitle}</h1>
-            <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400">
+            <h1 className="text-2xl font-bold text-slate-900 dark:text-white">{t.pelamar.auth.loginTitle}</h1>
+            <p className="text-sm text-slate-500 dark:text-slate-400">
               {t.pelamar.auth.loginSubtitle}
             </p>
           </div>
@@ -104,10 +105,10 @@ export default function PelamarLoginPage() {
           {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-1">
-              <div className="flex items-center justify-between text-xs font-bold text-slate-700 dark:text-slate-300">
+              <div className="flex items-center justify-between text-xs font-semibold text-slate-700 dark:text-slate-300">
                 <label htmlFor="email">{t.pelamar.auth.emailLabel}</label>
-                <button type="button" className="text-[#1b7b9e] dark:text-cyan-400 hover:underline flex items-center gap-1">
-                  <HelpCircle size={14} /> Help
+                <button type="button" className="text-[#1A4B9F] dark:text-blue-400 hover:underline flex items-center gap-1">
+                  <HelpCircle size={14} /> {t.pelamar.auth.help}
                 </button>
               </div>
 
@@ -116,14 +117,14 @@ export default function PelamarLoginPage() {
                 type="email"
                 value={email}
                 onChange={(e) => { setEmail(e.target.value); setError(''); }}
-                placeholder="nama@email.com"
-                className="w-full px-4 py-3 bg-white dark:bg-slate-800 border-2 border-slate-300 dark:border-slate-700 focus:border-[#1b7b9e] dark:focus:border-cyan-400 focus:ring-2 focus:ring-cyan-100 dark:focus:ring-cyan-900 rounded-2xl text-sm outline-none transition-all dark:text-white"
+                placeholder={t.pelamar.auth.emailPlaceholder}
+                className="w-full px-4 py-3 bg-white dark:bg-slate-950 text-slate-900 dark:text-white border-2 border-slate-300 dark:border-slate-700 focus:border-[#1A4B9F] dark:focus:border-blue-400 focus:ring-2 focus:ring-blue-100 dark:focus:ring-blue-900 rounded-2xl text-sm outline-none transition-all"
               />
             </div>
 
             <div className="space-y-1">
-              <label htmlFor="password" className="block text-xs font-bold text-slate-700 dark:text-slate-300">
-                Password
+              <label htmlFor="password" className="block text-xs font-semibold text-slate-700 dark:text-slate-300">
+                {t.pelamar.auth.passwordLabel}
               </label>
               <input
                 id="password"
@@ -131,7 +132,7 @@ export default function PelamarLoginPage() {
                 value={password}
                 onChange={(e) => { setPassword(e.target.value); setError(''); }}
                 placeholder="••••••••"
-                className="w-full px-4 py-3 bg-white dark:bg-slate-800 border-2 border-slate-300 dark:border-slate-700 focus:border-[#1b7b9e] dark:focus:border-cyan-400 focus:ring-2 focus:ring-cyan-100 dark:focus:ring-cyan-900 rounded-2xl text-sm outline-none transition-all dark:text-white"
+                className="w-full px-4 py-3 bg-white dark:bg-slate-950 text-slate-900 dark:text-white border-2 border-slate-300 dark:border-slate-700 focus:border-[#1A4B9F] dark:focus:border-blue-400 focus:ring-2 focus:ring-blue-100 dark:focus:ring-blue-900 rounded-2xl text-sm outline-none transition-all"
               />
             </div>
 
@@ -144,17 +145,17 @@ export default function PelamarLoginPage() {
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full py-3.5 rounded-full bg-[#1b7b9e] hover:bg-[#1D7FA1] text-white font-extrabold text-xs sm:text-sm shadow-md hover:shadow-lg transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer"
+              className="w-full py-3 rounded-full bg-[#1A4B9F] hover:bg-[#133878] text-white font-semibold text-sm shadow-sm hover:shadow-md transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer"
             >
-              <span>{isLoading ? 'Processing...' : t.pelamar.auth.signIn}</span>
-              <ArrowRight size={16} />
+              <span>{isLoading ? t.pelamar.auth.processing : t.pelamar.auth.signIn}</span>
+              {!isLoading && <ArrowRight size={18} />}
             </button>
           </form>
 
           {/* Bottom Switch to Register */}
           <div className="pt-2 text-center text-xs text-slate-600 dark:text-slate-400 font-medium">
             {t.pelamar.auth.noAccount}{' '}
-            <Link href="/applicant/register" className="font-extrabold text-[#1b7b9e] dark:text-cyan-400 hover:underline">
+            <Link href="/applicant/register" className="font-semibold text-[#1A4B9F] dark:text-blue-400 hover:underline">
               {t.pelamar.auth.registerNow}
             </Link>
           </div>
@@ -163,7 +164,7 @@ export default function PelamarLoginPage() {
       </main>
 
       {/* Simple Footer */}
-      <footer className="py-6 border-t border-[#C4E3ED] dark:border-slate-800 bg-white dark:bg-slate-900 text-center text-xs text-slate-400">
+      <footer className="py-6 border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-center text-xs text-slate-400">
         &copy; {new Date().getFullYear()} AI-Recruit Pro Candidate Portal. Seluruh hak cipta dilindungi.
       </footer>
 

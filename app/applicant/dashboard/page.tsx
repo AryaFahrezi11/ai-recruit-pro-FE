@@ -28,6 +28,7 @@ import {
   FileText,
   Building,
   Check,
+  RefreshCw,
   Award,
   Zap,
   HelpCircle,
@@ -80,7 +81,7 @@ interface Company {
 function DashboardContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { t } = useTranslation();
+  const { t, language } = useTranslation();
   const initialView = searchParams.get('view') || 'recommended';
 
   const [activeTab, setActiveTab] = useState<'recommended' | 'companies' | 'saved'>(
@@ -459,8 +460,8 @@ function DashboardContent() {
   return (
     <div className="space-y-6 max-w-[1600px] mx-auto">
 
-      {/* VIBRANT TOP SEARCH BANNER (Primary Brand Color Header System) */}
-      <div className="bg-gradient-to-r from-[#2596be] via-[#1b7b9e] to-[#0c2b3d] rounded-3xl p-6 sm:p-8 text-white shadow-xl space-y-5">
+      {/* TOP SEARCH BANNER (Enterprise Solid Blue) */}
+      <div className="bg-[#1A4B9F] rounded-2xl p-6 sm:p-8 text-white shadow-md space-y-5">
         <form
           onSubmit={(e) => {
             e.preventDefault();
@@ -482,8 +483,8 @@ function DashboardContent() {
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder={activeTab === 'companies' ? 'Cari nama perusahaan atau industri...' : t.pelamar.dashboard.searchPlaceholder}
-              className="w-full pl-12 pr-4 py-3.5 bg-white text-slate-800 rounded-2xl text-sm font-semibold placeholder:text-slate-400 outline-none focus:ring-2 focus:ring-[#2596be] shadow-inner"
+              placeholder={activeTab === 'companies' ? (language === 'id' ? 'Cari nama perusahaan atau industri...' : 'Search company or industry...') : t.pelamar.dashboard.searchPlaceholder}
+              className="w-full pl-12 pr-4 py-3.5 bg-white text-slate-800 rounded-2xl text-sm font-semibold placeholder:text-slate-400 outline-none focus:ring-2 focus:ring-[#1A4B9F] shadow-inner"
             />
           </div>
 
@@ -495,14 +496,14 @@ function DashboardContent() {
               value={locationQuery}
               onChange={(e) => setLocationQuery(e.target.value)}
               placeholder={t.pelamar.dashboard.locationPlaceholder}
-              className="w-full pl-12 pr-4 py-3.5 bg-white text-slate-800 rounded-2xl text-sm font-semibold placeholder:text-slate-400 outline-none focus:ring-2 focus:ring-[#2596be] shadow-inner"
+              className="w-full pl-12 pr-4 py-3.5 bg-white text-slate-800 rounded-2xl text-sm font-semibold placeholder:text-slate-400 outline-none focus:ring-2 focus:ring-[#1A4B9F] shadow-inner"
             />
           </div>
 
           {/* Search Button */}
           <div className="md:col-span-2">
             <button type="submit" className="w-full h-full py-3.5 bg-white/20 hover:bg-white/30 text-white rounded-2xl font-bold flex items-center justify-center gap-2 border border-white/30 transition-colors shadow-inner">
-              <Search className="w-4 h-4" /> Cari
+              <Search className="w-4 h-4" /> {language === 'id' ? 'Cari' : 'Search'}
             </button>
           </div>
         </form>
@@ -517,7 +518,7 @@ function DashboardContent() {
             }}
             className="px-4 py-2 rounded-full bg-white/20 hover:bg-white/30 text-white font-bold border border-white/30 transition-all cursor-pointer flex items-center gap-1.5"
           >
-            <span>Semua Filter</span>
+            <span>{language === 'id' ? 'Semua Filter' : 'All Filters'}</span>
           </button>
 
           {activeTab === 'companies' ? (
@@ -528,12 +529,12 @@ function DashboardContent() {
               }}
               className="px-4 py-2 rounded-full bg-white/15 hover:bg-white/25 text-white font-bold border border-white/30 outline-none cursor-pointer text-xs"
             >
-              <option className="text-slate-800" value="Semua">Semua Industri</option>
-              <option className="text-slate-800" value="Teknologi">Teknologi & IT</option>
-              <option className="text-slate-800" value="Keuangan">Keuangan & Perbankan</option>
-              <option className="text-slate-800" value="Kesehatan">Kesehatan</option>
-              <option className="text-slate-800" value="Pendidikan">Pendidikan</option>
-              <option className="text-slate-800" value="Manufaktur">Manufaktur</option>
+              <option className="text-slate-800" value="Semua">{language === 'id' ? 'Semua Industri' : 'All Industries'}</option>
+              <option className="text-slate-800" value="Teknologi">{language === 'id' ? 'Teknologi & IT' : 'Tech & IT'}</option>
+              <option className="text-slate-800" value="Keuangan">{language === 'id' ? 'Keuangan & Perbankan' : 'Finance & Banking'}</option>
+              <option className="text-slate-800" value="Kesehatan">{language === 'id' ? 'Kesehatan' : 'Healthcare'}</option>
+              <option className="text-slate-800" value="Pendidikan">{language === 'id' ? 'Pendidikan' : 'Education'}</option>
+              <option className="text-slate-800" value="Manufaktur">{language === 'id' ? 'Manufaktur' : 'Manufacturing'}</option>
             </select>
           ) : (
             <>
@@ -544,11 +545,11 @@ function DashboardContent() {
                 }}
                 className="px-4 py-2 rounded-full bg-white/15 hover:bg-white/25 text-white font-bold border border-white/30 outline-none cursor-pointer text-xs"
               >
-                <option className="text-slate-800" value="Semua">Minimum Education</option>
-                <option className="text-slate-800" value="SMA">SMA/SMK/Sederajat</option>
-                <option className="text-slate-800" value="D3">D3</option>
-                <option className="text-slate-800" value="S1">D4/S1</option>
-                <option className="text-slate-800" value="S2">S2</option>
+                <option className="text-slate-800" value="Semua">{language === 'id' ? 'Minimum Pendidikan' : 'Minimum Education'}</option>
+                <option className="text-slate-800" value="SMA">{language === 'id' ? 'SMA/SMK/Sederajat' : 'High School'}</option>
+                <option className="text-slate-800" value="D3">{language === 'id' ? 'D3' : 'Diploma'}</option>
+                <option className="text-slate-800" value="S1">{language === 'id' ? 'D4/S1' : 'Bachelor'}</option>
+                <option className="text-slate-800" value="S2">{language === 'id' ? 'S2' : 'Master'}</option>
               </select>
 
               <select
@@ -558,8 +559,8 @@ function DashboardContent() {
                 }}
                 className="px-4 py-2 rounded-full bg-white/15 hover:bg-white/25 text-white font-bold border border-white/30 outline-none cursor-pointer text-xs"
               >
-                <option className="text-slate-800" value="Semua">Work Policy</option>
-                <option className="text-slate-800" value="On-site">On-site (WFO)</option>
+                <option className="text-slate-800" value="Semua">{language === 'id' ? 'Kebijakan Kerja' : 'Work Policy'}</option>
+                <option className="text-slate-800" value="On-site">{language === 'id' ? 'On-site (WFO)' : 'On-site'}</option>
                 <option className="text-slate-800" value="Remote">Remote</option>
                 <option className="text-slate-800" value="Hybrid">Hybrid</option>
               </select>
@@ -568,24 +569,26 @@ function DashboardContent() {
 
           <button
             onClick={() => setActiveTab('recommended')}
-            className={`px-4 py-2 rounded-full font-bold border transition-all cursor-pointer flex items-center gap-1.5 ${activeTab !== 'companies'
-                ? 'bg-[#E0F1F7] text-[#2596be] border-[#B8E1ED] font-extrabold'
+            className={`px-4 py-2 rounded-full font-bold border transition-all cursor-pointer flex items-center gap-1.5 ${
+              activeTab !== 'companies'
+                ? 'bg-[#EFF6FF] text-slate-900 border-[#DBEAFE] font-semibold'
                 : 'bg-white/15 hover:bg-white/25 text-white border-white/30'
               }`}
           >
             <Briefcase className="w-4 h-4" />
-            <span>Job Listings</span>
+            <span>{t.pelamar.nav.findJobs}</span>
           </button>
 
           <button
             onClick={() => setActiveTab('companies')}
-            className={`px-4 py-2 rounded-full font-bold border transition-all cursor-pointer flex items-center gap-1.5 ${activeTab === 'companies'
-                ? 'bg-[#E0F1F7] text-[#2596be] border-[#B8E1ED] font-extrabold'
+            className={`px-4 py-2 rounded-full font-bold border transition-all cursor-pointer flex items-center gap-1.5 ${
+              activeTab === 'companies'
+                ? 'bg-[#EFF6FF] text-slate-900 border-[#DBEAFE] font-semibold'
                 : 'bg-white/15 hover:bg-white/25 text-white border-white/30'
               }`}
           >
             <Building2 className="w-4 h-4" />
-            <span>Companies ({filteredCompanies.length})</span>
+            <span>{t.pelamar.nav.companies} ({filteredCompanies.length})</span>
           </button>
         </div>
       </div>
@@ -602,33 +605,28 @@ function DashboardContent() {
             ) : (
               filteredCompanies.map((comp) => (
                 <div
-                  key={comp.id}
-                  onClick={() => router.push(`/applicant/companies/${comp.id}`)}
-                  className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-2xs hover:shadow-md hover:border-[#2596be]/40 transition-all space-y-4 flex flex-col justify-between cursor-pointer group"
-                >
-                  <div className="space-y-3">
-                    <div className="flex items-start justify-between gap-3">
-                      <img
-                        src={comp.logo}
-                        alt={comp.name}
-                        className="w-14 h-14 rounded-2xl object-cover border border-slate-200 dark:border-slate-700"
-                      />
-                      <span className="px-3 py-1 rounded-full bg-[#E0F1F7] dark:bg-slate-800 text-[#2596be] dark:text-cyan-400 font-black text-xs border border-[#B8E1ED] dark:border-slate-700">
-                        {comp.openJobsCount} Lowongan Buka
-                      </span>
-                    </div>
+                key={comp.id}
+                onClick={() => router.push(`/applicant/companies/${comp.id}`)}
+                className="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-2xs hover:shadow-md hover:border-[#1A4B9F]/40 transition-all space-y-4 flex flex-col justify-between cursor-pointer group"
+              >
+                <div className="space-y-3">
+                  <div className="flex items-start justify-between gap-3">
+                    <img
+                      src={comp.logo}
+                      alt={comp.name}
+                      className="w-14 h-14 rounded-2xl object-cover border border-slate-200 dark:border-slate-700"
+                    />
+                    <span className="px-3 py-1 rounded-full bg-[#EFF6FF] dark:bg-slate-800 text-slate-900 dark:text-white font-bold text-xs border border-[#DBEAFE] dark:border-slate-700">
+                      {comp.openJobsCount} Lowongan Buka
+                    </span>
+                  </div>
 
-                    <div>
-                      <h4 className="font-black text-lg text-slate-800 dark:text-white group-hover:text-[#2596be] transition-colors">
-                        {comp.name}
-                      </h4>
-                      <p className="text-xs text-slate-500 font-bold">
-                        {comp.industry} • {comp.location}
-                      </p>
-                    </div>
-
-                    <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed line-clamp-2">
-                      {comp.description}
+                  <div>
+                    <h4 className="font-bold text-lg text-slate-800 dark:text-white group-hover:text-slate-900 transition-colors">
+                      {comp.name}
+                    </h4>
+                    <p className="text-xs text-slate-500 font-bold">
+                      {comp.industry} • {comp.location}
                     </p>
                   </div>
 
@@ -639,7 +637,15 @@ function DashboardContent() {
                     <ChevronRight className="w-4 h-4" />
                   </div>
                 </div>
-              )))}
+
+                <div
+                  className="w-full py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 group-hover:border-[#1A4B9F] group-hover:text-slate-900 group-hover:bg-[#EFF6FF] dark:group-hover:bg-slate-800 text-slate-600 dark:text-slate-400 text-xs font-bold transition-all flex items-center justify-center gap-2"
+                >
+                  <span>Lihat {comp.openJobsCount} Lowongan Buka</span>
+                  <ChevronRight className="w-4 h-4" />
+                </div>
+              </div>
+            )))}
           </div>
         </div>
       ) : (
@@ -649,16 +655,16 @@ function DashboardContent() {
           {/* RICH SOCIAL SHARE MODAL */}
           {shareJob && (
             <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fadeIn">
-              <div className="bg-white dark:bg-slate-900 rounded-3xl w-full max-w-lg p-6 sm:p-8 shadow-2xl relative border border-slate-200 dark:border-slate-800 space-y-6">
-
+              <div className="bg-white dark:bg-slate-900 rounded-2xl w-full max-w-lg p-6 sm:p-8 shadow-2xl relative border border-slate-200 dark:border-slate-800 space-y-6">
+                
                 {/* Modal Header */}
                 <div className="flex items-start justify-between">
                   <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 rounded-2xl bg-[#E0F1F7] dark:bg-slate-800 text-[#2596be] dark:text-cyan-400 flex items-center justify-center shrink-0">
+                    <div className="w-12 h-12 rounded-2xl bg-[#EFF6FF] dark:bg-slate-800 text-slate-900 dark:text-white flex items-center justify-center shrink-0">
                       <Share2 size={24} />
                     </div>
                     <div>
-                      <h3 className="text-lg font-black text-slate-900 dark:text-white">Bagikan Lowongan Pekerjaan</h3>
+                      <h3 className="text-lg font-bold text-slate-900 dark:text-white">Bagikan Lowongan Pekerjaan</h3>
                       <p className="text-xs text-slate-500 font-bold line-clamp-1">
                         {shareJob.title} • {shareJob.company}
                       </p>
@@ -674,7 +680,7 @@ function DashboardContent() {
 
                 {/* Social Media Share Buttons Grid */}
                 <div className="space-y-2">
-                  <p className="text-xs font-extrabold text-slate-500 uppercase tracking-wider">
+                  <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
                     Pilih Media Sosial untuk Berbagi:
                   </p>
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
@@ -685,7 +691,7 @@ function DashboardContent() {
                         const text = `Lowongan Pekerjaan: ${shareJob.title} di ${shareJob.company}\n\nApply & lihat detail loker:\n${url}`;
                         window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`, '_blank');
                       }}
-                      className="p-3.5 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 hover:bg-emerald-100 dark:hover:bg-emerald-900/50 text-emerald-700 dark:text-emerald-300 font-extrabold text-xs flex flex-col items-center gap-2 transition-all cursor-pointer group shadow-2xs"
+                      className="p-3.5 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 hover:bg-emerald-100 dark:hover:bg-emerald-900/50 text-emerald-700 dark:text-emerald-300 font-semibold text-xs flex flex-col items-center gap-2 transition-all cursor-pointer group shadow-2xs"
                     >
                       <div className="w-10 h-10 rounded-full bg-emerald-500 text-white flex items-center justify-center group-hover:scale-110 transition-transform">
                         <MessageCircle size={20} />
@@ -700,7 +706,7 @@ function DashboardContent() {
                         const text = `Lowongan Pekerjaan: ${shareJob.title} di ${shareJob.company}`;
                         window.open(`https://t.me/share/url?url=${encodeURIComponent(url)}&text=${encodeURIComponent(text)}`, '_blank');
                       }}
-                      className="p-3.5 rounded-2xl bg-sky-50 dark:bg-sky-950/40 border border-sky-200 dark:border-sky-800 hover:bg-sky-100 dark:hover:bg-sky-900/50 text-sky-700 dark:text-sky-300 font-extrabold text-xs flex flex-col items-center gap-2 transition-all cursor-pointer group shadow-2xs"
+                      className="p-3.5 rounded-2xl bg-sky-50 dark:bg-sky-950/40 border border-sky-200 dark:border-sky-800 hover:bg-sky-100 dark:hover:bg-sky-900/50 text-sky-700 dark:text-sky-300 font-semibold text-xs flex flex-col items-center gap-2 transition-all cursor-pointer group shadow-2xs"
                     >
                       <div className="w-10 h-10 rounded-full bg-sky-500 text-white flex items-center justify-center group-hover:scale-110 transition-transform">
                         <Send size={20} />
@@ -714,7 +720,7 @@ function DashboardContent() {
                         const url = typeof window !== 'undefined' ? window.location.origin + '/jobs/' + shareJob.id : '';
                         window.open(`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(url)}`, '_blank');
                       }}
-                      className="p-3.5 rounded-2xl bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800 hover:bg-blue-100 dark:hover:bg-blue-900/50 text-blue-700 dark:text-blue-300 font-extrabold text-xs flex flex-col items-center gap-2 transition-all cursor-pointer group shadow-2xs"
+                      className="p-3.5 rounded-2xl bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800 hover:bg-blue-100 dark:hover:bg-blue-900/50 text-blue-700 dark:text-blue-300 font-semibold text-xs flex flex-col items-center gap-2 transition-all cursor-pointer group shadow-2xs"
                     >
                       <div className="w-10 h-10 rounded-full bg-[#0A66C2] text-white flex items-center justify-center group-hover:scale-110 transition-transform">
                         <Globe size={20} />
@@ -730,7 +736,7 @@ function DashboardContent() {
                         const body = `Halo,\n\nSaya ingin membagikan info lowongan pekerjaan berikut:\n\nPosisi: ${shareJob.title}\nPerusahaan: ${shareJob.company}\nLokasi: ${shareJob.location}\n\nLink detail & pendaftaran: ${url}`;
                         window.open(`mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`, '_blank');
                       }}
-                      className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-extrabold text-xs flex flex-col items-center gap-2 transition-all cursor-pointer group shadow-2xs"
+                      className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-semibold text-xs flex flex-col items-center gap-2 transition-all cursor-pointer group shadow-2xs"
                     >
                       <div className="w-10 h-10 rounded-full bg-slate-700 text-white flex items-center justify-center group-hover:scale-110 transition-transform">
                         <Mail size={20} />
@@ -742,7 +748,7 @@ function DashboardContent() {
 
                 {/* Copy Link Input Bar */}
                 <div className="space-y-2">
-                  <p className="text-xs font-extrabold text-slate-500 uppercase tracking-wider">
+                  <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
                     Atau Salin Tautan Link:
                   </p>
                   <div className="p-2 pl-4 bg-slate-50 dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 flex items-center gap-2">
@@ -754,7 +760,7 @@ function DashboardContent() {
                     />
                     <button
                       onClick={handleCopyLink}
-                      className="px-4 py-2.5 bg-[#2596be] hover:bg-[#1D7FA1] text-white text-xs font-black rounded-xl transition-all cursor-pointer shrink-0 shadow-sm flex items-center gap-1.5"
+                      className="px-4 py-2.5 bg-[#1A4B9F] hover:bg-[#133878] text-white text-xs font-bold rounded-xl transition-all cursor-pointer shrink-0 shadow-sm flex items-center gap-1.5"
                     >
                       <Copy size={14} />
                       <span>Salin Link</span>
@@ -772,7 +778,7 @@ function DashboardContent() {
             {/* Header info */}
             <div className="flex items-center justify-between px-1">
               <div>
-                <h2 className="text-lg font-black text-slate-800 dark:text-white flex items-center gap-1.5">
+                <h2 className="text-lg font-bold text-slate-800 dark:text-white flex items-center gap-1.5">
                   <span>{t.pelamar.dashboard.title}</span>
                   <Info className="w-4 h-4 text-slate-400" />
                 </h2>
@@ -786,7 +792,7 @@ function DashboardContent() {
                 <select
                   value={sortOrder}
                   onChange={(e) => setSortOrder(e.target.value)}
-                  className="text-[#2596be] font-extrabold cursor-pointer bg-transparent outline-none"
+                  className="text-slate-900 font-semibold cursor-pointer bg-transparent outline-none"
                 >
                   <option className="text-slate-700" value="rekomendasi">Rekomendasi PO-FIT</option>
                   <option className="text-slate-700" value="terbaru">Terbaru</option>
@@ -798,14 +804,14 @@ function DashboardContent() {
             {/* Job Cards List */}
             <div className="space-y-3.5 max-h-[85vh] overflow-y-auto pr-1">
               {filteredJobs.length === 0 ? (
-                <div className="bg-white dark:bg-slate-900 rounded-3xl p-8 text-center border border-slate-200 dark:border-slate-800 space-y-3">
+                <div className="bg-white dark:bg-slate-900 rounded-2xl p-8 text-center border border-slate-200 dark:border-slate-800 space-y-3">
                   <Briefcase className="w-10 h-10 text-slate-400 mx-auto" />
                   <p className="text-xs font-bold text-slate-600 dark:text-slate-300">
                     {t.pelamar.dashboard.requirements}
                   </p>
                   <button
                     onClick={() => { setSearchQuery(''); setLocationQuery(''); setEducationFilter('Semua'); setWorkPolicyFilter('Semua'); }}
-                    className="px-4 py-2 rounded-full bg-[#2596be] text-white font-bold text-xs cursor-pointer"
+                    className="px-4 py-2 rounded-full bg-[#1A4B9F] text-white font-bold text-xs cursor-pointer"
                   >
                     Reset Filter
                   </button>
@@ -819,8 +825,9 @@ function DashboardContent() {
                     <div
                       key={job.id}
                       onClick={() => setSelectedJobId(job.id)}
-                      className={`p-5 rounded-3xl border transition-all cursor-pointer relative space-y-3 ${isSelected
-                          ? 'bg-white dark:bg-slate-900 border-2 border-[#2596be] shadow-md ring-2 ring-[#2596be]/20'
+                      className={`p-5 rounded-2xl border transition-all cursor-pointer relative space-y-3 ${
+                        isSelected
+                          ? 'bg-white dark:bg-slate-900 border-2 border-[#1A4B9F] shadow-md ring-2 ring-[#1A4B9F]/20'
                           : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 shadow-2xs'
                         }`}
                     >
@@ -834,21 +841,21 @@ function DashboardContent() {
                           />
                           <div>
                             <div className="flex flex-wrap items-center gap-1.5 mb-1">
-                              <span className="font-extrabold text-xs text-slate-700 dark:text-slate-300">
+                              <span className="font-semibold text-xs text-slate-700 dark:text-slate-300">
                                 {job.company}
                               </span>
                               {job.isNew && (
-                                <span className="px-2 py-0.5 rounded-md bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 font-extrabold text-[10px] border border-amber-200 dark:border-amber-800">
+                                <span className="px-2 py-0.5 rounded-md bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 font-semibold text-[10px] border border-amber-200 dark:border-amber-800">
                                   Loker Terbaru
                                 </span>
                               )}
                               {job.isPromoted && (
-                                <span className="px-2 py-0.5 rounded-md bg-cyan-100 dark:bg-cyan-950/60 text-cyan-800 dark:text-cyan-300 font-extrabold text-[10px]">
+                                <span className="px-2 py-0.5 rounded-md bg-cyan-100 dark:bg-cyan-950/60 text-cyan-800 dark:text-cyan-300 font-semibold text-[10px]">
                                   Dipromosikan
                                 </span>
                               )}
                             </div>
-                            <h3 className="text-base sm:text-lg font-black text-slate-900 dark:text-white leading-snug hover:text-[#2596be] transition-colors">
+                            <h3 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white leading-snug hover:text-slate-900 transition-colors">
                               {job.title}
                             </h3>
                           </div>
@@ -857,7 +864,7 @@ function DashboardContent() {
 
                       {/* Kuota Posisi Pill Badge */}
                       {job.openingsCount > 0 && (
-                        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#E0F1F7] dark:bg-slate-800 text-[#2596be] dark:text-cyan-400 text-xs font-extrabold border border-[#B8E1ED] dark:border-slate-700">
+                        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#EFF6FF] dark:bg-slate-800 text-slate-900 dark:text-white text-xs font-semibold border border-[#DBEAFE] dark:border-slate-700">
                           <Users size={13} />
                           <span>Kuota: {job.openingsCount} Posisi</span>
                         </div>
@@ -872,8 +879,8 @@ function DashboardContent() {
                           </span>
                         </div>
                         <div className="flex items-center gap-1.5">
-                          <DollarSign size={14} className="text-[#2596be] shrink-0" />
-                          <span className="font-black text-slate-900 dark:text-white text-sm">{job.salary}</span>
+                          <DollarSign size={14} className="text-slate-900 shrink-0" />
+                          <span className="font-bold text-slate-900 dark:text-white text-sm">{job.salary}</span>
                         </div>
                       </div>
 
@@ -881,7 +888,7 @@ function DashboardContent() {
                       {job.benefits && job.benefits.length > 0 && (
                         <div className="flex flex-wrap items-center gap-1.5 pt-1">
                           {job.benefits.slice(0, 4).map((b, idx) => (
-                            <span key={idx} className="px-2.5 py-0.5 rounded-full bg-[#F0F8FB] dark:bg-slate-800 text-[#2596be] dark:text-cyan-400 text-[11px] font-bold border border-[#C2E5EF] dark:border-slate-700 flex items-center gap-1">
+                            <span key={idx} className="px-2.5 py-0.5 rounded-full bg-[#EFF6FF] dark:bg-slate-800 text-slate-900 dark:text-white text-[11px] font-bold border border-[#C2E5EF] dark:border-slate-700 flex items-center gap-1">
                               ✓ {b}
                             </span>
                           ))}
@@ -903,11 +910,11 @@ function DashboardContent() {
                               e.stopPropagation();
                               toggleSaveJob(job.id);
                             }}
-                            className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-[#2596be] transition-colors cursor-pointer"
+                            className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-slate-900 transition-colors cursor-pointer"
                             title={isSaved ? 'Hapus Simpan' : 'Save Job'}
                           >
                             {isSaved ? (
-                              <BookmarkCheck size={16} className="text-[#2596be] fill-current" />
+                              <BookmarkCheck size={16} className="text-slate-900 fill-current" />
                             ) : (
                               <Bookmark size={16} />
                             )}
@@ -918,7 +925,7 @@ function DashboardContent() {
                               e.stopPropagation();
                               setShareJob(job);
                             }}
-                            className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-[#2596be] transition-colors cursor-pointer"
+                            className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-slate-900 transition-colors cursor-pointer"
                             title="Bagikan Lowongan"
                           >
                             <Share2 size={16} />
@@ -935,8 +942,8 @@ function DashboardContent() {
           {/* RIGHT COLUMN: DYNAMIC JOB DETAIL PANE (~62% Width / 7 Cols) */}
           <div className="lg:col-span-7 sticky top-28 h-[calc(100vh-130px)]">
             {selectedJob && (
-              <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-md overflow-y-auto h-full custom-scrollbar">
-
+              <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-md overflow-y-auto h-full custom-scrollbar">
+                
                 {/* Detail Header */}
                 <div className="p-6 sm:p-8 pb-4 space-y-4 border-b border-slate-100 dark:border-slate-800">
                   <div className="flex items-start gap-4">
@@ -947,27 +954,27 @@ function DashboardContent() {
                     />
                     <div className="space-y-1.5">
                       <div className="flex flex-wrap items-center gap-2">
-                        <span className="text-sm font-extrabold text-[#2596be] dark:text-cyan-400">
+                        <span className="text-sm font-semibold text-slate-900 dark:text-white">
                           {selectedJob.company}
                         </span>
                         {selectedJob.isNew && (
-                          <span className="px-2.5 py-0.5 rounded-md bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 font-extrabold text-xs border border-amber-200 dark:border-amber-800">
+                          <span className="px-2.5 py-0.5 rounded-md bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 font-semibold text-xs border border-amber-200 dark:border-amber-800">
                             Loker Terbaru
                           </span>
                         )}
                         {selectedJob.isPromoted && (
-                          <span className="px-2.5 py-0.5 rounded-md bg-cyan-100 dark:bg-cyan-950/60 text-cyan-800 dark:text-cyan-300 font-extrabold text-xs">
+                          <span className="px-2.5 py-0.5 rounded-md bg-cyan-100 dark:bg-cyan-950/60 text-cyan-800 dark:text-cyan-300 font-semibold text-xs">
                             Dipromosikan
                           </span>
                         )}
                       </div>
 
-                      <h1 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white leading-tight">
+                      <h1 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white leading-tight">
                         {selectedJob.title}
                       </h1>
 
                       {selectedJob.openingsCount > 0 && (
-                        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#E0F1F7] dark:bg-slate-800 text-[#2596be] dark:text-cyan-400 text-xs font-extrabold border border-[#B8E1ED] dark:border-slate-700">
+                        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#EFF6FF] dark:bg-slate-800 text-slate-900 dark:text-white text-xs font-semibold border border-[#DBEAFE] dark:border-slate-700">
                           <Users size={13} />
                           <span>Kuota Terbuka: {selectedJob.openingsCount} Posisi</span>
                         </div>
@@ -978,50 +985,50 @@ function DashboardContent() {
                   {/* Info Grid Cards */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 text-xs text-slate-700 dark:text-slate-300 font-semibold pt-1">
                     <div className="flex items-center gap-2 p-2.5 bg-slate-50 dark:bg-slate-800/60 rounded-xl">
-                      <MapPin size={16} className="text-[#2596be] shrink-0" />
+                      <MapPin size={16} className="text-slate-900 shrink-0" />
                       <div>
                         <p className="text-[10px] text-slate-400 font-bold uppercase">Lokasi Penempatan</p>
-                        <p className="font-extrabold">{selectedJob.location}</p>
+                        <p className="font-semibold">{selectedJob.location}</p>
                       </div>
                     </div>
 
                     <div className="flex items-center gap-2 p-2.5 bg-slate-50 dark:bg-slate-800/60 rounded-xl">
-                      <GraduationCap size={16} className="text-[#2596be] shrink-0" />
+                      <GraduationCap size={16} className="text-slate-900 shrink-0" />
                       <div>
                         <p className="text-[10px] text-slate-400 font-bold uppercase">Min. Pendidikan</p>
-                        <p className="font-extrabold">{selectedJob.educationLevel}</p>
+                        <p className="font-semibold">{selectedJob.educationLevel}</p>
                       </div>
                     </div>
 
                     <div className="flex items-center gap-2 p-2.5 bg-slate-50 dark:bg-slate-800/60 rounded-xl">
-                      <Briefcase size={16} className="text-[#2596be] shrink-0" />
+                      <Briefcase size={16} className="text-slate-900 shrink-0" />
                       <div>
                         <p className="text-[10px] text-slate-400 font-bold uppercase">Kebijakan & Tipe Kerja</p>
-                        <p className="font-extrabold">{selectedJob.workPolicy}</p>
+                        <p className="font-semibold">{selectedJob.workPolicy}</p>
                       </div>
                     </div>
 
                     <div className="flex items-center gap-2 p-2.5 bg-slate-50 dark:bg-slate-800/60 rounded-xl">
-                      <Award size={16} className="text-[#2596be] shrink-0" />
+                      <Award size={16} className="text-slate-900 shrink-0" />
                       <div>
                         <p className="text-[10px] text-slate-400 font-bold uppercase">Level Pengalaman</p>
-                        <p className="font-extrabold">{selectedJob.experienceLevel}</p>
+                        <p className="font-semibold">{selectedJob.experienceLevel}</p>
                       </div>
                     </div>
 
                     <div className="flex items-center gap-2 p-2.5 bg-slate-50 dark:bg-slate-800/60 rounded-xl">
-                      <DollarSign size={16} className="text-[#2596be] shrink-0" />
+                      <DollarSign size={16} className="text-slate-900 shrink-0" />
                       <div>
                         <p className="text-[10px] text-slate-400 font-bold uppercase">Rentang Gaji</p>
-                        <p className="font-black text-[#2596be] dark:text-cyan-400 text-sm">{selectedJob.salary}</p>
+                        <p className="font-bold text-slate-900 dark:text-white text-sm">{selectedJob.salary}</p>
                       </div>
                     </div>
 
                     <div className="flex items-center gap-2 p-2.5 bg-slate-50 dark:bg-slate-800/60 rounded-xl">
-                      <Clock size={16} className="text-[#2596be] shrink-0" />
+                      <Clock size={16} className="text-slate-900 shrink-0" />
                       <div>
                         <p className="text-[10px] text-slate-400 font-bold uppercase">Batas Akhir Lamaran</p>
-                        <p className="font-extrabold">{selectedJob.applicationDeadline || 'Tidak ditentukan'}</p>
+                        <p className="font-semibold">{selectedJob.applicationDeadline || 'Tidak ditentukan'}</p>
                       </div>
                     </div>
                   </div>
@@ -1029,10 +1036,10 @@ function DashboardContent() {
                   {/* Benefits Pills */}
                   {selectedJob.benefits && selectedJob.benefits.length > 0 && (
                     <div className="space-y-1.5 pt-1">
-                      <p className="text-[11px] font-extrabold text-slate-500 uppercase tracking-wider">Fasilitas &amp; Benefit Pekerjaan:</p>
+                      <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Fasilitas &amp; Benefit Pekerjaan:</p>
                       <div className="flex flex-wrap items-center gap-1.5">
                         {selectedJob.benefits.map((benefit, idx) => (
-                          <span key={idx} className="px-3 py-1 rounded-full bg-[#F0F8FB] dark:bg-slate-800 text-[#2596be] dark:text-cyan-400 text-xs font-extrabold border border-[#C2E5EF] dark:border-slate-700 flex items-center gap-1">
+                          <span key={idx} className="px-3 py-1 rounded-full bg-[#EFF6FF] dark:bg-slate-800 text-slate-900 dark:text-white text-xs font-semibold border border-[#C2E5EF] dark:border-slate-700 flex items-center gap-1">
                             ✓ {benefit}
                           </span>
                         ))}
@@ -1047,13 +1054,13 @@ function DashboardContent() {
                   {/* Action CTA Buttons Bar (Matching KitaLulus Primary Blue Button) */}
                   <div className="flex flex-wrap items-center gap-3 pt-2">
                     {appliedJobs.some(id => String(id) === String(selectedJob.id)) ? (
-                      <span className="px-7 py-3 rounded-2xl bg-emerald-100 text-emerald-800 font-black text-xs sm:text-sm border border-emerald-300 flex items-center gap-2 shadow-sm cursor-not-allowed opacity-90">
+                      <span className="px-7 py-3 rounded-2xl bg-emerald-100 text-emerald-800 font-bold text-xs sm:text-sm border border-emerald-300 flex items-center gap-2 shadow-sm cursor-not-allowed opacity-90">
                         <CheckCircle2 size={16} /> Anda sudah melamar
                       </span>
                     ) : (
                       <button
                         onClick={() => handleApplyWithCv(selectedJob.id, selectedJob.company, selectedJob.title)}
-                        className="px-7 py-3 rounded-2xl bg-[#2596be] hover:bg-[#1D7FA1] text-white font-black text-xs sm:text-sm shadow-md hover:shadow-lg transition-all cursor-pointer flex items-center gap-2"
+                        className="px-7 py-3 rounded-2xl bg-[#1A4B9F] hover:bg-[#133878] text-white font-bold text-xs sm:text-sm shadow-md hover:shadow-lg transition-all cursor-pointer flex items-center gap-2"
                       >
                         <Send size={16} />
                         <span>{t.pelamar.dashboard.applyNow}</span>
@@ -1063,8 +1070,9 @@ function DashboardContent() {
                     {/* Bookmark */}
                     <button
                       onClick={() => toggleSaveJob(selectedJob.id)}
-                      className={`p-3 rounded-2xl border transition-colors cursor-pointer ${savedJobIds.some(id => String(id) === String(selectedJob.id))
-                          ? 'bg-cyan-50 border-[#2596be] text-[#2596be] dark:bg-slate-800'
+                      className={`p-3 rounded-2xl border transition-colors cursor-pointer ${
+                        savedJobIds.some(id => String(id) === String(selectedJob.id))
+                          ? 'bg-cyan-50 border-[#1A4B9F] text-slate-900 dark:bg-slate-800'
                           : 'border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50'
                         }`}
                       title="Save Job"
@@ -1087,7 +1095,7 @@ function DashboardContent() {
                 <div className="p-6 sm:p-8 pt-6 space-y-6">
                   {/* Deskripsi Pekerjaan */}
                   <div className="space-y-3 text-xs sm:text-sm text-slate-700 dark:text-slate-300 leading-relaxed">
-                    <h3 className="font-extrabold text-sm text-slate-900 dark:text-white uppercase tracking-wider">
+                    <h3 className="font-semibold text-sm text-slate-900 dark:text-white uppercase tracking-wider">
                       {t.pelamar.dashboard.aboutRole}
                     </h3>
                     <p className="font-bold text-slate-800 dark:text-slate-200">
@@ -1103,7 +1111,7 @@ function DashboardContent() {
                   {/* Tanggung Jawab Pekerjaan */}
                   {selectedJob.responsibilitiesBullets && selectedJob.responsibilitiesBullets.length > 0 && (
                     <div className="space-y-3 text-xs sm:text-sm text-slate-700 dark:text-slate-300">
-                      <h3 className="font-extrabold text-sm text-slate-900 dark:text-white uppercase tracking-wider">
+                      <h3 className="font-semibold text-sm text-slate-900 dark:text-white uppercase tracking-wider">
                         Tanggung Jawab Utama
                       </h3>
                       <ul className="space-y-1.5 list-disc pl-5 font-semibold text-slate-700 dark:text-slate-300">
@@ -1116,7 +1124,7 @@ function DashboardContent() {
 
                   {/* Kriteria / Kualifikasi */}
                   <div className="space-y-3 text-xs sm:text-sm text-slate-700 dark:text-slate-300">
-                    <h3 className="font-extrabold text-sm text-slate-900 dark:text-white uppercase tracking-wider">
+                    <h3 className="font-semibold text-sm text-slate-900 dark:text-white uppercase tracking-wider">
                       {t.pelamar.dashboard.requirements}
                     </h3>
                     <ul className="space-y-1.5 list-disc pl-5 font-semibold text-slate-700 dark:text-slate-300">
@@ -1128,7 +1136,7 @@ function DashboardContent() {
 
                   {/* Informasi Lokasi & Penempatan */}
                   <div className="space-y-2 text-xs sm:text-sm text-slate-700 dark:text-slate-300 pt-2 border-t border-slate-100 dark:border-slate-800">
-                    <h3 className="font-extrabold text-sm text-slate-900 dark:text-white uppercase tracking-wider">
+                    <h3 className="font-semibold text-sm text-slate-900 dark:text-white uppercase tracking-wider">
                       Lokasi Penempatan
                     </h3>
                     <p className="font-medium text-slate-600 dark:text-slate-400">
