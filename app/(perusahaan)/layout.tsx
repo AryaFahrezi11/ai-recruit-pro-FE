@@ -18,7 +18,7 @@ export default function PerusahaanLayout({
   children: React.ReactNode;
 }) {
   const router = useRouter();
-  const { language, setLanguage, toggleMobileSidebar, logout } = useAppStore();
+  const { toggleMobileSidebar, logout } = useAppStore();
   const { t } = useTranslation();
   const [mounted, setMounted] = useState(false);
 
@@ -95,15 +95,6 @@ export default function PerusahaanLayout({
             {mounted && (
               <>
 
-
-                <button
-                  onClick={() => setLanguage(language === 'id' ? 'en' : 'id')}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-full hover:bg-muted transition-colors border border-border text-muted-foreground font-bold text-xs"
-                  title="Toggle Language"
-                >
-                  <Globe size={16} />
-                  <span>{language.toUpperCase()}</span>
-                </button>
               </>
             )}
             

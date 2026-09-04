@@ -234,9 +234,9 @@ function DashboardContent() {
           const diffDays = Math.floor((nowStartOfDay.getTime() - createdStartOfDay.getTime()) / (1000 * 60 * 60 * 24));
 
           const postedAgoText = (() => {
-            if (diffDays <= 0) return 'Hari ini';
-            if (diffDays === 1) return '1 hari yang lalu';
-            return `${diffDays} hari yang lalu`;
+            if (diffDays <= 0) return language === 'id' ? 'Hari ini' : 'Today';
+            if (diffDays === 1) return language === 'id' ? '1 hari yang lalu' : '1 day ago';
+            return language === 'id' ? `${diffDays} hari yang lalu` : `${diffDays} days ago`;
           })();
 
           const isNewJob = diffDays >= 0 && diffDays <= 7;
@@ -249,7 +249,7 @@ function DashboardContent() {
               ? getMediaUrl(j.perusahaan.logo_url)
               : 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=120&auto=format&fit=crop&q=80',
             location: j.kota || (j.perusahaan?.kota ? j.perusahaan.kota : 'Remote'),
-            education: j.pendidikan_min || safeParseArray(j.kualifikasi)[0] || 'Terbuka untuk umum',
+            education: j.pendidikan_min || safeParseArray(j.kualifikasi)[0] || (language === 'id' ? 'Terbuka untuk umum' : 'Open to public'),
             educationLevel: j.pendidikan_min || 'SMA/SMK/D3/S1',
             experienceLevel: expLevel,
             openingsCount: j.openings_count || 1,
@@ -261,7 +261,7 @@ function DashboardContent() {
             })(),
             salary: (j.tampilkan_gaji && j.gaji_min && j.gaji_max)
               ? `Rp ${(j.gaji_min / 1000000).toFixed(0)} Jt - Rp ${(j.gaji_max / 1000000).toFixed(0)} Jt`
-              : 'Gaji Dirahasiakan',
+              : (language === 'id' ? 'Gaji Dirahasiakan' : 'Salary Undisclosed'),
             postedAgo: postedAgoText,
             publishDate: createdDate.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }),
             applicationDeadline: j.tanggal_tutup ? new Date(j.tanggal_tutup).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) : null,
@@ -269,10 +269,10 @@ function DashboardContent() {
             isNew: isNewJob,
             matchScore: j.match_score || 92,
             createdAtMs: createdDate.getTime(),
-            reason: j.reason || 'Keahlian & kualifikasi Anda sesuai dengan posisi ini.',
+            reason: j.reason || (language === 'id' ? 'Keahlian & kualifikasi Anda sesuai dengan posisi ini.' : 'Your skills and qualifications match this role.'),
             descriptionBullets: safeParseArray(j.deskripsi_pekerjaan),
             responsibilitiesBullets: safeParseArray(j.tanggung_jawab),
-            placementInfo: j.kota ? `Untuk lokasi di ${j.kota}` : (j.lokasi_kerja === 'remote' ? 'Remote (Kerja Dari Mana Saja)' : 'Lokasi Perusahaan'),
+            placementInfo: j.kota ? (language === 'id' ? `Untuk lokasi di ${j.kota}` : `Located in ${j.kota}`) : (j.lokasi_kerja === 'remote' ? (language === 'id' ? 'Remote (Kerja Dari Mana Saja)' : 'Remote (Work From Anywhere)') : (language === 'id' ? 'Lokasi Perusahaan' : 'Company Location')),
             criteriaBullets: safeParseArray(j.kualifikasi),
           };
         });
@@ -348,12 +348,12 @@ function DashboardContent() {
           linkedinUrl: p.linkedin_url || '',
           portfolioUrl: p.portfolio_url || '',
           socialLinks: parsedSocial,
-          skills: p.keahlian || 'Belum ada skill yang ditambahkan',
+          skills: p.keahlian || (language === 'id' ? 'Belum ada skill yang ditambahkan' : 'No skills added yet'),
           summary: p.ringkasan_diri || '',
           experiences: parsedExp,
           education: parsedEdu,
           certifications: parsedCert,
-          updatedAt: 'Baru Saja'
+          updatedAt: language === 'id' ? 'Baru Saja' : 'Just Now'
         });
       }
     } catch (err) {
@@ -407,7 +407,7 @@ function DashboardContent() {
     if (!shareJob) return;
     const url = typeof window !== 'undefined' ? window.location.origin + '/jobs/' + shareJob.id : 'http://localhost:3000/jobs/' + shareJob.id;
     navigator.clipboard.writeText(url);
-    toast.success('Link berhasil disalin ke clipboard!');
+    toast.success(language === 'id' ? 'Link berhasil disalin ke clipboard!' : 'Link copied to clipboard!');
     setShareJob(null);
   };
 
@@ -600,7 +600,7 @@ function DashboardContent() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
             {filteredCompanies.length === 0 ? (
               <div className="col-span-full py-12 text-center">
-                <p className="text-slate-500 font-semibold">Tidak ada perusahaan yang sesuai dengan pencarian Anda.</p>
+                <p className="text-slate-500 font-semibold">{language === 'id' ? 'Tidak ada perusahaan yang sesuai dengan pencarian Anda.' : 'No companies match your search.'}</p>
               </div>
             ) : (
               filteredCompanies.map((comp) => (
@@ -617,7 +617,7 @@ function DashboardContent() {
                       className="w-14 h-14 rounded-2xl object-cover border border-slate-200 dark:border-slate-700"
                     />
                     <span className="px-3 py-1 rounded-full bg-[#EFF6FF] dark:bg-slate-800 text-slate-900 dark:text-white font-bold text-xs border border-[#DBEAFE] dark:border-slate-700">
-                      {comp.openJobsCount} Lowongan Buka
+                      {comp.openJobsCount} {language === 'id' ? 'Lowongan Buka' : 'Open Jobs'}
                     </span>
                   </div>
 
@@ -631,19 +631,13 @@ function DashboardContent() {
                   </div>
 
                   <div
-                    className="w-full py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 group-hover:border-[#2596be] group-hover:text-[#2596be] group-hover:bg-[#F0F8FB] dark:group-hover:bg-slate-800 text-slate-600 dark:text-slate-400 text-xs font-bold transition-all flex items-center justify-center gap-2"
+                    className="w-full py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 group-hover:border-[#1A4B9F] group-hover:text-[#1A4B9F] group-hover:bg-[#EFF6FF] dark:group-hover:bg-slate-800 text-slate-600 dark:text-slate-400 text-xs font-bold transition-all flex items-center justify-center gap-2"
                   >
-                    <span>Lihat {comp.openJobsCount} Lowongan Buka</span>
+                    <span>{language === 'id' ? 'Lihat' : 'View'} {comp.openJobsCount} {language === 'id' ? 'Lowongan Buka' : 'Open Jobs'}</span>
                     <ChevronRight className="w-4 h-4" />
                   </div>
                 </div>
 
-                <div
-                  className="w-full py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 group-hover:border-[#1A4B9F] group-hover:text-slate-900 group-hover:bg-[#EFF6FF] dark:group-hover:bg-slate-800 text-slate-600 dark:text-slate-400 text-xs font-bold transition-all flex items-center justify-center gap-2"
-                >
-                  <span>Lihat {comp.openJobsCount} Lowongan Buka</span>
-                  <ChevronRight className="w-4 h-4" />
-                </div>
               </div>
             )))}
           </div>
@@ -664,7 +658,7 @@ function DashboardContent() {
                       <Share2 size={24} />
                     </div>
                     <div>
-                      <h3 className="text-lg font-bold text-slate-900 dark:text-white">Bagikan Lowongan Pekerjaan</h3>
+                      <h3 className="text-lg font-bold text-slate-900 dark:text-white">{language === 'id' ? 'Bagikan Lowongan Pekerjaan' : 'Share Job Opening'}</h3>
                       <p className="text-xs text-slate-500 font-bold line-clamp-1">
                         {shareJob.title} • {shareJob.company}
                       </p>
@@ -681,14 +675,16 @@ function DashboardContent() {
                 {/* Social Media Share Buttons Grid */}
                 <div className="space-y-2">
                   <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
-                    Pilih Media Sosial untuk Berbagi:
+                    {language === 'id' ? 'Pilih Media Sosial untuk Berbagi:' : 'Choose Social Media to Share:'}
                   </p>
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                     {/* WhatsApp */}
                     <button
                       onClick={() => {
                         const url = typeof window !== 'undefined' ? window.location.origin + '/jobs/' + shareJob.id : '';
-                        const text = `Lowongan Pekerjaan: ${shareJob.title} di ${shareJob.company}\n\nApply & lihat detail loker:\n${url}`;
+                        const text = language === 'id'
+                          ? `Lowongan Pekerjaan: ${shareJob.title} di ${shareJob.company}\n\nApply & lihat detail loker:\n${url}`
+                          : `Job Opening: ${shareJob.title} at ${shareJob.company}\n\nApply & view job details:\n${url}`;
                         window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`, '_blank');
                       }}
                       className="p-3.5 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 hover:bg-emerald-100 dark:hover:bg-emerald-900/50 text-emerald-700 dark:text-emerald-300 font-semibold text-xs flex flex-col items-center gap-2 transition-all cursor-pointer group shadow-2xs"
@@ -703,7 +699,7 @@ function DashboardContent() {
                     <button
                       onClick={() => {
                         const url = typeof window !== 'undefined' ? window.location.origin + '/jobs/' + shareJob.id : '';
-                        const text = `Lowongan Pekerjaan: ${shareJob.title} di ${shareJob.company}`;
+                        const text = language === 'id' ? `Lowongan Pekerjaan: ${shareJob.title} di ${shareJob.company}` : `Job Opening: ${shareJob.title} at ${shareJob.company}`;
                         window.open(`https://t.me/share/url?url=${encodeURIComponent(url)}&text=${encodeURIComponent(text)}`, '_blank');
                       }}
                       className="p-3.5 rounded-2xl bg-sky-50 dark:bg-sky-950/40 border border-sky-200 dark:border-sky-800 hover:bg-sky-100 dark:hover:bg-sky-900/50 text-sky-700 dark:text-sky-300 font-semibold text-xs flex flex-col items-center gap-2 transition-all cursor-pointer group shadow-2xs"
@@ -732,8 +728,10 @@ function DashboardContent() {
                     <button
                       onClick={() => {
                         const url = typeof window !== 'undefined' ? window.location.origin + '/jobs/' + shareJob.id : '';
-                        const subject = `Lowongan Pekerjaan: ${shareJob.title} di ${shareJob.company}`;
-                        const body = `Halo,\n\nSaya ingin membagikan info lowongan pekerjaan berikut:\n\nPosisi: ${shareJob.title}\nPerusahaan: ${shareJob.company}\nLokasi: ${shareJob.location}\n\nLink detail & pendaftaran: ${url}`;
+                        const subject = language === 'id' ? `Lowongan Pekerjaan: ${shareJob.title} di ${shareJob.company}` : `Job Opening: ${shareJob.title} at ${shareJob.company}`;
+                        const body = language === 'id' 
+                          ? `Halo,\n\nSaya ingin membagikan info lowongan pekerjaan berikut:\n\nPosisi: ${shareJob.title}\nPerusahaan: ${shareJob.company}\nLokasi: ${shareJob.location}\n\nLink detail & pendaftaran: ${url}`
+                          : `Hello,\n\nI would like to share the following job opening:\n\nPosition: ${shareJob.title}\nCompany: ${shareJob.company}\nLocation: ${shareJob.location}\n\nApply & view job details: ${url}`;
                         window.open(`mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`, '_blank');
                       }}
                       className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-semibold text-xs flex flex-col items-center gap-2 transition-all cursor-pointer group shadow-2xs"
@@ -749,7 +747,7 @@ function DashboardContent() {
                 {/* Copy Link Input Bar */}
                 <div className="space-y-2">
                   <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
-                    Atau Salin Tautan Link:
+                    {language === 'id' ? 'Atau Salin Tautan Link:' : 'Or Copy Link:'}
                   </p>
                   <div className="p-2 pl-4 bg-slate-50 dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 flex items-center gap-2">
                     <input
@@ -763,7 +761,7 @@ function DashboardContent() {
                       className="px-4 py-2.5 bg-[#1A4B9F] hover:bg-[#133878] text-white text-xs font-bold rounded-xl transition-all cursor-pointer shrink-0 shadow-sm flex items-center gap-1.5"
                     >
                       <Copy size={14} />
-                      <span>Salin Link</span>
+                      <span>{language === 'id' ? 'Salin Link' : 'Copy Link'}</span>
                     </button>
                   </div>
                 </div>
@@ -788,15 +786,15 @@ function DashboardContent() {
               </div>
 
               <div className="flex items-center gap-1 text-xs text-slate-500 font-bold">
-                <span>Urut berdasarkan:</span>
+                <span>{language === 'id' ? 'Urut berdasarkan:' : 'Sort by:'}</span>
                 <select
                   value={sortOrder}
                   onChange={(e) => setSortOrder(e.target.value)}
                   className="text-slate-900 font-semibold cursor-pointer bg-transparent outline-none"
                 >
-                  <option className="text-slate-700" value="rekomendasi">Rekomendasi PO-FIT</option>
-                  <option className="text-slate-700" value="terbaru">Terbaru</option>
-                  <option className="text-slate-700" value="terlama">Terlama</option>
+                  <option className="text-slate-700" value="rekomendasi">{language === 'id' ? 'Rekomendasi PO-FIT' : 'PO-FIT Recommendation'}</option>
+                  <option className="text-slate-700" value="terbaru">{language === 'id' ? 'Terbaru' : 'Newest'}</option>
+                  <option className="text-slate-700" value="terlama">{language === 'id' ? 'Terlama' : 'Oldest'}</option>
                 </select>
               </div>
             </div>
@@ -813,7 +811,7 @@ function DashboardContent() {
                     onClick={() => { setSearchQuery(''); setLocationQuery(''); setEducationFilter('Semua'); setWorkPolicyFilter('Semua'); }}
                     className="px-4 py-2 rounded-full bg-[#1A4B9F] text-white font-bold text-xs cursor-pointer"
                   >
-                    Reset Filter
+                    {language === 'id' ? 'Reset Filter' : 'Reset Filters'}
                   </button>
                 </div>
               ) : (
@@ -846,12 +844,12 @@ function DashboardContent() {
                               </span>
                               {job.isNew && (
                                 <span className="px-2 py-0.5 rounded-md bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 font-semibold text-[10px] border border-amber-200 dark:border-amber-800">
-                                  Loker Terbaru
+                                  {language === 'id' ? 'Loker Terbaru' : 'New Job'}
                                 </span>
                               )}
                               {job.isPromoted && (
                                 <span className="px-2 py-0.5 rounded-md bg-cyan-100 dark:bg-cyan-950/60 text-cyan-800 dark:text-cyan-300 font-semibold text-[10px]">
-                                  Dipromosikan
+                                  {language === 'id' ? 'Dipromosikan' : 'Promoted'}
                                 </span>
                               )}
                             </div>
@@ -862,11 +860,11 @@ function DashboardContent() {
                         </div>
                       </div>
 
-                      {/* Kuota Posisi Pill Badge */}
+                      {/* Kuota Posisi Badge */}
                       {job.openingsCount > 0 && (
-                        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#EFF6FF] dark:bg-slate-800 text-slate-900 dark:text-white text-xs font-semibold border border-[#DBEAFE] dark:border-slate-700">
-                          <Users size={13} />
-                          <span>Kuota: {job.openingsCount} Posisi</span>
+                        <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-slate-100 dark:bg-slate-800/50 text-slate-700 dark:text-slate-300 text-[11px] font-bold border border-slate-200 dark:border-slate-700">
+                          <Users size={12} />
+                          <span>{language === 'id' ? 'Kuota:' : 'Openings:'} {job.openingsCount} {language === 'id' ? 'Posisi' : 'Positions'}</span>
                         </div>
                       )}
 
@@ -884,16 +882,16 @@ function DashboardContent() {
                         </div>
                       </div>
 
-                      {/* Benefits Pills List */}
+                      {/* Benefits List */}
                       {job.benefits && job.benefits.length > 0 && (
                         <div className="flex flex-wrap items-center gap-1.5 pt-1">
                           {job.benefits.slice(0, 4).map((b, idx) => (
-                            <span key={idx} className="px-2.5 py-0.5 rounded-full bg-[#EFF6FF] dark:bg-slate-800 text-slate-900 dark:text-white text-[11px] font-bold border border-[#C2E5EF] dark:border-slate-700 flex items-center gap-1">
+                            <span key={idx} className="px-2 py-0.5 rounded-md bg-slate-50 dark:bg-slate-800/50 text-slate-600 dark:text-slate-400 text-[10px] font-bold border border-slate-200 dark:border-slate-700 flex items-center gap-1">
                               ✓ {b}
                             </span>
                           ))}
                           {job.benefits.length > 4 && (
-                            <span className="text-[10px] font-bold text-slate-400">+{job.benefits.length - 4} lainnya</span>
+                            <span className="text-[10px] font-bold text-slate-400">+{job.benefits.length - 4} {language === 'id' ? 'lainnya' : 'more'}</span>
                           )}
                         </div>
                       )}
@@ -901,7 +899,7 @@ function DashboardContent() {
                       {/* Card Bottom Time & Share/Bookmark */}
                       <div className="flex items-center justify-between pt-2 border-t border-slate-100 dark:border-slate-800 text-[11px]">
                         <span className="text-slate-400 font-bold">
-                          Diterbitkan: {job.publishDate} • {job.postedAgo}
+                          {language === 'id' ? 'Diterbitkan:' : 'Published:'} {job.publishDate} • {job.postedAgo}
                         </span>
 
                         <div className="flex items-center gap-2">
@@ -959,12 +957,12 @@ function DashboardContent() {
                         </span>
                         {selectedJob.isNew && (
                           <span className="px-2.5 py-0.5 rounded-md bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 font-semibold text-xs border border-amber-200 dark:border-amber-800">
-                            Loker Terbaru
+                            {language === 'id' ? 'Loker Terbaru' : 'New Job'}
                           </span>
                         )}
                         {selectedJob.isPromoted && (
                           <span className="px-2.5 py-0.5 rounded-md bg-cyan-100 dark:bg-cyan-950/60 text-cyan-800 dark:text-cyan-300 font-semibold text-xs">
-                            Dipromosikan
+                            {language === 'id' ? 'Dipromosikan' : 'Promoted'}
                           </span>
                         )}
                       </div>
@@ -974,9 +972,9 @@ function DashboardContent() {
                       </h1>
 
                       {selectedJob.openingsCount > 0 && (
-                        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#EFF6FF] dark:bg-slate-800 text-slate-900 dark:text-white text-xs font-semibold border border-[#DBEAFE] dark:border-slate-700">
-                          <Users size={13} />
-                          <span>Kuota Terbuka: {selectedJob.openingsCount} Posisi</span>
+                        <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-slate-100 dark:bg-slate-800/50 text-slate-700 dark:text-slate-300 text-[11px] font-bold border border-slate-200 dark:border-slate-700">
+                          <Users size={12} />
+                          <span>{language === 'id' ? 'Kuota Terbuka:' : 'Openings:'} {selectedJob.openingsCount} {language === 'id' ? 'Posisi' : 'Positions'}</span>
                         </div>
                       )}
                     </div>
@@ -987,7 +985,7 @@ function DashboardContent() {
                     <div className="flex items-center gap-2 p-2.5 bg-slate-50 dark:bg-slate-800/60 rounded-xl">
                       <MapPin size={16} className="text-slate-900 shrink-0" />
                       <div>
-                        <p className="text-[10px] text-slate-400 font-bold uppercase">Lokasi Penempatan</p>
+                        <p className="text-[10px] text-slate-400 font-bold uppercase">{language === 'id' ? 'Lokasi Penempatan' : 'Location'}</p>
                         <p className="font-semibold">{selectedJob.location}</p>
                       </div>
                     </div>
@@ -995,7 +993,7 @@ function DashboardContent() {
                     <div className="flex items-center gap-2 p-2.5 bg-slate-50 dark:bg-slate-800/60 rounded-xl">
                       <GraduationCap size={16} className="text-slate-900 shrink-0" />
                       <div>
-                        <p className="text-[10px] text-slate-400 font-bold uppercase">Min. Pendidikan</p>
+                        <p className="text-[10px] text-slate-400 font-bold uppercase">{language === 'id' ? 'Min. Pendidikan' : 'Education'}</p>
                         <p className="font-semibold">{selectedJob.educationLevel}</p>
                       </div>
                     </div>
@@ -1003,7 +1001,7 @@ function DashboardContent() {
                     <div className="flex items-center gap-2 p-2.5 bg-slate-50 dark:bg-slate-800/60 rounded-xl">
                       <Briefcase size={16} className="text-slate-900 shrink-0" />
                       <div>
-                        <p className="text-[10px] text-slate-400 font-bold uppercase">Kebijakan & Tipe Kerja</p>
+                        <p className="text-[10px] text-slate-400 font-bold uppercase">{language === 'id' ? 'Kebijakan & Tipe Kerja' : 'Work Policy'}</p>
                         <p className="font-semibold">{selectedJob.workPolicy}</p>
                       </div>
                     </div>
@@ -1011,7 +1009,7 @@ function DashboardContent() {
                     <div className="flex items-center gap-2 p-2.5 bg-slate-50 dark:bg-slate-800/60 rounded-xl">
                       <Award size={16} className="text-slate-900 shrink-0" />
                       <div>
-                        <p className="text-[10px] text-slate-400 font-bold uppercase">Level Pengalaman</p>
+                        <p className="text-[10px] text-slate-400 font-bold uppercase">{language === 'id' ? 'Level Pengalaman' : 'Experience Level'}</p>
                         <p className="font-semibold">{selectedJob.experienceLevel}</p>
                       </div>
                     </div>
@@ -1019,7 +1017,7 @@ function DashboardContent() {
                     <div className="flex items-center gap-2 p-2.5 bg-slate-50 dark:bg-slate-800/60 rounded-xl">
                       <DollarSign size={16} className="text-slate-900 shrink-0" />
                       <div>
-                        <p className="text-[10px] text-slate-400 font-bold uppercase">Rentang Gaji</p>
+                        <p className="text-[10px] text-slate-400 font-bold uppercase">{language === 'id' ? 'Rentang Gaji' : 'Salary Range'}</p>
                         <p className="font-bold text-slate-900 dark:text-white text-sm">{selectedJob.salary}</p>
                       </div>
                     </div>
@@ -1027,7 +1025,7 @@ function DashboardContent() {
                     <div className="flex items-center gap-2 p-2.5 bg-slate-50 dark:bg-slate-800/60 rounded-xl">
                       <Clock size={16} className="text-slate-900 shrink-0" />
                       <div>
-                        <p className="text-[10px] text-slate-400 font-bold uppercase">Batas Akhir Lamaran</p>
+                        <p className="text-[10px] text-slate-400 font-bold uppercase">{language === 'id' ? 'Batas Akhir Lamaran' : 'Deadline'}</p>
                         <p className="font-semibold">{selectedJob.applicationDeadline || 'Tidak ditentukan'}</p>
                       </div>
                     </div>
@@ -1036,10 +1034,10 @@ function DashboardContent() {
                   {/* Benefits Pills */}
                   {selectedJob.benefits && selectedJob.benefits.length > 0 && (
                     <div className="space-y-1.5 pt-1">
-                      <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Fasilitas &amp; Benefit Pekerjaan:</p>
+                      <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">{language === 'id' ? 'Fasilitas & Benefit Pekerjaan:' : 'Benefits & Perks:'}</p>
                       <div className="flex flex-wrap items-center gap-1.5">
                         {selectedJob.benefits.map((benefit, idx) => (
-                          <span key={idx} className="px-3 py-1 rounded-full bg-[#EFF6FF] dark:bg-slate-800 text-slate-900 dark:text-white text-xs font-semibold border border-[#C2E5EF] dark:border-slate-700 flex items-center gap-1">
+                          <span key={idx} className="px-2 py-0.5 rounded-md bg-slate-50 dark:bg-slate-800/50 text-slate-600 dark:text-slate-400 text-[10px] font-bold border border-slate-200 dark:border-slate-700 flex items-center gap-1">
                             ✓ {benefit}
                           </span>
                         ))}
@@ -1048,14 +1046,14 @@ function DashboardContent() {
                   )}
 
                   <p className="text-[11px] text-slate-400 font-bold italic">
-                    Diterbitkan: {selectedJob.publishDate} • {selectedJob.postedAgo}
+                    {language === 'id' ? 'Diterbitkan:' : 'Published:'} {selectedJob.publishDate} • {selectedJob.postedAgo}
                   </p>
 
                   {/* Action CTA Buttons Bar (Matching KitaLulus Primary Blue Button) */}
                   <div className="flex flex-wrap items-center gap-3 pt-2">
                     {appliedJobs.some(id => String(id) === String(selectedJob.id)) ? (
                       <span className="px-7 py-3 rounded-2xl bg-emerald-100 text-emerald-800 font-bold text-xs sm:text-sm border border-emerald-300 flex items-center gap-2 shadow-sm cursor-not-allowed opacity-90">
-                        <CheckCircle2 size={16} /> Anda sudah melamar
+                        <CheckCircle2 size={16} /> {language === 'id' ? 'Anda sudah melamar' : 'You have applied'}
                       </span>
                     ) : (
                       <button
@@ -1084,7 +1082,7 @@ function DashboardContent() {
                     <button
                       onClick={() => setShareJob(selectedJob)}
                       className="p-3 rounded-2xl border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 transition-colors cursor-pointer"
-                      title="Bagikan Lowongan"
+                      title={language === 'id' ? 'Bagikan Lowongan' : 'Share Job'}
                     >
                       <Share2 size={18} />
                     </button>
@@ -1099,7 +1097,7 @@ function DashboardContent() {
                       {t.pelamar.dashboard.aboutRole}
                     </h3>
                     <p className="font-bold text-slate-800 dark:text-slate-200">
-                      Gambaran Umum &amp; Deskripsi Pekerjaan:
+                      {language === 'id' ? 'Gambaran Umum & Deskripsi Pekerjaan:' : 'Overview & Job Description:'}
                     </p>
                     <ul className="space-y-1.5 list-disc pl-5">
                       {selectedJob.descriptionBullets.map((bullet, idx) => (
@@ -1112,7 +1110,7 @@ function DashboardContent() {
                   {selectedJob.responsibilitiesBullets && selectedJob.responsibilitiesBullets.length > 0 && (
                     <div className="space-y-3 text-xs sm:text-sm text-slate-700 dark:text-slate-300">
                       <h3 className="font-semibold text-sm text-slate-900 dark:text-white uppercase tracking-wider">
-                        Tanggung Jawab Utama
+                        {language === 'id' ? 'Tanggung Jawab Utama' : 'Key Responsibilities'}
                       </h3>
                       <ul className="space-y-1.5 list-disc pl-5 font-semibold text-slate-700 dark:text-slate-300">
                         {selectedJob.responsibilitiesBullets.map((resp, idx) => (
@@ -1137,7 +1135,7 @@ function DashboardContent() {
                   {/* Informasi Lokasi & Penempatan */}
                   <div className="space-y-2 text-xs sm:text-sm text-slate-700 dark:text-slate-300 pt-2 border-t border-slate-100 dark:border-slate-800">
                     <h3 className="font-semibold text-sm text-slate-900 dark:text-white uppercase tracking-wider">
-                      Lokasi Penempatan
+                      {language === 'id' ? 'Lokasi Penempatan' : 'Placement Location'}
                     </h3>
                     <p className="font-medium text-slate-600 dark:text-slate-400">
                       {selectedJob.placementInfo}

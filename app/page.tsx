@@ -5,9 +5,9 @@ import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 import { useAppStore } from '@/lib/store/useAppStore';
-import { useTranslation } from '@/hooks/useTranslation';
 import { getBaseUrl, getMediaUrl, getApiUrl } from '@/lib/api';
-import LanguageSwitcher from '@/components/LanguageSwitcher';
+import Footer from '@/components/Footer';
+
 import {
   Search,
   MapPin,
@@ -71,7 +71,7 @@ interface Job {
 function LandingPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { language, setLanguage } = useAppStore();
+  const { isMobileSidebarOpen, toggleMobileSidebar } = useAppStore();
   const { t } = useTranslation();
   const [mounted, setMounted] = useState(false);
   const [activeSection, setActiveSection] = useState('');
@@ -191,11 +191,12 @@ function LandingPageContent() {
           category: j.kategori?.nama_kategori || 'Teknologi Informasi',
           experienceLevel: (() => {
             const el = j.experience_level;
-            if (el === 'Entry Level') return 'Entry Level (0 - 1 Tahun)';
-            if (el === 'Mid Level') return 'Mid Level (2 - 4 Tahun)';
-            if (el === 'Senior Level') return 'Senior Level (5+ Tahun)';
-            if (el === 'Lead / Manager') return 'Lead / Manager (8+ Tahun)';
-            return el || (j.pengalaman_min_tahun > 3 ? 'Senior Level (5+ Tahun)' : 'Mid Level (2 - 4 Tahun)');
+            const years = 'Tahun';
+            if (el === 'Entry Level') return `Entry Level (0 - 1 ${years})`;
+            if (el === 'Mid Level') return `Mid Level (2 - 4 ${years})`;
+            if (el === 'Senior Level') return `Senior Level (5+ ${years})`;
+            if (el === 'Lead / Manager') return `Lead / Manager (8+ ${years})`;
+            return el || (j.pengalaman_min_tahun > 3 ? `Senior Level (5+ ${years})` : `Mid Level (2 - 4 ${years})`);
           })(),
           educationLevel: j.pendidikan_min || '-',
           benefits: (() => { try { return j.benefits_json ? JSON.parse(j.benefits_json) : []; } catch (e) { return []; } })(),
@@ -290,55 +291,55 @@ function LandingPageContent() {
       role: 'Staf Administrasi',
       company: 'PT Maju Bersama',
       avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
-      comment: language === 'en' ? 'The matching process was super transparent. I didn’t need to wait weeks for CV screening!' : 'Proses pencocokan kerjanya sangat transparan. Saya tidak perlu menunggu berminggu-minggu hanya untuk kabar panggilan kerja!',
-      timeDays: language === 'en' ? '3 Days' : '3 Hari'
+      comment: 'Proses pencocokan kerjanya sangat transparan. Saya tidak perlu menunggu berminggu-minggu hanya untuk kabar panggilan kerja!',
+      timeDays: '3 Hari'
     },
     {
       name: 'Siti Rahmawati',
       role: 'Marketing Executive',
       company: 'Nusantara Global',
       avatar: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=150&auto=format&fit=crop&q=80',
-      comment: language === 'en' ? 'The virtual video interview gave me confidence to demonstrate my soft skills alongside my technical CV.' : 'Fitur wawancara video virtual memberikan rasa percaya diri lebih untuk menunjukkan kemampuan komunikasi saya dibanding sekadar CV.',
-      timeDays: language === 'en' ? '5 Days' : '5 Hari'
+      comment: 'Fitur wawancara video virtual memberikan rasa percaya diri lebih untuk menunjukkan kemampuan komunikasi saya dibanding sekadar CV.',
+      timeDays: '5 Hari'
     },
     {
       name: 'Kevin Jonathan',
       role: 'Software Engineer',
       company: 'Techindo Solutions',
       avatar: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=150&auto=format&fit=crop&q=80',
-      comment: language === 'en' ? 'The AI analysis of my technical test was spot on and incredibly fast. It felt like they truly understood my capabilities.' : 'Analisis AI dari tes teknikal saya sangat akurat dan luar biasa cepat. Rasanya mereka benar-benar memahami kapasitas saya.',
-      timeDays: language === 'en' ? '2 Days' : '2 Hari'
+      comment: 'Analisis AI dari tes teknikal saya sangat akurat dan luar biasa cepat. Rasanya mereka benar-benar memahami kapasitas saya.',
+      timeDays: '2 Hari'
     },
     {
       name: 'Nadia Putri',
       role: 'Data Analyst',
       company: 'Fintech Asia',
       avatar: 'https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=150&auto=format&fit=crop&q=80',
-      comment: language === 'en' ? 'No more black holes of resumes. I tracked my application every step of the way and got an offer the same week.' : 'Bukan lagi seperti mengirim CV ke lubang hitam. Saya bisa melacak setiap tahap dan mendapat tawaran dalam minggu yang sama.',
-      timeDays: language === 'en' ? '4 Days' : '4 Hari'
+      comment: 'Bukan lagi seperti mengirim CV ke lubang hitam. Saya bisa melacak setiap tahap dan mendapat tawaran dalam minggu yang sama.',
+      timeDays: '4 Hari'
     }
   ];
 
   // FAQ Items
   const faqItems = [
     {
-      q: language === 'en' ? 'Is AI-RecruitPro completely free for applicants?' : 'Apakah AI-RecruitPro gratis untuk pelamar?',
-      a: language === 'en' ? 'Absolutely! Our platform is 100% free for job seekers. You will never be charged a dime from registration until you get hired.' : 'Tentu saja! Platform ini 100% gratis untuk pencari kerja. Kamu tidak akan dipungut biaya sepeser pun dari awal daftar sampai diterima kerja.'
+      q: 'Apakah AI-RecruitPro gratis untuk pelamar?',
+      a: 'Tentu saja! Platform ini 100% gratis untuk pencari kerja. Kamu tidak akan dipungut biaya sepeser pun dari awal daftar sampai diterima kerja.'
     },
     {
-      q: language === 'en' ? 'Who can see my CV and video recordings?' : 'Siapa saja yang bisa melihat CV dan rekaman video saya?',
-      a: language === 'en' ? 'We take your privacy seriously. Your data, CV, and interview recordings can only be accessed by the HR or recruitment team of the specific company you applied to.' : 'Privasi kamu sangat kami jaga. Data, CV, dan rekaman wawancara kamu hanya bisa dilihat oleh HRD atau tim rekrutmen dari perusahaan yang kamu lamar secara langsung.'
+      q: 'Siapa saja yang bisa melihat CV dan rekaman video saya?',
+      a: 'Privasi kamu sangat kami jaga. Data, CV, dan rekaman wawancara kamu hanya bisa dilihat oleh HRD atau tim rekrutmen dari perusahaan yang kamu lamar secara langsung.'
     },
     {
-      q: language === 'en' ? 'How does the selection process actually work?' : 'Gimana sih sebenarnya proses seleksi di sini?',
-      a: language === 'en' ? 'It’s super simple. Once you upload your CV, our system automatically finds the best matching jobs for you. If it’s a match, you just do a quick video interview so companies can see your true potential.' : 'Gampang banget kok. Begitu kamu upload CV, sistem akan otomatis nyari lowongan yang paling cocok buat kamu. Kalau udah match, kamu tinggal ikutin wawancara video singkat biar perusahaan bisa lihat langsung potensi kamu.'
+      q: 'Gimana sih sebenarnya proses seleksi di sini?',
+      a: 'Gampang banget kok. Begitu kamu upload CV, sistem akan otomatis nyari lowongan yang paling cocok buat kamu. Kalau udah match, kamu tinggal ikutin wawancara video singkat biar perusahaan bisa lihat langsung potensi kamu.'
     }
   ];
 
   // Real Jobs (Fetched from DB)
   const combinedJobs = useMemo(() => {
     return realJobs;
-  }, [realJobs, language]);
+  }, [realJobs]);
 
   const combinedCompanies = useMemo(() => {
     return realCompanies.slice(0, 8); // maximum 8 companies
@@ -348,16 +349,16 @@ function LandingPageContent() {
   const jobCategories = useMemo(() => {
     if (!combinedJobs || combinedJobs.length === 0) {
       return [
-        { name: language === 'en' ? 'Sales & Marketing' : 'Sales & Marketing', count: language === 'en' ? '0 Openings' : '0 Lowongan', icon: TrendingUp, skills: 'Sales, Digital Marketing' },
-        { name: language === 'en' ? 'Finance & Accounting' : 'Finance & Accounting', count: language === 'en' ? '0 Openings' : '0 Lowongan', icon: Briefcase, skills: 'Pajak, Laporan Keuangan' },
-        { name: language === 'en' ? 'Customer Service' : 'Customer Service', count: language === 'en' ? '0 Openings' : '0 Lowongan', icon: Users, skills: 'Komunikasi, Problem Solving' },
-        { name: language === 'en' ? 'Operations' : 'Operations', count: language === 'en' ? '0 Openings' : '0 Lowongan', icon: Activity, skills: 'Logistik, Manajemen Proyek' },
+        { name: 'Sales & Marketing', count: '0 Lowongan', icon: TrendingUp, skills: 'Sales, Digital Marketing' },
+        { name: 'Finance & Accounting', count: '0 Lowongan', icon: Briefcase, skills: 'Pajak, Laporan Keuangan' },
+        { name: 'Customer Service', count: '0 Lowongan', icon: Users, skills: 'Komunikasi, Problem Solving' },
+        { name: 'Operations', count: '0 Lowongan', icon: Activity, skills: 'Logistik, Manajemen Proyek' },
       ];
     }
 
     const catMap = new Map();
     combinedJobs.forEach(job => {
-      const cat = job.category || (language === 'en' ? 'General' : 'Umum');
+      const cat = job.category || 'Umum';
       catMap.set(cat, (catMap.get(cat) || 0) + 1);
     });
 
@@ -367,11 +368,11 @@ function LandingPageContent() {
       .slice(0, 6)
       .map(([name, count], idx) => ({
         name,
-        count: language === 'en' ? `${count} Openings` : `${count} Lowongan`,
+        count: `${count} Lowongan`,
         icon: icons[idx % icons.length],
-        skills: language === 'en' ? 'Relevant skills' : 'Keahlian relevan'
+        skills: 'Keahlian relevan'
       }));
-  }, [combinedJobs, language]);
+  }, [combinedJobs]);
 
   // Filter jobs
   const filteredJobs = useMemo(() => {
@@ -391,11 +392,11 @@ function LandingPageContent() {
 
       return matchKey && matchLoc && matchCat && matchWork && matchExp;
     });
-  }, [keyword, location, selectedCategory, selectedWorkType, selectedExpLevel, language, combinedJobs]);
+  }, [keyword, location, selectedCategory, selectedWorkType, selectedExpLevel, combinedJobs]);
 
   const selectedPreviewJob = useMemo(() => {
     return combinedJobs.find(j => j.id === previewJobId) || combinedJobs[0];
-  }, [previewJobId, language, combinedJobs]);
+  }, [previewJobId, combinedJobs]);
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 font-sans antialiased flex flex-col selection:bg-[#1A4B9F] selection:text-white transition-colors duration-300">
@@ -440,7 +441,7 @@ function LandingPageContent() {
 
           {/* Right Action Controls */}
           <div className="flex items-center gap-3 sm:gap-4">
-            {mounted && <LanguageSwitcher />}
+
 
             <Link
               href="/login"
@@ -457,13 +458,6 @@ function LandingPageContent() {
             </Link>
 
             {/* Mobile Menu Toggle */}
-            <button
-              onClick={() => setLanguage(language === 'id' ? 'en' : 'id')}
-              className="md:hidden flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-200 font-bold text-sm"
-            >
-              <Globe size={18} />
-              <span>{language.toUpperCase()}</span>
-            </button>
             <button
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
               className="md:hidden w-10 h-10 flex items-center justify-center rounded-xl bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-200"
@@ -599,7 +593,7 @@ function LandingPageContent() {
               <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 pt-4 text-sm text-blue-100">
                 <span className="font-semibold shrink-0">{lang.trending}</span>
                 <div className="flex flex-wrap gap-2">
-                  {(language === 'en' ? ['Software Engineer', 'Data Analyst', 'Product Manager'] : ['Software Engineer', 'Data Analyst', 'Product Manager']).map((tag, idx) => (
+                  {['Software Engineer', 'Data Analyst', 'Product Manager'].map((tag, idx) => (
                     <button
                       key={idx}
                       type="button"
@@ -659,7 +653,7 @@ function LandingPageContent() {
                 {lang.topEmployersTitle || 'Perusahaan Populer'}
               </h2>
               <p className="text-sm text-slate-500 mt-2">
-                Temukan lowongan baru dan bergabung dengan perusahaan teratas pilihan kami.
+                {'Temukan lowongan baru dan bergabung dengan perusahaan teratas pilihan kami.'}
               </p>
             </div>
           </div>
@@ -677,7 +671,7 @@ function LandingPageContent() {
 
                 <div className="mt-6">
                   <div className="inline-block px-3 py-1.5 bg-[#E8F1FC] dark:bg-blue-900/30 text-[#1A4B9F] dark:text-blue-400 text-xs font-bold rounded">
-                    {emp.jobsCount} Pekerjaan
+                    {emp.jobsCount} {'Pekerjaan'}
                   </div>
                 </div>
 
@@ -867,7 +861,7 @@ function LandingPageContent() {
                   : 'bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700'
                   }`}
               >
-                {wt === 'Semua' && language === 'en' ? 'All' : wt}
+                {wt}
               </button>
             ))}
 
@@ -885,7 +879,7 @@ function LandingPageContent() {
                   : 'bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700'
                   }`}
               >
-                {exp === 'Semua' && language === 'en' ? 'All' : exp}
+                {exp}
               </button>
             ))}
 
@@ -893,7 +887,7 @@ function LandingPageContent() {
               onClick={() => updateUrlParams({ category: selectedCategory, workType: selectedWorkType, expLevel: selectedExpLevel })}
               className="ml-auto px-5 py-1.5 rounded-full bg-[#1A4B9F] hover:bg-[#133878] text-white font-bold shadow-md transition-all cursor-pointer"
             >
-              Terapkan Filter
+              {'Terapkan Filter'}
             </button>
           </div>
         </div>
@@ -930,7 +924,7 @@ function LandingPageContent() {
                               <span className="text-xs font-bold text-slate-500 dark:text-slate-400 block truncate">{job.company}</span>
                               {job.isNew && (
                                 <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 dark:bg-amber-900/50 dark:text-amber-400 border border-amber-200 dark:border-amber-800">
-                                  Loker Terbaru
+                                  {'Loker Terbaru'}
                                 </span>
                               )}
                             </div>
@@ -944,7 +938,6 @@ function LandingPageContent() {
                           onClick={(e) => { e.stopPropagation(); toggleSaveJob(job.id); }}
                           className={`p-2.5 rounded-xl border transition-colors cursor-pointer ${isSaved ? 'bg-slate-100 dark:bg-slate-800 border-slate-300 dark:border-slate-700 text-slate-900 dark:text-slate-200' : 'bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200'
                             }`}
-                          title={isSaved ? 'Tersimpan' : 'Simpan Pekerjaan'}
                         >
                           <Bookmark size={18} className="fill-current" />
                         </button>
@@ -954,7 +947,7 @@ function LandingPageContent() {
                       <div className="flex items-center justify-between flex-wrap gap-2">
                         <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white text-xs font-bold">
                           <Users size={15} className="text-slate-900 dark:text-slate-200" />
-                          <span>Kuota: {job.openingsCount} Posisi</span>
+                          <span>{'Kuota:'} {job.openingsCount} {'Posisi'}</span>
                         </div>
                       </div>
 
@@ -983,7 +976,7 @@ function LandingPageContent() {
 
                     {/* Bottom CTA */}
                     <div className="pt-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between gap-2 text-xs sm:text-sm">
-                      <span className="text-slate-400 font-medium">Diterbitkan: {job.publishDate} <span className="text-slate-300 mx-1">•</span> {job.postedAgo}</span>
+                      <span className="text-slate-400 font-medium">{language === 'en' ? 'Published:' : 'Diterbitkan:'} {job.publishDate} <span className="text-slate-300 mx-1">•</span> {job.postedAgo}</span>
 
                       <div className="flex items-center gap-3">
                         <Link
@@ -1045,7 +1038,7 @@ function LandingPageContent() {
                         {selectedPreviewJob.applicationDeadline && (
                           <>
                             <span>•</span>
-                            <span className="text-amber-600 dark:text-amber-500 font-bold">Batas Pendaftaran: {selectedPreviewJob.applicationDeadline}</span>
+                            <span className="text-amber-600 dark:text-amber-500 font-bold">{language === 'en' ? 'Deadline:' : 'Batas Pendaftaran:'} {selectedPreviewJob.applicationDeadline}</span>
                           </>
                         )}
                       </div>
@@ -1091,7 +1084,7 @@ function LandingPageContent() {
               ) : (
                 <div className="text-center py-12 text-slate-400 dark:text-slate-500">
                   <Briefcase size={48} className="mx-auto mb-4 opacity-30" />
-                  <p className="font-medium text-sm">Belum ada lowongan untuk ditampilkan</p>
+                  <p className="font-medium text-sm">{language === 'en' ? 'No jobs to display' : 'Belum ada lowongan untuk ditampilkan'}</p>
                 </div>
               )}
 
@@ -1199,64 +1192,7 @@ function LandingPageContent() {
         </div>
       </section>
 
-      {/* Enterprise Footer */}
-      <footer className="bg-slate-950 text-slate-300 py-16 sm:py-20 mt-auto">
-        <div className="max-w-[1400px] mx-auto px-6 sm:px-10 lg:px-16 space-y-16">
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-12 lg:gap-8">
-            <div className="lg:col-span-2 space-y-6 pr-0 lg:pr-12">
-              <span className="font-bold text-2xl text-white block">AI-RecruitPro</span>
-              <p className="text-slate-400 leading-relaxed text-sm">
-                {lang.footerDesc}
-              </p>
-              <div className="flex gap-4 pt-2">
-                <div className="w-10 h-10 rounded-full bg-slate-900 border border-slate-800 flex items-center justify-center hover:bg-[#1A4B9F] hover:border-[#1A4B9F] hover:text-white transition-all cursor-pointer"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"></path></svg></div>
-                <div className="w-10 h-10 rounded-full bg-slate-900 border border-slate-800 flex items-center justify-center hover:bg-[#1DA1F2] hover:border-[#1DA1F2] hover:text-white transition-all cursor-pointer"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 4s-.7 2.1-2 3.4c1.6 10-9.4 17.3-18 11.6 2.2.1 4.4-.6 6-2C3 15.5.5 9.6 3 5c2.2 2.6 5.6 4.1 9 4-.9-4.2 4-6.6 7-3.8 1.1 0 3-1.2 3-1.2z"></path></svg></div>
-                <div className="w-10 h-10 rounded-full bg-slate-900 border border-slate-800 flex items-center justify-center hover:bg-[#0A66C2] hover:border-[#0A66C2] hover:text-white transition-all cursor-pointer"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"></path><rect x="2" y="9" width="4" height="12"></rect><circle cx="4" cy="4" r="2"></circle></svg></div>
-              </div>
-            </div>
-
-            <div className="space-y-5">
-              <h4 className="font-bold text-white text-sm tracking-wider uppercase">Platform</h4>
-              <ul className="space-y-3 text-sm">
-                <li><Link href="/applicant/login" className="hover:text-white transition-colors">Kandidat</Link></li>
-                <li><Link href="/perusahaan/login" className="hover:text-white transition-colors">Perusahaan</Link></li>
-                <li><Link href="/applicant/login" className="hover:text-white transition-colors">Fitur Wawancara Video</Link></li>
-                <li><Link href="/applicant/login" className="hover:text-white transition-colors">Sistem NLP</Link></li>
-              </ul>
-            </div>
-
-            <div className="space-y-5">
-              <h4 className="font-bold text-white text-sm tracking-wider uppercase">Perusahaan</h4>
-              <ul className="space-y-3 text-sm">
-                <li><Link href="#" className="hover:text-white transition-colors">Tentang Kami</Link></li>
-                <li><Link href="#" className="hover:text-white transition-colors">Karier</Link></li>
-                <li><Link href="#" className="hover:text-white transition-colors">Blog</Link></li>
-                <li><Link href="#" className="hover:text-white transition-colors">Kontak</Link></li>
-              </ul>
-            </div>
-
-            <div className="space-y-5">
-              <h4 className="font-bold text-white text-sm tracking-wider uppercase">Legal & Keamanan</h4>
-              <ul className="space-y-3 text-sm">
-                <li><Link href="#" className="hover:text-white transition-colors">Kebijakan Privasi</Link></li>
-                <li><Link href="#" className="hover:text-white transition-colors">Syarat & Ketentuan</Link></li>
-                <li><Link href="#" className="hover:text-white transition-colors">Keamanan Data (ISO 27001)</Link></li>
-                <li><Link href="#" className="hover:text-white transition-colors">Cookie Policy</Link></li>
-              </ul>
-            </div>
-          </div>
-
-          <div className="pt-8 border-t border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs">
-            <p>&copy; {new Date().getFullYear()} AI-RecruitPro. {language === 'en' ? 'All rights reserved.' : 'Hak cipta dilindungi.'}</p>
-            <div className="flex gap-6">
-              <Link href="#" className="hover:text-white transition-colors">Status Sistem</Link>
-              <span className="text-slate-600">|</span>
-              <button className="hover:text-white transition-colors cursor-pointer">Bahasa: {language === 'en' ? 'English' : 'Indonesia'}</button>
-            </div>
-          </div>
-        </div>
-      </footer>
+      <Footer />
 
     </div>
   );

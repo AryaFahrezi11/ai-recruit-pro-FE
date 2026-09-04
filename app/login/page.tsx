@@ -1,10 +1,10 @@
 'use client';
 
 import React, { useState } from 'react';
-import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useTranslation } from '@/hooks/useTranslation';
-import LanguageSwitcher from '@/components/LanguageSwitcher';
+import Footer from '@/components/Footer';
+
 import { useAppStore } from '@/lib/store/useAppStore';
 import { loginUser } from '@/lib/api/auth';
 import { toast } from 'react-hot-toast';
@@ -110,7 +110,7 @@ export default function CompanyLoginPage() {
         </Link>
 
         <div className="flex items-center gap-6">
-          <LanguageSwitcher />
+
           <Link
             href="/applicant/login"
             className="text-xs sm:text-sm font-semibold text-[#1A4B9F] hover:underline flex items-center gap-1.5"
@@ -146,6 +146,12 @@ export default function CompanyLoginPage() {
                   type="email"
                   value={email}
                   onChange={(e) => { setEmail(e.target.value); setError(''); }}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      document.getElementById('company-password')?.focus();
+                    }
+                  }}
                   placeholder={t.employerAuth.emailPlaceholder}
                   className={`w-full pl-12 pr-4 py-3 bg-white dark:bg-slate-950 text-slate-900 dark:text-white border-2 rounded-2xl text-sm outline-none transition-all ${error ? 'border-red-500 focus:ring-2 focus:ring-red-200' : 'border-slate-300 dark:border-slate-700 focus:border-[#1A4B9F] focus:ring-2 focus:ring-blue-100 dark:focus:ring-blue-900'
                     }`}
@@ -169,6 +175,12 @@ export default function CompanyLoginPage() {
                   type="password"
                   value={password}
                   onChange={(e) => { setPassword(e.target.value); setError(''); }}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      document.getElementById('submit-btn')?.click();
+                    }
+                  }}
                   placeholder="••••••••"
                   className="w-full pl-12 pr-4 py-3 bg-white dark:bg-slate-950 text-slate-900 dark:text-white border-2 border-slate-300 dark:border-slate-700 focus:border-[#1A4B9F] focus:ring-2 focus:ring-blue-100 dark:focus:ring-blue-900 rounded-2xl text-sm outline-none transition-all"
                 />
@@ -184,6 +196,7 @@ export default function CompanyLoginPage() {
             )}
 
             <button
+              id="submit-btn"
               type="submit"
               disabled={isLoading}
               className="w-full py-3 rounded-full bg-[#1A4B9F] hover:bg-[#133878] text-white font-semibold text-sm shadow-sm transition-all duration-200 flex items-center justify-center gap-2"
@@ -211,10 +224,7 @@ export default function CompanyLoginPage() {
         </div>
       </main>
 
-      {/* Footer */}
-      <footer className="py-6 border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-center text-xs text-slate-400">
-        {t.employerAuth.footerText.replace('{year}', new Date().getFullYear().toString())}
-      </footer>
+      <Footer />
 
     </div>
   );

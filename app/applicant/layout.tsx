@@ -2,10 +2,11 @@
 
 import React, { useEffect, useState, useRef, Suspense } from 'react';
 import Link from 'next/link';
+import Footer from '@/components/Footer';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useAppStore } from '@/lib/store/useAppStore';
 import { useTranslation } from '@/hooks/useTranslation';
-import LanguageSwitcher from '@/components/LanguageSwitcher';
+
 import {
   Search,
   Building2,
@@ -224,8 +225,6 @@ export default function PelamarPerfectLayout({
           <div className="flex items-center gap-3 sm:gap-4">
 
 
-            {/* Toggle Language */}
-            <LanguageSwitcher />
 
             <div className="h-6 w-[1px] bg-slate-200 dark:bg-slate-800 hidden sm:block"></div>
 
@@ -304,21 +303,7 @@ export default function PelamarPerfectLayout({
         {children}
       </main>
 
-      {/* Footer */}
-      <footer className="no-print bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 py-8 mt-12">
-        <div className="max-w-[1600px] mx-auto px-4 sm:px-8 lg:px-12 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs sm:text-sm text-slate-500 dark:text-slate-400">
-          <div className="flex items-center gap-2">
-            <span className="font-semibold text-slate-900 dark:text-white">AI-RecruitPro</span>
-            <span>&copy; {new Date().getFullYear()} PO-FIT Recruitment Engine</span>
-          </div>
-          <div className="flex items-center gap-4">
-            <span className="inline-flex items-center gap-2 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 px-4 py-1.5 rounded-full font-bold text-xs border border-slate-200 dark:border-slate-700">
-              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-              {t.pelamar.footer.systemActive}
-            </span>
-          </div>
-        </div>
-      </footer>
+      <Footer />
 
       {/* LOGOUT CONFIRMATION MODAL */}
       {showLogoutModal && (

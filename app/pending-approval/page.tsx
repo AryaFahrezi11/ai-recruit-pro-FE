@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
+import Footer from '@/components/Footer';
 import Link from 'next/link';
 import { toast } from 'react-hot-toast';
 import {
@@ -153,10 +154,7 @@ export default function PendingApprovalPage() {
         </div>
       </main>
 
-      {/* Footer */}
-      <footer className="py-6 border-t border-[#C2E5EF] bg-white text-center text-xs text-slate-400">
-        &copy; {new Date().getFullYear()} AI-Recruit Pro Account Approval Engine. All Rights Reserved.
-      </footer>
+      <Footer />
 
     </div>
   );

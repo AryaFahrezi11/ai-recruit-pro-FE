@@ -52,7 +52,7 @@ interface SavedJob {
 function SavedJobsContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { t } = useTranslation();
+  const { t, language } = useTranslation();
   const [searchQuery, setSearchQuery] = useState(searchParams.get('keyword') || '');
   const [policyFilter, setPolicyFilter] = useState(searchParams.get('policy') || 'Semua');
 
@@ -146,11 +146,11 @@ function SavedJobsContent() {
               if (expVal === 'Lead / Manager') return 'Lead / Manager (8+ Tahun)';
               if (typeof expVal === 'number') {
                 if (expVal === 0) return 'Fresh Graduate';
-                if (expVal <= 1) return '< 1 Tahun';
-                if (expVal <= 3) return `${expVal} Tahun`;
-                return `> ${expVal} Tahun`;
+                if (expVal <= 1) return language === 'id' ? '< 1 Tahun' : '< 1 Year';
+                if (expVal <= 3) return language === 'id' ? `${expVal} Tahun` : `${expVal} Years`;
+                return language === 'id' ? `> ${expVal} Tahun` : `> ${expVal} Years`;
               }
-              return expVal || 'Semua Pengalaman';
+              return expVal || (language === 'id' ? 'Semua Pengalaman' : 'Any Experience');
             })();
 
             const createdDate = j.tanggal_buka ? new Date(j.tanggal_buka) : (j.created_at ? new Date(j.created_at) : new Date());
@@ -160,21 +160,21 @@ function SavedJobsContent() {
             const diffDays = Math.floor((nowStartOfDay.getTime() - createdStartOfDay.getTime()) / (1000 * 60 * 60 * 24));
 
             const postedAgoText = (() => {
-              if (diffDays <= 0) return 'Hari ini';
-              if (diffDays === 1) return '1 hari yang lalu';
-              return `${diffDays} hari yang lalu`;
+              if (diffDays <= 0) return language === 'id' ? 'Hari ini' : 'Today';
+              if (diffDays === 1) return language === 'id' ? '1 hari yang lalu' : '1 day ago';
+              return language === 'id' ? `${diffDays} hari yang lalu` : `${diffDays} days ago`;
             })();
             const isNewJob = diffDays >= 0 && diffDays <= 7;
 
             return {
               id: j.id,
               title: j.judul_posisi,
-              company: j.perusahaan?.nama_perusahaan || 'Perusahaan',
+              company: j.perusahaan?.nama_perusahaan || (language === 'id' ? 'Perusahaan' : 'Company'),
               logo: (j.perusahaan?.logo_url && j.perusahaan.logo_url !== '')
                 ? getMediaUrl(j.perusahaan.logo_url)
                 : 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=120&auto=format&fit=crop&q=80',
               location: j.kota || (j.perusahaan?.kota ? j.perusahaan.kota : 'Remote'),
-              education: j.pendidikan_min || safeParseArray(j.kualifikasi)[0] || 'Terbuka untuk umum',
+              education: j.pendidikan_min || safeParseArray(j.kualifikasi)[0] || (language === 'id' ? 'Terbuka untuk umum' : 'Open to public'),
               educationLevel: j.pendidikan_min || 'SMA/SMK/D3/S1',
               experienceLevel: expLevel,
               openingsCount: j.openings_count || 1,
@@ -184,19 +184,19 @@ function SavedJobsContent() {
                 const loc = j.lokasi_kerja === 'remote' ? 'Remote (WFH)' : j.lokasi_kerja === 'hybrid' ? 'Hybrid' : 'On-site';
                 return `${type} (${loc})`;
               })(),
-              salary: (j.tampilkan_gaji && j.gaji_min && j.gaji_max) ? `Rp ${(j.gaji_min / 1000000).toFixed(0)} Jt - Rp ${(j.gaji_max / 1000000).toFixed(0)} Jt` : 'Gaji Dirahasiakan',
+              salary: (j.tampilkan_gaji && j.gaji_min && j.gaji_max) ? `Rp ${(j.gaji_min / 1000000).toFixed(0)} Jt - Rp ${(j.gaji_max / 1000000).toFixed(0)} Jt` : (language === 'id' ? 'Gaji Dirahasiakan' : 'Salary Undisclosed'),
               postedAgo: postedAgoText,
               publishDate: createdDate.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }),
               applicationDeadline: j.tanggal_tutup ? new Date(j.tanggal_tutup).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) : null,
               isPromoted: j.is_promoted || false,
               isNew: isNewJob,
               matchScore: j.match_score || 92,
-              reason: j.reason || 'Keahlian & kualifikasi Anda sesuai dengan posisi ini.',
+              reason: j.reason || (language === 'id' ? 'Keahlian & kualifikasi Anda sesuai dengan posisi ini.' : 'Your skills and qualifications match this role.'),
               descriptionBullets: safeParseArray(j.deskripsi_pekerjaan),
               responsibilitiesBullets: safeParseArray(j.tanggung_jawab),
-              placementInfo: j.kota ? `Untuk lokasi di ${j.kota}` : (j.lokasi_kerja === 'remote' ? 'Remote (Kerja Dari Mana Saja)' : 'Lokasi Perusahaan'),
+              placementInfo: j.kota ? (language === 'id' ? `Untuk lokasi di ${j.kota}` : `Located in ${j.kota}`) : (j.lokasi_kerja === 'remote' ? (language === 'id' ? 'Remote (Kerja Dari Mana Saja)' : 'Remote (Work From Anywhere)') : (language === 'id' ? 'Lokasi Perusahaan' : 'Company Location')),
               criteriaBullets: safeParseArray(j.kualifikasi),
-              savedAt: j.tanggal_buka ? new Date(j.tanggal_buka).toLocaleDateString('id-ID') : 'Terbaru'
+              savedAt: j.tanggal_buka ? new Date(j.tanggal_buka).toLocaleDateString('id-ID') : (language === 'id' ? 'Terbaru' : 'Newest')
             };
           });
           setMasterJobs(mapped);
@@ -232,7 +232,9 @@ function SavedJobsContent() {
     setAppliedJobs(newApplied);
     localStorage.setItem('appliedJobsList', JSON.stringify(newApplied));
 
-    alert(`🎉 Sukses! CV ATS-Friendly Anda ("${cvDetails?.fullName || 'Pelamar'}") telah terkirim ke HR ${companyName} untuk posisi "${title}".`);
+    alert(language === 'id' 
+      ? `🎉 Sukses! CV ATS-Friendly Anda ("${cvDetails?.fullName || 'Pelamar'}") telah terkirim ke HR ${companyName} untuk posisi "${title}".`
+      : `🎉 Success! Your ATS-Friendly CV ("${cvDetails?.fullName || 'Applicant'}") has been sent to ${companyName} HR for the "${title}" position.`);
     router.push('/applicant/status');
   };
 
@@ -276,7 +278,7 @@ function SavedJobsContent() {
         <div className="space-y-2 relative z-10">
           <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-white/20 text-white text-xs font-extrabold backdrop-blur-md border border-white/20">
             <Bookmark className="w-3.5 h-3.5 fill-current text-cyan-300" />
-            <span>Lowongan Impian Anda</span>
+            <span>{language === 'id' ? 'Lowongan Impian Anda' : 'Your Dream Jobs'}</span>
           </div>
           <h1 className="text-2xl sm:text-4xl font-black tracking-tight">
             {t.pelamar.tersimpan.title}
@@ -289,7 +291,7 @@ function SavedJobsContent() {
         {/* Counter Badge */}
         <div className="bg-white/10 backdrop-blur-md border border-white/20 p-5 rounded-3xl shrink-0 text-center space-y-1 self-start md:self-center">
           <span className="text-3xl font-black text-white">{visibleSavedJobs.length}</span>
-          <span className="block text-xs font-bold text-cyan-200">Total Lowongan Tersimpan</span>
+          <span className="block text-xs font-bold text-cyan-200">{language === 'id' ? 'Total Lowongan Tersimpan' : 'Total Saved Jobs'}</span>
         </div>
       </div>
 
@@ -310,7 +312,7 @@ function SavedJobsContent() {
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Cari dalam lowongan tersimpan..."
+                placeholder={language === 'id' ? "Cari dalam lowongan tersimpan..." : "Search in saved jobs..."}
                 className="w-full pl-11 pr-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100 rounded-2xl text-xs font-bold outline-none focus:ring-2 focus:ring-[#2596be]"
               />
             </div>
@@ -320,8 +322,8 @@ function SavedJobsContent() {
               onChange={(e) => setPolicyFilter(e.target.value)}
               className="w-full sm:w-auto px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 rounded-2xl text-xs font-bold outline-none cursor-pointer"
             >
-              <option value="Semua">Semua Kebijakan Kerja</option>
-              <option value="WFO">Kerja dari Kantor (WFO)</option>
+              <option value="Semua">{language === 'id' ? 'Semua Kebijakan Kerja' : 'All Work Policies'}</option>
+              <option value="WFO">{language === 'id' ? 'Kerja dari Kantor (WFO)' : 'Work From Office (WFO)'}</option>
               <option value="Remote">Remote / WFH</option>
               <option value="Hybrid">Hybrid</option>
             </select>
@@ -330,7 +332,7 @@ function SavedJobsContent() {
               type="submit"
               className="w-full sm:w-auto px-5 py-2.5 rounded-2xl bg-[#2596be] hover:bg-[#1b7b9e] text-white font-bold text-xs transition-colors cursor-pointer shrink-0"
             >
-              Cari
+              {language === 'id' ? 'Cari' : 'Search'}
             </button>
           </form>
 
@@ -342,7 +344,7 @@ function SavedJobsContent() {
                 className="px-4 py-2.5 rounded-2xl border border-red-200 text-red-600 hover:bg-red-50 dark:hover:bg-red-950/40 font-bold text-xs transition-colors cursor-pointer flex items-center gap-1.5 shrink-0"
               >
                 <Trash2 className="w-4 h-4" />
-                <span className="hidden sm:inline">Hapus Semua</span>
+                <span className="hidden sm:inline">{language === 'id' ? 'Hapus Semua' : 'Clear All'}</span>
               </button>
             )}
           </div>
@@ -362,7 +364,7 @@ function SavedJobsContent() {
               {t.pelamar.tersimpan.noSavedJobs}
             </h3>
             <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 max-w-md mx-auto leading-relaxed">
-              Jelajahi berbagai posisi lowongan kerja terbaik di halaman Cari Lowongan dan simpan lowongan favorit Anda.
+              {language === 'id' ? 'Jelajahi berbagai posisi lowongan kerja terbaik di halaman Cari Lowongan dan simpan lowongan favorit Anda.' : 'Explore the best job openings on the Search Jobs page and save your favorite listings.'}
             </p>
           </div>
           <Link
@@ -397,7 +399,7 @@ function SavedJobsContent() {
                     <button
                       onClick={() => handleRemoveSaved(job.id)}
                       className="p-2 rounded-xl text-slate-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-slate-800 transition-colors cursor-pointer"
-                      title="Hapus dari simpanan"
+                      title={language === 'id' ? "Hapus dari simpanan" : "Remove from saved"}
                     >
                       <Trash2 className="w-4 h-4" />
                     </button>
@@ -439,19 +441,19 @@ function SavedJobsContent() {
                 {/* Card Actions */}
                 <div className="space-y-3 pt-3 border-t border-slate-100 dark:border-slate-800">
                   <div className="flex items-center justify-between text-[11px] text-slate-400">
-                    <span>Disimpan pada: {job.savedAt}</span>
+                    <span>{language === 'id' ? 'Disimpan pada:' : 'Saved on:'} {job.savedAt}</span>
                     <button
                       onClick={() => setActiveJobModal(job)}
                       className="font-bold text-[#2596be] hover:underline cursor-pointer flex items-center gap-1"
                     >
-                      <span>Detail</span>
+                      <span>{language === 'id' ? 'Detail' : 'Details'}</span>
                       <ChevronRight size={14} />
                     </button>
                   </div>
 
                   {isApplied ? (
                     <div className="w-full py-3 rounded-2xl bg-emerald-100 text-emerald-800 font-bold text-xs flex items-center justify-center gap-2 border border-emerald-300">
-                      <CheckCircle2 size={16} /> Lamaran &amp; CV Terkirim
+                      <CheckCircle2 size={16} /> {language === 'id' ? 'Lamaran & CV Terkirim' : 'Application & CV Sent'}
                     </div>
                   ) : (
                     <button
@@ -487,16 +489,16 @@ function SavedJobsContent() {
                     <div className="flex flex-wrap items-center gap-2">
                       <span className="text-sm font-extrabold text-[#2596be] dark:text-cyan-400">{activeJobModal.company}</span>
                       {activeJobModal.isNew && (
-                        <span className="px-2 py-0.5 rounded-md bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 font-extrabold text-[10px] border border-amber-200">Loker Terbaru</span>
+                        <span className="px-2 py-0.5 rounded-md bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 font-extrabold text-[10px] border border-amber-200">{language === 'id' ? 'Loker Terbaru' : 'New Job'}</span>
                       )}
                       {activeJobModal.isPromoted && (
-                        <span className="px-2 py-0.5 rounded-md bg-cyan-100 dark:bg-cyan-950/60 text-cyan-800 dark:text-cyan-300 font-extrabold text-[10px]">Dipromosikan</span>
+                        <span className="px-2 py-0.5 rounded-md bg-cyan-100 dark:bg-cyan-950/60 text-cyan-800 dark:text-cyan-300 font-extrabold text-[10px]">{language === 'id' ? 'Dipromosikan' : 'Promoted'}</span>
                       )}
                     </div>
                     <h3 className="font-black text-xl text-slate-900 dark:text-white leading-tight">{activeJobModal.title}</h3>
                     {activeJobModal.openingsCount > 0 && (
                       <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#E0F1F7] dark:bg-slate-800 text-[#2596be] dark:text-cyan-400 text-xs font-extrabold border border-[#B8E1ED]">
-                        Kuota Terbuka: {activeJobModal.openingsCount} Posisi
+                        {language === 'id' ? 'Kuota Terbuka:' : 'Openings:'} {activeJobModal.openingsCount} {language === 'id' ? 'Posisi' : 'Positions'}
                       </div>
                     )}
                   </div>
@@ -510,34 +512,34 @@ function SavedJobsContent() {
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-xs text-slate-700 dark:text-slate-300 font-semibold">
                 <div className="flex items-center gap-2 p-2.5 bg-slate-50 dark:bg-slate-800/60 rounded-xl">
                   <MapPin size={14} className="text-[#2596be] shrink-0" />
-                  <div><p className="text-[10px] text-slate-400 uppercase font-bold">Lokasi</p><p className="font-extrabold">{activeJobModal.location}</p></div>
+                  <div><p className="text-[10px] text-slate-400 uppercase font-bold">{language === 'id' ? 'Lokasi' : 'Location'}</p><p className="font-extrabold">{activeJobModal.location}</p></div>
                 </div>
                 <div className="flex items-center gap-2 p-2.5 bg-slate-50 dark:bg-slate-800/60 rounded-xl">
                   <GraduationCap size={14} className="text-[#2596be] shrink-0" />
-                  <div><p className="text-[10px] text-slate-400 uppercase font-bold">Min. Pendidikan</p><p className="font-extrabold">{activeJobModal.educationLevel}</p></div>
+                  <div><p className="text-[10px] text-slate-400 uppercase font-bold">{language === 'id' ? 'Min. Pendidikan' : 'Min. Education'}</p><p className="font-extrabold">{activeJobModal.educationLevel}</p></div>
                 </div>
                 <div className="flex items-center gap-2 p-2.5 bg-slate-50 dark:bg-slate-800/60 rounded-xl">
                   <Briefcase size={14} className="text-[#2596be] shrink-0" />
-                  <div><p className="text-[10px] text-slate-400 uppercase font-bold">Tipe Kerja</p><p className="font-extrabold">{activeJobModal.workPolicy}</p></div>
+                  <div><p className="text-[10px] text-slate-400 uppercase font-bold">{language === 'id' ? 'Tipe Kerja' : 'Work Type'}</p><p className="font-extrabold">{activeJobModal.workPolicy}</p></div>
                 </div>
                 <div className="flex items-center gap-2 p-2.5 bg-slate-50 dark:bg-slate-800/60 rounded-xl">
                   <DollarSign size={14} className="text-[#2596be] shrink-0" />
-                  <div><p className="text-[10px] text-slate-400 uppercase font-bold">Gaji</p><p className="font-black text-[#2596be] dark:text-cyan-400">{activeJobModal.salary}</p></div>
+                  <div><p className="text-[10px] text-slate-400 uppercase font-bold">{language === 'id' ? 'Gaji' : 'Salary'}</p><p className="font-black text-[#2596be] dark:text-cyan-400">{activeJobModal.salary}</p></div>
                 </div>
                 <div className="flex items-center gap-2 p-2.5 bg-slate-50 dark:bg-slate-800/60 rounded-xl">
                   <Clock size={14} className="text-[#2596be] shrink-0" />
-                  <div><p className="text-[10px] text-slate-400 uppercase font-bold">Batas Lamaran</p><p className="font-extrabold">{activeJobModal.applicationDeadline || 'Tidak ditentukan'}</p></div>
+                  <div><p className="text-[10px] text-slate-400 uppercase font-bold">{language === 'id' ? 'Batas Lamaran' : 'Deadline'}</p><p className="font-extrabold">{activeJobModal.applicationDeadline || (language === 'id' ? 'Tidak ditentukan' : 'Not specified')}</p></div>
                 </div>
                 <div className="flex items-center gap-2 p-2.5 bg-slate-50 dark:bg-slate-800/60 rounded-xl">
                   <CheckCircle2 size={14} className="text-[#2596be] shrink-0" />
-                  <div><p className="text-[10px] text-slate-400 uppercase font-bold">Pengalaman</p><p className="font-extrabold">{activeJobModal.experienceLevel}</p></div>
+                  <div><p className="text-[10px] text-slate-400 uppercase font-bold">{language === 'id' ? 'Pengalaman' : 'Experience'}</p><p className="font-extrabold">{activeJobModal.experienceLevel}</p></div>
                 </div>
               </div>
 
               {/* Benefits */}
               {activeJobModal.benefits && activeJobModal.benefits.length > 0 && (
                 <div className="space-y-1">
-                  <p className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider">Fasilitas &amp; Benefit:</p>
+                  <p className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider">{language === 'id' ? 'Fasilitas & Benefit:' : 'Facilities & Benefits:'}</p>
                   <div className="flex flex-wrap gap-1.5">
                     {activeJobModal.benefits.map((b, i) => (
                       <span key={i} className="px-2.5 py-0.5 rounded-full bg-[#F0F8FB] dark:bg-slate-800 text-[#2596be] dark:text-cyan-400 text-[11px] font-bold border border-[#C2E5EF]">✓ {b}</span>
@@ -547,7 +549,7 @@ function SavedJobsContent() {
               )}
 
               <p className="text-[11px] text-slate-400 font-bold italic">
-                Diterbitkan: {activeJobModal.publishDate} • {activeJobModal.postedAgo}
+                {language === 'id' ? 'Diterbitkan:' : 'Published:'} {activeJobModal.publishDate} • {activeJobModal.postedAgo}
               </p>
             </div>
 
@@ -555,7 +557,7 @@ function SavedJobsContent() {
             <div className="flex-1 overflow-y-auto p-6 sm:p-8 space-y-5">
               {/* Deskripsi */}
               <div className="space-y-2 text-xs sm:text-sm text-slate-700 dark:text-slate-300 leading-relaxed">
-                <h4 className="font-extrabold text-sm text-slate-900 dark:text-white uppercase tracking-wider">Gambaran Umum &amp; Deskripsi Pekerjaan</h4>
+                <h4 className="font-extrabold text-sm text-slate-900 dark:text-white uppercase tracking-wider">{language === 'id' ? 'Gambaran Umum & Deskripsi Pekerjaan' : 'Job Overview & Description'}</h4>
                 <ul className="space-y-1.5 list-disc pl-5">
                   {activeJobModal.descriptionBullets.map((b, i) => <li key={i}>{b}</li>)}
                 </ul>
@@ -564,7 +566,7 @@ function SavedJobsContent() {
               {/* Tanggung Jawab */}
               {activeJobModal.responsibilitiesBullets && activeJobModal.responsibilitiesBullets.length > 0 && (
                 <div className="space-y-2 text-xs sm:text-sm text-slate-700 dark:text-slate-300">
-                  <h4 className="font-extrabold text-sm text-slate-900 dark:text-white uppercase tracking-wider">Tanggung Jawab Utama</h4>
+                  <h4 className="font-extrabold text-sm text-slate-900 dark:text-white uppercase tracking-wider">{language === 'id' ? 'Tanggung Jawab Utama' : 'Key Responsibilities'}</h4>
                   <ul className="space-y-1.5 list-disc pl-5 font-semibold">
                     {activeJobModal.responsibilitiesBullets.map((r, i) => <li key={i}>{r}</li>)}
                   </ul>
@@ -573,7 +575,7 @@ function SavedJobsContent() {
 
               {/* Kualifikasi */}
               <div className="space-y-2 text-xs sm:text-sm text-slate-700 dark:text-slate-300">
-                <h4 className="font-extrabold text-sm text-slate-900 dark:text-white uppercase tracking-wider">Kualifikasi &amp; Persyaratan</h4>
+                <h4 className="font-extrabold text-sm text-slate-900 dark:text-white uppercase tracking-wider">{language === 'id' ? 'Kualifikasi & Persyaratan' : 'Qualifications & Requirements'}</h4>
                 <ul className="space-y-1.5 list-disc pl-5 font-semibold">
                   {activeJobModal.criteriaBullets.map((c, i) => <li key={i}>{c}</li>)}
                 </ul>
@@ -581,7 +583,7 @@ function SavedJobsContent() {
 
               {/* Lokasi Penempatan */}
               <div className="space-y-1 text-xs sm:text-sm text-slate-700 dark:text-slate-300 pt-2 border-t border-slate-100 dark:border-slate-800">
-                <h4 className="font-extrabold text-sm text-slate-900 dark:text-white uppercase tracking-wider">Lokasi Penempatan</h4>
+                <h4 className="font-extrabold text-sm text-slate-900 dark:text-white uppercase tracking-wider">{language === 'id' ? 'Lokasi Penempatan' : 'Placement Location'}</h4>
                 <p className="font-medium text-slate-600 dark:text-slate-400">{activeJobModal.placementInfo}</p>
               </div>
             </div>
