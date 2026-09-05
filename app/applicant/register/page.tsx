@@ -50,29 +50,15 @@ export default function PelamarRegisterPage() {
   const [otpCode, setOtpCode] = useState(['', '', '', '', '', '']);
   const [otpError, setOtpError] = useState('');
   const [isResending, setIsResending] = useState(false);
-  const [countdown, setCountdown] = useState(0);
+  const [resendTimer, setResendTimer] = useState(0);
+  const [resendSuccess, setResendSuccess] = useState('');
 
   useEffect(() => {
-    if (countdown > 0) {
-      const timer = setTimeout(() => setCountdown(countdown - 1), 1000);
+    if (resendTimer > 0) {
+      const timer = setTimeout(() => setResendTimer(resendTimer - 1), 1000);
       return () => clearTimeout(timer);
     }
-  }, [countdown]);
-
-  const handleResendOtp = async () => {
-    if (isResending || countdown > 0) return;
-    setIsResending(true);
-    setOtpError('');
-    try {
-      await api.post('/auth/resend-otp', { email });
-      toast.success('Kode OTP baru berhasil dikirimkan ke email Anda.');
-      setCountdown(60);
-    } catch (err: any) {
-      setOtpError(parseErrorMessage(err));
-    } finally {
-      setIsResending(false);
-    }
-  };
+  }, [resendTimer]);
 
   const checkPasswordStrength = (pwd: string) => {
     return {
@@ -137,10 +123,8 @@ export default function PelamarRegisterPage() {
     setResendSuccess('');
     setOtpError('');
     try {
-      await api.post('/auth/register', {
-        email,
-        password,
-        role: 'pelamar'
+      await api.post('/auth/resend-otp', {
+        email
       });
       setResendSuccess('Kode verifikasi baru berhasil dikirimkan ke email Anda.');
       setResendTimer(60);
@@ -519,17 +503,6 @@ export default function PelamarRegisterPage() {
                     : resendTimer > 0
                     ? `Kirim ulang (${resendTimer}s)`
                     : 'Kirim Ulang Kode'}
-                </button>
-              </div>
-
-              <div className="pt-2 text-center">
-                <button
-                  type="button"
-                  onClick={handleResendOtp}
-                  disabled={isResending || countdown > 0}
-                  className="text-xs font-semibold text-[#1A4B9F] dark:text-blue-400 hover:underline disabled:opacity-50 disabled:no-underline cursor-pointer"
-                >
-                  {countdown > 0 ? `Kirim ulang kode OTP dalam (${countdown}s)` : isResending ? 'Mengirim ulang...' : 'Belum menerima kode? Kirim Ulang OTP'}
                 </button>
               </div>
 
