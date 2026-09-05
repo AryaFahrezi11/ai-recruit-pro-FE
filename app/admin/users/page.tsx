@@ -1,14 +1,48 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
-import { Search, Filter, Trash2, ShieldBan, ShieldCheck, Plus, Edit2, X, AlertCircle, Eye, BadgeCheck, CheckCircle2 } from 'lucide-react';
+import React, { useEffect, useState, useMemo } from 'react';
+import {
+  Search,
+  Filter,
+  Trash2,
+  ShieldBan,
+  ShieldCheck,
+  Plus,
+  Edit2,
+  X,
+  AlertCircle,
+  Eye,
+  BadgeCheck,
+  CheckCircle2,
+  Clock,
+  XCircle,
+  RefreshCw,
+  CornerDownLeft
+} from 'lucide-react';
 import { fetchAuth } from '@/lib/api/auth';
 import { toast } from 'react-hot-toast';
+import { DataTable, ColumnDef } from '@/components/ui/DataTable';
+
+interface UserItem {
+  id: string;
+  email: string;
+  role: string;
+  name: string;
+  is_active: boolean;
+  is_banned: boolean;
+  is_verified?: boolean;
+  verification_status?: 'VERIFIED' | 'REJECTED' | 'PENDING' | 'UNVERIFIED';
+  rejection_reason?: string;
+  created_at: string;
+}
 
 export default function AdminUsersPage() {
-  const [users, setUsers] = useState([]);
+  const [users, setUsers] = useState<UserItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [filterRole, setFilterRole] = useState('');
+  const [searchInput, setSearchInput] = useState('');
+  const [activeSearch, setActiveSearch] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
 
   // Modal states
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -27,13 +61,17 @@ export default function AdminUsersPage() {
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const loadUsers = async () => {
+  const loadUsers = async (searchQuery: string = activeSearch, roleQuery: string = filterRole) => {
     setIsLoading(true);
     try {
-      const url = filterRole ? `/api/admin/users?role=${filterRole}` : '/api/admin/users';
+      const params = new URLSearchParams();
+      if (roleQuery) params.append('role', roleQuery);
+      if (searchQuery.trim()) params.append('search', searchQuery.trim());
+
+      const url = params.toString() ? `/api/admin/users?${params.toString()}` : '/api/admin/users';
       const res = await fetchAuth(url, { method: 'GET' });
       const data = await res.json();
-      setUsers(data);
+      setUsers(Array.isArray(data) ? data : []);
     } catch (error) {
       toast.error('Gagal memuat data pengguna');
     } finally {
@@ -42,8 +80,23 @@ export default function AdminUsersPage() {
   };
 
   useEffect(() => {
-    loadUsers();
+    setCurrentPage(1);
+    loadUsers(activeSearch, filterRole);
   }, [filterRole]);
+
+  const handleSearchSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    setActiveSearch(searchInput);
+    setCurrentPage(1);
+    loadUsers(searchInput, filterRole);
+  };
+
+  const handleClearSearch = () => {
+    setSearchInput('');
+    setActiveSearch('');
+    setCurrentPage(1);
+    loadUsers('', filterRole);
+  };
 
   const handleBan = async (userId: string, currentStatus: boolean) => {
     try {
@@ -172,21 +225,241 @@ export default function AdminUsersPage() {
     }
   };
 
+  // Helper untuk merender status verifikasi akun yang selaras dengan halaman verifikasi perusahaan
+  const renderAccountStatus = (u: UserItem) => {
+    if (u.role === 'perusahaan') {
+      const status = u.verification_status || (u.is_verified ? 'VERIFIED' : 'PENDING');
+      if (status === 'VERIFIED') {
+        return (
+          <span className="inline-flex items-center gap-1.5 text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/40 px-2.5 py-1 rounded-full text-xs font-bold border border-emerald-200 dark:border-emerald-800/60">
+            <CheckCircle2 size={13} className="text-emerald-600 dark:text-emerald-400 shrink-0" />
+            Verified
+          </span>
+        );
+      }
+      if (status === 'REJECTED') {
+        return (
+          <span
+            className="inline-flex items-center gap-1 text-rose-700 dark:text-rose-300 bg-rose-50 dark:bg-rose-950/40 px-2.5 py-1 rounded-full text-xs font-bold border border-rose-200 dark:border-rose-800/60"
+            title={u.rejection_reason || 'Verifikasi perusahaan ditolak'}
+          >
+            <XCircle size={13} className="text-rose-600 dark:text-rose-400 shrink-0" />
+            Ditolak
+          </span>
+        );
+      }
+      return (
+        <span className="inline-flex items-center gap-1 text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/40 px-2.5 py-1 rounded-full text-xs font-bold border border-amber-200 dark:border-amber-800/60">
+          <Clock size={13} className="text-amber-600 dark:text-amber-400 shrink-0" />
+          Belum Verifikasi
+        </span>
+      );
+    }
+
+    if (u.role === 'kampus') {
+      if (u.is_verified) {
+        return (
+          <span className="inline-flex items-center gap-1.5 text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/40 px-2.5 py-1 rounded-full text-xs font-bold border border-emerald-200 dark:border-emerald-800/60">
+            <CheckCircle2 size={13} className="text-emerald-600 dark:text-emerald-400 shrink-0" />
+            Verified
+          </span>
+        );
+      }
+      return (
+        <span className="inline-flex items-center gap-1 text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/40 px-2.5 py-1 rounded-full text-xs font-bold border border-amber-200 dark:border-amber-800/60">
+          <Clock size={13} className="text-amber-600 dark:text-amber-400 shrink-0" />
+          Belum Verifikasi
+        </span>
+      );
+    }
+
+    // Role Pelamar / Admin
+    return u.is_active ? (
+      <span className="inline-flex items-center gap-1.5 text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/40 px-2.5 py-1 rounded-full text-xs font-bold border border-emerald-200 dark:border-emerald-800/60">
+        <BadgeCheck size={14} className="text-emerald-600 dark:text-emerald-400 shrink-0" /> Verified
+      </span>
+    ) : (
+      <span className="inline-flex items-center gap-1 text-slate-400 text-xs font-medium bg-slate-100 dark:bg-slate-800/60 px-2.5 py-1 rounded-full border border-slate-200 dark:border-slate-700">
+        Unverified
+      </span>
+    );
+  };
+
+  // DataTable Column Definitions
+  const tableColumns: ColumnDef<UserItem>[] = [
+    {
+      key: 'no',
+      header: 'No',
+      align: 'center',
+      className: 'w-12 text-center text-slate-500 dark:text-slate-400 font-semibold',
+      headerClassName: 'w-12 text-center',
+      render: (_, index) => index + 1
+    },
+    {
+      key: 'name_email',
+      header: 'Pengguna',
+      align: 'left',
+      render: (u) => (
+        <div className="flex flex-col min-w-0">
+          <span className="font-bold text-slate-900 dark:text-white text-xs truncate">
+            {u.name || u.email}
+          </span>
+          <span className="text-slate-500 dark:text-slate-400 text-[11px] mt-0.5 truncate">
+            {u.email}
+          </span>
+        </div>
+      )
+    },
+    {
+      key: 'role',
+      header: 'Peran (Role)',
+      align: 'left',
+      render: (u) => (
+        <span
+          className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${
+            u.role === 'pelamar'
+              ? 'bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-700'
+              : u.role === 'perusahaan'
+              ? 'bg-blue-50 dark:bg-blue-950/50 text-[#1A4B9F] dark:text-blue-300 border border-blue-200 dark:border-blue-900'
+              : u.role === 'kampus'
+              ? 'bg-purple-50 dark:bg-purple-950/50 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800'
+              : 'bg-black text-white'
+          }`}
+        >
+          {u.role}
+        </span>
+      )
+    },
+    {
+      key: 'status',
+      header: 'Status Akun',
+      align: 'left',
+      render: (u) => renderAccountStatus(u)
+    },
+    {
+      key: 'banned',
+      header: 'Banned',
+      align: 'left',
+      render: (u) =>
+        u.is_banned ? (
+          <span className="inline-flex items-center gap-1 text-rose-700 dark:text-rose-400 text-xs font-bold bg-rose-50 dark:bg-rose-950/40 px-2 py-0.5 rounded border border-rose-200 dark:border-rose-800">
+            <ShieldBan size={14} className="text-rose-700 dark:text-rose-400" /> BANNED
+          </span>
+        ) : (
+          <span className="text-slate-300 dark:text-slate-600 text-xs">-</span>
+        )
+    },
+    {
+      key: 'aksi',
+      header: 'Aksi',
+      align: 'right',
+      headerClassName: 'text-right',
+      className: 'text-right',
+      render: (u) => (
+        <div className="flex items-center justify-end gap-1.5">
+          <button
+            onClick={() => handleOpenDetail(u.id)}
+            title="Lihat Detail"
+            className="p-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-black dark:text-white hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors border border-slate-200 dark:border-slate-700"
+          >
+            <Eye size={15} className="text-black dark:text-white" />
+          </button>
+          <button
+            onClick={() => handleOpenEdit(u)}
+            title="Edit Data"
+            className="p-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-black dark:text-white hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors border border-slate-200 dark:border-slate-700"
+          >
+            <Edit2 size={15} className="text-black dark:text-white" />
+          </button>
+          <button
+            onClick={() => handleBan(u.id, u.is_banned)}
+            title={u.is_banned ? 'Unban User' : 'Ban User'}
+            className="p-1.5 rounded-lg transition-colors border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 text-black dark:text-white hover:bg-slate-200 dark:hover:bg-slate-700"
+          >
+            {u.is_banned ? (
+              <ShieldCheck size={15} className="text-black dark:text-white" />
+            ) : (
+              <ShieldBan size={15} className="text-black dark:text-white" />
+            )}
+          </button>
+          <button
+            onClick={() => handleDelete(u.id)}
+            title="Hapus Permanen"
+            className="p-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-black dark:text-white hover:bg-rose-100 dark:hover:bg-rose-950/60 hover:text-rose-600 transition-colors border border-slate-200 dark:border-slate-700"
+          >
+            <Trash2 size={15} />
+          </button>
+        </div>
+      )
+    }
+  ];
+
   return (
     <div className="space-y-6 font-sans antialiased">
-      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+      {/* Header Toolbar */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-extrabold text-slate-900 dark:text-white tracking-tight">Manajemen Pengguna</h1>
-          <p className="text-slate-500 dark:text-slate-400 text-xs font-medium mt-1">Kelola akses, edit, blokir, dan hapus pengguna platform.</p>
+          <div className="flex items-center gap-3">
+            <h1 className="text-2xl font-extrabold text-slate-900 dark:text-white tracking-tight">
+              Manajemen Pengguna
+            </h1>
+            {!isLoading && (
+              <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-700">
+                {users.length} Akun
+              </span>
+            )}
+          </div>
+          <p className="text-slate-500 dark:text-slate-400 text-xs font-medium mt-1">
+            Kelola akses, verifikasi, edit peran, blokir, dan hapus pengguna platform.
+          </p>
         </div>
 
-        <div className="flex flex-wrap items-center gap-3">
-          <div className="relative">
+        {/* Toolbar: GET Search, Role Filter, Refresh, Tambah Pengguna */}
+        <div className="flex items-center gap-2.5 flex-wrap sm:flex-nowrap">
+          {/* Search Form via GET */}
+          <form onSubmit={handleSearchSubmit} className="flex items-center gap-1.5 w-full sm:w-auto">
+            <div className="relative flex-1 sm:w-64">
+              <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+              <input
+                type="text"
+                value={searchInput}
+                onChange={(e) => setSearchInput(e.target.value)}
+                placeholder="Cari nama, email, peran..."
+                className="w-full pl-9 pr-20 py-2 text-xs bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-400 text-slate-800 dark:text-slate-200 shadow-xs"
+              />
+              {searchInput && (
+                <button
+                  type="button"
+                  onClick={handleClearSearch}
+                  className="absolute right-14 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+                  title="Hapus pencarian"
+                >
+                  <X size={13} />
+                </button>
+              )}
+              <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] text-slate-400 dark:text-slate-500 bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded border border-slate-200 dark:border-slate-700 font-mono inline-flex items-center gap-0.5 select-none pointer-events-none">
+                <CornerDownLeft size={10} /> Enter
+              </span>
+            </div>
+
+            <button
+              type="submit"
+              disabled={isLoading}
+              className="px-3.5 py-2 bg-black hover:bg-slate-800 text-white rounded-xl text-xs font-semibold shadow-xs transition-colors inline-flex items-center gap-1.5 shrink-0 cursor-pointer"
+              title="Cari (GET)"
+            >
+              <Search size={13} />
+              <span className="hidden sm:inline">Cari</span>
+            </button>
+          </form>
+
+          {/* Filter Role */}
+          <div className="relative shrink-0">
             <Filter size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-black dark:text-white" />
-            <select 
+            <select
               value={filterRole}
               onChange={(e) => setFilterRole(e.target.value)}
-              className="pl-8 pr-8 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-xs text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-slate-400 appearance-none font-semibold"
+              className="pl-8 pr-8 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-xs text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-slate-400 appearance-none font-semibold shadow-xs cursor-pointer"
             >
               <option value="">Semua Peran</option>
               <option value="pelamar">Pelamar</option>
@@ -195,119 +468,62 @@ export default function AdminUsersPage() {
               <option value="admin">Admin</option>
             </select>
           </div>
+
+          {/* Refresh Button */}
+          <button
+            onClick={() => loadUsers(activeSearch, filterRole)}
+            disabled={isLoading}
+            title="Muat Ulang"
+            className="p-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors shrink-0 cursor-pointer"
+          >
+            <RefreshCw size={16} className={isLoading ? 'animate-spin' : ''} />
+          </button>
+
+          {/* Tambah Pengguna Button */}
           <button
             onClick={handleOpenAdd}
-            className="flex items-center gap-2 bg-black hover:bg-slate-800 text-white px-4 py-2 rounded-xl text-xs font-semibold transition-colors shadow-xs cursor-pointer"
+            className="flex items-center gap-2 bg-black hover:bg-slate-800 text-white px-4 py-2 rounded-xl text-xs font-semibold transition-colors shadow-xs cursor-pointer shrink-0"
           >
             <Plus size={16} className="text-white" />
-            Tambah Pengguna
+            <span className="hidden sm:inline">Tambah Pengguna</span>
           </button>
         </div>
       </div>
 
-      <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-xs border border-slate-200 dark:border-slate-800 overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-xs text-left">
-            <thead className="bg-slate-50 dark:bg-slate-800/50 text-slate-500 dark:text-slate-400 text-[11px] uppercase font-bold border-b border-slate-200 dark:border-slate-800">
-              <tr>
-                <th className="px-6 py-4 text-center">No</th>
-                <th className="px-6 py-4">Pengguna</th>
-                <th className="px-6 py-4">Peran (Role)</th>
-                <th className="px-6 py-4">Status Akun</th>
-                <th className="px-6 py-4">Banned</th>
-                <th className="px-6 py-4 text-right">Aksi</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-              {isLoading ? (
-                <tr>
-                  <td colSpan={6} className="px-6 py-8 text-center text-slate-400 font-medium">Memuat data...</td>
-                </tr>
-              ) : users.length === 0 ? (
-                <tr>
-                  <td colSpan={6} className="px-6 py-8 text-center text-slate-400 font-medium">Tidak ada pengguna ditemukan.</td>
-                </tr>
-              ) : (
-                users.map((u: any, index: number) => (
-                  <tr key={u.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors">
-                    <td className="px-6 py-4 text-center">
-                      <span className="text-slate-500 dark:text-slate-400 font-semibold text-xs">{index + 1}</span>
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="flex flex-col">
-                        <span className="font-bold text-slate-900 dark:text-white text-xs">{u.name || u.email}</span>
-                        <span className="text-slate-500 dark:text-slate-400 text-[11px] mt-0.5">{u.email}</span>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${
-                        u.role === 'pelamar' ? 'bg-slate-100 text-slate-800 border border-slate-200' :
-                        u.role === 'perusahaan' ? 'bg-slate-100 text-slate-800 border border-slate-200' :
-                        u.role === 'admin' ? 'bg-black text-white' :
-                        'bg-slate-100 text-slate-800 border border-slate-200'
-                      }`}>
-                        {u.role}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4">
-                      {u.is_active ? (
-                        <span className="inline-flex items-center gap-1.5 text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/40 px-2.5 py-1 rounded-full text-xs font-bold border border-emerald-200 dark:border-emerald-800/60">
-                          <BadgeCheck size={14} className="text-emerald-600 dark:text-emerald-400 shrink-0" /> Verified
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center gap-1 text-slate-400 text-xs font-medium bg-slate-100 dark:bg-slate-800/60 px-2.5 py-1 rounded-full border border-slate-200 dark:border-slate-700">
-                          Unverified
-                        </span>
-                      )}
-                    </td>
-                    <td className="px-6 py-4">
-                      {u.is_banned ? (
-                        <span className="inline-flex items-center gap-1 text-rose-700 text-xs font-bold bg-rose-50 px-2 py-0.5 rounded border border-rose-200">
-                          <ShieldBan size={14} className="text-rose-700" /> BANNED
-                        </span>
-                      ) : (
-                        <span className="text-slate-300 text-xs">-</span>
-                      )}
-                    </td>
-                    <td className="px-6 py-4 text-right">
-                        <div className="flex items-center justify-end gap-1.5">
-                          <button 
-                            onClick={() => handleOpenDetail(u.id)}
-                            title="Lihat Detail"
-                            className="p-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-black dark:text-white hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors border border-slate-200 dark:border-slate-700"
-                          >
-                            <Eye size={15} className="text-black dark:text-white" />
-                          </button>
-                          <button 
-                            onClick={() => handleOpenEdit(u)}
-                            title="Edit Data"
-                            className="p-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-black dark:text-white hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors border border-slate-200 dark:border-slate-700"
-                          >
-                            <Edit2 size={15} className="text-black dark:text-white" />
-                          </button>
-                          <button 
-                            onClick={() => handleBan(u.id, u.is_banned)}
-                            title={u.is_banned ? "Unban User" : "Ban User"}
-                            className={`p-1.5 rounded-lg transition-colors border ${u.is_banned ? 'bg-slate-100 text-black hover:bg-slate-200 border-slate-200' : 'bg-slate-100 text-black hover:bg-slate-200 border-slate-200'}`}
-                          >
-                            {u.is_banned ? <ShieldCheck size={15} className="text-black dark:text-white" /> : <ShieldBan size={15} className="text-black dark:text-white" />}
-                          </button>
-                          <button 
-                            onClick={() => handleDelete(u.id)}
-                            title="Hapus Permanen"
-                            className="p-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-black dark:text-white hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors border border-slate-200 dark:border-slate-700"
-                          >
-                            <Trash2 size={15} className="text-black dark:text-white" />
-                          </button>
-                        </div>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+      {/* Active Search Filter Banner */}
+      {activeSearch && (
+        <div className="flex items-center justify-between px-4 py-2.5 rounded-xl bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-900 text-xs text-blue-900 dark:text-blue-300">
+          <div className="flex items-center gap-2">
+            <Search size={14} className="text-blue-600 dark:text-blue-400 shrink-0" />
+            <span>
+              Hasil pencarian pengguna: <strong className="font-bold underline">&ldquo;{activeSearch}&rdquo;</strong> ({users.length} pengguna ditemukan)
+            </span>
+          </div>
+          <button
+            onClick={handleClearSearch}
+            className="text-xs text-blue-700 dark:text-blue-400 hover:underline font-bold inline-flex items-center gap-1 shrink-0 ml-3 cursor-pointer"
+          >
+            <X size={13} /> Reset Filter
+          </button>
         </div>
-      </div>
+      )}
+
+      {/* Reusable DataTable Component with 10 Rows Pagination */}
+      <DataTable<UserItem>
+        data={users}
+        columns={tableColumns}
+        keyExtractor={(item) => item.id}
+        isLoading={isLoading}
+        pageSize={10}
+        currentPage={currentPage}
+        onPageChange={setCurrentPage}
+        emptyTitle={activeSearch ? 'Tidak Ada Pengguna Ditemukan' : 'Belum Ada Pengguna'}
+        emptyDescription={
+          activeSearch
+            ? `Tidak ada data pengguna yang cocok dengan kata kunci "${activeSearch}".`
+            : 'Belum ada data pengguna yang terdaftar untuk filter ini.'
+        }
+      />
 
       {/* MODAL: Tambah Pengguna */}
       {isAddModalOpen && (
