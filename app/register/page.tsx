@@ -656,9 +656,6 @@ function CompanyRegistrationInner() {
           <div className="bg-white dark:bg-slate-900 rounded-3xl p-8 sm:p-10 shadow-2xl border border-slate-200 dark:border-slate-800 space-y-8">
             <div className="space-y-1.5 border-b border-slate-100 dark:border-slate-800 pb-5">
               <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Dokumen & Data Perusahaan</h2>
-              <p className="text-sm text-slate-500 dark:text-slate-400">
-                Lengkapi informasi berikut untuk diverifikasi oleh tim AI-RecruitPro. Proses verifikasi umumnya membutuhkan 1-2 hari kerja.
-              </p>
             </div>
 
             {isFromIncomplete && (
@@ -839,7 +836,6 @@ function CompanyRegistrationInner() {
               )}
 
               <div className="flex items-center gap-3 pt-2 border-t border-slate-100 dark:border-slate-800">
-                <button type="button" onClick={() => setStep(2)} className={outlineBtn}>Kembali</button>
                 <button type="submit" disabled={isLoading} className={primaryBtnFlex}>
                   {isLoading ? 'Mengirim data...' : 'Kirim & Ajukan Verifikasi'}
                 </button>

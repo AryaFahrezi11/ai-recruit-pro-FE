@@ -1,22 +1,76 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
-import { ShieldCheck, Building2, ExternalLink, FileText, CheckCircle2, Clock } from 'lucide-react';
+import React, { useEffect, useState, useMemo } from 'react';
+import {
+  ShieldCheck,
+  Building2,
+  ExternalLink,
+  FileText,
+  CreditCard,
+  CheckCircle2,
+  Clock,
+  Search,
+  Eye,
+  X,
+  Globe,
+  Phone,
+  MapPin,
+  Calendar,
+  Briefcase,
+  LayoutGrid,
+  List,
+  AlertCircle,
+  User,
+  RefreshCw,
+  FileCheck2
+} from 'lucide-react';
 import { fetchAuth } from '@/lib/api/auth';
+import { getMediaUrl } from '@/lib/api';
 import { toast } from 'react-hot-toast';
 
+interface CompanyVerificationItem {
+  id: string;
+  user_id?: string;
+  nama_perusahaan: string;
+  industri?: string;
+  ukuran?: string;
+  deskripsi?: string;
+  alamat?: string;
+  kota?: string;
+  provinsi?: string;
+  website_url?: string;
+  logo_url?: string;
+  no_telepon?: string;
+  tahun_berdiri?: string | number;
+  nib_number?: string;
+  nib_document_url?: string;
+  hr_name?: string;
+  hr_whatsapp?: string;
+  hr_position?: string;
+  hr_id_card_url?: string;
+  is_verified?: boolean;
+}
+
 export default function AdminVerificationPage() {
-  const [companies, setCompanies] = useState([]);
+  const [companies, setCompanies] = useState<CompanyVerificationItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [viewMode, setViewMode] = useState<'table' | 'grid'>('table');
+  const [selectedCompany, setSelectedCompany] = useState<CompanyVerificationItem | null>(null);
+  const [approvingId, setApprovingId] = useState<string | null>(null);
 
   const loadPendingCompanies = async () => {
     setIsLoading(true);
     try {
       const res = await fetchAuth('/api/admin/perusahaan/pending', { method: 'GET' });
-      const data = await res.json();
-      setCompanies(data);
-    } catch (error) {
-      toast.error('Gagal memuat data perusahaan');
+      if (res.ok) {
+        const data = await res.json();
+        setCompanies(Array.isArray(data) ? data : []);
+      } else {
+        toast.error('Gagal memuat data perusahaan');
+      }
+    } catch {
+      toast.error('Gagal memuat data perusahaan. Periksa koneksi backend.');
     } finally {
       setIsLoading(false);
     }
@@ -27,136 +81,637 @@ export default function AdminVerificationPage() {
   }, []);
 
   const handleApprove = async (companyId: string, companyName: string) => {
-    if (!window.confirm(`Setujui akun perusahaan "${companyName}"? Mereka akan diberikan akses penuh ke portal perusahaan.`)) return;
-    
+    if (
+      !window.confirm(
+        `Setujui akun perusahaan "${companyName || 'ini'}"? Akses dashboard rekrutmen akan langsung aktif.`
+      )
+    )
+      return;
+
+    setApprovingId(companyId);
     try {
-      await fetchAuth(`/api/admin/perusahaan/${companyId}/verify`, { method: 'PUT' });
-      toast.success(`${companyName} berhasil diverifikasi!`, { icon: '🎉' });
-      loadPendingCompanies();
-    } catch (error) {
-      toast.error('Gagal memverifikasi perusahaan');
+      const res = await fetchAuth(`/api/admin/perusahaan/${companyId}/verify`, { method: 'PUT' });
+      if (res.ok) {
+        toast.success(`Akun "${companyName || 'Perusahaan'}" berhasil disetujui!`, { icon: '🎉' });
+        if (selectedCompany?.id === companyId) {
+          setSelectedCompany(null);
+        }
+        loadPendingCompanies();
+      } else {
+        toast.error('Gagal memverifikasi perusahaan');
+      }
+    } catch {
+      toast.error('Terjadi kesalahan saat memverifikasi perusahaan');
+    } finally {
+      setApprovingId(null);
     }
   };
 
+  // Filter companies based on search
+  const filteredCompanies = useMemo(() => {
+    const q = searchQuery.toLowerCase().trim();
+    if (!q) return companies;
+    return companies.filter((c) => {
+      const name = (c.nama_perusahaan || '').toLowerCase();
+      const nib = (c.nib_number || '').toLowerCase();
+      const hr = (c.hr_name || '').toLowerCase();
+      const kota = (c.kota || '').toLowerCase();
+      const industri = (c.industri || '').toLowerCase();
+      return (
+        name.includes(q) ||
+        nib.includes(q) ||
+        hr.includes(q) ||
+        kota.includes(q) ||
+        industri.includes(q)
+      );
+    });
+  }, [companies, searchQuery]);
+
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-slate-800">Verifikasi Legalitas Perusahaan</h1>
-        <p className="text-slate-500 text-sm mt-1">Tinjau dan setujui perusahaan baru yang mendaftar ke AI-Recruit Pro.</p>
+      {/* Page Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <div className="flex items-center gap-3">
+            <h1 className="text-2xl font-bold text-slate-800 dark:text-white">
+              Verifikasi Legalitas Perusahaan
+            </h1>
+            {!isLoading && (
+              <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300 border border-amber-200 dark:border-amber-800">
+                {companies.length} Menunggu
+              </span>
+            )}
+          </div>
+          <p className="text-slate-500 dark:text-slate-400 text-xs sm:text-sm mt-1">
+            Tinjau berkas legalitas (NIB &amp; KTP HR) dan setujui perusahaan baru yang mendaftar.
+          </p>
+        </div>
+
+        {/* Toolbar: Search, Refresh, View Toggle */}
+        <div className="flex items-center gap-2.5">
+          <div className="relative flex-1 sm:w-64">
+            <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Cari perusahaan, NIB, PIC..."
+              className="w-full pl-9 pr-3 py-2 text-xs bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 text-slate-800 dark:text-slate-200"
+            />
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery('')}
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+              >
+                <X size={13} />
+              </button>
+            )}
+          </div>
+
+          <div className="inline-flex rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 p-1">
+            <button
+              onClick={() => setViewMode('table')}
+              title="Tampilan Tabel Kompak"
+              className={`p-1.5 rounded-lg text-xs font-semibold transition-all ${
+                viewMode === 'table'
+                  ? 'bg-white dark:bg-slate-800 text-blue-600 dark:text-blue-400 shadow-xs'
+                  : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
+              }`}
+            >
+              <List size={16} />
+            </button>
+            <button
+              onClick={() => setViewMode('grid')}
+              title="Tampilan Kartu Ringkas"
+              className={`p-1.5 rounded-lg text-xs font-semibold transition-all ${
+                viewMode === 'grid'
+                  ? 'bg-white dark:bg-slate-800 text-blue-600 dark:text-blue-400 shadow-xs'
+                  : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
+              }`}
+            >
+              <LayoutGrid size={16} />
+            </button>
+          </div>
+
+          <button
+            onClick={loadPendingCompanies}
+            disabled={isLoading}
+            title="Muat Ulang"
+            className="p-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 hover:bg-slate-50 transition-colors"
+          >
+            <RefreshCw size={16} className={isLoading ? 'animate-spin' : ''} />
+          </button>
+        </div>
       </div>
 
-      <div className="grid grid-cols-1 gap-4">
-        {isLoading ? (
-          <div className="p-8 text-center text-slate-400 bg-white rounded-2xl border border-slate-200">
-            Memuat data...
+      {/* Main Content Area */}
+      {isLoading ? (
+        <div className="p-12 text-center text-slate-400 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 flex items-center justify-center gap-2">
+          <RefreshCw size={18} className="animate-spin text-blue-500" />
+          <span className="text-sm font-medium">Memuat antrean verifikasi perusahaan...</span>
+        </div>
+      ) : companies.length === 0 ? (
+        <div className="p-12 text-center flex flex-col items-center bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
+          <div className="w-16 h-16 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-500 rounded-2xl flex items-center justify-center mb-4 border border-emerald-100 dark:border-emerald-800/60">
+            <CheckCircle2 size={32} />
           </div>
-        ) : companies.length === 0 ? (
-          <div className="p-12 text-center flex flex-col items-center bg-white rounded-2xl border border-slate-200 shadow-sm">
-            <div className="w-16 h-16 bg-emerald-50 text-emerald-500 rounded-full flex items-center justify-center mb-4">
-              <CheckCircle2 size={32} />
-            </div>
-            <h3 className="text-lg font-bold text-slate-800">Tidak Ada Antrean</h3>
-            <p className="text-slate-500 text-sm max-w-sm mt-2">Semua perusahaan baru sudah diverifikasi. Anda bisa bersantai untuk sementara waktu!</p>
-          </div>
-        ) : (
-          companies.map((company: any) => (
-            <div key={company.id} className="bg-white rounded-2xl p-6 shadow-sm border border-slate-200 hover:border-blue-300 transition-colors flex flex-col lg:flex-row gap-6">
-              
-              {/* Company Identity */}
-              <div className="flex-1 space-y-4">
-                <div className="flex items-start gap-4">
-                  <div className="w-14 h-14 bg-slate-100 rounded-xl flex items-center justify-center border border-slate-200 text-slate-400 shrink-0">
-                    <Building2 size={24} />
-                  </div>
-                  <div>
-                    <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-amber-100 text-amber-700 text-[10px] font-extrabold uppercase tracking-widest mb-2 border border-amber-200">
-                      <Clock size={12} /> Pending Approval
-                    </div>
-                    <h3 className="text-xl font-bold text-slate-800">{company.nama_perusahaan}</h3>
-                    <p className="text-sm text-slate-500 font-medium">{company.industri} • {company.ukuran}</p>
-                  </div>
-                </div>
+          <h3 className="text-lg font-bold text-slate-800 dark:text-white">Tidak Ada Antrean Verifikasi</h3>
+          <p className="text-slate-500 dark:text-slate-400 text-xs sm:text-sm max-w-sm mt-1.5">
+            Semua pendaftaran perusahaan telah selesai diverifikasi atau belum ada pendaftaran baru.
+          </p>
+        </div>
+      ) : filteredCompanies.length === 0 ? (
+        <div className="p-10 text-center bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800">
+          <AlertCircle size={28} className="mx-auto text-slate-400 mb-2" />
+          <p className="text-sm font-semibold text-slate-700 dark:text-slate-300">
+            Tidak ada perusahaan yang cocok dengan pencarian "{searchQuery}"
+          </p>
+          <button
+            onClick={() => setSearchQuery('')}
+            className="mt-2 text-xs text-blue-600 hover:underline font-semibold"
+          >
+            Reset Pencarian
+          </button>
+        </div>
+      ) : viewMode === 'table' ? (
+        /* TABLE VIEW (Kompak & Muat Banyak) */
+        <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full text-xs text-left">
+              <thead className="bg-slate-50 dark:bg-slate-950/60 text-slate-500 dark:text-slate-400 font-bold border-b border-slate-200 dark:border-slate-800 uppercase tracking-wider text-[10px]">
+                <tr>
+                  <th className="px-5 py-3.5">Perusahaan</th>
+                  <th className="px-4 py-3.5">NIB / NPWP</th>
+                  <th className="px-4 py-3.5">Perwakilan HRD</th>
+                  <th className="px-4 py-3.5">Berkas Legalitas</th>
+                  <th className="px-4 py-3.5">Status</th>
+                  <th className="px-5 py-3.5 text-right">Aksi</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                {filteredCompanies.map((c) => {
+                  const isApproving = approvingId === c.id;
+                  return (
+                    <tr
+                      key={c.id}
+                      className="hover:bg-blue-50/40 dark:hover:bg-slate-800/50 transition-colors"
+                    >
+                      {/* Perusahaan Info */}
+                      <td className="px-5 py-3.5">
+                        <div className="flex items-center gap-3">
+                          <div className="w-9 h-9 rounded-xl bg-blue-50 dark:bg-blue-950/50 border border-blue-200 dark:border-blue-900 text-[#1A4B9F] dark:text-blue-400 flex items-center justify-center font-bold text-xs shrink-0">
+                            {c.nama_perusahaan ? c.nama_perusahaan.slice(0, 2).toUpperCase() : <Building2 size={16} />}
+                          </div>
+                          <div className="min-w-0">
+                            <button
+                              onClick={() => setSelectedCompany(c)}
+                              className="font-bold text-slate-800 dark:text-white text-xs sm:text-sm hover:text-blue-600 dark:hover:text-blue-400 text-left block truncate max-w-[220px]"
+                              title={c.nama_perusahaan}
+                            >
+                              {c.nama_perusahaan || '-'}
+                            </button>
+                            <span className="text-[11px] text-slate-400 dark:text-slate-500 block truncate max-w-[220px]">
+                              {[c.industri, c.kota || c.provinsi].filter(Boolean).join(' • ') || 'Industri umum'}
+                            </span>
+                          </div>
+                        </div>
+                      </td>
 
-                <div className="grid grid-cols-2 gap-4 pt-4 border-t border-slate-100 text-sm">
-                  <div className="col-span-2">
-                    <span className="block text-xs font-semibold text-slate-400">Deskripsi Perusahaan</span>
-                    <p className="font-medium text-slate-700 text-xs mt-1 leading-relaxed">{company.deskripsi || 'Tidak Ada Deskripsi'}</p>
-                  </div>
-                  <div className="col-span-2">
-                    <span className="block text-xs font-semibold text-slate-400">Lokasi / Alamat Lengkap</span>
-                    <span className="font-medium text-slate-700 text-xs leading-relaxed block mt-1">
-                      {company.alamat ? `${company.alamat}, ` : ''}{company.kota || ''}{company.provinsi ? `, ${company.provinsi}` : ''}
-                      {!company.alamat && !company.kota && !company.provinsi && 'Tidak Ada Lokasi'}
+                      {/* NIB / NPWP */}
+                      <td className="px-4 py-3.5">
+                        <span className="font-mono font-bold text-slate-800 dark:text-slate-200 block">
+                          {c.nib_number || '-'}
+                        </span>
+                        <span className="text-[10px] text-slate-400 block">
+                          Tahun: {c.tahun_berdiri || '-'}
+                        </span>
+                      </td>
+
+                      {/* Perwakilan HR */}
+                      <td className="px-4 py-3.5">
+                        <div className="flex flex-col min-w-0">
+                          <span className="font-bold text-slate-800 dark:text-slate-200 truncate max-w-[160px]">
+                            {c.hr_name || '-'}
+                          </span>
+                          <div className="flex items-center gap-2 mt-0.5">
+                            {c.hr_position && (
+                              <span className="text-[10px] text-slate-500 capitalize">
+                                {c.hr_position}
+                              </span>
+                            )}
+                            {c.hr_whatsapp && (
+                              <a
+                                href={`https://wa.me/${c.hr_whatsapp.replace(/[^0-9]/g, '')}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-[10px] text-emerald-600 hover:text-emerald-700 font-semibold inline-flex items-center gap-0.5"
+                                title="Chat WhatsApp"
+                              >
+                                <Phone size={10} /> {c.hr_whatsapp}
+                              </a>
+                            )}
+                          </div>
+                        </div>
+                      </td>
+
+                      {/* Berkas Legalitas Chips */}
+                      <td className="px-4 py-3.5">
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          {c.nib_document_url ? (
+                            <a
+                              href={getMediaUrl(c.nib_document_url)}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-blue-50 dark:bg-blue-950/50 text-[#1A4B9F] dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/50 text-[11px] font-bold border border-blue-200 dark:border-blue-900/60 transition-colors"
+                              title="Lihat Berkas NIB / NPWP"
+                            >
+                              <FileText size={12} /> NIB <ExternalLink size={10} />
+                            </a>
+                          ) : (
+                            <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] bg-slate-100 dark:bg-slate-800 text-slate-400">
+                              NIB -
+                            </span>
+                          )}
+
+                          {c.hr_id_card_url ? (
+                            <a
+                              href={getMediaUrl(c.hr_id_card_url)}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-100 dark:hover:bg-emerald-900/50 text-[11px] font-bold border border-emerald-200 dark:border-emerald-900/60 transition-colors"
+                              title="Lihat Berkas KTP / ID Card HRD"
+                            >
+                              <CreditCard size={12} /> KTP <ExternalLink size={10} />
+                            </a>
+                          ) : (
+                            <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] bg-slate-100 dark:bg-slate-800 text-slate-400">
+                              KTP -
+                            </span>
+                          )}
+                        </div>
+                      </td>
+
+                      {/* Status */}
+                      <td className="px-4 py-3.5">
+                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 text-[10px] font-bold border border-amber-200 dark:border-amber-800">
+                          <Clock size={10} /> Menunggu
+                        </span>
+                      </td>
+
+                      {/* Aksi Buttons */}
+                      <td className="px-5 py-3.5 text-right">
+                        <div className="flex items-center justify-end gap-1.5">
+                          <button
+                            onClick={() => setSelectedCompany(c)}
+                            className="p-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                            title="Lihat Rincian Lengkap"
+                          >
+                            <Eye size={15} />
+                          </button>
+
+                          <button
+                            onClick={() => handleApprove(c.id, c.nama_perusahaan)}
+                            disabled={isApproving}
+                            className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-xs transition-all disabled:opacity-50"
+                            title="Setujui Akun Perusahaan"
+                          >
+                            {isApproving ? (
+                              <RefreshCw size={13} className="animate-spin" />
+                            ) : (
+                              <ShieldCheck size={14} />
+                            )}
+                            <span>Setujui</span>
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      ) : (
+        /* GRID VIEW (Ringkas 2-3 Kolom, Tidak Boros Tempat) */
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {filteredCompanies.map((c) => {
+            const isApproving = approvingId === c.id;
+            return (
+              <div
+                key={c.id}
+                className="bg-white dark:bg-slate-900 rounded-2xl p-4 sm:p-5 border border-slate-200 dark:border-slate-800 shadow-xs hover:border-blue-400 transition-all flex flex-col justify-between space-y-4"
+              >
+                <div>
+                  {/* Top Bar */}
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-950/50 border border-blue-200 dark:border-blue-900 text-[#1A4B9F] dark:text-blue-400 flex items-center justify-center font-bold text-sm shrink-0">
+                        {c.nama_perusahaan ? c.nama_perusahaan.slice(0, 2).toUpperCase() : <Building2 size={18} />}
+                      </div>
+                      <div className="min-w-0">
+                        <h3
+                          onClick={() => setSelectedCompany(c)}
+                          className="font-bold text-slate-900 dark:text-white text-sm hover:text-blue-600 dark:hover:text-blue-400 cursor-pointer truncate"
+                          title={c.nama_perusahaan}
+                        >
+                          {c.nama_perusahaan || '-'}
+                        </h3>
+                        <span className="text-[11px] text-slate-400 block truncate">
+                          {[c.industri, c.kota].filter(Boolean).join(' • ') || 'Industri'}
+                        </span>
+                      </div>
+                    </div>
+                    <span className="shrink-0 px-2 py-0.5 rounded-full bg-amber-50 dark:bg-amber-950/50 text-amber-700 dark:text-amber-400 text-[10px] font-bold border border-amber-200 dark:border-amber-800">
+                      Pending
                     </span>
                   </div>
-                  <div>
-                    <span className="block text-xs font-semibold text-slate-400">Tahun Berdiri</span>
-                    <span className="font-medium text-slate-700">{company.tahun_berdiri || '-'}</span>
-                  </div>
-                  <div>
-                    <span className="block text-xs font-semibold text-slate-400">Website Resmi</span>
-                    <span className="font-medium text-slate-700">{company.website_url || 'Tidak Ada'}</span>
-                  </div>
-                  <div>
-                    <span className="block text-xs font-semibold text-slate-400">Nomor Telepon Kantor</span>
-                    <span className="font-medium text-slate-700">{company.no_telepon || '-'}</span>
-                  </div>
-                  <div>
-                    <span className="block text-xs font-semibold text-slate-400">Nama Perwakilan HR</span>
-                    <span className="font-medium text-slate-700">{company.hr_name || '-'}</span>
-                  </div>
-                  <div>
-                    <span className="block text-xs font-semibold text-slate-400">WhatsApp Perwakilan</span>
-                    <span className="font-medium text-slate-700">{company.hr_whatsapp || '-'}</span>
-                  </div>
-                </div>
-              </div>
 
-              {/* Legal Documents */}
-              <div className="lg:w-80 bg-slate-50 rounded-xl p-5 border border-slate-100 flex flex-col justify-between">
-                <div>
-                  <h4 className="text-sm font-bold text-slate-700 flex items-center gap-2 mb-4">
-                    <FileText size={16} className="text-blue-500"/> Dokumen Legalitas
-                  </h4>
-                  
-                  <div className="space-y-3">
-                    <div className="bg-white p-3 rounded-lg border border-slate-200 flex items-center justify-between">
-                      <div>
-                        <span className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider">NIB / NPWP</span>
-                        <span className="text-sm font-bold text-slate-700">{company.nib_number || 'Tidak dilampirkan'}</span>
-                      </div>
-                      <button className="text-blue-500 hover:text-blue-700 bg-blue-50 p-1.5 rounded-md transition-colors" title="Lihat Dokumen">
-                        <ExternalLink size={16} />
-                      </button>
+                  {/* Compact Info Grid */}
+                  <div className="grid grid-cols-2 gap-2 text-[11px] bg-slate-50 dark:bg-slate-950/60 p-3 rounded-xl border border-slate-100 dark:border-slate-800/80 mt-3.5">
+                    <div>
+                      <span className="text-slate-400 block text-[10px] font-medium">NIB / NPWP</span>
+                      <span className="font-mono font-bold text-slate-800 dark:text-slate-200 truncate block">
+                        {c.nib_number || '-'}
+                      </span>
                     </div>
+                    <div>
+                      <span className="text-slate-400 block text-[10px] font-medium">PIC HR</span>
+                      <span className="font-bold text-slate-800 dark:text-slate-200 truncate block">
+                        {c.hr_name || '-'}
+                      </span>
+                    </div>
+                  </div>
 
-                    <div className="bg-white p-3 rounded-lg border border-slate-200 flex items-center justify-between">
-                      <div>
-                        <span className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider">ID Card / KTP HR</span>
-                        <span className="text-sm font-bold text-slate-700">Lampiran Foto</span>
-                      </div>
-                      <button className="text-blue-500 hover:text-blue-700 bg-blue-50 p-1.5 rounded-md transition-colors" title="Lihat Dokumen">
-                        <ExternalLink size={16} />
-                      </button>
-                    </div>
+                  {/* Document Chips */}
+                  <div className="flex items-center gap-2 mt-3">
+                    {c.nib_document_url ? (
+                      <a
+                        href={getMediaUrl(c.nib_document_url)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex-1 text-center py-1 px-2 rounded-lg bg-blue-50 dark:bg-blue-950/50 text-[#1A4B9F] dark:text-blue-400 hover:bg-blue-100 text-[10px] font-bold border border-blue-200 dark:border-blue-900 inline-flex items-center justify-center gap-1"
+                      >
+                        <FileText size={11} /> Berkas NIB
+                      </a>
+                    ) : (
+                      <span className="flex-1 text-center py-1 px-2 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-400 text-[10px]">
+                        NIB (-)
+                      </span>
+                    )}
+
+                    {c.hr_id_card_url ? (
+                      <a
+                        href={getMediaUrl(c.hr_id_card_url)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex-1 text-center py-1 px-2 rounded-lg bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-100 text-[10px] font-bold border border-emerald-200 dark:border-emerald-900 inline-flex items-center justify-center gap-1"
+                      >
+                        <CreditCard size={11} /> KTP HR
+                      </a>
+                    ) : (
+                      <span className="flex-1 text-center py-1 px-2 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-400 text-[10px]">
+                        KTP (-)
+                      </span>
+                    )}
                   </div>
                 </div>
 
-                <div className="mt-6 pt-4 border-t border-slate-200">
-                  <button 
-                    onClick={() => handleApprove(company.id, company.nama_perusahaan)}
-                    className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl transition-colors flex items-center justify-center gap-2 shadow-sm hover:shadow"
+                {/* Bottom Actions */}
+                <div className="pt-2 border-t border-slate-100 dark:border-slate-800 flex items-center gap-2">
+                  <button
+                    onClick={() => setSelectedCompany(c)}
+                    className="flex-1 py-2 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-semibold inline-flex items-center justify-center gap-1 transition-colors"
                   >
-                    <ShieldCheck size={18} />
-                    Approve Perusahaan
+                    <Eye size={13} /> Rincian
+                  </button>
+
+                  <button
+                    onClick={() => handleApprove(c.id, c.nama_perusahaan)}
+                    disabled={isApproving}
+                    className="flex-1 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow-xs transition-all inline-flex items-center justify-center gap-1 disabled:opacity-50"
+                  >
+                    {isApproving ? (
+                      <RefreshCw size={13} className="animate-spin" />
+                    ) : (
+                      <ShieldCheck size={14} />
+                    )}
+                    <span>Approve</span>
                   </button>
                 </div>
               </div>
+            );
+          })}
+        </div>
+      )}
 
+      {/* DETAIL MODAL DIALOG */}
+      {selectedCompany && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-4 animate-in fade-in duration-200">
+          <div className="bg-white dark:bg-slate-900 rounded-3xl w-full max-w-2xl border border-slate-200 dark:border-slate-800 shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+            {/* Modal Header */}
+            <div className="p-5 sm:p-6 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-11 h-11 rounded-2xl bg-blue-50 dark:bg-blue-950/50 border border-blue-200 dark:border-blue-900 text-[#1A4B9F] dark:text-blue-400 flex items-center justify-center font-bold text-base">
+                  <Building2 size={22} />
+                </div>
+                <div>
+                  <h2 className="text-lg font-bold text-slate-900 dark:text-white">
+                    {selectedCompany.nama_perusahaan || '-'}
+                  </h2>
+                  <span className="text-xs text-slate-400">
+                    {[selectedCompany.industri, selectedCompany.ukuran].filter(Boolean).join(' • ') || 'Profil Bisnis'}
+                  </span>
+                </div>
+              </div>
+
+              <button
+                onClick={() => setSelectedCompany(null)}
+                className="p-2 rounded-xl text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+              >
+                <X size={18} />
+              </button>
             </div>
-          ))
-        )}
-      </div>
+
+            {/* Modal Body */}
+            <div className="p-6 overflow-y-auto space-y-5 text-xs text-slate-700 dark:text-slate-300">
+              {/* Deskripsi */}
+              <div>
+                <span className="block font-semibold text-slate-400 text-[11px] mb-1">
+                  Deskripsi Perusahaan
+                </span>
+                <p className="p-3 bg-slate-50 dark:bg-slate-950/60 rounded-xl border border-slate-100 dark:border-slate-800 leading-relaxed font-normal">
+                  {selectedCompany.deskripsi || 'Tidak ada deskripsi profil perusahaan.'}
+                </p>
+              </div>
+
+              {/* Data Grid */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 bg-slate-50 dark:bg-slate-950/60 p-4 rounded-2xl border border-slate-100 dark:border-slate-800">
+                <div>
+                  <span className="font-semibold text-slate-400 text-[10px] block">Nomor NIB / NPWP</span>
+                  <span className="font-mono font-bold text-slate-800 dark:text-slate-100 text-sm">
+                    {selectedCompany.nib_number || '-'}
+                  </span>
+                </div>
+
+                <div>
+                  <span className="font-semibold text-slate-400 text-[10px] block">Tahun Berdiri</span>
+                  <span className="font-bold text-slate-800 dark:text-slate-100">
+                    {selectedCompany.tahun_berdiri || '-'}
+                  </span>
+                </div>
+
+                <div>
+                  <span className="font-semibold text-slate-400 text-[10px] block">Nama Perwakilan HRD</span>
+                  <span className="font-bold text-slate-800 dark:text-slate-100">
+                    {selectedCompany.hr_name || '-'}
+                  </span>
+                </div>
+
+                <div>
+                  <span className="font-semibold text-slate-400 text-[10px] block">Jabatan HRD</span>
+                  <span className="font-bold text-slate-800 dark:text-slate-100 capitalize">
+                    {selectedCompany.hr_position || '-'}
+                  </span>
+                </div>
+
+                <div>
+                  <span className="font-semibold text-slate-400 text-[10px] block">WhatsApp HRD</span>
+                  <span className="font-mono font-bold text-slate-800 dark:text-slate-100">
+                    {selectedCompany.hr_whatsapp || '-'}
+                  </span>
+                </div>
+
+                <div>
+                  <span className="font-semibold text-slate-400 text-[10px] block">Nomor Telepon Kantor</span>
+                  <span className="font-mono font-bold text-slate-800 dark:text-slate-100">
+                    {selectedCompany.no_telepon || '-'}
+                  </span>
+                </div>
+
+                <div className="sm:col-span-2">
+                  <span className="font-semibold text-slate-400 text-[10px] block">Website Resmi</span>
+                  {selectedCompany.website_url ? (
+                    <a
+                      href={
+                        selectedCompany.website_url.startsWith('http')
+                          ? selectedCompany.website_url
+                          : `https://${selectedCompany.website_url}`
+                      }
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-blue-600 hover:underline inline-flex items-center gap-1 font-semibold"
+                    >
+                      <Globe size={12} /> {selectedCompany.website_url} <ExternalLink size={10} />
+                    </a>
+                  ) : (
+                    <span>-</span>
+                  )}
+                </div>
+
+                <div className="sm:col-span-2">
+                  <span className="font-semibold text-slate-400 text-[10px] block">Alamat Kantor</span>
+                  <span className="leading-relaxed">
+                    {[selectedCompany.alamat, selectedCompany.kota, selectedCompany.provinsi]
+                      .filter(Boolean)
+                      .join(', ') || '-'}
+                  </span>
+                </div>
+              </div>
+
+              {/* Berkas Dokumen Fisik */}
+              <div>
+                <span className="font-semibold text-slate-400 text-[11px] block mb-2">
+                  Dokumen Persyaratan Fisik
+                </span>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {/* Dokumen NIB */}
+                  <div className="p-3 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl flex items-center justify-between gap-2 shadow-xs">
+                    <div className="flex items-center gap-2.5 overflow-hidden">
+                      <div className="w-8 h-8 rounded-lg bg-blue-50 dark:bg-blue-950/60 text-blue-600 flex items-center justify-center shrink-0">
+                        <FileText size={16} />
+                      </div>
+                      <div className="truncate">
+                        <span className="font-bold text-slate-800 dark:text-white block text-xs truncate">
+                          Dokumen NIB/NPWP
+                        </span>
+                        <span className="text-[10px] text-slate-400 block truncate">
+                          {selectedCompany.nib_document_url ? 'File Tersedia' : 'Belum Ada'}
+                        </span>
+                      </div>
+                    </div>
+
+                    {selectedCompany.nib_document_url ? (
+                      <a
+                        href={getMediaUrl(selectedCompany.nib_document_url)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="px-2.5 py-1 rounded-lg bg-blue-600 text-white font-semibold text-[11px] hover:bg-blue-700 transition-colors inline-flex items-center gap-1 shrink-0"
+                      >
+                        Buka <ExternalLink size={11} />
+                      </a>
+                    ) : (
+                      <span className="text-[10px] text-slate-400 px-2">Kosong</span>
+                    )}
+                  </div>
+
+                  {/* Dokumen KTP */}
+                  <div className="p-3 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl flex items-center justify-between gap-2 shadow-xs">
+                    <div className="flex items-center gap-2.5 overflow-hidden">
+                      <div className="w-8 h-8 rounded-lg bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 flex items-center justify-center shrink-0">
+                        <CreditCard size={16} />
+                      </div>
+                      <div className="truncate">
+                        <span className="font-bold text-slate-800 dark:text-white block text-xs truncate">
+                          KTP / ID Card HR
+                        </span>
+                        <span className="text-[10px] text-slate-400 block truncate">
+                          {selectedCompany.hr_id_card_url ? 'File Tersedia' : 'Belum Ada'}
+                        </span>
+                      </div>
+                    </div>
+
+                    {selectedCompany.hr_id_card_url ? (
+                      <a
+                        href={getMediaUrl(selectedCompany.hr_id_card_url)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="px-2.5 py-1 rounded-lg bg-emerald-600 text-white font-semibold text-[11px] hover:bg-emerald-700 transition-colors inline-flex items-center gap-1 shrink-0"
+                      >
+                        Buka <ExternalLink size={11} />
+                      </a>
+                    ) : (
+                      <span className="text-[10px] text-slate-400 px-2">Kosong</span>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Modal Footer */}
+            <div className="p-5 border-t border-slate-100 dark:border-slate-800 flex items-center justify-end gap-2.5 bg-slate-50/50 dark:bg-slate-950/40">
+              <button
+                onClick={() => setSelectedCompany(null)}
+                className="px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-semibold transition-colors"
+              >
+                Tutup
+              </button>
+
+              <button
+                onClick={() => handleApprove(selectedCompany.id, selectedCompany.nama_perusahaan)}
+                disabled={approvingId === selectedCompany.id}
+                className="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow-sm transition-all inline-flex items-center gap-1.5 disabled:opacity-50"
+              >
+                {approvingId === selectedCompany.id ? (
+                  <RefreshCw size={14} className="animate-spin" />
+                ) : (
+                  <ShieldCheck size={16} />
+                )}
+                <span>Setujui Akun Perusahaan</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
