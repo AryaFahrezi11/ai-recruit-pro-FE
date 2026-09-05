@@ -221,19 +221,17 @@ export default function AdminUsersPage() {
             <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
               {isLoading ? (
                 <tr>
-                  <td colSpan={5} className="px-6 py-8 text-center text-slate-400 font-medium">Memuat data...</td>
+                  <td colSpan={6} className="px-6 py-8 text-center text-slate-400 font-medium">Memuat data...</td>
                 </tr>
               ) : users.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="px-6 py-8 text-center text-slate-400 font-medium">Tidak ada pengguna ditemukan.</td>
+                  <td colSpan={6} className="px-6 py-8 text-center text-slate-400 font-medium">Tidak ada pengguna ditemukan.</td>
                 </tr>
               ) : (
-                users.map((u: any) => (
+                users.map((u: any, index: number) => (
                   <tr key={u.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors">
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-2 ">
-                        <span className="w-full text-center">{index + 1}</span>
-                      </div>
+                    <td className="px-6 py-4 text-center">
+                      <span className="text-slate-500 dark:text-slate-400 font-semibold text-xs">{index + 1}</span>
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex flex-col">

@@ -6,6 +6,7 @@ import Image from 'next/image';
 import { toast } from 'react-hot-toast';
 import { useRouter } from 'next/navigation';
 import { getApiUrl, getMediaUrl } from '@/lib/api';
+import Footer from '@/components/Footer';
 import {
   Clock,
   AlertCircle,
@@ -22,7 +23,9 @@ import {
   RefreshCw,
   LogOut,
   Edit,
-  XCircle
+  XCircle,
+  User,
+  ArrowRight
 } from 'lucide-react';
 
 interface UserProfileData {
