@@ -764,7 +764,7 @@ export default function PipelinePage() {
           <div className="flex gap-6 items-start min-w-max h-full">
 
             {/* 1. UPLOAD CV */}
-            <KanbanColumn title={t.pipeline?.uploadCV || '1. Upload CV'} count={uploadCvApps.length}>
+            <KanbanColumn stageKey="upload_cv" title={t.pipeline?.uploadCV || '1. Upload CV'} count={uploadCvApps.length}>
               {uploadCvApps.map((app) => (
                 <CandidateCard
                   key={app.id}
@@ -782,7 +782,7 @@ export default function PipelinePage() {
             </KanbanColumn>
 
             {/* 2. CV SCREENING  */}
-            <KanbanColumn title={t.pipeline?.cvScreening || '2. CV Screening'} count={screeningApps.length}>
+            <KanbanColumn stageKey="cv_screening" title={t.pipeline?.cvScreening || '2. CV Screening'} count={screeningApps.length}>
               {screeningApps.map((app) => {
                 const cvScore = Math.round(app.analisis_cv?.skor_kecocokan || 0);
                 const threshold = app.analisis_cv?.threshold_digunakan || app.job?.cv_threshold || 60;
@@ -791,11 +791,11 @@ export default function PipelinePage() {
                 const isPassed = cvScore >= threshold && !isFailedEdu;
 
                 const actionButtons = isAiProcessed ? (
-                  <div className="flex items-center gap-1.5">
+                  <div className="flex items-center gap-1">
                     {isPassed ? (
                       <button
                         onClick={(e) => { e.stopPropagation(); handleUpdateStatus(app.id, 'virtual_interview'); }}
-                        className="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-md text-[11px] flex items-center gap-1 shadow-2xs cursor-pointer"
+                        className="px-2 py-0.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-md text-[10px] flex items-center gap-0.5 shadow-2xs cursor-pointer active:scale-95"
                       >
                         Loloskan
                       </button>
@@ -803,13 +803,13 @@ export default function PipelinePage() {
                       <>
                         <button
                           onClick={(e) => { e.stopPropagation(); handleUpdateStatus(app.id, 'virtual_interview'); }}
-                          className="px-2.5 py-1 bg-muted hover:bg-muted/80 text-foreground font-semibold rounded-md text-[11px] flex items-center gap-1 border border-border cursor-pointer"
+                          className="px-2 py-0.5 bg-muted hover:bg-muted/80 text-foreground font-bold rounded-md text-[10px] flex items-center gap-0.5 border border-border cursor-pointer active:scale-95"
                         >
                           Override
                         </button>
                         <button
                           onClick={(e) => { e.stopPropagation(); handleUpdateStatus(app.id, 'ditolak_sistem'); }}
-                          className="px-2.5 py-1 bg-rose-600 hover:bg-rose-700 text-white font-semibold rounded-md text-[11px] flex items-center gap-1 shadow-2xs cursor-pointer"
+                          className="px-2 py-0.5 bg-rose-600 hover:bg-rose-700 text-white font-bold rounded-md text-[10px] flex items-center gap-0.5 shadow-2xs cursor-pointer active:scale-95"
                         >
                           Tolak
                         </button>
@@ -839,7 +839,7 @@ export default function PipelinePage() {
             </KanbanColumn>
 
             {/* 3. VIRTUAL INTERVIEW */}
-            <KanbanColumn title={t.pipeline?.virtualInterview || '3. Virtual Interview'} count={virtualInterviewApps.length}>
+            <KanbanColumn stageKey="interview" title={t.pipeline?.virtualInterview || '3. Virtual Interview'} count={virtualInterviewApps.length}>
               {virtualInterviewApps.map((app) => (
                 <CandidateCard
                   key={app.id}
@@ -855,7 +855,7 @@ export default function PipelinePage() {
             </KanbanColumn>
 
             {/* 4. AI VIDEO ANALYSIS */}
-            <KanbanColumn title={t.pipeline?.videoAnalysis || '4. Analisis AI Video'} count={videoAnalysisApps.length}>
+            <KanbanColumn stageKey="ai_analysis" title={t.pipeline?.videoAnalysis || '4. Analisis AI Video'} count={videoAnalysisApps.length}>
               {videoAnalysisApps.map((app) => {
                 const isCurrentPolling = pollingId === app.id;
                 const isCurrentAnalyzing = analyzingId === app.id || isCurrentPolling;
@@ -883,7 +883,7 @@ export default function PipelinePage() {
             </KanbanColumn>
 
             {/* 5. HUMAN VALIDATION */}
-            <KanbanColumn title={t.pipeline?.humanValidation || '5. Validasi HR'} count={humanValidationApps.length}>
+            <KanbanColumn stageKey="human_validation" title={t.pipeline?.humanValidation || '5. Validasi HR'} count={humanValidationApps.length}>
               {humanValidationApps.map((app) => {
                 const appAi = (app as any).ai_result;
                 const parsePct = (val: any) => typeof val === 'string' ? parseFloat(val.replace('%', '')) : (typeof val === 'number' ? val : 0);

@@ -1,9 +1,21 @@
 import React from 'react';
-import { Clock, RefreshCw, CheckCircle2, XCircle, Loader2, FileText, Video, Brain, UserCheck, GraduationCap, Building2 } from 'lucide-react';
+import { 
+  Clock, 
+  CheckCircle2, 
+  XCircle, 
+  Loader2, 
+  Video, 
+  Brain, 
+  UserCheck, 
+  GraduationCap, 
+  Building2,
+  Calendar,
+  Sparkles
+} from 'lucide-react';
 import { useTranslation } from '@/hooks/useTranslation';
 
 export type CandidateStage = 'upload_cv' | 'cv_screening' | 'interview' | 'ai_analysis' | 'human_validation';
-export type CandidateStatus = 'pending' | 'processing' | 'video_uploaded' | 'awaiting_video' | 'needs_approval';
+export type CandidateStatus = 'pending' | 'processing' | 'video_uploaded' | 'awaiting_video' | 'needs_approval' | 'interview_lanjutan' | 'hired' | 'rejected';
 
 interface VideoScores {
   ability: number;
@@ -17,9 +29,9 @@ interface CandidateCardProps {
   name: string;
   matchScore?: string;
   role: string;
-  education?: string; // Information on highest education
-  university?: string; // Information on candidate's origin university
-  appliedJob?: string; // Information on the job applied for
+  education?: string;
+  university?: string;
+  appliedJob?: string;
   timeInfo: string;
   variant?: 'default' | 'screening' | 'analysis';
   timeIcon?: boolean;
@@ -34,19 +46,39 @@ interface CandidateCardProps {
   customActions?: React.ReactNode;
   // Flowchart props
   stage?: CandidateStage;
-  status?: CandidateStatus;
+  status?: CandidateStatus | string;
   cvScore?: number;
   threshold?: number;
   videoUploaded?: boolean;
   videoScores?: VideoScores;
 }
 
-const stageBorderColors: Record<CandidateStage, string> = {
-  upload_cv: 'border-l-4 border-l-blue-600 border-y-border border-r-border',
-  cv_screening: 'border-l-4 border-l-amber-600 border-y-border border-r-border',
-  interview: 'border-l-4 border-l-violet-600 border-y-border border-r-border',
-  ai_analysis: 'border-l-4 border-l-cyan-600 border-y-border border-r-border',
-  human_validation: 'border-l-4 border-l-[#2596be] border-y-border border-r-border',
+const stageAccents: Record<CandidateStage, { border: string; avatarBg: string; text: string }> = {
+  upload_cv: { 
+    border: 'border-l-[3px] border-l-blue-500', 
+    avatarBg: 'bg-blue-50 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300',
+    text: 'text-blue-600 dark:text-blue-400'
+  },
+  cv_screening: { 
+    border: 'border-l-[3px] border-l-amber-500', 
+    avatarBg: 'bg-amber-50 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300',
+    text: 'text-amber-600 dark:text-amber-400'
+  },
+  interview: { 
+    border: 'border-l-[3px] border-l-purple-500', 
+    avatarBg: 'bg-purple-50 text-purple-700 dark:bg-purple-950/60 dark:text-purple-300',
+    text: 'text-purple-600 dark:text-purple-400'
+  },
+  ai_analysis: { 
+    border: 'border-l-[3px] border-l-indigo-500', 
+    avatarBg: 'bg-indigo-50 text-indigo-700 dark:bg-indigo-950/60 dark:text-indigo-300',
+    text: 'text-indigo-600 dark:text-indigo-400'
+  },
+  human_validation: { 
+    border: 'border-l-[3px] border-l-emerald-500', 
+    avatarBg: 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300',
+    text: 'text-emerald-600 dark:text-emerald-400'
+  },
 };
 
 export function CandidateCard({
@@ -63,7 +95,7 @@ export function CandidateCard({
   actionLoading,
   onActionClick,
   customActions,
-  stage,
+  stage = 'upload_cv',
   status,
   cvScore,
   threshold = 60,
@@ -71,154 +103,147 @@ export function CandidateCard({
 }: CandidateCardProps) {
   const { t } = useTranslation();
 
-  // Determine border style
-  let borderStyle = 'border-border';
-  if (stage) {
-    borderStyle = stageBorderColors[stage];
-  } else if (variant === 'screening') {
-    borderStyle = 'border-l-4 border-l-amber-600 border-y-border border-r-border';
-  }
+  const accent = stageAccents[stage] || stageAccents.upload_cv;
 
-  const statusConfig: Record<CandidateStatus, { icon: React.ReactNode; label: string; className: string }> = {
+  // Generate initials
+  const initials = name
+    .split(' ')
+    .filter(Boolean)
+    .slice(0, 2)
+    .map(w => w[0].toUpperCase())
+    .join('') || 'KD';
+
+  // Status configuration
+  const statusConfig: Record<string, { icon: React.ReactNode; label: string; className: string }> = {
     pending: { 
-      icon: <Clock size={12} />, 
+      icon: <Clock size={10} />, 
       label: t.pipeline?.pending || 'Menunggu', 
-      className: 'bg-amber-100 text-amber-900 font-bold border-amber-300 dark:bg-amber-950/60 dark:text-amber-300 dark:border-amber-700' 
+      className: 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/50 dark:text-amber-300 dark:border-amber-800' 
     },
     processing: { 
-      icon: <Loader2 size={12} className="animate-spin" />, 
+      icon: <Loader2 size={10} className="animate-spin" />, 
       label: t.pipeline?.processing || 'Memproses AI...', 
-      className: 'bg-blue-100 text-blue-900 font-bold border-blue-300 dark:bg-blue-950/60 dark:text-blue-300 dark:border-blue-700' 
+      className: 'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/50 dark:text-blue-300 dark:border-blue-800' 
     },
     video_uploaded: { 
-      icon: <CheckCircle2 size={12} />, 
+      icon: <CheckCircle2 size={10} />, 
       label: t.pipeline?.videoUploaded || 'Video Terunggah', 
-      className: 'bg-emerald-100 text-emerald-900 font-bold border-emerald-300 dark:bg-emerald-950/60 dark:text-emerald-300 dark:border-emerald-700' 
+      className: 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/50 dark:text-emerald-300 dark:border-emerald-800' 
     },
     awaiting_video: { 
-      icon: <Clock size={12} />, 
-      label: t.pipeline?.awaitingVideo || 'Belum Upload Video', 
-      className: 'bg-amber-100 text-amber-900 font-bold border-amber-300 dark:bg-amber-950/60 dark:text-amber-300 dark:border-amber-700' 
+      icon: <Video size={10} />, 
+      label: t.pipeline?.awaitingVideo || 'Menunggu Video', 
+      className: 'bg-purple-50 text-purple-700 border-purple-200 dark:bg-purple-950/50 dark:text-purple-300 dark:border-purple-800' 
     },
     needs_approval: { 
-      icon: <UserCheck size={12} />, 
-      label: t.pipeline?.needsApproval || 'Butuh Persetujuan HR', 
-      className: 'bg-violet-100 text-violet-900 font-bold border-violet-300 dark:bg-violet-950/60 dark:text-violet-300 dark:border-violet-700' 
+      icon: <UserCheck size={10} />, 
+      label: 'Validasi HR', 
+      className: 'bg-indigo-50 text-indigo-700 border-indigo-200 dark:bg-indigo-950/50 dark:text-indigo-300 dark:border-indigo-800' 
     },
+    interview_lanjutan: {
+      icon: <Calendar size={10} />,
+      label: 'Wawancara Lanjutan',
+      className: 'bg-indigo-100 text-indigo-800 border-indigo-300 dark:bg-indigo-900/60 dark:text-indigo-200 dark:border-indigo-700'
+    }
   };
+
+  // Video average score
+  const avgVideoScore = videoScores 
+    ? Math.round(
+        (videoScores.ability + 
+         videoScores.intelligent + 
+         videoScores.personality + 
+         videoScores.attitude + 
+         videoScores.emotionalIntelligence) / 5
+      )
+    : null;
+
+  const isCvPassed = cvScore !== undefined ? cvScore >= threshold : false;
 
   return (
     <div 
       onClick={onClick}
-      className={`bg-card text-card-foreground p-4 rounded-lg shadow-sm border ${borderStyle} hover:shadow-md hover:border-primary/60 transition-all cursor-pointer active:scale-[0.98] select-none group`}
+      className={`bg-white dark:bg-slate-900 rounded-xl p-3 border border-slate-200/90 dark:border-slate-800 shadow-2xs hover:shadow-md hover:border-primary/40 transition-all duration-200 hover:-translate-y-0.5 cursor-pointer active:scale-[0.99] select-none group relative ${accent.border}`}
     >
-      {/* Top row: Name + Status Badge */}
-      <div className="flex justify-between items-start mb-1.5">
-        <h4 className="font-bold text-sm text-foreground">{name}</h4>
-        {stage !== 'upload_cv' && status && statusConfig[status] && (
-          <span className={`flex items-center gap-1 text-[10px] px-2.5 py-0.5 rounded-full border shadow-2xs ${statusConfig[status].className}`}>
-            {statusConfig[status].icon}
-            {statusConfig[status].label}
-          </span>
-        )}
-        {!status && matchScore && (
-          <span className="bg-primary/10 text-primary text-xs font-bold px-2.5 py-1 rounded-md border border-primary/20">
-            {matchScore} {t.pipeline?.match}
-          </span>
-        )}
+      {/* Header: Avatar, Name, Role & Status */}
+      <div className="flex items-start gap-2.5">
+        <div className={`w-8 h-8 rounded-lg ${accent.avatarBg} font-extrabold text-[11px] flex items-center justify-center shrink-0 border border-black/5 dark:border-white/10 shadow-2xs`}>
+          {initials}
+        </div>
+
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center justify-between gap-1.5">
+            <h4 className="font-extrabold text-xs text-foreground truncate group-hover:text-primary transition-colors">
+              {name}
+            </h4>
+            {status && statusConfig[status] && (
+              <span className={`inline-flex items-center gap-1 text-[9px] font-bold px-2 py-0.5 rounded-md border shrink-0 ${statusConfig[status].className}`}>
+                {statusConfig[status].icon}
+                <span>{statusConfig[status].label}</span>
+              </span>
+            )}
+          </div>
+
+          <p className="text-[11px] font-medium text-muted-foreground truncate mt-0.5">
+            {appliedJob || role}
+          </p>
+        </div>
       </div>
 
-      {/* Role */}
-      <p className="text-xs font-medium text-muted-foreground mb-3">{role}</p>
+      {/* Education & Origin Institution (Clean single line) */}
+      {(education || university) && (
+        <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground font-medium mt-2 pt-2 border-t border-border/50">
+          <GraduationCap size={11} className="shrink-0 text-muted-foreground/80" />
+          <span className="truncate">
+            {education || 'Pendidikan'} {university ? `• ${university}` : ''}
+          </span>
+        </div>
+      )}
 
-      {/* Education, University & Applied Job */}
-      {(education || university || appliedJob) && (
-        <div className="flex flex-col gap-1 mb-3">
-          {education && (
-            <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground font-medium">
-              <GraduationCap size={12} className="shrink-0 text-primary/70" />
-              <span className="truncate">{education}</span>
+      {/* Metrics Row (ATS Match Score & AI Video) - Compact & Elegant */}
+      {(cvScore !== undefined || avgVideoScore !== null) && (
+        <div className="flex items-center gap-1.5 flex-wrap mt-2.5">
+          {cvScore !== undefined && (
+            <div className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-mono font-bold border ${
+              isCvPassed
+                ? 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800'
+                : 'bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-950/40 dark:text-rose-300 dark:border-rose-800'
+            }`}>
+              <span>ATS {cvScore}% Match</span>
+              <span>{isCvPassed ? '✓' : '✗'}</span>
             </div>
           )}
-          {university && (
-            <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground font-medium">
-              <Building2 size={12} className="shrink-0 text-primary/70" />
-              <span className="truncate">{university}</span>
-            </div>
-          )}
-          {appliedJob && (
-            <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground font-medium mt-1 pt-1 border-t border-border/40">
-              <span className="shrink-0 text-[9px] px-1.5 py-0.5 bg-indigo-50 text-indigo-700 border border-indigo-200 dark:bg-indigo-950/30 dark:border-indigo-800 dark:text-indigo-400 rounded-md uppercase tracking-wider font-bold">APPLIED</span>
-              <span className="truncate text-foreground font-semibold">{appliedJob}</span>
+
+          {avgVideoScore !== null && (
+            <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-mono font-bold bg-indigo-50 text-indigo-700 border border-indigo-200 dark:bg-indigo-950/40 dark:text-indigo-300 dark:border-indigo-800">
+              <Brain size={11} className="text-indigo-600 dark:text-indigo-400" />
+              <span>AI Video {avgVideoScore}/100</span>
             </div>
           )}
         </div>
       )}
 
-      {/* CV Score indicator (for cv_screening stage) */}
-      {cvScore !== undefined && (
-        <div className="mb-3 p-2 bg-muted/40 rounded-lg border border-border/80">
-          <div className="flex justify-between items-center mb-1.5">
-            <span className="text-[10px] font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
-              {t.pipeline?.cosineSimilarity}
-            </span>
-            <span className={`text-xs font-bold ${cvScore >= threshold ? 'text-emerald-700 dark:text-emerald-400' : 'text-rose-700 dark:text-rose-400'}`}>
-              {cvScore}% Match
-            </span>
-          </div>
-          <div className="w-full bg-slate-200 dark:bg-slate-800 rounded-full h-2 overflow-hidden">
-            <div 
-              className={`h-full rounded-full transition-all duration-500 ${cvScore >= threshold ? 'bg-emerald-600' : 'bg-rose-600'}`}
-              style={{ width: `${cvScore}%` }}
-            ></div>
-          </div>
-          <div className="flex items-center justify-between mt-1">
-            <span className="text-[9px] font-semibold text-muted-foreground">Standar Kelulusan: {threshold}%</span>
-            <span className={`text-[9px] font-bold ${cvScore >= threshold ? 'text-emerald-700 dark:text-emerald-400' : 'text-rose-700 dark:text-rose-400'}`}>
-              {cvScore >= threshold ? '✓ Lolos' : '✗ Tidak Memenuhi Standar'}
-            </span>
-          </div>
+      {/* Footer: Date / Time & Quick Action */}
+      <div className="flex items-center justify-between gap-2 pt-2.5 border-t border-border/50 mt-2.5 text-[10px] text-muted-foreground">
+        <div className="flex items-center gap-1 truncate font-medium">
+          <Clock size={11} className="shrink-0 text-muted-foreground/70" />
+          <span className="truncate">{timeInfo}</span>
         </div>
-      )}
 
-      {/* Mini video analysis scores (for ai_analysis / human_validation) */}
-      {videoScores && (
-        <div className="mb-3 space-y-1 p-2 bg-muted/40 rounded-lg border border-border/80">
-          {[
-            { label: 'Komunikasi', value: videoScores.ability },
-            { label: 'Pemahaman', value: videoScores.intelligent },
-            { label: 'Percaya Diri', value: videoScores.personality },
-            { label: 'Sikap Kerja', value: videoScores.attitude },
-            { label: 'Ketenangan', value: videoScores.emotionalIntelligence },
-          ].map((item) => (
-            <div key={item.label} className="flex items-center justify-between text-[10px]">
-              <span className="text-slate-600 dark:text-slate-400 font-medium">{item.label}</span>
-              <span className="font-bold text-foreground">{item.value} / 100</span>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {/* Time info & Action */}
-      <div className="flex items-center justify-between pt-2 border-t border-border/60 mt-1">
-        <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground font-medium">
-          <Clock size={12} className="text-muted-foreground shrink-0" />
-          <span>{timeInfo}</span>
-        </div>
-        
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5 shrink-0" onClick={(e) => e.stopPropagation()}>
           {customActions}
           {actionLabel && (
             <button
+              type="button"
               onClick={(e) => {
                 e.stopPropagation();
                 if (onActionClick) onActionClick(e);
               }}
               disabled={actionLoading}
-              className="px-3 py-1.5 bg-[#2596be] hover:bg-[#1D7FA1] text-white text-[10px] font-bold rounded-md transition-colors flex items-center gap-1 disabled:opacity-75"
+              className="px-2.5 py-1 bg-primary hover:bg-primary/90 text-primary-foreground text-[10px] font-bold rounded-lg transition-colors flex items-center gap-1 shadow-2xs active:scale-95 disabled:opacity-60 cursor-pointer"
             >
               {actionLoading ? <Loader2 size={10} className="animate-spin" /> : <Brain size={10} />}
-              {actionLoading ? 'Memproses...' : actionLabel}
+              <span>{actionLoading ? 'Memproses...' : actionLabel}</span>
             </button>
           )}
         </div>
