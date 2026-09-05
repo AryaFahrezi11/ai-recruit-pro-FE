@@ -102,11 +102,6 @@ export default function PendingApprovalPage() {
   const isApproved = Boolean(profileData?.profil?.is_verified);
   const isIncomplete = profileData ? !profileData.profil?.has_completed_profile : false;
 
-  // Real Registration ID from DB
-  const registrationId = profileData?.user_id
-    ? `REG-${profileData.user_id.replace(/-/g, '').slice(0, 8).toUpperCase()}`
-    : null;
-
   // Format real registration timestamp
   const formattedRegistrationDate = profileData?.created_at
     ? new Date(profileData.created_at).toLocaleDateString('id-ID', {
@@ -126,12 +121,14 @@ export default function PendingApprovalPage() {
     return raw.length > 25 ? `${raw.slice(0, 12)}...${raw.slice(-8)}` : raw;
   };
 
-  const waAdminUrl = `https://wa.me/6281299008800?text=${encodeURIComponent(
-    `Halo Admin AI-Recruit Pro, saya ingin menanyakan status verifikasi akun pendaftaran perusahaan kami:\n` +
-    `• Perusahaan: ${profileData?.profil?.nama_perusahaan || '-'}\n` +
-    `• ID Registrasi: #${registrationId || '-'}\n` +
-    `• Email: ${profileData?.email || '-'}\n` +
-    `Mohon bantuannya untuk diproses, terima kasih.`
+  const supportEmailUrl = `mailto:admin@airecruitpro.com?subject=${encodeURIComponent(
+    `Pertanyaan Status Verifikasi Akun Perusahaan: ${profileData?.profil?.nama_perusahaan || ''}`
+  )}&body=${encodeURIComponent(
+    `Halo Tim Admin AI-Recruit Pro,\n\nKami ingin mengonfirmasi status peninjauan akun perusahaan kami:\n• Perusahaan: ${
+      profileData?.profil?.nama_perusahaan || '-'
+    }\n• Email Akun: ${profileData?.email || '-'}\n• NIB / NPWP: ${
+      profileData?.profil?.nib_number || '-'
+    }\n\nTerima kasih.`
   )}`;
 
   return (
@@ -185,11 +182,9 @@ export default function PendingApprovalPage() {
 
           {/* Heading & Notice */}
           <div className="space-y-3 max-w-xl mx-auto">
-            {registrationId && (
-              <span className="inline-block px-4 py-1.5 rounded-full bg-amber-50 text-amber-700 font-extrabold text-xs border border-amber-200 uppercase tracking-wider">
-                Verifikasi Dalam Proses • ID: #{registrationId}
-              </span>
-            )}
+            <span className="inline-block px-4 py-1.5 rounded-full bg-amber-50 text-amber-700 font-extrabold text-xs border border-amber-200 uppercase tracking-wider">
+              Verifikasi Dalam Proses
+            </span>
 
             <h1 className="text-2xl sm:text-4xl font-black text-[#1b7b9e] leading-tight">
               Pendaftaran Berhasil Dikirim &amp; Dalam Peninjauan Admin
@@ -438,9 +433,7 @@ export default function PendingApprovalPage() {
             )}
 
             <a
-              href={waAdminUrl}
-              target="_blank"
-              rel="noopener noreferrer"
+              href={supportEmailUrl}
               className="w-full sm:w-auto px-6 py-3 rounded-full bg-[#1b7b9e] hover:bg-[#1D7FA1] text-white font-extrabold text-xs sm:text-sm shadow-md transition-all inline-flex items-center justify-center gap-2"
             >
               <MessageSquare size={16} />
