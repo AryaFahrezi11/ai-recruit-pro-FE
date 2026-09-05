@@ -7,6 +7,7 @@ import Image from 'next/image';
 import { useAppStore } from '@/lib/store/useAppStore';
 import { getBaseUrl, getMediaUrl, getApiUrl } from '@/lib/api';
 import Footer from '@/components/Footer';
+import { useTranslation } from '@/hooks/useTranslation';
 
 import {
   Search,
@@ -72,7 +73,7 @@ function LandingPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { isMobileSidebarOpen, toggleMobileSidebar } = useAppStore();
-  const { t } = useTranslation();
+  const { t, language } = useTranslation();
   const [mounted, setMounted] = useState(false);
   const [activeSection, setActiveSection] = useState('');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);

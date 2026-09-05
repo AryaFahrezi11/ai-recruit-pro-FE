@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { useTranslation } from '@/hooks/useTranslation';
 import Footer from '@/components/Footer';
 

@@ -1273,7 +1273,11 @@ export function CandidateModal({ candidate, onClose }: CandidateModalProps) {
                     )}
                   </div>
 
-                  {/* Observasi Perilaku & Gaya Komunikasi (Gabungan Opsi A & B) */}
+                </div>
+
+                {/* Right Side: Radar Chart, 5 Aspek Kompetensi & Decision Buttons */}
+                <div className="space-y-4">
+                  {/* Observasi Perilaku & Gaya Komunikasi */}
                   <div className="p-4 bg-card rounded-xl border border-border shadow-sm space-y-3">
                     <div>
                       <h4 className="font-bold text-sm text-foreground flex items-center gap-2">
@@ -1281,7 +1285,7 @@ export function CandidateModal({ candidate, onClose }: CandidateModalProps) {
                         <span>Observasi Sikap & Bahasa Tubuh Rekaman</span>
                       </h4>
                       <p className="text-[11px] text-muted-foreground mt-0.5">
-                        Catatan pengamatan fisik rekaman video yang menjadi dasar pertimbangan nilai kompetensi di samping.
+                        Catatan pengamatan fisik rekaman video yang menjadi dasar pertimbangan nilai kompetensi.
                       </p>
                     </div>
 
@@ -1304,82 +1308,46 @@ export function CandidateModal({ candidate, onClose }: CandidateModalProps) {
                       ))}
                     </div>
                   </div>
-                </div>
 
-                {/* Right Side: Radar Chart, 5 Aspek Kompetensi & Decision Buttons */}
-                <div className="space-y-4">
-                  {/* Radar Chart & 5 Dimensi Kompetensi (Sebelumnya di Tab 4) */}
-                  <div className="p-4 bg-card rounded-xl border border-border shadow-sm space-y-3">
-                    <h4 className="font-bold text-sm text-foreground flex items-center justify-between">
-                      <span className="flex items-center gap-2">
+                  {/* Evaluasi Kompetensi & Keputusan HR (Gabungan Radar Chart & Bar) */}
+                  <div className="p-5 bg-card rounded-xl border border-border shadow-sm space-y-5">
+                    <div className="flex items-center justify-between border-b border-border/50 pb-3">
+                      <h3 className="font-bold text-sm text-foreground flex items-center gap-2">
                         <BarChart3 size={16} className="text-primary" />
-                        Pemetaan 5 Dimensi Kompetensi
-                      </span>
-                      <span className="text-xs font-bold text-primary">Rata-rata: {overallVideoScore}/100</span>
-                    </h4>
-
-                    {/* Radar Chart */}
-                    <div className="h-[200px] w-full">
-                      <ResponsiveContainer width="100%" height="100%">
-                        <RadarChart cx="50%" cy="50%" outerRadius="65%" data={radarData}>
-                          <PolarGrid stroke="currentColor" className="text-border" />
-                          <PolarAngleAxis dataKey="subject" tick={{ fill: 'currentColor', fontSize: 10 }} className="text-muted-foreground" />
-                          <Radar name="Candidate" dataKey="A" stroke="#1b7b9e" fill="#1b7b9e" fillOpacity={0.3} />
-                        </RadarChart>
-                      </ResponsiveContainer>
-                    </div>
-
-                    {/* 5 Skor Output Mini Cards (Sebelumnya di Tab 4) */}
-                    <div className="grid grid-cols-3 gap-2 text-center text-xs">
-                      <div className="p-2 bg-muted/30 rounded-lg border border-border/70">
-                        <p className="text-[10px] text-muted-foreground">Komunikasi</p>
-                        <p className="font-bold text-blue-600 dark:text-blue-400">{Math.round(abilityScore)}</p>
-                      </div>
-                      <div className="p-2 bg-muted/30 rounded-lg border border-border/70">
-                        <p className="text-[10px] text-muted-foreground">Pemahaman</p>
-                        <p className="font-bold text-violet-600 dark:text-violet-400">{Math.round(intelligentScore)}</p>
-                      </div>
-                      <div className="p-2 bg-muted/30 rounded-lg border border-border/70">
-                        <p className="text-[10px] text-muted-foreground">Percaya Diri</p>
-                        <p className="font-bold text-amber-600 dark:text-amber-400">{Math.round(personalityScore)}</p>
-                      </div>
-                      <div className="p-2 bg-muted/30 rounded-lg border border-border/70">
-                        <p className="text-[10px] text-muted-foreground">Sikap Kerja</p>
-                        <p className="font-bold text-emerald-600 dark:text-emerald-400">{Math.round(attitudeScore)}</p>
-                      </div>
-                      <div className="p-2 bg-muted/30 rounded-lg border border-border/70 col-span-2">
-                        <p className="text-[10px] text-muted-foreground">Ketenangan</p>
-                        <p className="font-bold text-cyan-600 dark:text-cyan-400">{Math.round(emotionalIntelligenceScore)}</p>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Evaluasi Aspek Kompetensi & Keputusan Akhir HR */}
-                  <div className="p-5 bg-card rounded-xl border border-border shadow-sm space-y-4">
-                    <div>
-                      <h3 className="font-bold text-sm text-foreground mb-1 flex items-center gap-2">
-                        <UserCheck size={16} className="text-primary" />
-                        Rincian Nilai Aspek Kandidat (Tetap)
+                        Hasil Evaluasi Kompetensi
                       </h3>
-                      <p className="text-[11px] text-muted-foreground mb-3">
-                        Hasil evaluasi otomatis dari analisis video kandidat (bersifat tetap).
-                      </p>
+                      <span className="text-xs font-bold text-primary px-2.5 py-1 bg-primary/10 rounded-md">
+                        Rata-rata: {overallVideoScore}/100
+                      </span>
+                    </div>
 
-                      {/* Read-Only Competency Bars (Tidak Dapat Diubah) */}
-                      <div className="space-y-2.5">
+                    <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 items-center">
+                      {/* Radar Chart */}
+                      <div className="h-[200px] w-full">
+                        <ResponsiveContainer width="100%" height="100%">
+                          <RadarChart cx="50%" cy="50%" outerRadius="70%" data={radarData}>
+                            <PolarGrid stroke="currentColor" className="text-border" />
+                            <PolarAngleAxis dataKey="subject" tick={{ fill: 'currentColor', fontSize: 10 }} className="text-muted-foreground" />
+                            <Radar name="Candidate" dataKey="A" stroke="#1b7b9e" fill="#1b7b9e" fillOpacity={0.3} />
+                          </RadarChart>
+                        </ResponsiveContainer>
+                      </div>
+
+                      {/* Read-Only Competency Bars */}
+                      <div className="space-y-3.5">
                         {[
-                          { label: 'Kemampuan Komunikasi & Artikulasi', score: Math.round(abilityScore), color: 'bg-blue-600' },
-                          { label: 'Pemahaman & Kedalaman Respon', score: Math.round(intelligentScore), color: 'bg-indigo-600' },
-                          { label: 'Kepercayaan Diri & Bahasa Tubuh', score: Math.round(personalityScore), color: 'bg-amber-600' },
+                          { label: 'Komunikasi & Artikulasi', score: Math.round(abilityScore), color: 'bg-blue-600' },
+                          { label: 'Pemahaman & Respon', score: Math.round(intelligentScore), color: 'bg-indigo-600' },
+                          { label: 'Kepercayaan Diri', score: Math.round(personalityScore), color: 'bg-amber-600' },
                           { label: 'Sikap Kerja & Profesionalisme', score: Math.round(attitudeScore), color: 'bg-emerald-600' },
-                          { label: 'Ketenangan & Pengendalian Emosi', score: Math.round(emotionalIntelligenceScore), color: 'bg-cyan-600' },
+                          { label: 'Ketenangan & Emosi', score: Math.round(emotionalIntelligenceScore), color: 'bg-cyan-600' },
                         ].map((item, i) => (
-                          <div key={i} className="p-2 bg-muted/30 rounded-lg border border-border/70 space-y-1">
-                            <div className="flex justify-between items-center text-xs">
+                          <div key={i} className="space-y-1.5">
+                            <div className="flex justify-between items-center text-[11px]">
                               <span className="font-medium text-foreground">{item.label}</span>
                               <span className="font-bold text-primary">{item.score} / 100</span>
                             </div>
-                            <div className="w-full bg-slate-200 dark:bg-slate-800 rounded-full h-1.5 overflow-hidden">
+                            <div className="w-full bg-muted rounded-full h-1.5 overflow-hidden">
                               <div
                                 className={`h-full rounded-full transition-all duration-500 ${item.color}`}
                                 style={{ width: `${item.score}%` }}
@@ -1388,21 +1356,21 @@ export function CandidateModal({ candidate, onClose }: CandidateModalProps) {
                           </div>
                         ))}
                       </div>
+                    </div>
 
-                      {/* Catatan Pertimbangan HR */}
-                      <div className="mt-4">
-                        <label className="block text-xs font-semibold text-foreground mb-1.5">
-                          {t.modal.catatanHR}
-                        </label>
-                        <textarea
-                          className="w-full p-2.5 bg-muted/30 border border-border rounded-lg text-xs resize-none h-16 focus:outline-none focus:border-primary transition-all"
-                          placeholder="Tuliskan catatan observasi atau pertimbangan internal HR di sini..."
-                        ></textarea>
-                      </div>
+                    {/* Catatan Pertimbangan HR */}
+                    <div className="pt-2 border-t border-border/50">
+                      <label className="block text-xs font-semibold text-foreground mb-1.5">
+                        {t.modal.catatanHR}
+                      </label>
+                      <textarea
+                        className="w-full p-2.5 bg-muted/30 border border-border rounded-lg text-xs resize-none h-16 focus:outline-none focus:border-primary transition-all"
+                        placeholder="Tuliskan catatan observasi atau pertimbangan internal HR di sini..."
+                      ></textarea>
                     </div>
 
                     {/* Decision Buttons (Terima, Tolak, Wawancara Langsung) */}
-                    <div className="space-y-2 pt-2 border-t border-border/70">
+                    <div className="space-y-2 pt-4 border-t border-border/70">
                       <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
                         Keputusan Akhir HR
                       </p>
