@@ -10,15 +10,11 @@ import { useAppStore } from '@/lib/store/useAppStore';
 import { loginUser } from '@/lib/api/auth';
 import { toast } from 'react-hot-toast';
 import {
-  Building2,
   Lock,
   Mail,
   AlertCircle,
-  ArrowRight,
-  ShieldCheck,
-  CheckCircle2,
-  Sparkles,
-  HelpCircle
+  Eye,
+  EyeOff,
 } from 'lucide-react';
 
 export default function CompanyLoginPage() {
@@ -27,6 +23,8 @@ export default function CompanyLoginPage() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showOtpRedirect, setShowOtpRedirect] = useState(false);
   const { t } = useTranslation();
 
   const setToken = useAppStore((state) => state.setToken);
@@ -68,6 +66,27 @@ export default function CompanyLoginPage() {
         setIsLoading(false);
         return;
       }
+
+      // Security check: Email Verification
+      if (response.user.is_verified === false) {
+        setError('Email perusahaan Anda belum diverifikasi dengan kode OTP. Silakan lakukan verifikasi terlebih dahulu.');
+        setShowOtpRedirect(true);
+        setIsLoading(false);
+        return;
+      }
+
+      // Security check: Admin Approval
+      if (response.user.approval_status === 'pending' || response.user.is_approved === false) {
+        setError('Akun perusahaan Anda sedang dalam proses peninjauan oleh tim Admin AI-RecruitPro. Akses login akan aktif setelah pendaftaran dokumen disetujui.');
+        setIsLoading(false);
+        return;
+      }
+
+      if (response.user.approval_status === 'rejected') {
+        setError('Pendaftaran akun perusahaan Anda ditolak oleh Admin. Silakan hubungi dukungan pelanggan kami.');
+        setIsLoading(false);
+        return;
+      }
       
       setToken(response.access_token);
       setUser(response.user);
@@ -81,14 +100,16 @@ export default function CompanyLoginPage() {
       }
 
       toast.success(t.employerAuth.loginSuccess);
-      
-      // Jika Anda menggunakan app/(perusahaan)/dashboard atau app/dashboard
       router.push('/dashboard');
     } catch (err: any) {
       const errorMsg = err.message === 'Failed to fetch' 
         ? t.employerAuth.errorNetwork
         : (err.message || t.employerAuth.errorGeneric);
+      
       setError(errorMsg);
+      if (errorMsg.toLowerCase().includes('otp') || errorMsg.toLowerCase().includes('verifikasi')) {
+        setShowOtpRedirect(true);
+      }
     } finally {
       setIsLoading(false);
     }
@@ -173,7 +194,7 @@ export default function CompanyLoginPage() {
                 <Lock size={18} className="absolute left-4 text-slate-400 pointer-events-none" />
                 <input
                   id="company-password"
-                  type="password"
+                  type={showPassword ? 'text' : 'password'}
                   value={password}
                   onChange={(e) => { setPassword(e.target.value); setError(''); }}
                   onKeyDown={(e) => {
@@ -183,16 +204,34 @@ export default function CompanyLoginPage() {
                     }
                   }}
                   placeholder="••••••••"
-                  className="w-full pl-12 pr-4 py-3 bg-white dark:bg-slate-950 text-slate-900 dark:text-white border-2 border-slate-300 dark:border-slate-700 focus:border-[#1A4B9F] focus:ring-2 focus:ring-blue-100 dark:focus:ring-blue-900 rounded-2xl text-sm outline-none transition-all"
+                  className="w-full pl-12 pr-12 py-3 bg-white dark:bg-slate-950 text-slate-900 dark:text-white border-2 border-slate-300 dark:border-slate-700 focus:border-[#1A4B9F] focus:ring-2 focus:ring-blue-100 dark:focus:ring-blue-900 rounded-2xl text-sm outline-none transition-all"
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-4 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
+                  tabIndex={-1}
+                >
+                  {showPassword ? <Eye size={18} /> : <EyeOff size={18} />}
+                </button>
               </div>
             </div>
 
             {/* Error Notification */}
             {error && (
-              <div className="p-3.5 rounded-2xl bg-red-50 border border-red-200 text-red-700 text-xs font-semibold flex items-start gap-2.5 leading-relaxed">
-                <AlertCircle size={18} className="shrink-0 mt-0.5" />
-                <span>{error}</span>
+              <div className="p-3.5 rounded-2xl bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300 text-xs font-semibold flex flex-col gap-2 leading-relaxed">
+                <div className="flex items-start gap-2.5">
+                  <AlertCircle size={18} className="shrink-0 mt-0.5 text-red-600 dark:text-red-400" />
+                  <span>{error}</span>
+                </div>
+                {showOtpRedirect && (
+                  <Link
+                    href="/register"
+                    className="text-[#1A4B9F] dark:text-blue-400 font-bold underline hover:text-blue-900 dark:hover:text-blue-300 text-[11px] self-start ml-7"
+                  >
+                    Verifikasi Kode OTP Sekarang &rarr;
+                  </Link>
+                )}
               </div>
             )}
 
@@ -200,16 +239,9 @@ export default function CompanyLoginPage() {
               id="submit-btn"
               type="submit"
               disabled={isLoading}
-              className="w-full py-3 rounded-full bg-[#1A4B9F] hover:bg-[#133878] text-white font-semibold text-sm shadow-sm transition-all duration-200 flex items-center justify-center gap-2"
+              className="w-full py-3 rounded-full bg-[#1A4B9F] hover:bg-[#133878] active:bg-[#0f2a5a] text-white font-semibold text-sm shadow-sm transition-all duration-200 disabled:opacity-60 disabled:cursor-not-allowed"
             >
-              {isLoading ? (
-                <span>{t.employerAuth.processing}</span>
-              ) : (
-                <>
-                  <span>{t.employerAuth.signIn}</span>
-                  <ArrowRight size={16} />
-                </>
-              )}
+              {isLoading ? t.employerAuth.processing : t.employerAuth.signIn}
             </button>
           </form>
 

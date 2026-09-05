@@ -7,7 +7,8 @@ import { useTranslation } from '@/hooks/useTranslation';
 import Footer from '@/components/Footer';
 import {
   HelpCircle,
-  ArrowRight,
+  Eye,
+  EyeOff,
   Building2
 } from 'lucide-react';
 import { api, parseErrorMessage } from '@/lib/api';
@@ -19,6 +20,8 @@ export default function PelamarLoginPage() {
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [showOtpRedirect, setShowOtpRedirect] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -27,7 +30,7 @@ export default function PelamarLoginPage() {
       return;
     }
     if (!password) {
-      setError('Masukkan kata sandi akun Anda.');
+      setError('Masukkan password akun Anda.');
       return;
     }
 
@@ -36,6 +39,14 @@ export default function PelamarLoginPage() {
 
     try {
       const res = await api.post('/auth/login', { email, password, role: 'pelamar' });
+
+      // Security check: Email Verification
+      if (res.is_verified === false || res.is_email_verified === false) {
+        setError('Email Anda belum diverifikasi dengan kode OTP. Silakan lakukan verifikasi OTP terlebih dahulu.');
+        setShowOtpRedirect(true);
+        setIsLoading(false);
+        return;
+      }
 
       const token = res.access_token;
       const role = res.role;
@@ -57,7 +68,11 @@ export default function PelamarLoginPage() {
         setError('Respon login tidak valid.');
       }
     } catch (err: any) {
-      setError(parseErrorMessage(err));
+      const errText = parseErrorMessage(err);
+      setError(errText);
+      if (errText.toLowerCase().includes('otp') || errText.toLowerCase().includes('verifikasi')) {
+        setShowOtpRedirect(true);
+      }
     } finally {
       setIsLoading(false);
     }
@@ -125,29 +140,49 @@ export default function PelamarLoginPage() {
               <label htmlFor="password" className="block text-xs font-semibold text-slate-700 dark:text-slate-300">
                 {t.pelamar.auth.passwordLabel}
               </label>
-              <input
-                id="password"
-                type="password"
-                value={password}
-                onChange={(e) => { setPassword(e.target.value); setError(''); }}
-                placeholder="••••••••"
-                className="w-full px-4 py-3 bg-white dark:bg-slate-950 text-slate-900 dark:text-white border-2 border-slate-300 dark:border-slate-700 focus:border-[#1A4B9F] dark:focus:border-blue-400 focus:ring-2 focus:ring-blue-100 dark:focus:ring-blue-900 rounded-2xl text-sm outline-none transition-all"
-              />
+              <div className="relative flex items-center">
+                <input
+                  id="password"
+                  type={showPassword ? 'text' : 'password'}
+                  value={password}
+                  onChange={(e) => { setPassword(e.target.value); setError(''); }}
+                  placeholder="••••••••"
+                  className="w-full px-4 pr-12 py-3 bg-white dark:bg-slate-950 text-slate-900 dark:text-white border-2 border-slate-300 dark:border-slate-700 focus:border-[#1A4B9F] dark:focus:border-blue-400 focus:ring-2 focus:ring-blue-100 dark:focus:ring-blue-900 rounded-2xl text-sm outline-none transition-all"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-4 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
+                  tabIndex={-1}
+                >
+                  {showPassword ? <Eye size={18} /> : <EyeOff size={18} />}
+                </button>
+              </div>
             </div>
 
             {error && (
-              <div className="p-3.5 rounded-2xl bg-red-50 dark:bg-red-950/50 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300 text-xs font-semibold">
-                {error}
+              <div className="p-3.5 rounded-2xl bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300 text-xs font-semibold flex flex-col gap-2 leading-relaxed">
+                <div className="flex items-start gap-2.5">
+                  <AlertCircle size={16} className="shrink-0 mt-0.5 text-red-600 dark:text-red-400" />
+                  <span>{error}</span>
+                </div>
+                {showOtpRedirect && (
+                  <Link
+                    href="/applicant/register"
+                    className="text-[#1A4B9F] dark:text-blue-400 font-bold underline hover:text-blue-900 dark:hover:text-blue-300 text-[11px] self-start ml-6"
+                  >
+                    Verifikasi Kode OTP Sekarang &rarr;
+                  </Link>
+                )}
               </div>
             )}
 
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full py-3 rounded-full bg-[#1A4B9F] hover:bg-[#133878] text-white font-semibold text-sm shadow-sm hover:shadow-md transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer"
+              className="w-full py-3 rounded-full bg-[#1A4B9F] hover:bg-[#133878] active:bg-[#0f2a5a] text-white font-semibold text-sm shadow-sm transition-all duration-200 disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer"
             >
-              <span>{isLoading ? t.pelamar.auth.processing : t.pelamar.auth.signIn}</span>
-              {!isLoading && <ArrowRight size={18} />}
+              {isLoading ? t.pelamar.auth.processing : t.pelamar.auth.signIn}
             </button>
           </form>
 

@@ -329,7 +329,7 @@ export default function AdminUsersPage() {
                 />
               </div>
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">Kata Sandi Sementara</label>
+                <label className="block text-xs font-bold text-slate-700 mb-1">Password Sementara</label>
                 <input 
                   type="password" required 
                   value={formData.password} onChange={e => setFormData({...formData, password: e.target.value})}

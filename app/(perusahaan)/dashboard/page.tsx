@@ -160,30 +160,30 @@ export default function DashboardPage() {
           const dateObj = new Date(a.updated_at || a.applied_at);
           
           let icon = UserPlus;
-          let iconBg = 'bg-blue-100 dark:bg-blue-900/30';
-          let iconColor = 'text-blue-600 dark:text-blue-400';
+          let iconBg = 'bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700';
+          let iconColor = 'text-slate-700 dark:text-slate-200';
           let actionText = 'melamar posisi';
           let target = a.job?.judul_posisi || '';
 
           if (a.status === 'lolos_cv' || a.status === 'video_analysis') {
             icon = BrainCircuit;
-            iconBg = 'bg-cyan-100 dark:bg-cyan-900/30';
-            iconColor = 'text-cyan-600 dark:text-cyan-400';
+            iconBg = 'bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700';
+            iconColor = 'text-slate-700 dark:text-slate-200';
             actionText = 'lolos AI screening untuk';
           } else if (a.status === 'virtual_interview') {
              icon = Calendar;
-             iconBg = 'bg-amber-100 dark:bg-amber-900/30';
-             iconColor = 'text-amber-600 dark:text-amber-400';
+             iconBg = 'bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700';
+             iconColor = 'text-slate-700 dark:text-slate-200';
              actionText = 'menunggu interview untuk';
           } else if (a.status === 'Lolos') {
              icon = CheckCircle2;
-             iconBg = 'bg-purple-100 dark:bg-purple-900/30';
-             iconColor = 'text-purple-600 dark:text-purple-400';
+             iconBg = 'bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700';
+             iconColor = 'text-slate-700 dark:text-slate-200';
              actionText = 'diterima (Lolos) pada posisi';
           } else if (a.status === 'ditolak_sistem' || a.status === 'ditolak') {
              icon = Check;
-             iconBg = 'bg-rose-100 dark:bg-rose-900/30';
-             iconColor = 'text-rose-600 dark:text-rose-400';
+             iconBg = 'bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700';
+             iconColor = 'text-slate-700 dark:text-slate-200';
              actionText = 'ditolak pada posisi';
           }
 
@@ -257,9 +257,6 @@ export default function DashboardPage() {
         <div>
           <div className="flex items-center gap-2">
             <h1 className="text-2xl font-extrabold text-foreground tracking-tight">{t.dashboard.title}</h1>
-            <span className="px-2.5 py-0.5 bg-primary/10 text-primary font-bold text-[10px] rounded-full border border-primary/20">
-              HR Suite
-            </span>
           </div>
           <p className="text-sm text-muted-foreground mt-1">{t.dashboard.subtitle}</p>
         </div>
@@ -277,8 +274,8 @@ export default function DashboardPage() {
           icon={<Users size={18} />}
           trend={trendCv.startsWith('-') ? 'down' : 'up'}
           trendValue={trendCv}
-          iconBgColor="bg-blue-50 dark:bg-blue-950/60 border border-blue-200/80 dark:border-blue-800"
-          iconColor="text-blue-600 dark:text-blue-400"
+          iconBgColor="bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700"
+          iconColor="text-slate-800 dark:text-slate-200"
         />
         <StatCard
           title={t.dashboard.passedScreening || 'LOLOS CV SCREENING'}
@@ -287,8 +284,8 @@ export default function DashboardPage() {
           icon={<BrainCircuit size={18} />}
           trend="neutral"
           trendValue="-"
-          iconBgColor="bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200/80 dark:border-emerald-800"
-          iconColor="text-emerald-600 dark:text-emerald-400"
+          iconBgColor="bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700"
+          iconColor="text-slate-800 dark:text-slate-200"
         />
         <StatCard
           title={t.dashboard.interviewScheduled || 'WAWANCARA VIDEO'}
@@ -297,8 +294,8 @@ export default function DashboardPage() {
           icon={<Calendar size={18} />}
           trend="neutral"
           trendValue="-"
-          iconBgColor="bg-amber-50 dark:bg-amber-950/60 border border-amber-200/80 dark:border-amber-800"
-          iconColor="text-amber-600 dark:text-amber-400"
+          iconBgColor="bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700"
+          iconColor="text-slate-800 dark:text-slate-200"
         />
         <StatCard
           title={t.dashboard.awaitingValidation || 'MENUNGGU VALIDASI HR'}
@@ -307,25 +304,24 @@ export default function DashboardPage() {
           icon={<Clock size={18} />}
           trend="neutral"
           trendValue="-"
-          iconBgColor="bg-rose-50 dark:bg-rose-950/60 border border-rose-200/80 dark:border-rose-800"
-          iconColor="text-rose-600 dark:text-rose-400"
+          iconBgColor="bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700"
+          iconColor="text-slate-800 dark:text-slate-200"
         />
       </div>
 
       {/* PENDING HR APPROVAL PANEL */}
-      <div className="bg-card p-6 rounded-2xl border border-rose-200/80 dark:border-rose-900/50 shadow-xs relative overflow-hidden space-y-4">
-        <div className="absolute top-0 right-0 w-40 h-40 bg-rose-500/5 rounded-full blur-3xl pointer-events-none"></div>
+      <div className="bg-card p-6 rounded-2xl border border-border shadow-xs space-y-4">
 
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-border pb-4">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-rose-50 dark:bg-rose-950/80 text-rose-600 dark:text-rose-400 flex items-center justify-center font-bold border border-rose-200 dark:border-rose-800 shrink-0 shadow-2xs">
+            <div className="w-10 h-10 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 flex items-center justify-center font-bold border border-slate-200 dark:border-slate-700 shrink-0 shadow-2xs">
               <UserCheck size={20} />
             </div>
             <div>
               <div className="flex items-center gap-2">
                 <h2 className="font-bold text-base text-foreground">{t.dashboard.pendingApprovalTitle}</h2>
                 {pendingCandidates.length > 0 && (
-                  <span className="px-2.5 py-0.5 bg-rose-100 text-rose-700 dark:bg-rose-950/80 dark:text-rose-300 border border-rose-200 dark:border-rose-800 font-extrabold text-[11px] rounded-full">
+                  <span className="px-2.5 py-0.5 bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 border border-slate-200 dark:border-slate-700 font-bold text-[11px] rounded-md">
                     {pendingCandidates.length} Perlu Validasi
                   </span>
                 )}
@@ -353,7 +349,7 @@ export default function DashboardPage() {
             pendingCandidates.map((c, i) => (
               <div key={i} className="p-4 bg-muted/30 hover:bg-muted/50 rounded-xl border border-border transition-all flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                 <div className="flex items-start gap-3">
-                  <div className="w-10 h-10 rounded-full bg-[#1b7b9e]/15 text-[#1b7b9e] dark:bg-[#1b7b9e]/30 dark:text-cyan-300 font-black flex items-center justify-center text-sm border border-[#1b7b9e]/30 shrink-0 mt-0.5 sm:mt-0 shadow-2xs">
+                  <div className="w-10 h-10 rounded-full bg-primary/15 text-primary dark:bg-primary/30 dark:text-blue-300 font-black flex items-center justify-center text-sm border border-primary/30 shrink-0 mt-0.5 sm:mt-0 shadow-2xs">
                     {c.name.charAt(0)}
                   </div>
                   <div className="space-y-1">
@@ -361,17 +357,17 @@ export default function DashboardPage() {
                     <p className="text-xs font-semibold text-muted-foreground">{c.role}</p>
 
                     {c.education && c.education !== "-" && (
-                      <div className="inline-flex items-center gap-1 text-[11px] font-bold text-purple-700 dark:text-purple-300 bg-purple-50 dark:bg-purple-950/60 px-2 py-0.5 rounded-md border border-purple-200/80 dark:border-purple-800">
-                        <GraduationCap size={12} className="text-purple-600 dark:text-purple-400 shrink-0" />
+                      <div className="inline-flex items-center gap-1 text-[11px] font-bold text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-md border border-slate-200 dark:border-slate-700">
+                        <GraduationCap size={12} className="text-slate-600 dark:text-slate-400 shrink-0" />
                         <span>{c.education}</span>
                       </div>
                     )}
 
                     <div className="flex flex-wrap items-center gap-2 pt-1">
-                      <span className="px-2.5 py-0.5 bg-emerald-50 text-emerald-700 dark:bg-emerald-950/70 dark:text-emerald-300 font-bold text-[11px] rounded-md border border-emerald-200/80 dark:border-emerald-800">
+                      <span className="px-2.5 py-0.5 bg-slate-100 text-slate-800 dark:bg-slate-800 dark:text-slate-200 font-bold text-[11px] rounded-md border border-slate-200 dark:border-slate-700">
                         CV Match: {c.cvScore}%
                       </span>
-                      <span className="px-2.5 py-0.5 bg-sky-50 text-sky-700 dark:bg-sky-950/70 dark:text-sky-300 font-bold text-[11px] rounded-md border border-sky-200/80 dark:border-sky-800">
+                      <span className="px-2.5 py-0.5 bg-slate-100 text-slate-800 dark:bg-slate-800 dark:text-slate-200 font-bold text-[11px] rounded-md border border-slate-200 dark:border-slate-700">
                         Video Score: {c.videoScores ? ((c.videoScores.ability + c.videoScores.intelligent + c.videoScores.personality + c.videoScores.attitude + c.videoScores.emotionalIntelligence) / 5).toFixed(1) : '-'}
                       </span>
                     </div>
@@ -404,7 +400,7 @@ export default function DashboardPage() {
           <div className="bg-card p-5 sm:p-6 rounded-2xl border border-border shadow-sm space-y-4 w-full">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 border-b border-border pb-4">
               <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-lg bg-primary/10 text-primary flex items-center justify-center font-bold shrink-0">
+                <div className="w-8 h-8 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-slate-100 flex items-center justify-center font-bold shrink-0 border border-slate-200 dark:border-slate-700">
                   <Briefcase size={18} />
                 </div>
                 <div>
@@ -433,14 +429,14 @@ export default function DashboardPage() {
                       </span>
                     </div>
                     <p className="text-xs text-muted-foreground">
-                      Dipublikasikan {job.posted} &bull; <strong className="text-violet-600 dark:text-violet-400">Threshold: {job.threshold}%</strong>
+                      Dipublikasikan {job.posted} &bull; <span>Threshold: {job.threshold}%</span>
                     </p>
                   </div>
 
                   <div className="flex items-center justify-between sm:justify-end gap-3 w-full sm:w-auto border-t sm:border-t-0 border-border/60 pt-2 sm:pt-0">
                     <div className="text-left sm:text-right">
                       <p className="text-xs font-bold text-foreground">{job.applicants} Pelamar</p>
-                      <p className="text-[11px] text-emerald-600 dark:text-emerald-400 font-bold">
+                      <p className="text-[11px] text-muted-foreground font-semibold">
                         {job.passed} Lolos Screening
                       </p>
                     </div>
@@ -465,8 +461,10 @@ export default function DashboardPage() {
 
           {/* AI SYSTEM PERFORMANCE METRICS */}
           <div className="bg-card p-6 rounded-2xl border border-border shadow-sm space-y-4">
-            <div className="flex items-center gap-2 border-b border-border pb-3">
-              <Zap size={18} className="text-amber-500" />
+            <div className="flex items-center gap-2.5 border-b border-border pb-3">
+              <div className="w-8 h-8 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-slate-100 flex items-center justify-center font-bold shrink-0 border border-slate-200 dark:border-slate-700">
+                <BrainCircuit size={18} />
+              </div>
               <h3 className="font-bold text-base text-foreground">{t.dashboard.aiPerformanceTitle}</h3>
             </div>
 
@@ -475,10 +473,10 @@ export default function DashboardPage() {
               <div className="p-4 bg-muted/30 border border-border rounded-xl space-y-2">
                 <div className="flex justify-between items-center text-xs">
                   <span className="font-bold text-foreground">{t.dashboard.avgCosineSimilarity}</span>
-                  <span className="font-bold text-blue-600 dark:text-blue-400">{stats.avgCosineSimilarity}%</span>
+                  <span className="font-bold text-primary">{stats.avgCosineSimilarity}%</span>
                 </div>
                 <div className="w-full bg-muted rounded-full h-2 overflow-hidden">
-                  <div className="bg-blue-600 h-full rounded-full" style={{ width: `${stats.avgCosineSimilarity}%` }}></div>
+                  <div className="bg-primary h-full rounded-full" style={{ width: `${stats.avgCosineSimilarity}%` }}></div>
                 </div>
               </div>
 
@@ -499,8 +497,8 @@ export default function DashboardPage() {
                   <p className="text-xs font-bold text-foreground">{t.dashboard.avgProcessingSpeed}</p>
                   <p className="text-xs text-muted-foreground">{avgSpeed} Detik per Berkas CV</p>
                 </div>
-                <span className="px-2.5 py-1 bg-purple-50 text-purple-700 dark:bg-purple-950/70 dark:text-purple-300 font-extrabold text-xs rounded-lg border border-purple-200/80 dark:border-purple-800">
-                  ⚡ Super Fast
+                <span className="text-xs font-semibold text-muted-foreground">
+                  Kecepatan Tinggi
                 </span>
               </div>
             </div>

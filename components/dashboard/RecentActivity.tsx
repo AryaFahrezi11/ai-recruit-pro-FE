@@ -26,9 +26,14 @@ export function RecentActivity({ activities }: RecentActivityProps) {
 
   return (
     <div className="bg-card text-card-foreground p-6 rounded-xl border border-border shadow-sm h-full transition-colors duration-300">
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-lg font-bold">{t.dashboard.recentActivity}</h2>
-        <button className="text-sm text-primary font-medium hover:underline">
+      <div className="flex justify-between items-center mb-6 border-b border-border pb-3">
+        <div className="flex items-center gap-2.5">
+          <div className="w-8 h-8 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-slate-100 flex items-center justify-center font-bold shrink-0 border border-slate-200 dark:border-slate-700">
+            <UserPlus size={18} />
+          </div>
+          <h2 className="text-base font-bold text-foreground">{t.dashboard.recentActivity}</h2>
+        </div>
+        <button className="text-xs text-primary font-bold hover:underline">
           {t.dashboard.viewAll}
         </button>
       </div>

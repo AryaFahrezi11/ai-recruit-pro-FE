@@ -196,10 +196,10 @@ function JobOpeningsContent() {
         <div className="p-5 bg-card rounded-xl border border-border shadow-sm flex items-center justify-between">
           <div>
             <p className="text-xs text-muted-foreground font-semibold uppercase tracking-wider">{t.jobs.activeJobsCount}</p>
-            <p className="text-2xl font-bold text-emerald-700 dark:text-emerald-400 mt-1">{totalActive}</p>
+            <p className="text-2xl font-bold text-foreground mt-1">{totalActive}</p>
             <span className="text-[11px] text-muted-foreground font-medium">Lowongan aktif dipublikasi</span>
           </div>
-          <div className="w-12 h-12 rounded-xl bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-700 flex items-center justify-center font-bold">
+          <div className="w-12 h-12 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-slate-100 border border-slate-200 dark:border-slate-700 flex items-center justify-center font-bold">
             <Briefcase size={22} />
           </div>
         </div>
@@ -207,10 +207,10 @@ function JobOpeningsContent() {
         <div className="p-5 bg-card rounded-xl border border-border shadow-sm flex items-center justify-between">
           <div>
             <p className="text-xs text-muted-foreground font-semibold uppercase tracking-wider">{t.jobs.draftJobsCount}</p>
-            <p className="text-2xl font-bold text-slate-800 dark:text-slate-200 mt-1">{totalDrafts}</p>
+            <p className="text-2xl font-bold text-foreground mt-1">{totalDrafts}</p>
             <span className="text-[11px] text-muted-foreground font-medium">Tersimpan dalam draf</span>
           </div>
-          <div className="w-12 h-12 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 border border-slate-300 dark:border-slate-700 flex items-center justify-center font-bold">
+          <div className="w-12 h-12 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-slate-100 border border-slate-200 dark:border-slate-700 flex items-center justify-center font-bold">
             <FileText size={22} />
           </div>
         </div>
@@ -218,10 +218,10 @@ function JobOpeningsContent() {
         <div className="p-5 bg-card rounded-xl border border-border shadow-sm flex items-center justify-between">
           <div>
             <p className="text-xs text-muted-foreground font-semibold uppercase tracking-wider">Total Lowongan</p>
-            <p className="text-2xl font-bold text-blue-700 dark:text-blue-400 mt-1">{jobs.length}</p>
+            <p className="text-2xl font-bold text-foreground mt-1">{jobs.length}</p>
             <span className="text-[11px] text-muted-foreground font-medium">Seluruh lowongan ({totalClosed} ditutup)</span>
           </div>
-          <div className="w-12 h-12 rounded-xl bg-blue-100 dark:bg-blue-950/60 text-blue-800 dark:text-blue-300 border border-blue-300 dark:border-blue-700 flex items-center justify-center font-bold">
+          <div className="w-12 h-12 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-slate-100 border border-slate-200 dark:border-slate-700 flex items-center justify-center font-bold">
             <Users size={22} />
           </div>
         </div>
@@ -391,19 +391,19 @@ function JobOpeningsContent() {
                     {/* Status Badge */}
                     <div>
                       {isPublished && (
-                        <span className="px-3.5 py-1 bg-emerald-100 text-emerald-950 font-bold border border-emerald-300 dark:bg-emerald-950/70 dark:text-emerald-300 dark:border-emerald-700 text-xs rounded-full flex items-center gap-1.5 shadow-2xs">
-                          <span className="w-2 h-2 rounded-full bg-emerald-600 animate-pulse"></span>
-                          Dipublikasikan • Active
+                        <span className="px-2.5 py-0.5 bg-slate-100 text-slate-900 font-bold border border-slate-200 dark:bg-slate-800 dark:text-slate-100 dark:border-slate-700 text-xs rounded-md flex items-center gap-1.5 shadow-2xs">
+                          <span className="w-2 h-2 rounded-full bg-slate-800 dark:bg-slate-200"></span>
+                          Dipublikasikan &bull; Active
                         </span>
                       )}
                       {isDraft && (
-                        <span className="px-3.5 py-1 bg-slate-100 text-slate-900 font-bold border border-slate-300 dark:bg-slate-800 dark:text-slate-200 dark:border-slate-700 text-xs rounded-full flex items-center gap-1.5 shadow-2xs">
-                          <FileText size={13} className="text-slate-600 dark:text-slate-400" />
-                          Draf • Belum Dipublikasikan
+                        <span className="px-2.5 py-0.5 bg-slate-100 text-slate-900 font-bold border border-slate-200 dark:bg-slate-800 dark:text-slate-100 dark:border-slate-700 text-xs rounded-md flex items-center gap-1.5 shadow-2xs">
+                          <FileText size={13} className="text-slate-700 dark:text-slate-300" />
+                          Draf &bull; Belum Dipublikasikan
                         </span>
                       )}
                       {job.status === 'closed' && (
-                        <span className="px-3.5 py-1 bg-rose-100 text-rose-950 font-bold border border-rose-300 dark:bg-rose-950/70 dark:text-rose-300 dark:border-rose-700 text-xs rounded-full flex items-center gap-1.5 shadow-2xs">
+                        <span className="px-2.5 py-0.5 bg-slate-100 text-slate-700 font-bold border border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700 text-xs rounded-md flex items-center gap-1.5 shadow-2xs">
                           Ditutup
                         </span>
                       )}
@@ -415,7 +415,7 @@ function JobOpeningsContent() {
                     <div>
                       <span className="text-[10px] text-muted-foreground font-semibold block mb-0.5">{t.jobs.thresholdAI}</span>
                       <span className="font-bold text-primary flex items-center gap-1">
-                        <Sparkles size={13} className="text-amber-500" />
+                        <Sparkles size={13} className="text-primary" />
                         PO-FIT {job.cv_threshold}%
                       </span>
                     </div>
@@ -474,7 +474,7 @@ function JobOpeningsContent() {
                         className={`px-3.5 py-1.5 text-xs font-bold rounded-lg transition-colors border shadow-2xs ${
                           isPublished 
                             ? 'bg-slate-100 text-slate-900 border-slate-300 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-200 dark:border-slate-700' 
-                            : 'bg-emerald-600 text-white border-emerald-600 hover:bg-emerald-700'
+                            : 'bg-primary text-primary-foreground border-primary hover:bg-primary/90'
                         }`}
                       >
                         {isPublished ? 'Jadikan Draf' : 'Publikasikan'}
@@ -483,7 +483,7 @@ function JobOpeningsContent() {
                       {/* Hapus */}
                       <button 
                         onClick={() => handleDeleteJob(job)}
-                        className="px-3.5 py-1.5 bg-card border border-rose-200 dark:border-rose-800 text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 text-xs font-semibold rounded-lg transition-colors flex items-center gap-1.5"
+                        className="px-3.5 py-1.5 bg-card border border-border text-muted-foreground hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 text-xs font-semibold rounded-lg transition-colors flex items-center gap-1.5"
                       >
                         <Trash2 size={13} />
                         Hapus
