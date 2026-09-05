@@ -129,7 +129,7 @@ function MasterDataContent() {
           <h1 className="text-2xl font-bold text-slate-800 flex items-center gap-2">
             <Database className="text-blue-600" /> Master Data
           </h1>
-          <p className="text-slate-500 text-sm mt-1">Kelola data referensi seperti Kategori Pekerjaan dan Skill.</p>
+          <p className="text-slate-500 text-sm mt-1">Kelola data referensi seperti Kategori Pekerjaan.</p>
         </div>
       </div>
 
@@ -148,20 +148,6 @@ function MasterDataContent() {
         >
           <LayoutTemplate size={16} />
           Kategori Lowongan
-        </button>
-        <button
-          onClick={() => {
-            setActiveTab('skill');
-            updateUrlParams({ tab: 'skill' });
-          }}
-          className={`px-4 py-3 text-sm font-semibold border-b-2 transition-colors flex items-center gap-2 ${
-            activeTab === 'skill' 
-              ? 'border-blue-600 text-blue-600' 
-              : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'
-          }`}
-        >
-          <Briefcase size={16} />
-          Master Skill (Coming Soon)
         </button>
       </div>
 
@@ -251,16 +237,6 @@ function MasterDataContent() {
               </table>
             </div>
           </div>
-        </div>
-      )}
-
-      {activeTab === 'skill' && (
-        <div className="bg-white p-12 rounded-2xl border border-slate-200 shadow-sm flex flex-col items-center justify-center text-center animate-in fade-in duration-300">
-          <Briefcase size={48} className="text-slate-300 mb-4" />
-          <h3 className="text-lg font-bold text-slate-800 mb-2">Manajemen Skill</h3>
-          <p className="text-slate-500 text-sm max-w-md">
-            Fitur Master Skill sedang dalam pengembangan. Nantinya Anda dapat mengelola daftar skill yang akan digunakan untuk pencocokan AI.
-          </p>
         </div>
       )}
 

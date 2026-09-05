@@ -140,7 +140,7 @@ function CompanyRegistrationInner() {
     }
 
     if (!isValidPassword) {
-      setErrorStep1('Kata sandi belum memenuhi semua persyaratan keamanan.');
+      setErrorStep1('Kata sandi belum memenuhi semua persyaratan keamanan di bawah.');
       return;
     }
 
@@ -148,8 +148,6 @@ function CompanyRegistrationInner() {
       setErrorStep1('Konfirmasi kata sandi tidak cocok dengan kata sandi.');
       return;
     }
-    if (!isValidPassword) { setErrorStep1('Password belum memenuhi semua persyaratan di bawah.'); return; }
-    if (password !== confirmPassword) { setErrorStep1('Konfirmasi password tidak cocok. Silakan periksa kembali.'); return; }
 
     setErrorStep1('');
     setIsLoading(true);
@@ -162,13 +160,6 @@ function CompanyRegistrationInner() {
       const data = await res.json();
       if (!res.ok) {
         const detail = typeof data.detail === 'string' ? data.detail : '';
-        // Otomatis langsung arahkan ke Step 2 (Verifikasi OTP) tanpa perlu klik tombol lagi
-        if (detail.toLowerCase().includes('terdaftar') || detail.toLowerCase().includes('already') || detail.toLowerCase().includes('exist')) {
-          setIsLoading(false);
-          setErrorStep1('');
-          setStep(2);
-          return;
-        }
         setErrorStep1(detail || 'Terjadi kesalahan saat pendaftaran.');
         setIsLoading(false);
         return;
@@ -448,7 +439,7 @@ function CompanyRegistrationInner() {
                   />
                 </div>
                 <p className="text-[11px] text-slate-400 mt-1">
-                  Email pribadi (Gmail, Yahoo, Outlook) tidak dapat digunakan.
+                  Gunakan email resmi domain perusahaan Anda (1 perusahaan = 1 akun perwakilan). Email pribadi (Gmail, Yahoo) tidak diperbolehkan.
                 </p>
               </div>
 
@@ -525,7 +516,17 @@ function CompanyRegistrationInner() {
               {errorStep1 && (
                 <div className="p-3.5 rounded-2xl bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300 text-xs font-semibold flex items-start gap-2.5 leading-relaxed">
                   <AlertCircle size={18} className="shrink-0 mt-0.5" />
-                  <span>{errorStep1}</span>
+                  <div className="flex-1">
+                    <p>{errorStep1}</p>
+                    {errorStep1.toLowerCase().includes('terdaftar') && (
+                      <Link
+                        href="/login"
+                        className="inline-block mt-1.5 text-blue-600 dark:text-blue-400 hover:underline font-bold"
+                      >
+                        Sudah punya akun? Masuk ke portal perusahaan &rarr;
+                      </Link>
+                    )}
+                  </div>
                 </div>
               )}
 
