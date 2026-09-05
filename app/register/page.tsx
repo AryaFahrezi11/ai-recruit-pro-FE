@@ -66,6 +66,7 @@ function CompanyRegistrationInner() {
 
   const [companyName, setCompanyName] = useState('');
   const [industri, setIndustri] = useState('');
+  const [customIndustri, setCustomIndustri] = useState('');
   const [ukuran, setUkuran] = useState('');
   const [websiteUrl, setWebsiteUrl] = useState('');
   const [nibNpwpNumber, setNibNpwpNumber] = useState('');
@@ -103,7 +104,23 @@ function CompanyRegistrationInner() {
           if (data && data.profil) {
             const p = data.profil;
             if (p.nama_perusahaan) setCompanyName(p.nama_perusahaan);
-            if (p.industri) setIndustri(p.industri);
+            if (p.industri) {
+              const standardList = [
+                'Teknologi Informasi',
+                'Keuangan & Perbankan',
+                'Kesehatan',
+                'Pendidikan',
+                'Manufaktur',
+                'Retail & E-commerce'
+              ];
+              if (standardList.includes(p.industri)) {
+                setIndustri(p.industri);
+                setCustomIndustri('');
+              } else {
+                setIndustri('Lainnya');
+                setCustomIndustri(p.industri);
+              }
+            }
             if (p.ukuran) setUkuran(p.ukuran);
             if (p.website_url) setWebsiteUrl(p.website_url);
             if (p.alamat) setCompanyAddress(p.alamat);
@@ -275,8 +292,16 @@ function CompanyRegistrationInner() {
       setErrorStep3('Harap pilih Sektor Industri.');
       return;
     }
+    if (industri === 'Lainnya' && !customIndustri.trim()) {
+      setErrorStep3('Harap isi nama Sektor Industri Lainnya.');
+      return;
+    }
     if (!ukuran.trim()) {
       setErrorStep3('Harap pilih Ukuran Perusahaan.');
+      return;
+    }
+    if (!websiteUrl.trim()) {
+      setErrorStep3('Harap isi Link Website Resmi Perusahaan.');
       return;
     }
     if (!nibNpwpNumber.trim() || !/^\d+$/.test(nibNpwpNumber)) {
@@ -313,9 +338,10 @@ function CompanyRegistrationInner() {
     setIsLoading(true);
     try {
       const token = localStorage.getItem('access_token');
+      const finalIndustri = industri === 'Lainnya' ? customIndustri.trim() : industri;
       const formData = new FormData();
       formData.append('nama_perusahaan', companyName);
-      formData.append('industri', industri);
+      formData.append('industri', finalIndustri);
       formData.append('ukuran', ukuran);
       if (websiteUrl) formData.append('website_url', websiteUrl);
       formData.append('alamat', companyAddress);
@@ -687,7 +713,17 @@ function CompanyRegistrationInner() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label className={labelBase}>Sektor Industri <span className="text-red-500">*</span></label>
-                    <select value={industri} onChange={(e) => setIndustri(e.target.value)} className={inputBase}>
+                    <select
+                      value={industri}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setIndustri(val);
+                        if (val !== 'Lainnya') {
+                          setCustomIndustri('');
+                        }
+                      }}
+                      className={inputBase}
+                    >
                       <option value="">Pilih sektor</option>
                       <option value="Teknologi Informasi">Teknologi Informasi</option>
                       <option value="Keuangan & Perbankan">Keuangan & Perbankan</option>
@@ -709,6 +745,22 @@ function CompanyRegistrationInner() {
                     </select>
                   </div>
                 </div>
+
+                {industri === 'Lainnya' && (
+                  <div className="animate-in fade-in duration-200">
+                    <label className={labelBase}>
+                      Nama Sektor Industri Lainnya <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={customIndustri}
+                      onChange={(e) => setCustomIndustri(e.target.value)}
+                      placeholder="Contoh: Agrikultur / Konstruksi / Perhotelan & Pariwisata"
+                      className={inputBase}
+                      autoFocus
+                    />
+                  </div>
+                )}
 
                 <div>
                   <label className={labelBase}>Website Perusahaan <span className="text-red-500">*</span></label>
