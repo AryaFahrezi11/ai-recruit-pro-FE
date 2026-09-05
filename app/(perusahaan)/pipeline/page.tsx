@@ -25,7 +25,10 @@ import {
   GraduationCap,
   Clock,
   ChevronRight,
-  UserCheck
+  UserCheck,
+  CornerDownLeft,
+  X,
+  RotateCcw
 } from 'lucide-react';
 import { fetchAuth } from '@/lib/api/auth';
 import { api, parseErrorMessage } from '@/lib/api';
@@ -83,10 +86,21 @@ export default function PipelinePage() {
   const [pollMessage, setPollMessage] = useState<string>('');
   const [analyzingId, setAnalyzingId] = useState<string | null>(null);
 
-  // Filter States for Table View
-  const [searchQuery, setSearchQuery] = useState('');
-  const [stageFilter, setStageFilter] = useState('all');
+  // Filter & GET Search States (Default: Validasi HR)
+  const [searchInput, setSearchInput] = useState('');
+  const [activeSearch, setActiveSearch] = useState('');
+  const [stageFilter, setStageFilter] = useState('human_validation');
   const [jobFilter, setJobFilter] = useState('all');
+
+  const handleSearchSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    setActiveSearch(searchInput.trim());
+  };
+
+  const handleClearSearch = () => {
+    setSearchInput('');
+    setActiveSearch('');
+  };
 
   const loadApplications = async () => {
     try {
@@ -270,31 +284,32 @@ export default function PipelinePage() {
   // Filtered applications for Table View
   const filteredApplications = useMemo(() => {
     return applications.filter(app => {
-      // Search
+      // Search via GET submit
       const name = (app.pelamar?.nama_lengkap || '').toLowerCase();
       const job = (app.job?.judul_posisi || '').toLowerCase();
       const uni = (app.pelamar?.institusi_pendidikan || '').toLowerCase();
-      const q = searchQuery.toLowerCase().trim();
+      const q = activeSearch.toLowerCase().trim();
       const matchSearch = !q || name.includes(q) || job.includes(q) || uni.includes(q);
 
       // Job Filter
       const matchJob = jobFilter === 'all' || app.job?.judul_posisi === jobFilter;
 
-      // Stage Filter
+      // Stage Filter (Default: human_validation matches both before & during interview lanjutan)
       let matchStage = true;
       const s = app.status || 'upload_cv';
-      if (stageFilter === 'upload_cv') matchStage = s === 'upload_cv' || s === 'dikirim';
+      if (stageFilter === 'all') matchStage = true;
+      else if (stageFilter === 'upload_cv') matchStage = s === 'upload_cv' || s === 'dikirim';
       else if (stageFilter === 'cv_screening') matchStage = s === 'cv_screening' || s === 'lolos_cv' || s === 'ditolak_sistem';
       else if (stageFilter === 'virtual_interview') matchStage = s === 'virtual_interview';
       else if (stageFilter === 'video_analysis') matchStage = s === 'video_analysis';
-      else if (stageFilter === 'human_validation') matchStage = s === 'human_validation';
+      else if (stageFilter === 'human_validation') matchStage = s === 'human_validation' || s === 'interview_lanjutan';
       else if (stageFilter === 'interview_lanjutan') matchStage = s === 'interview_lanjutan';
       else if (stageFilter === 'hired') matchStage = s === 'hired' || s === 'accepted';
       else if (stageFilter === 'rejected') matchStage = s === 'rejected' || s === 'ditolak';
 
       return matchSearch && matchJob && matchStage;
     });
-  }, [applications, searchQuery, jobFilter, stageFilter]);
+  }, [applications, activeSearch, jobFilter, stageFilter]);
 
   // Pipeline Kanban stage buckets
   const uploadCvApps = applications.filter(a => a.status === 'upload_cv' || a.status === 'dikirim');
@@ -608,17 +623,42 @@ export default function PipelinePage() {
         <div className="space-y-4 animate-in fade-in duration-200">
           {/* Filter Bar */}
           <div className="p-4 bg-card rounded-2xl border border-border shadow-xs flex flex-col md:flex-row items-stretch md:items-center gap-3">
-            {/* Search Input */}
-            <div className="relative flex-1">
-              <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Cari nama pelamar, universitas, atau posisi lowongan..."
-                className="w-full pl-9 pr-4 py-2 bg-muted/40 border border-border rounded-xl text-xs text-foreground focus:ring-2 focus:ring-primary/20 outline-none font-medium"
-              />
-            </div>
+            {/* Search Input Form via GET */}
+            <form onSubmit={handleSearchSubmit} className="flex items-center gap-1.5 flex-1 w-full sm:w-auto">
+              <div className="relative flex-1">
+                <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+                <input
+                  type="text"
+                  value={searchInput}
+                  onChange={(e) => setSearchInput(e.target.value)}
+                  placeholder="Cari nama pelamar, universitas, posisi..."
+                  className="w-full pl-9 pr-24 py-2 bg-muted/40 border border-border rounded-xl text-xs text-foreground focus:ring-2 focus:ring-primary/20 outline-none font-medium shadow-2xs"
+                />
+                {searchInput && (
+                  <button
+                    type="button"
+                    onClick={handleClearSearch}
+                    className="absolute right-16 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground cursor-pointer"
+                    title="Hapus teks"
+                  >
+                    <X size={13} />
+                  </button>
+                )}
+                <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[10px] text-muted-foreground bg-muted px-1.5 py-0.5 rounded border border-border font-mono inline-flex items-center gap-0.5 select-none pointer-events-none">
+                  <CornerDownLeft size={10} /> Enter
+                </span>
+              </div>
+
+              <button
+                type="submit"
+                disabled={loading}
+                className="bg-black hover:bg-slate-800 dark:bg-white dark:hover:bg-slate-200 dark:text-black text-white px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer shrink-0 shadow-xs flex items-center gap-1.5 active:scale-95 disabled:opacity-50"
+                title="Cari (GET)"
+              >
+                <Search size={13} />
+                <span>Cari</span>
+              </button>
+            </form>
 
             {/* Filter by Job Position */}
             <div className="w-full md:w-56">
@@ -634,25 +674,73 @@ export default function PipelinePage() {
               </select>
             </div>
 
-            {/* Filter by Stage / Status */}
-            <div className="w-full md:w-52">
+            {/* Filter by Stage / Status (Default: Validasi HR) */}
+            <div className="w-full md:w-64">
               <select
                 value={stageFilter}
                 onChange={(e) => setStageFilter(e.target.value)}
-                className="w-full px-3 py-2 bg-muted/40 border border-border rounded-xl text-xs text-foreground focus:ring-2 focus:ring-primary/20 outline-none font-medium cursor-pointer"
+                className="w-full px-3 py-2 bg-muted/40 border border-border rounded-xl text-xs text-foreground focus:ring-2 focus:ring-primary/20 outline-none font-bold cursor-pointer text-indigo-600 dark:text-indigo-400"
               >
-                <option value="all">Semua Tahapan Seleksi</option>
+                <option value="human_validation">5. Validasi HR (Semua: Sebelum & Wawancara)</option>
+                <option value="interview_lanjutan">5. Validasi HR (Wawancara Lanjutan Saja)</option>
+                <option value="all">Semua Tahapan Seleksi (1 s/d 5)</option>
                 <option value="upload_cv">1. Upload CV</option>
                 <option value="cv_screening">2. CV Screening AI</option>
                 <option value="virtual_interview">3. Wawancara Video</option>
                 <option value="video_analysis">4. Analisis AI Video</option>
-                <option value="human_validation">5. Validasi HR (Semua)</option>
-                <option value="interview_lanjutan">5. Validasi HR (Wawancara Lanjutan)</option>
                 <option value="hired">Diterima (Hired)</option>
                 <option value="rejected">Ditolak (Rejected)</option>
               </select>
             </div>
           </div>
+
+          {/* Active Filter Indicators */}
+          {(activeSearch || jobFilter !== 'all' || stageFilter !== 'human_validation') && (
+            <div className="flex items-center justify-between text-xs px-3.5 py-2 bg-muted/30 border border-border rounded-xl text-muted-foreground animate-in fade-in">
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="font-semibold text-foreground flex items-center gap-1 text-[11px]">
+                  <Filter size={12} className="text-primary" />
+                  Filter Aktif:
+                </span>
+                {activeSearch && (
+                  <span className="px-2.5 py-0.5 rounded-md bg-blue-50 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300 font-bold text-[11px] border border-blue-200 dark:border-blue-800 flex items-center gap-1">
+                    Pencarian: &ldquo;{activeSearch}&rdquo;
+                    <button type="button" onClick={handleClearSearch} className="hover:text-blue-900 cursor-pointer">
+                      <X size={11} />
+                    </button>
+                  </span>
+                )}
+                {jobFilter !== 'all' && (
+                  <span className="px-2.5 py-0.5 rounded-md bg-purple-50 text-purple-700 dark:bg-purple-950/60 dark:text-purple-300 font-bold text-[11px] border border-purple-200 dark:border-purple-800 flex items-center gap-1">
+                    Posisi: {jobFilter}
+                    <button type="button" onClick={() => setJobFilter('all')} className="hover:text-purple-900 cursor-pointer">
+                      <X size={11} />
+                    </button>
+                  </span>
+                )}
+                {stageFilter !== 'human_validation' && (
+                  <span className="px-2.5 py-0.5 rounded-md bg-amber-50 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300 font-bold text-[11px] border border-amber-200 dark:border-amber-800 flex items-center gap-1">
+                    Tahap: {stageFilter === 'all' ? 'Semua Tahapan' : stageFilter}
+                    <button type="button" onClick={() => setStageFilter('human_validation')} className="hover:text-amber-900 cursor-pointer">
+                      <X size={11} />
+                    </button>
+                  </span>
+                )}
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  handleClearSearch();
+                  setJobFilter('all');
+                  setStageFilter('human_validation');
+                }}
+                className="text-[11px] font-bold text-muted-foreground hover:text-foreground flex items-center gap-1 cursor-pointer transition-colors"
+              >
+                <RotateCcw size={11} />
+                Reset Filter
+              </button>
+            </div>
+          )}
 
           {/* Table Container */}
           <DataTable
@@ -660,7 +748,11 @@ export default function PipelinePage() {
             columns={tableColumns}
             isLoading={loading}
             pageSize={10}
-            emptyMessage="Tidak ada pelamar yang cocok dengan kriteria pencarian atau filter yang dipilih."
+            emptyMessage={
+              activeSearch
+                ? `Tidak ada pelamar yang cocok dengan kata kunci "${activeSearch}" pada filter yang dipilih.`
+                : "Tidak ada pelamar pada tahapan filter yang dipilih saat ini."
+            }
             onRowClick={(item) => openCandidateModal(item)}
           />
         </div>
