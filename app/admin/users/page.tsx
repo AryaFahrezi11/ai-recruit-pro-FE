@@ -34,7 +34,10 @@ import {
   Share2,
   FileSpreadsheet,
   Sparkles,
-  UserCheck
+  UserCheck,
+  Mail,
+  ChevronDown,
+  ChevronUp
 } from 'lucide-react';
 import { fetchAuth } from '@/lib/api/auth';
 import { getMediaUrl } from '@/lib/api';
@@ -54,6 +57,139 @@ interface UserItem {
   created_at: string;
 }
 
+interface SkillGroup {
+  category: string;
+  items: string[];
+}
+
+interface EducationEntry {
+  school?: string;
+  institution?: string;
+  degree?: string;
+  period?: string;
+  gpa?: string;
+}
+
+interface ExperienceEntry {
+  company?: string;
+  role?: string;
+  period?: string;
+  description?: string;
+}
+
+interface CertificationEntry {
+  name?: string;
+  credentialUrl?: string;
+  issuer?: string;
+  year?: string;
+}
+
+interface SocialLinkEntry {
+  platform?: string;
+  url?: string;
+}
+
+function parseSkills(raw: any): { isCategorized: boolean; categories: SkillGroup[]; list: string[] } {
+  if (!raw) return { isCategorized: false, categories: [], list: [] };
+  let data = raw;
+  if (typeof raw === 'string') {
+    try {
+      data = JSON.parse(raw);
+    } catch {
+      const list = raw.split(/[,;\n]+/).map((s: string) => s.trim()).filter(Boolean);
+      return { isCategorized: false, categories: [], list };
+    }
+  }
+
+  if (Array.isArray(data)) {
+    if (data.length > 0 && typeof data[0] === 'object' && (data[0].category || data[0].items)) {
+      const categories: SkillGroup[] = data.map((cat: any) => {
+        const catName = cat.category || 'Kategori Keahlian';
+        let items: string[] = [];
+        if (typeof cat.items === 'string') {
+          items = cat.items
+            .split(/[,;\n]+/)
+            .map((s: string) => s.trim().replace(/^\./, '').replace(/\.$/, ''))
+            .filter(Boolean);
+        } else if (Array.isArray(cat.items)) {
+          items = cat.items.map((s: any) => String(s).trim()).filter(Boolean);
+        }
+        return { category: catName, items };
+      }).filter(c => c.items.length > 0);
+
+      return { isCategorized: true, categories, list: [] };
+    } else {
+      const list = data.map((item: any) => typeof item === 'string' ? item : item.name || String(item)).filter(Boolean);
+      return { isCategorized: false, categories: [], list };
+    }
+  }
+
+  return {
+    isCategorized: false,
+    categories: [],
+    list: String(raw).split(/[,;\n]+/).map((s: string) => s.trim()).filter(Boolean)
+  };
+}
+
+function parseEducation(raw: any): EducationEntry[] {
+  if (!raw) return [];
+  let data = raw;
+  if (typeof raw === 'string') {
+    try {
+      data = JSON.parse(raw);
+    } catch {
+      return [{ school: raw }];
+    }
+  }
+  if (Array.isArray(data)) return data;
+  if (typeof data === 'object') return [data];
+  return [];
+}
+
+function parseExperience(raw: any): ExperienceEntry[] {
+  if (!raw) return [];
+  let data = raw;
+  if (typeof raw === 'string') {
+    try {
+      data = JSON.parse(raw);
+    } catch {
+      return [{ description: raw }];
+    }
+  }
+  if (Array.isArray(data)) return data;
+  if (typeof data === 'object') return [data];
+  return [];
+}
+
+function parseCertifications(raw: any): CertificationEntry[] {
+  if (!raw) return [];
+  let data = raw;
+  if (typeof raw === 'string') {
+    try {
+      data = JSON.parse(raw);
+    } catch {
+      return [{ name: raw }];
+    }
+  }
+  if (Array.isArray(data)) return data;
+  if (typeof data === 'object') return [data];
+  return [];
+}
+
+function parseSocialLinks(raw: any): SocialLinkEntry[] {
+  if (!raw) return [];
+  let data = raw;
+  if (typeof raw === 'string') {
+    try {
+      data = JSON.parse(raw);
+    } catch {
+      return [];
+    }
+  }
+  if (Array.isArray(data)) return data;
+  return [];
+}
+
 export default function AdminUsersPage() {
   const [users, setUsers] = useState<UserItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -68,6 +204,7 @@ export default function AdminUsersPage() {
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
   const [selectedUserDetail, setSelectedUserDetail] = useState<any>(null);
   const [isDetailLoading, setIsDetailLoading] = useState(false);
+  const [showRawCvText, setShowRawCvText] = useState(false);
 
   // Form states
   const [formData, setFormData] = useState({
@@ -166,6 +303,7 @@ export default function AdminUsersPage() {
   const handleOpenDetail = async (userId: string) => {
     setIsDetailModalOpen(true);
     setIsDetailLoading(true);
+    setShowRawCvText(false);
     try {
       const res = await fetchAuth(`/api/admin/users/${userId}/detail`, { method: 'GET' });
       const data = await res.json();
@@ -988,239 +1126,413 @@ export default function AdminUsersPage() {
                     </div>
                   </div>
                 </div>
-              ) : selectedUserDetail.role === 'pelamar' ? (
-                /* TAMPILAN DETAIL LENGKAP KHUSUS PELAMAR (CV, PROFIL, PENDIDIKAN, PENGALAMAN) */
-                <div className="space-y-5">
-                  {/* Header Identity & Status */}
-                  <div className="flex items-start gap-3.5 bg-slate-50 dark:bg-slate-800/40 p-4 sm:p-5 rounded-2xl border border-slate-200 dark:border-slate-800">
-                    <div className="w-12 h-12 rounded-2xl bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-900/60 flex items-center justify-center font-black text-base shrink-0">
-                      {selectedUserDetail.profile?.nama_lengkap
-                        ? selectedUserDetail.profile.nama_lengkap.slice(0, 2).toUpperCase()
-                        : selectedUserDetail.email.charAt(0).toUpperCase()}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <h4 className="font-extrabold text-slate-900 dark:text-white text-base truncate">
-                        {selectedUserDetail.profile?.nama_lengkap || selectedUserDetail.email}
-                      </h4>
-                      <span className="text-xs text-slate-500 dark:text-slate-400 block truncate mt-0.5">
-                        {selectedUserDetail.email} {selectedUserDetail.profile?.no_telepon ? `• ${selectedUserDetail.profile.no_telepon}` : ''}
-                      </span>
-                      <div className="flex flex-wrap gap-2 items-center mt-2">
-                        <span className="text-[10px] font-extrabold bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 px-2 py-0.5 rounded uppercase border border-emerald-200 dark:border-emerald-800">
-                          PELAMAR
-                        </span>
-                        {selectedUserDetail.is_active ? (
-                          <span className="text-[10px] font-extrabold bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 px-2.5 py-0.5 rounded-full uppercase border border-emerald-200 dark:border-emerald-800 flex items-center gap-1">
-                            <BadgeCheck size={13} className="text-emerald-600 dark:text-emerald-400 shrink-0" />
-                            Verified
-                          </span>
-                        ) : (
-                          <span className="text-[10px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-400 px-2.5 py-0.5 rounded-full uppercase border border-slate-200 dark:border-slate-700">
-                            Unverified
-                          </span>
-                        )}
-                        {selectedUserDetail.is_banned && (
-                          <span className="text-[10px] font-extrabold bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300 px-2 py-0.5 rounded uppercase border border-rose-200 dark:border-rose-800">
-                            Banned
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  </div>
+              ) : selectedUserDetail.role === 'pelamar' ? (() => {
+                const profile = selectedUserDetail.profile || {};
+                const skillsData = parseSkills(profile.keahlian);
+                const educations = parseEducation(profile.riwayat_pendidikan);
+                const experiences = parseExperience(profile.pengalaman_kerja);
+                const certifications = parseCertifications(profile.sertifikasi);
+                const socialLinks = parseSocialLinks(profile.social_links);
+                const latestCv = profile.latest_cv;
 
-                  {/* Dokumen CV Utama Pelamar */}
-                  <div>
-                    <span className="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider block mb-2.5">
-                      Berkas Curriculum Vitae (CV) Terunggah
-                    </span>
-                    {selectedUserDetail.profile?.latest_cv ? (
-                      <div className="p-4 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-800 rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                        <div className="flex items-center gap-3 min-w-0">
-                          <div className="w-11 h-11 rounded-xl bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0 border border-blue-200 dark:border-blue-900/60">
-                            <FileText size={22} />
-                          </div>
-                          <div className="min-w-0">
-                            <h5 className="font-bold text-slate-900 dark:text-white text-xs truncate max-w-sm" title={selectedUserDetail.profile.latest_cv.nama_file}>
-                              {selectedUserDetail.profile.latest_cv.nama_file}
-                            </h5>
-                            <span className="text-[11px] text-slate-400 block mt-0.5">
-                              Ukuran: {selectedUserDetail.profile.latest_cv.file_size_kb ? `${selectedUserDetail.profile.latest_cv.file_size_kb} KB` : '-'} • Tipe: {selectedUserDetail.profile.latest_cv.file_type?.toUpperCase() || 'PDF'}
+                return (
+                  <div className="space-y-5">
+                    {/* Header Identity & Status */}
+                    <div className="flex items-start gap-3.5 bg-slate-50 dark:bg-slate-800/40 p-4 sm:p-5 rounded-2xl border border-slate-200 dark:border-slate-800">
+                      <div className="w-12 h-12 rounded-2xl bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-900/60 flex items-center justify-center font-black text-base shrink-0">
+                        {profile.nama_lengkap
+                          ? profile.nama_lengkap.slice(0, 2).toUpperCase()
+                          : selectedUserDetail.email.charAt(0).toUpperCase()}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <h4 className="font-extrabold text-slate-900 dark:text-white text-base truncate">
+                          {profile.nama_lengkap || selectedUserDetail.email}
+                        </h4>
+                        <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1 text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                          <span className="flex items-center gap-1">
+                            <Mail size={12} className="text-slate-400 shrink-0" />
+                            {selectedUserDetail.email}
+                          </span>
+                          {profile.no_telepon && (
+                            <span className="flex items-center gap-1">
+                              • <Phone size={12} className="text-slate-400 shrink-0" />
+                              {profile.no_telepon}
                             </span>
-                          </div>
+                          )}
+                          {profile.judul_posisi && (
+                            <span className="flex items-center gap-1">
+                              • <Briefcase size={12} className="text-blue-500 shrink-0" />
+                              <strong className="font-semibold text-slate-700 dark:text-slate-200">{profile.judul_posisi}</strong>
+                            </span>
+                          )}
                         </div>
-
-                        <a
-                          href={getMediaUrl(selectedUserDetail.profile.latest_cv.file_url)}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="w-full sm:w-auto px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-xs transition-colors inline-flex items-center justify-center gap-1.5 shrink-0"
-                        >
-                          <Eye size={13} />
-                          <span>Buka / Unduh CV</span>
-                          <ExternalLink size={12} />
-                        </a>
-                      </div>
-                    ) : (
-                      <div className="py-6 text-center text-slate-400 bg-slate-50 dark:bg-slate-800/30 rounded-2xl border border-dashed border-slate-200 dark:border-slate-800 text-xs">
-                        <FileText size={24} className="mx-auto text-slate-300 dark:text-slate-600 mb-1.5" />
-                        Pelamar belum mengunggah dokumen CV digital ke sistem.
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Ringkasan Diri / Bio */}
-                  {selectedUserDetail.profile?.ringkasan_diri && (
-                    <div>
-                      <span className="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider block mb-1">
-                        Ringkasan Profesional
-                      </span>
-                      <p className="p-3.5 bg-slate-50 dark:bg-slate-800/40 rounded-xl border border-slate-200 dark:border-slate-800 text-xs text-slate-700 dark:text-slate-300 leading-relaxed font-normal">
-                        {selectedUserDetail.profile.ringkasan_diri}
-                      </p>
-                    </div>
-                  )}
-
-                  {/* Rincian Kontak & Tautan */}
-                  <div>
-                    <span className="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider block mb-2">
-                      Kontak &amp; Tautan Profil
-                    </span>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
-                      {/* Telepon */}
-                      <div className="bg-slate-50 dark:bg-slate-800/40 p-3 rounded-xl border border-slate-200 dark:border-slate-800">
-                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">No. WhatsApp / HP</span>
-                        {selectedUserDetail.profile?.no_telepon ? (
-                          <a
-                            href={`https://wa.me/${selectedUserDetail.profile.no_telepon.replace(/[^0-9]/g, '')}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-emerald-600 dark:text-emerald-400 hover:underline font-mono font-bold inline-flex items-center gap-1 mt-1"
-                          >
-                            <Phone size={12} /> {selectedUserDetail.profile.no_telepon}
-                          </a>
-                        ) : (
-                          <span className="text-slate-400 block mt-1">-</span>
-                        )}
-                      </div>
-
-                      {/* Judul Posisi */}
-                      <div className="bg-slate-50 dark:bg-slate-800/40 p-3 rounded-xl border border-slate-200 dark:border-slate-800">
-                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Target Posisi</span>
-                        <span className="font-bold text-slate-800 dark:text-slate-100 flex items-center gap-1.5 mt-1">
-                          <Briefcase size={13} className="text-blue-500 shrink-0" />
-                          {selectedUserDetail.profile?.judul_posisi || '-'}
-                        </span>
-                      </div>
-
-                      {/* LinkedIn */}
-                      <div className="bg-slate-50 dark:bg-slate-800/40 p-3 rounded-xl border border-slate-200 dark:border-slate-800">
-                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Profil LinkedIn</span>
-                        {selectedUserDetail.profile?.linkedin_url ? (
-                          <a
-                            href={selectedUserDetail.profile.linkedin_url.startsWith('http') ? selectedUserDetail.profile.linkedin_url : `https://${selectedUserDetail.profile.linkedin_url}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-blue-600 dark:text-blue-400 hover:underline font-semibold inline-flex items-center gap-1 mt-1 truncate max-w-full"
-                          >
-                            <Share2 size={12} /> LinkedIn Profile <ExternalLink size={10} />
-                          </a>
-                        ) : (
-                          <span className="text-slate-400 block mt-1">-</span>
-                        )}
-                      </div>
-
-                      {/* Portofolio */}
-                      <div className="bg-slate-50 dark:bg-slate-800/40 p-3 rounded-xl border border-slate-200 dark:border-slate-800">
-                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Portofolio / Website</span>
-                        {selectedUserDetail.profile?.portfolio_url ? (
-                          <a
-                            href={selectedUserDetail.profile.portfolio_url.startsWith('http') ? selectedUserDetail.profile.portfolio_url : `https://${selectedUserDetail.profile.portfolio_url}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-blue-600 dark:text-blue-400 hover:underline font-semibold inline-flex items-center gap-1 mt-1 truncate max-w-full"
-                          >
-                            <Globe size={12} /> Buka Portofolio <ExternalLink size={10} />
-                          </a>
-                        ) : (
-                          <span className="text-slate-400 block mt-1">-</span>
-                        )}
-                      </div>
-
-                      {/* Alamat */}
-                      <div className="sm:col-span-2 bg-slate-50 dark:bg-slate-800/40 p-3 rounded-xl border border-slate-200 dark:border-slate-800">
-                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Domisili / Alamat</span>
-                        <span className="text-slate-800 dark:text-slate-200 font-medium block mt-1">
-                          {selectedUserDetail.profile?.alamat || '-'}
-                        </span>
+                        <div className="flex flex-wrap gap-2 items-center mt-2.5">
+                          <span className="text-[10px] font-extrabold bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 px-2 py-0.5 rounded uppercase border border-emerald-200 dark:border-emerald-800">
+                            PELAMAR
+                          </span>
+                          {selectedUserDetail.is_active ? (
+                            <span className="text-[10px] font-extrabold bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 px-2.5 py-0.5 rounded-full uppercase border border-emerald-200 dark:border-emerald-800 flex items-center gap-1">
+                              <BadgeCheck size={13} className="text-emerald-600 dark:text-emerald-400 shrink-0" />
+                              Verified
+                            </span>
+                          ) : (
+                            <span className="text-[10px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-400 px-2.5 py-0.5 rounded-full uppercase border border-slate-200 dark:border-slate-700">
+                              Unverified
+                            </span>
+                          )}
+                          {selectedUserDetail.is_banned && (
+                            <span className="text-[10px] font-extrabold bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300 px-2 py-0.5 rounded uppercase border border-rose-200 dark:border-rose-800">
+                              Banned
+                            </span>
+                          )}
+                        </div>
                       </div>
                     </div>
-                  </div>
 
-                  {/* Keahlian / Skills */}
-                  {selectedUserDetail.profile?.keahlian && (
+                    {/* Dokumen CV Utama Pelamar */}
                     <div>
                       <span className="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider block mb-2">
+                        Dokumen Curriculum Vitae (CV)
+                      </span>
+                      {latestCv ? (
+                        <div className="p-4 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-800 rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                          <div className="flex items-center gap-3 min-w-0">
+                            <div className="w-11 h-11 rounded-xl bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0 border border-blue-200 dark:border-blue-900/60">
+                              <FileText size={22} />
+                            </div>
+                            <div className="min-w-0">
+                              <h5 className="font-bold text-slate-900 dark:text-white text-xs truncate max-w-sm" title={latestCv.nama_file}>
+                                {latestCv.file_url === 'profil-dashboard'
+                                  ? 'Profil CV Digital Standar ATS'
+                                  : latestCv.nama_file}
+                              </h5>
+                              <span className="text-[11px] text-slate-400 block mt-0.5">
+                                {latestCv.file_url === 'profil-dashboard'
+                                  ? 'Dihasilkan dan tersinkronisasi otomatis dari profil pelamar'
+                                  : `Ukuran: ${latestCv.file_size_kb ? `${latestCv.file_size_kb} KB` : '-'} • Tipe: ${(latestCv.file_type || 'PDF').toUpperCase()}`}
+                              </span>
+                            </div>
+                          </div>
+
+                          {latestCv.file_url && latestCv.file_url !== 'profil-dashboard' ? (
+                            <a
+                              href={getMediaUrl(latestCv.file_url)}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="w-full sm:w-auto px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-xs transition-colors inline-flex items-center justify-center gap-1.5 shrink-0 cursor-pointer"
+                            >
+                              <Eye size={13} />
+                              <span>Buka / Unduh Berkas CV</span>
+                              <ExternalLink size={12} />
+                            </a>
+                          ) : (
+                            <span className="px-3 py-1.5 rounded-xl bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 font-bold text-xs border border-emerald-200 dark:border-emerald-800/80 inline-flex items-center gap-1.5 shrink-0">
+                              <CheckCircle2 size={14} className="text-emerald-500" />
+                              ATS Digital Ready
+                            </span>
+                          )}
+                        </div>
+                      ) : (
+                        <div className="py-6 text-center text-slate-400 bg-slate-50 dark:bg-slate-800/30 rounded-2xl border border-dashed border-slate-200 dark:border-slate-800 text-xs">
+                          <FileText size={24} className="mx-auto text-slate-300 dark:text-slate-600 mb-1.5" />
+                          Pelamar belum mengunggah dokumen CV ke sistem.
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Ringkasan Diri / Bio */}
+                    {profile.ringkasan_diri && (
+                      <div>
+                        <span className="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider block mb-1.5">
+                          Ringkasan Profesional
+                        </span>
+                        <div className="p-3.5 bg-slate-50 dark:bg-slate-800/40 rounded-xl border border-slate-200 dark:border-slate-800 text-xs text-slate-700 dark:text-slate-300 leading-relaxed font-normal text-justify">
+                          {profile.ringkasan_diri}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Pengalaman Kerja */}
+                    <div>
+                      <span className="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider block mb-2 flex items-center gap-1.5">
+                        <Briefcase size={14} className="text-emerald-600 dark:text-emerald-400" />
+                        Pengalaman Kerja
+                      </span>
+                      {experiences.length > 0 ? (
+                        <div className="space-y-2.5">
+                          {experiences.map((exp, idx) => (
+                            <div
+                              key={idx}
+                              className="p-3.5 bg-slate-50 dark:bg-slate-800/40 rounded-xl border border-slate-200 dark:border-slate-800 space-y-1.5"
+                            >
+                              <div className="flex flex-col sm:flex-row sm:items-baseline sm:justify-between gap-1">
+                                <h5 className="font-bold text-slate-900 dark:text-white text-xs">
+                                  {exp.role || 'Posisi'}
+                                  {exp.company ? <span className="font-semibold text-slate-500 dark:text-slate-400"> — {exp.company}</span> : ''}
+                                </h5>
+                                {exp.period && (
+                                  <span className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 bg-slate-200/70 dark:bg-slate-700/60 px-2 py-0.5 rounded-full w-fit">
+                                    {exp.period}
+                                  </span>
+                                )}
+                              </div>
+                              {exp.description && (
+                                <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed pl-2.5 border-l-2 border-emerald-500/40 whitespace-pre-line text-justify font-normal">
+                                  {exp.description}
+                                </p>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="p-3 bg-slate-50 dark:bg-slate-800/30 rounded-xl border border-dashed border-slate-200 dark:border-slate-800 text-xs text-slate-400 italic">
+                          Belum ada data pengalaman kerja tercatat.
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Riwayat Pendidikan */}
+                    <div>
+                      <span className="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider block mb-2 flex items-center gap-1.5">
+                        <GraduationCap size={14} className="text-blue-600 dark:text-blue-400" />
+                        Riwayat Pendidikan
+                      </span>
+                      {educations.length > 0 ? (
+                        <div className="space-y-2.5">
+                          {educations.map((edu, idx) => (
+                            <div
+                              key={idx}
+                              className="p-3.5 bg-slate-50 dark:bg-slate-800/40 rounded-xl border border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2"
+                            >
+                              <div className="min-w-0">
+                                <h5 className="font-bold text-slate-900 dark:text-white text-xs">
+                                  {edu.degree || 'Pendidikan Formal'}
+                                </h5>
+                                <span className="text-xs text-slate-600 dark:text-slate-300 font-medium block mt-0.5">
+                                  {edu.school || edu.institution || '-'}
+                                </span>
+                              </div>
+                              <div className="flex items-center gap-2 shrink-0">
+                                {edu.gpa && (
+                                  <span className="text-[10px] font-bold text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800 px-2 py-0.5 rounded-md">
+                                    IPK: {edu.gpa}
+                                  </span>
+                                )}
+                                {edu.period && (
+                                  <span className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 bg-slate-200/70 dark:bg-slate-700/60 px-2 py-0.5 rounded-full">
+                                    {edu.period}
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="p-3 bg-slate-50 dark:bg-slate-800/30 rounded-xl border border-dashed border-slate-200 dark:border-slate-800 text-xs text-slate-400 italic">
+                          Belum ada data riwayat pendidikan tercatat.
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Keahlian & Keterampilan */}
+                    <div>
+                      <span className="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider block mb-2 flex items-center gap-1.5">
+                        <Sparkles size={14} className="text-blue-500" />
                         Keahlian &amp; Keterampilan
                       </span>
-                      <div className="p-3 bg-slate-50 dark:bg-slate-800/40 rounded-xl border border-slate-200 dark:border-slate-800 flex flex-wrap gap-1.5">
-                        {selectedUserDetail.profile.keahlian
-                          .split(/[,;\n]+/)
-                          .map((skill: string) => skill.trim())
-                          .filter(Boolean)
-                          .map((skill: string, idx: number) => (
+                      {skillsData.isCategorized && skillsData.categories.length > 0 ? (
+                        <div className="space-y-2.5">
+                          {skillsData.categories.map((cat, cIdx) => (
+                            <div key={cIdx} className="p-3 bg-slate-50 dark:bg-slate-800/40 rounded-xl border border-slate-200 dark:border-slate-800">
+                              <span className="text-[10px] font-extrabold text-slate-500 dark:text-slate-400 uppercase tracking-wider block mb-2">
+                                {cat.category}
+                              </span>
+                              <div className="flex flex-wrap gap-1.5">
+                                {cat.items.map((skill, sIdx) => (
+                                  <span
+                                    key={sIdx}
+                                    className="px-2.5 py-1 rounded-lg bg-white dark:bg-slate-900 text-blue-700 dark:text-blue-300 font-bold text-[11px] border border-blue-200 dark:border-blue-900/60 shadow-2xs inline-flex items-center gap-1"
+                                  >
+                                    <Sparkles size={10} className="text-blue-500 shrink-0" />
+                                    {skill}
+                                  </span>
+                                ))}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      ) : skillsData.list.length > 0 ? (
+                        <div className="p-3 bg-slate-50 dark:bg-slate-800/40 rounded-xl border border-slate-200 dark:border-slate-800 flex flex-wrap gap-1.5">
+                          {skillsData.list.map((skill, idx) => (
                             <span
                               key={idx}
-                              className="px-2.5 py-1 rounded-lg bg-blue-50 dark:bg-blue-950/50 text-[#1A4B9F] dark:text-blue-300 font-bold text-[11px] border border-blue-200 dark:border-blue-900/60 inline-flex items-center gap-1"
+                              className="px-2.5 py-1 rounded-lg bg-white dark:bg-slate-900 text-blue-700 dark:text-blue-300 font-bold text-[11px] border border-blue-200 dark:border-blue-900/60 shadow-2xs inline-flex items-center gap-1"
                             >
-                              <Sparkles size={11} className="text-blue-500" />
+                              <Sparkles size={10} className="text-blue-500 shrink-0" />
                               {skill}
                             </span>
                           ))}
+                        </div>
+                      ) : (
+                        <div className="p-3 bg-slate-50 dark:bg-slate-800/30 rounded-xl border border-dashed border-slate-200 dark:border-slate-800 text-xs text-slate-400 italic">
+                          Belum ada keahlian tercantum.
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Sertifikasi & Lisensi */}
+                    {certifications.length > 0 && (
+                      <div>
+                        <span className="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider block mb-2 flex items-center gap-1.5">
+                          <Award size={14} className="text-amber-500" />
+                          Sertifikasi &amp; Lisensi
+                        </span>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                          {certifications.map((cert, idx) => (
+                            <div key={idx} className="p-3 bg-slate-50 dark:bg-slate-800/40 rounded-xl border border-slate-200 dark:border-slate-800 flex items-center justify-between gap-2">
+                              <div className="min-w-0">
+                                <span className="font-bold text-xs text-slate-900 dark:text-white block truncate">
+                                  {cert.name || 'Sertifikat Keahlian'}
+                                </span>
+                                {cert.issuer && (
+                                  <span className="text-[10px] text-slate-400 block">{cert.issuer}</span>
+                                )}
+                              </div>
+                              {cert.credentialUrl && (
+                                <a
+                                  href={cert.credentialUrl.startsWith('http') ? cert.credentialUrl : `https://${cert.credentialUrl}`}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="px-2.5 py-1 bg-amber-50 dark:bg-amber-950/50 hover:bg-amber-100 text-amber-700 dark:text-amber-300 text-[11px] font-bold rounded-lg border border-amber-200 dark:border-amber-800 shrink-0 inline-flex items-center gap-1 cursor-pointer"
+                                >
+                                  <span>Bukti</span>
+                                  <ExternalLink size={10} />
+                                </a>
+                              )}
+                            </div>
+                          ))}
+                        </div>
                       </div>
-                    </div>
-                  )}
+                    )}
 
-                  {/* Riwayat Pendidikan & Pengalaman Kerja */}
-                  {(selectedUserDetail.profile?.riwayat_pendidikan || selectedUserDetail.profile?.pengalaman_kerja) && (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                      {selectedUserDetail.profile?.riwayat_pendidikan && (
-                        <div>
-                          <span className="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider block mb-1.5">
-                            Riwayat Pendidikan
-                          </span>
-                          <div className="p-3 bg-slate-50 dark:bg-slate-800/40 rounded-xl border border-slate-200 dark:border-slate-800 text-xs text-slate-700 dark:text-slate-300 whitespace-pre-line leading-relaxed">
-                            {selectedUserDetail.profile.riwayat_pendidikan}
-                          </div>
-                        </div>
-                      )}
-
-                      {selectedUserDetail.profile?.pengalaman_kerja && (
-                        <div>
-                          <span className="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider block mb-1.5">
-                            Pengalaman Kerja
-                          </span>
-                          <div className="p-3 bg-slate-50 dark:bg-slate-800/40 rounded-xl border border-slate-200 dark:border-slate-800 text-xs text-slate-700 dark:text-slate-300 whitespace-pre-line leading-relaxed">
-                            {selectedUserDetail.profile.pengalaman_kerja}
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  )}
-
-                  {/* Teks Hasil Ekstraksi / Ringkasan Dokumen CV */}
-                  {selectedUserDetail.profile?.latest_cv?.extracted_text && (
+                    {/* Kontak & Tautan Profil */}
                     <div>
-                      <span className="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider block mb-1.5">
-                        Teks Resume Hasil Ekstraksi CV
+                      <span className="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider block mb-2">
+                        Kontak &amp; Tautan Profil
                       </span>
-                      <div className="p-3 bg-slate-50 dark:bg-slate-800/40 rounded-xl border border-slate-200 dark:border-slate-800 max-h-40 overflow-y-auto font-mono text-[11px] text-slate-600 dark:text-slate-400 leading-relaxed whitespace-pre-wrap">
-                        {selectedUserDetail.profile.latest_cv.extracted_text.slice(0, 1500)}
-                        {selectedUserDetail.profile.latest_cv.extracted_text.length > 1500 && '... (teks dipotong untuk preview)'}
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                        {/* Telepon */}
+                        <div className="bg-slate-50 dark:bg-slate-800/40 p-3 rounded-xl border border-slate-200 dark:border-slate-800">
+                          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">No. WhatsApp / HP</span>
+                          {profile.no_telepon ? (
+                            <a
+                              href={`https://wa.me/${profile.no_telepon.replace(/[^0-9]/g, '')}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-emerald-600 dark:text-emerald-400 hover:underline font-mono font-bold inline-flex items-center gap-1 mt-1"
+                            >
+                              <Phone size={12} /> {profile.no_telepon}
+                            </a>
+                          ) : (
+                            <span className="text-slate-400 block mt-1">-</span>
+                          )}
+                        </div>
+
+                        {/* Judul Posisi */}
+                        <div className="bg-slate-50 dark:bg-slate-800/40 p-3 rounded-xl border border-slate-200 dark:border-slate-800">
+                          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Target Posisi</span>
+                          <span className="font-bold text-slate-800 dark:text-slate-100 flex items-center gap-1.5 mt-1">
+                            <Briefcase size={13} className="text-blue-500 shrink-0" />
+                            {profile.judul_posisi || '-'}
+                          </span>
+                        </div>
+
+                        {/* LinkedIn */}
+                        <div className="bg-slate-50 dark:bg-slate-800/40 p-3 rounded-xl border border-slate-200 dark:border-slate-800">
+                          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Profil LinkedIn</span>
+                          {profile.linkedin_url ? (
+                            <a
+                              href={profile.linkedin_url.startsWith('http') ? profile.linkedin_url : `https://${profile.linkedin_url}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-blue-600 dark:text-blue-400 hover:underline font-semibold inline-flex items-center gap-1 mt-1 truncate max-w-full"
+                            >
+                              <Share2 size={12} /> Profil LinkedIn <ExternalLink size={10} />
+                            </a>
+                          ) : (
+                            <span className="text-slate-400 block mt-1">-</span>
+                          )}
+                        </div>
+
+                        {/* Portofolio */}
+                        <div className="bg-slate-50 dark:bg-slate-800/40 p-3 rounded-xl border border-slate-200 dark:border-slate-800">
+                          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Portofolio / Website</span>
+                          {profile.portfolio_url ? (
+                            <a
+                              href={profile.portfolio_url.startsWith('http') ? profile.portfolio_url : `https://${profile.portfolio_url}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-blue-600 dark:text-blue-400 hover:underline font-semibold inline-flex items-center gap-1 mt-1 truncate max-w-full"
+                            >
+                              <Globe size={12} /> Buka Portofolio <ExternalLink size={10} />
+                            </a>
+                          ) : (
+                            <span className="text-slate-400 block mt-1">-</span>
+                          )}
+                        </div>
+
+                        {/* Social Links Lainnya */}
+                        {socialLinks.length > 0 && (
+                          <div className="sm:col-span-2 bg-slate-50 dark:bg-slate-800/40 p-3 rounded-xl border border-slate-200 dark:border-slate-800">
+                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1.5">Tautan Tambahan</span>
+                            <div className="flex flex-wrap gap-2">
+                              {socialLinks.map((link, idx) => (
+                                <a
+                                  key={idx}
+                                  href={link.url ? (link.url.startsWith('http') ? link.url : `https://${link.url}`) : '#'}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="text-xs text-blue-600 dark:text-blue-400 hover:underline font-semibold inline-flex items-center gap-1 bg-white dark:bg-slate-900 px-2.5 py-1 rounded-lg border border-slate-200 dark:border-slate-700 shadow-2xs"
+                                >
+                                  <Globe size={11} /> {link.platform ? `${link.platform}: ` : ''}{link.url} <ExternalLink size={9} />
+                                </a>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Alamat */}
+                        <div className="sm:col-span-2 bg-slate-50 dark:bg-slate-800/40 p-3 rounded-xl border border-slate-200 dark:border-slate-800">
+                          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Domisili / Alamat</span>
+                          <span className="text-slate-800 dark:text-slate-200 font-medium block mt-1 flex items-center gap-1.5">
+                            <MapPin size={13} className="text-rose-500 shrink-0" />
+                            {profile.alamat || '-'}
+                          </span>
+                        </div>
                       </div>
                     </div>
-                  )}
-                </div>
-              ) : (
+
+                    {/* Teks Hasil Ekstraksi CV (Collapsible) */}
+                    {latestCv?.extracted_text && (
+                      <div className="pt-2 border-t border-slate-200/60 dark:border-slate-800">
+                        <button
+                          type="button"
+                          onClick={() => setShowRawCvText(!showRawCvText)}
+                          className="text-xs font-bold text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white inline-flex items-center gap-1.5 transition-colors cursor-pointer"
+                        >
+                          <span>{showRawCvText ? 'Sembunyikan Teks Mentah CV' : 'Lihat Teks Mentah Hasil Ekstraksi CV (Raw ATS)'}</span>
+                          {showRawCvText ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+                        </button>
+                        {showRawCvText && (
+                          <div className="mt-2.5 p-3.5 bg-slate-50 dark:bg-slate-800/40 rounded-xl border border-slate-200 dark:border-slate-800 max-h-48 overflow-y-auto font-mono text-[11px] text-slate-600 dark:text-slate-400 leading-relaxed whitespace-pre-wrap">
+                            {latestCv.extracted_text}
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                );
+              })() : (
                 /* TAMPILAN UMUM (Kampus, Admin, dll) */
                 <div className="space-y-6">
                   {/* Executive Header Identity Card */}
@@ -1271,7 +1583,25 @@ export default function AdminUsersPage() {
                               {key.replace(/_/g, ' ')}
                             </span>
                             <span className="text-xs font-semibold text-slate-900 dark:text-slate-100 break-words leading-relaxed">
-                              {value === true ? 'Ya' : value === false ? 'Tidak' : (value as string) || '-'}
+                              {(() => {
+                                if (value === true) return 'Ya';
+                                if (value === false) return 'Tidak';
+                                if (value === null || value === undefined || value === '') return '-';
+                                if (typeof value === 'object') {
+                                  return Array.isArray(value)
+                                    ? value.map((v: any) => typeof v === 'object' ? JSON.stringify(v) : String(v)).join(', ')
+                                    : JSON.stringify(value);
+                                }
+                                if (typeof value === 'string' && (value.startsWith('[') || value.startsWith('{'))) {
+                                  try {
+                                    const parsed = JSON.parse(value);
+                                    if (Array.isArray(parsed)) {
+                                      return parsed.map((item: any) => typeof item === 'object' ? (item.name || item.title || item.school || item.company || JSON.stringify(item)) : String(item)).join(', ');
+                                    }
+                                  } catch {}
+                                }
+                                return String(value);
+                              })()}
                             </span>
                           </div>
                         ))}
