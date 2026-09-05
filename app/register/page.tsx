@@ -711,7 +711,7 @@ function CompanyRegistrationInner() {
                 </div>
 
                 <div>
-                  <label className={labelBase}>Website Perusahaan <span className="text-slate-400 font-normal">(opsional)</span></label>
+                  <label className={labelBase}>Website Perusahaan <span className="text-red-500">*</span></label>
                   <input type="url" value={websiteUrl} onChange={(e) => setWebsiteUrl(e.target.value)}
                     placeholder="https://www.perusahaan.com" className={inputBase} />
                 </div>

@@ -18,7 +18,9 @@ import {
   List,
   AlertCircle,
   RefreshCw,
-  CornerDownLeft
+  CornerDownLeft,
+  Users,
+  Briefcase
 } from 'lucide-react';
 import { fetchAuth } from '@/lib/api/auth';
 import { getMediaUrl } from '@/lib/api';
@@ -284,6 +286,7 @@ export default function AdminVerificationPage() {
               <thead className="bg-slate-50 dark:bg-slate-950/60 text-slate-500 dark:text-slate-400 font-bold border-b border-slate-200 dark:border-slate-800 uppercase tracking-wider text-[10px]">
                 <tr>
                   <th className="px-5 py-3.5">Perusahaan</th>
+                  <th className="px-4 py-3.5">Sektor &amp; Skala Karyawan</th>
                   <th className="px-4 py-3.5">NIB / NPWP</th>
                   <th className="px-4 py-3.5">Perwakilan HRD</th>
                   <th className="px-4 py-3.5">Berkas Legalitas</th>
@@ -308,16 +311,27 @@ export default function AdminVerificationPage() {
                           <div className="min-w-0">
                             <button
                               onClick={() => setSelectedCompany(c)}
-                              className="font-bold text-slate-800 dark:text-white text-xs sm:text-sm hover:text-blue-600 dark:hover:text-blue-400 text-left block truncate max-w-[220px]"
+                              className="font-bold text-slate-800 dark:text-white text-xs sm:text-sm hover:text-blue-600 dark:hover:text-blue-400 text-left block truncate max-w-[200px]"
                               title={c.nama_perusahaan}
                             >
                               {c.nama_perusahaan || '-'}
                             </button>
-                            <span className="text-[11px] text-slate-400 dark:text-slate-500 block truncate max-w-[220px]">
-                              {[c.industri, c.kota || c.provinsi].filter(Boolean).join(' • ') || 'Industri umum'}
+                            <span className="text-[11px] text-slate-400 dark:text-slate-500 block truncate max-w-[200px]">
+                              {[c.kota, c.provinsi].filter(Boolean).join(', ') || 'Lokasi belum diisi'}
                             </span>
                           </div>
                         </div>
+                      </td>
+
+                      {/* Sektor & Skala Karyawan */}
+                      <td className="px-4 py-3.5">
+                        <span className="font-semibold text-slate-800 dark:text-slate-200 block truncate max-w-[170px]" title={c.industri}>
+                          {c.industri || '-'}
+                        </span>
+                        <span className="text-[10px] text-slate-500 dark:text-slate-400 flex items-center gap-1 mt-0.5" title={c.ukuran}>
+                          <Users size={11} className="text-emerald-600 dark:text-emerald-400 shrink-0" />
+                          <span className="truncate max-w-[150px]">{c.ukuran || '-'}</span>
+                        </span>
                       </td>
 
                       {/* NIB / NPWP */}
@@ -333,12 +347,12 @@ export default function AdminVerificationPage() {
                       {/* Perwakilan HR */}
                       <td className="px-4 py-3.5">
                         <div className="flex flex-col min-w-0">
-                          <span className="font-bold text-slate-800 dark:text-slate-200 truncate max-w-[160px]">
+                          <span className="font-bold text-slate-800 dark:text-slate-200 truncate max-w-[150px]">
                             {c.hr_name || '-'}
                           </span>
                           <div className="flex items-center gap-2 mt-0.5">
                             {c.hr_position && (
-                              <span className="text-[10px] text-slate-500 capitalize">
+                              <span className="text-[10px] text-slate-500 capitalize truncate max-w-[90px]">
                                 {c.hr_position}
                               </span>
                             )}
@@ -347,7 +361,7 @@ export default function AdminVerificationPage() {
                                 href={`https://wa.me/${c.hr_whatsapp.replace(/[^0-9]/g, '')}`}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="text-[10px] text-emerald-600 hover:text-emerald-700 font-semibold inline-flex items-center gap-0.5"
+                                className="text-[10px] text-emerald-600 hover:text-emerald-700 font-semibold inline-flex items-center gap-0.5 shrink-0"
                                 title="Chat WhatsApp"
                               >
                                 <Phone size={10} /> {c.hr_whatsapp}
@@ -460,7 +474,7 @@ export default function AdminVerificationPage() {
                           {c.nama_perusahaan || '-'}
                         </h3>
                         <span className="text-[11px] text-slate-400 block truncate">
-                          {[c.industri, c.kota].filter(Boolean).join(' • ') || 'Industri'}
+                          {[c.kota, c.provinsi].filter(Boolean).join(', ') || 'Lokasi belum diisi'}
                         </span>
                       </div>
                     </div>
@@ -469,8 +483,20 @@ export default function AdminVerificationPage() {
                     </span>
                   </div>
 
-                  {/* Compact Info Grid */}
+                  {/* Compact Info Grid: Sektor, Ukuran, NIB, PIC */}
                   <div className="grid grid-cols-2 gap-2 text-[11px] bg-slate-50 dark:bg-slate-950/60 p-3 rounded-xl border border-slate-100 dark:border-slate-800/80 mt-3.5">
+                    <div>
+                      <span className="text-slate-400 block text-[10px] font-medium">Sektor Industri</span>
+                      <span className="font-semibold text-slate-800 dark:text-slate-200 truncate block" title={c.industri}>
+                        {c.industri || '-'}
+                      </span>
+                    </div>
+                    <div>
+                      <span className="text-slate-400 block text-[10px] font-medium">Skala Karyawan</span>
+                      <span className="font-semibold text-slate-800 dark:text-slate-200 truncate block" title={c.ukuran}>
+                        {c.ukuran || '-'}
+                      </span>
+                    </div>
                     <div>
                       <span className="text-slate-400 block text-[10px] font-medium">NIB / NPWP</span>
                       <span className="font-mono font-bold text-slate-800 dark:text-slate-200 truncate block">
@@ -554,7 +580,7 @@ export default function AdminVerificationPage() {
             {/* Modal Header */}
             <div className="p-5 sm:p-6 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="w-11 h-11 rounded-2xl bg-blue-50 dark:bg-blue-950/50 border border-blue-200 dark:border-blue-900 text-[#1A4B9F] dark:text-blue-400 flex items-center justify-center font-bold text-base">
+                <div className="w-11 h-11 rounded-2xl bg-blue-50 dark:bg-blue-950/50 border border-blue-200 dark:border-blue-900 text-[#1A4B9F] dark:text-blue-400 flex items-center justify-center font-bold text-base shrink-0">
                   <Building2 size={22} />
                 </div>
                 <div>
@@ -562,7 +588,7 @@ export default function AdminVerificationPage() {
                     {selectedCompany.nama_perusahaan || '-'}
                   </h2>
                   <span className="text-xs text-slate-400">
-                    {[selectedCompany.industri, selectedCompany.ukuran].filter(Boolean).join(' • ') || 'Profil Bisnis'}
+                    {[selectedCompany.industri, selectedCompany.ukuran].filter(Boolean).join(' • ') || 'Profil Perusahaan'}
                   </span>
                 </div>
               </div>
@@ -587,8 +613,24 @@ export default function AdminVerificationPage() {
                 </p>
               </div>
 
-              {/* Data Grid */}
+              {/* Data Grid: Sektor, Karyawan, NIB, Tahun, Kontak HR */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 bg-slate-50 dark:bg-slate-950/60 p-4 rounded-2xl border border-slate-100 dark:border-slate-800">
+                <div>
+                  <span className="font-semibold text-slate-400 text-[10px] block">Sektor Industri</span>
+                  <span className="font-bold text-slate-800 dark:text-slate-100 flex items-center gap-1.5 mt-0.5 text-xs sm:text-sm">
+                    <Briefcase size={14} className="text-blue-500 shrink-0" />
+                    {selectedCompany.industri || '-'}
+                  </span>
+                </div>
+
+                <div>
+                  <span className="font-semibold text-slate-400 text-[10px] block">Skala / Jumlah Karyawan</span>
+                  <span className="font-bold text-slate-800 dark:text-slate-100 flex items-center gap-1.5 mt-0.5 text-xs sm:text-sm">
+                    <Users size={14} className="text-emerald-500 shrink-0" />
+                    {selectedCompany.ukuran || '-'}
+                  </span>
+                </div>
+
                 <div>
                   <span className="font-semibold text-slate-400 text-[10px] block">Nomor NIB / NPWP</span>
                   <span className="font-mono font-bold text-slate-800 dark:text-slate-100 text-sm">
