@@ -29,15 +29,15 @@ export default function AuditLogsPage() {
   };
 
   const getActionIcon = (action: string) => {
-    if (action.includes('ERROR') || action.includes('FAIL')) return <AlertTriangle className="text-rose-500" size={18} />;
-    if (action.includes('VERIFY') || action.includes('SUCCESS')) return <CheckCircle className="text-emerald-500" size={18} />;
-    return <Info className="text-blue-500" size={18} />;
+    if (action.includes('ERROR') || action.includes('FAIL')) return <AlertTriangle className="text-black dark:text-white" size={16} />;
+    if (action.includes('VERIFY') || action.includes('SUCCESS')) return <CheckCircle className="text-black dark:text-white" size={16} />;
+    return <Info className="text-black dark:text-white" size={16} />;
   };
 
   const getActionColor = (action: string) => {
-    if (action.includes('ERROR') || action.includes('FAIL')) return 'bg-rose-50 text-rose-700 border-rose-200';
-    if (action.includes('VERIFY') || action.includes('SUCCESS')) return 'bg-emerald-50 text-emerald-700 border-emerald-200';
-    return 'bg-blue-50 text-blue-700 border-blue-200';
+    if (action.includes('ERROR') || action.includes('FAIL')) return 'bg-rose-50 dark:bg-rose-950/30 text-rose-800 dark:text-rose-300 border-rose-200 dark:border-rose-800';
+    if (action.includes('VERIFY') || action.includes('SUCCESS')) return 'bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-slate-100 border-slate-200 dark:border-slate-700';
+    return 'bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-slate-100 border-slate-200 dark:border-slate-700';
   };
 
   const formatDate = (dateStr: string) => {
@@ -49,58 +49,55 @@ export default function AuditLogsPage() {
   };
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-300">
+    <div className="space-y-6 font-sans antialiased">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-slate-800 flex items-center gap-2">
-            <FileText className="text-slate-600" /> Catatan Sistem (Audit Logs)
+          <h1 className="text-2xl font-extrabold text-slate-900 dark:text-white tracking-tight flex items-center gap-2">
+            <FileText className="text-black dark:text-white" size={24} /> Catatan Sistem (Audit Logs)
           </h1>
-          <p className="text-slate-500 text-sm mt-1">Pantau seluruh aktivitas penting dan error sistem secara real-time.</p>
+          <p className="text-slate-500 dark:text-slate-400 text-xs font-medium mt-1">Pantau seluruh aktivitas penting dan error sistem secara real-time.</p>
         </div>
         <button 
           onClick={loadLogs}
-          className="px-4 py-2 bg-white border border-slate-200 rounded-xl text-sm font-semibold hover:bg-slate-50 text-slate-700 transition-colors"
+          className="px-4 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-xs font-semibold hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-800 dark:text-slate-200 transition-colors shadow-xs cursor-pointer"
         >
           Refresh Data
         </button>
       </div>
 
-      <div className="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden">
+      <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-sm">
-            <thead className="bg-slate-50/80 text-slate-500 text-xs uppercase font-semibold">
+          <table className="w-full text-left text-xs">
+            <thead className="bg-slate-50 dark:bg-slate-800/50 text-slate-500 dark:text-slate-400 text-[11px] uppercase font-bold border-b border-slate-200 dark:border-slate-800">
               <tr>
-                <th className="px-6 py-4 rounded-tl-3xl">Waktu</th>
+                <th className="px-6 py-4">Waktu</th>
                 <th className="px-6 py-4">Aksi</th>
                 <th className="px-6 py-4">Aktor / Pengguna</th>
-                <th className="px-6 py-4 rounded-tr-3xl">Detail Informasi</th>
+                <th className="px-6 py-4">Detail Informasi</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100">
+            <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
               {isLoading ? (
                 <tr>
-                  <td colSpan={4} className="px-6 py-12 text-center text-slate-400">
-                    <div className="flex justify-center mb-4">
-                      <div className="w-8 h-8 border-2 border-blue-500/30 border-t-blue-500 rounded-full animate-spin"></div>
-                    </div>
+                  <td colSpan={4} className="px-6 py-12 text-center text-slate-400 font-medium">
                     Memuat catatan sistem...
                   </td>
                 </tr>
               ) : logs.length === 0 ? (
                 <tr>
-                  <td colSpan={4} className="px-6 py-12 text-center text-slate-400">
+                  <td colSpan={4} className="px-6 py-12 text-center text-slate-400 font-medium">
                     <div className="flex justify-center mb-2">
-                      <FileText size={32} className="text-slate-300" />
+                      <FileText size={32} className="text-black dark:text-white" />
                     </div>
                     Belum ada catatan sistem
                   </td>
                 </tr>
               ) : (
                 logs.map((log) => (
-                  <tr key={log.id} className="hover:bg-slate-50/50 transition-colors">
+                  <tr key={log.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors">
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center gap-2 text-slate-600">
-                        <Clock size={14} className="text-slate-400" />
+                      <div className="flex items-center gap-2 text-slate-600 dark:text-slate-300 font-medium">
+                        <Clock size={14} className="text-black dark:text-white" />
                         {formatDate(log.created_at)}
                       </div>
                     </td>
@@ -112,22 +109,22 @@ export default function AuditLogsPage() {
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-2">
-                        <div className="w-7 h-7 rounded-full bg-slate-100 flex items-center justify-center shrink-0">
+                        <div className="w-7 h-7 rounded-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-center shrink-0">
                           {log.action.includes('AI') ? (
-                            <ShieldAlert size={14} className="text-slate-500" />
+                            <ShieldAlert size={14} className="text-black dark:text-white" />
                           ) : (
-                            <User size={14} className="text-slate-500" />
+                            <User size={14} className="text-black dark:text-white" />
                           )}
                         </div>
                         <div>
-                          <p className="font-semibold text-slate-700">{log.user_name || 'Sistem / Bot'}</p>
+                          <p className="font-bold text-slate-900 dark:text-white text-xs">{log.user_name || 'Sistem / Bot'}</p>
                           {log.user_id && <p className="text-[10px] text-slate-400 font-mono">{log.user_id}</p>}
                         </div>
                       </div>
                     </td>
                     <td className="px-6 py-4">
-                      <div className="bg-slate-50 rounded-xl p-3 border border-slate-100">
-                        <pre className="text-xs text-slate-600 font-mono whitespace-pre-wrap break-all">
+                      <div className="bg-slate-50 dark:bg-slate-800/40 rounded-xl p-3 border border-slate-200 dark:border-slate-800">
+                        <pre className="text-xs text-slate-700 dark:text-slate-300 font-mono whitespace-pre-wrap break-all">
                           {typeof log.details === 'object' ? JSON.stringify(log.details, null, 2) : log.details || '-'}
                         </pre>
                       </div>

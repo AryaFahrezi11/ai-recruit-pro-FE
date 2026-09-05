@@ -123,36 +123,36 @@ function MasterDataContent() {
   );
 
   return (
-    <div className="space-y-6 relative">
+    <div className="space-y-6 font-sans antialiased">
       <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-slate-800 flex items-center gap-2">
-            <Database className="text-blue-600" /> Master Data
+          <h1 className="text-2xl font-extrabold text-slate-900 dark:text-white tracking-tight flex items-center gap-2">
+            <Database className="text-black dark:text-white" size={24} /> Master Data
           </h1>
           <p className="text-slate-500 text-sm mt-1">Kelola data referensi seperti Kategori Pekerjaan.</p>
         </div>
       </div>
 
       {/* Tabs */}
-      <div className="flex items-center gap-2 border-b border-slate-200">
+      <div className="flex items-center gap-2 border-b border-slate-200 dark:border-slate-800">
         <button
           onClick={() => {
             setActiveTab('kategori');
             updateUrlParams({ tab: 'kategori' });
           }}
-          className={`px-4 py-3 text-sm font-semibold border-b-2 transition-colors flex items-center gap-2 ${
+          className={`px-4 py-3 text-xs font-extrabold border-b-2 transition-colors flex items-center gap-2 cursor-pointer ${
             activeTab === 'kategori' 
-              ? 'border-blue-600 text-blue-600' 
-              : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'
+              ? 'border-black text-slate-900 dark:text-white' 
+              : 'border-transparent text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'
           }`}
         >
-          <LayoutTemplate size={16} />
+          <LayoutTemplate size={16} className="text-black dark:text-white" />
           Kategori Lowongan
         </button>
       </div>
 
       {activeTab === 'kategori' && (
-        <div className="space-y-4 animate-in fade-in duration-300">
+        <div className="space-y-4">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <form 
               className="flex items-center gap-2"
@@ -162,34 +162,34 @@ function MasterDataContent() {
               }}
             >
               <div className="relative">
-                <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-black dark:text-white" />
                 <input 
                   type="text"
                   placeholder="Cari kategori..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-8 pr-4 py-2 w-64 bg-white border border-slate-200 rounded-lg text-sm text-slate-600 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                  className="pl-8 pr-4 py-2 w-64 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-xs text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-slate-400 font-medium"
                 />
               </div>
               <button
                 type="submit"
-                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-semibold transition-colors shadow-sm cursor-pointer"
+                className="px-4 py-2 bg-black hover:bg-slate-800 text-white rounded-xl text-xs font-semibold transition-colors shadow-xs cursor-pointer"
               >
                 Cari
               </button>
             </form>
             <button 
               onClick={() => handleOpenModal('add')}
-              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-lg shadow-sm transition-colors flex items-center gap-2"
+              className="px-4 py-2 bg-black hover:bg-slate-800 text-white text-xs font-semibold rounded-xl shadow-xs transition-colors flex items-center gap-2 cursor-pointer"
             >
-              <Plus size={16} /> Tambah Kategori
+              <Plus size={16} className="text-white" /> Tambah Kategori
             </button>
           </div>
 
-          <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+          <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-xs border border-slate-200 dark:border-slate-800 overflow-hidden">
             <div className="overflow-x-auto">
-              <table className="w-full text-sm text-left">
-                <thead className="bg-slate-50 text-slate-500 text-xs uppercase font-bold border-b border-slate-200">
+              <table className="w-full text-xs text-left">
+                <thead className="bg-slate-50 dark:bg-slate-800/50 text-slate-500 dark:text-slate-400 text-[11px] uppercase font-bold border-b border-slate-200 dark:border-slate-800">
                   <tr>
                     <th className="px-6 py-4">No</th>
                     <th className="px-6 py-4">Nama Kategori</th>
@@ -197,36 +197,36 @@ function MasterDataContent() {
                     <th className="px-6 py-4 text-right">Aksi</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100">
+                <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                   {isLoading ? (
                     <tr>
-                      <td colSpan={4} className="px-6 py-8 text-center text-slate-400">Memuat data...</td>
+                      <td colSpan={4} className="px-6 py-8 text-center text-slate-400 font-medium">Memuat data...</td>
                     </tr>
                   ) : filteredCategories.length === 0 ? (
                     <tr>
-                      <td colSpan={4} className="px-6 py-8 text-center text-slate-400">Tidak ada kategori ditemukan.</td>
+                      <td colSpan={4} className="px-6 py-8 text-center text-slate-400 font-medium">Tidak ada kategori ditemukan.</td>
                     </tr>
                   ) : (
                     filteredCategories.map((cat, index) => (
-                      <tr key={cat.id} className="hover:bg-slate-50/50 transition-colors">
+                      <tr key={cat.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors">
                         <td className="px-6 py-4 text-slate-500 font-medium">{index + 1}</td>
-                        <td className="px-6 py-4 font-bold text-slate-800">{cat.nama_kategori}</td>
-                        <td className="px-6 py-4 text-slate-600">{cat.deskripsi || '-'}</td>
+                        <td className="px-6 py-4 font-bold text-slate-900 dark:text-white">{cat.nama_kategori}</td>
+                        <td className="px-6 py-4 text-slate-600 dark:text-slate-400">{cat.deskripsi || '-'}</td>
                         <td className="px-6 py-4 text-right">
-                          <div className="flex items-center justify-end gap-2">
+                          <div className="flex items-center justify-end gap-1.5">
                             <button 
                               onClick={() => handleOpenModal('edit', cat)}
                               title="Edit Kategori"
-                              className="p-1.5 rounded-lg bg-blue-50 text-blue-500 hover:bg-blue-100 transition-colors"
+                              className="p-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-black dark:text-white hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors border border-slate-200 dark:border-slate-700"
                             >
-                              <Edit size={16} />
+                              <Edit size={15} className="text-black dark:text-white" />
                             </button>
                             <button 
                               onClick={() => setConfirmDelete({ isOpen: true, id: cat.id, name: cat.nama_kategori })}
                               title="Hapus Kategori"
-                              className="p-1.5 rounded-lg bg-rose-50 text-rose-500 hover:bg-rose-100 transition-colors"
+                              className="p-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-black dark:text-white hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors border border-slate-200 dark:border-slate-700"
                             >
-                              <Trash2 size={16} />
+                              <Trash2 size={15} className="text-black dark:text-white" />
                             </button>
                           </div>
                         </td>
@@ -244,39 +244,39 @@ function MasterDataContent() {
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" onClick={() => setIsModalOpen(false)} />
-          <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg overflow-hidden relative z-10 animate-in zoom-in-95 duration-200">
-            <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
-              <h3 className="text-lg font-bold text-slate-800">
+          <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-xl w-full max-w-lg overflow-hidden relative z-10 animate-in zoom-in-95 duration-200 border border-slate-200 dark:border-slate-800">
+            <div className="px-6 py-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+              <h3 className="text-base font-extrabold text-slate-900 dark:text-white">
                 {modalMode === 'add' ? 'Tambah Kategori' : 'Edit Kategori'}
               </h3>
             </div>
             <form onSubmit={handleSave} className="p-6 space-y-4">
               <div>
-                <label className="block text-sm font-bold text-slate-700 mb-1.5">Nama Kategori <span className="text-rose-500">*</span></label>
+                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">Nama Kategori <span className="text-rose-500">*</span></label>
                 <input 
                   type="text" 
                   required
                   value={formData.nama_kategori}
                   onChange={(e) => setFormData({...formData, nama_kategori: e.target.value})}
-                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                  className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-slate-400 font-medium"
                   placeholder="Misal: Software Engineering"
                 />
               </div>
               <div>
-                <label className="block text-sm font-bold text-slate-700 mb-1.5">Deskripsi</label>
+                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">Deskripsi</label>
                 <textarea 
                   rows={3}
                   value={formData.deskripsi}
                   onChange={(e) => setFormData({...formData, deskripsi: e.target.value})}
-                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 resize-none"
+                  className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-slate-400 resize-none font-medium"
                   placeholder="Opsional: Penjelasan singkat mengenai kategori ini"
                 />
               </div>
               <div className="pt-4 flex items-center justify-end gap-3">
-                <button type="button" onClick={() => setIsModalOpen(false)} className="px-4 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-100 rounded-lg transition-colors">
+                <button type="button" onClick={() => setIsModalOpen(false)} className="px-4 py-2 text-xs font-semibold text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-colors">
                   Batal
                 </button>
-                <button type="submit" className="px-4 py-2 text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors">
+                <button type="submit" className="px-4 py-2 text-xs font-bold text-white bg-black hover:bg-slate-800 rounded-xl transition-colors cursor-pointer shadow-xs">
                   Simpan Kategori
                 </button>
               </div>
@@ -289,31 +289,31 @@ function MasterDataContent() {
       {confirmDelete.isOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" onClick={() => setConfirmDelete({ isOpen: false, id: '', name: '' })} />
-          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden relative z-10 animate-in zoom-in-95 duration-200">
+          <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-xl w-full max-w-md overflow-hidden relative z-10 animate-in zoom-in-95 duration-200 border border-slate-200 dark:border-slate-800">
             <div className="p-6">
-              <div className="flex items-center justify-center w-12 h-12 rounded-full bg-rose-100 mb-4 mx-auto">
-                <AlertTriangle className="text-rose-600" size={24} />
+              <div className="flex items-center justify-center w-12 h-12 rounded-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 mb-4 mx-auto">
+                <AlertTriangle className="text-black dark:text-white" size={24} />
               </div>
-              <h3 className="text-lg font-bold text-slate-800 text-center mb-2">
+              <h3 className="text-base font-extrabold text-slate-900 dark:text-white text-center mb-2">
                 Hapus Kategori
               </h3>
-              <p className="text-slate-500 text-sm text-center mb-6">
-                Yakin ingin menghapus kategori <span className="font-bold text-slate-700">"{confirmDelete.name}"</span>? 
-                Data yang terhubung mungkin akan terdampak (akan dikosongkan pada lowongan yang bersangkutan).
+              <p className="text-slate-500 dark:text-slate-400 text-xs text-center mb-6 font-medium">
+                Yakin ingin menghapus kategori <span className="font-bold text-slate-800 dark:text-slate-200">"{confirmDelete.name}"</span>? 
+                Data yang terhubung mungkin akan terdampak.
               </p>
               
               <div className="flex items-center gap-3">
                 <button
                   type="button"
                   onClick={() => setConfirmDelete({ isOpen: false, id: '', name: '' })}
-                  className="flex-1 px-4 py-2.5 rounded-lg border border-slate-200 text-slate-600 font-semibold text-sm hover:bg-slate-50 transition-colors"
+                  className="flex-1 px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 font-semibold text-xs hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
                 >
                   Batal
                 </button>
                 <button
                   type="button"
                   onClick={handleDelete}
-                  className="flex-1 px-4 py-2.5 rounded-lg text-white font-semibold text-sm bg-rose-500 hover:bg-rose-600 transition-colors shadow-sm"
+                  className="flex-1 px-4 py-2.5 rounded-xl text-white font-bold text-xs bg-rose-600 hover:bg-rose-700 transition-colors shadow-xs"
                 >
                   Ya, Hapus
                 </button>

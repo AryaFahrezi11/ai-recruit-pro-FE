@@ -419,9 +419,9 @@ export const dictionaries = {
         careerResources: 'Tips Karir',
       },
       header: {
-        portalName: 'Portal Kandidat',
+        portalName: 'Masuk ke Akun Pelamar',
         language: 'Bahasa',
-        forEmployers: 'Untuk Perusahaan',
+        forEmployers: 'Masuk sebagai Perusahaan',
       },
       profile: {
         manageProfile: 'Kelola Profil & CV',
@@ -627,7 +627,7 @@ export const dictionaries = {
         signIn: 'Masuk ke Akun',
         noAccount: 'Belum memiliki akun perusahaan?',
         registerNow: 'Daftarkan Perusahaan Anda',
-        applicantPortal: 'Login sebagai Kandidat',
+        applicantPortal: 'Masuk sebagai Pelamar',
         processing: 'Memproses...',
         footerText: '\u00a9 {year} AI-Recruit Pro. Akses Bisnis Terverifikasi.',
         errorInvalidEmail: 'Masukkan alamat email perusahaan yang valid.',
@@ -1059,7 +1059,7 @@ export const dictionaries = {
         careerResources: 'Career Tips',
       },
       header: {
-        portalName: 'Candidate Portal',
+        portalName: 'Applicant Portal',
         language: 'Language',
         forEmployers: 'For Employers',
       },

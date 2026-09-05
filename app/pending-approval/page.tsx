@@ -1,8 +1,8 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import Footer from '@/components/Footer';
 import Link from 'next/link';
+import Image from 'next/image';
 import { toast } from 'react-hot-toast';
 import { useRouter } from 'next/navigation';
 import { getApiUrl, getMediaUrl } from '@/lib/api';
@@ -10,7 +10,6 @@ import {
   Clock,
   AlertCircle,
   Building2,
-  User,
   CheckCircle2,
   Mail,
   Phone,
@@ -229,7 +228,7 @@ ${profileData?.profil?.hr_name || companyName}`;
             </p>
           </div>
 
-          {/* Conditional Alerts */}
+          {/* Conditional Banners */}
           {isApproved ? (
             <div className="p-5 rounded-2xl bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800 flex flex-col sm:flex-row items-center justify-between gap-4 text-emerald-900 dark:text-emerald-300 text-left">
               <div className="flex items-center gap-3">
@@ -243,7 +242,7 @@ ${profileData?.profil?.hr_name || companyName}`;
                 href="/dashboard"
                 className="shrink-0 px-6 py-2.5 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs sm:text-sm shadow-sm transition-all"
               >
-                Masuk ke Dashboard &rarr;
+                Buka Dashboard <ArrowRight size={14} />
               </Link>
             </div>
           ) : isRejected ? (
@@ -294,7 +293,7 @@ ${profileData?.profil?.hr_name || companyName}`;
                 href="/register?step=3"
                 className="shrink-0 px-6 py-2.5 rounded-full bg-amber-600 hover:bg-amber-700 text-white font-semibold text-xs sm:text-sm shadow-sm transition-all inline-flex items-center gap-2"
               >
-                <Edit size={16} /> Lengkapi Dokumen (Tahap 3)
+                <Edit size={14} /> Lengkapi Dokumen
               </Link>
             </div>
           ) : null}

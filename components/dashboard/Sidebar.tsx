@@ -64,8 +64,15 @@ export function Sidebar() {
       >
         <div className="p-5 overflow-y-auto custom-scrollbar flex-1 space-y-6">
           
-          <div className="flex items-center gap-2 mb-2 px-1 cursor-default">
-            <span className="font-bold text-xl tracking-tight text-[#0D3880] dark:text-white leading-none">
+          <div className="flex items-center gap-2.5 mb-2 px-1 cursor-default">
+            <Image
+              src="/Logo Ai Recruit Pro..png"
+              alt="AI-RecruitPro Logo"
+              width={44}
+              height={44}
+              className="h-10 w-auto object-contain shrink-0"
+            />
+            <span className="font-bold text-lg tracking-tight text-[#0D3880] dark:text-white leading-none">
               AI-RecruitPro
             </span>
           </div>

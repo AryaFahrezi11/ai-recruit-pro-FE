@@ -415,9 +415,17 @@ function LandingPageContent() {
                   window.scrollTo({ top: 0, behavior: 'smooth' });
                 }
               }}
-              className="flex items-center gap-2 group"
+              className="flex items-center gap-3 group"
             >
-              <span className="font-bold text-2xl tracking-tight text-slate-900 dark:text-white leading-none">
+              <Image
+                src="/Logo Ai Recruit Pro..png"
+                alt="AI-RecruitPro Logo"
+                width={70}
+                height={70}
+                className="h-13 sm:h-15 w-auto object-contain shrink-0 transition-transform group-hover:scale-105"
+                priority
+              />
+              <span className="font-extrabold text-lg sm:text-xl tracking-tight text-slate-900 dark:text-white leading-none">
                 AI-RecruitPro
               </span>
             </Link>
@@ -442,19 +450,11 @@ function LandingPageContent() {
 
           {/* Right Action Controls */}
           <div className="flex items-center gap-3 sm:gap-4">
-
-
-            <Link
-              href="/login"
-              className="hidden sm:inline-flex items-center gap-1.5 px-4 py-2 font-semibold text-sm text-slate-900 dark:text-white hover:bg-slate-100 dark:hover:bg-slate-800 rounded-md transition-colors"
-            >
-              {lang.companyPortal}
-            </Link>
-
             <Link
               href="/applicant/login"
               className="hidden sm:inline-flex px-5 py-2.5 bg-[#1A4B9F] hover:bg-[#1C41C5] text-white text-sm font-semibold rounded-md transition-colors items-center gap-1.5"
             >
+              <User size={16} />
               {lang.applicantPortal}
             </Link>
 
@@ -488,18 +488,10 @@ function LandingPageContent() {
 
             <div className="pt-4 border-t border-slate-100 dark:border-slate-800 flex flex-col gap-3 sm:hidden">
               <Link
-                href="/login"
-                className="w-full flex justify-center items-center gap-2 px-4 py-3 rounded-full border border-[#1A4B9F] dark:border-slate-400 text-sm font-bold text-slate-900 dark:text-white"
-              >
-                <Building2 size={16} />
-                {lang.companyPortal}
-              </Link>
-
-              <Link
                 href="/applicant/login"
                 className="w-full flex justify-center items-center gap-2 px-4 py-3 rounded-full bg-[#1A4B9F] hover:bg-[#133878] text-white text-sm font-bold shadow-md"
               >
-                <Users size={16} />
+                <User size={16} />
                 {lang.applicantPortal}
               </Link>
             </div>

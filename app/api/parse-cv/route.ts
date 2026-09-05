@@ -1,5 +1,4 @@
 import { NextResponse } from 'next/server';
-import pdfParse from 'pdf-parse';
 
 export async function POST(request: Request) {
   try {
@@ -14,9 +13,19 @@ export async function POST(request: Request) {
     const arrayBuffer = await file.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
 
-    // Extract text using pdf-parse
-    const pdfData = await pdfParse(buffer);
-    const rawText = pdfData.text || '';
+    // Dynamic import for pdf-parse
+    let pdfParse: any;
+    try {
+      pdfParse = require('pdf-parse');
+    } catch (e) {
+      console.warn('pdf-parse module unavailable');
+    }
+
+    let rawText = '';
+    if (pdfParse) {
+      const pdfData = await pdfParse(buffer);
+      rawText = pdfData.text || '';
+    }
 
     // Clean text for robust matching
     const noSpaceText = rawText.replace(/\s+/g, '');

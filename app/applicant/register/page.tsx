@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useTranslation } from '@/hooks/useTranslation';
 import Footer from '@/components/Footer';
 import Link from 'next/link';
+import Image from 'next/image';
 import { toast } from 'react-hot-toast';
 
 import {
@@ -220,13 +221,21 @@ export default function PelamarRegisterPage() {
 
       {/* Top Header */}
       <header className="py-6 px-6 sm:px-12 max-w-[1600px] w-full mx-auto flex items-center justify-between">
-        <Link href="/" className="flex items-center gap-2 group">
-          <div className="flex flex-col">
-            <span className="font-bold text-2xl tracking-tight text-slate-900 dark:text-white leading-none">
+        <Link href="/" className="flex items-center gap-3 group">
+          <Image
+            src="/Logo Ai Recruit Pro..png"
+            alt="AI-RecruitPro Logo"
+            width={70}
+            height={70}
+            className="h-13 sm:h-15 w-auto object-contain shrink-0 transition-transform group-hover:scale-105"
+            priority
+          />
+          <div className="flex flex-col justify-center">
+            <span className="font-extrabold text-lg sm:text-xl tracking-tight text-slate-900 dark:text-white leading-tight">
               AI-RecruitPro
             </span>
-            <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest mt-1">
-              {t.pelamar.header.portalName}
+            <span className="text-[10px] font-bold text-slate-400 dark:text-slate-400 uppercase tracking-widest mt-0.5">
+              Daftar Akun Pelamar
             </span>
           </div>
         </Link>
@@ -418,7 +427,7 @@ export default function PelamarRegisterPage() {
                 <span className="font-semibold text-slate-900 dark:text-white">{email}</span>
                 <button
                   type="button"
-                  onClick={() => { setStep(1); setOtpError(''); setResendSuccess(''); }}
+                  onClick={() => { setStep(1); setOtpError(''); }}
                   className="text-[#1A4B9F] dark:text-blue-400 hover:underline font-semibold text-xs ml-1"
                 >
                   (Ubah)
@@ -471,12 +480,6 @@ export default function PelamarRegisterPage() {
               {otpError && (
                 <div className="p-3 rounded-xl bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-300 text-xs font-medium text-center">
                   {otpError}
-                </div>
-              )}
-
-              {resendSuccess && (
-                <div className="p-3 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 text-emerald-600 dark:text-emerald-300 text-xs font-medium text-center">
-                  {resendSuccess}
                 </div>
               )}
 

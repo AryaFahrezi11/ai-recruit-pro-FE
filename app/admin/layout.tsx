@@ -4,6 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { useAppStore } from '@/lib/store/useAppStore';
 import Link from 'next/link';
+import Image from 'next/image';
 import { 
   LayoutDashboard, Users, ShieldCheck, LogOut, Settings, Bell, Search, Menu, X, Briefcase, Database, LineChart, FileText
 } from 'lucide-react';
@@ -65,27 +66,39 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       )}
 
       {/* 2. SIDEBAR: Gunakan sticky + h-screen agar terkunci rapat di kiri */}
-      <aside className={`fixed lg:sticky top-0 left-0 h-screen bg-[#0c2b3d] text-white w-64 shrink-0 transform transition-transform duration-300 z-50 ${
+      <aside className={`fixed lg:sticky top-0 left-0 h-screen bg-white dark:bg-slate-900 text-slate-900 dark:text-white border-r border-slate-200 dark:border-slate-800 w-64 shrink-0 transform transition-transform duration-300 z-50 ${
         isSidebarOpen ? 'translate-x-0' : '-translate-x-full'
       } lg:translate-x-0`}>
         <div className="h-full flex flex-col justify-between">
           
           {/* Top Section */}
           <div>
-            <div className="p-6 flex items-center justify-between border-b border-white/10">
-              <Link href="/admin/dashboard" className="flex items-center gap-3">
-                <div className="w-8 h-8 bg-blue-500 rounded-lg flex items-center justify-center font-bold text-white shadow-md">
-                  RP
+            <div className="p-5 flex items-center justify-between border-b border-slate-100 dark:border-slate-800">
+              <Link href="/admin/dashboard" className="flex items-center gap-3 group">
+                <Image
+                  src="/Logo Ai Recruit Pro..png"
+                  alt="AI-RecruitPro Logo"
+                  width={44}
+                  height={44}
+                  className="h-10 w-auto object-contain shrink-0"
+                  priority
+                />
+                <div className="flex flex-col justify-center">
+                  <span className="font-extrabold text-base tracking-tight text-slate-900 dark:text-white leading-tight">
+                    AI-RecruitPro
+                  </span>
+                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">
+                    Portal Admin
+                  </span>
                 </div>
-                <span className="font-bold text-lg tracking-tight">Admin<span className="text-blue-400">Portal</span></span>
               </Link>
-              <button onClick={() => setIsSidebarOpen(false)} className="lg:hidden text-slate-400 hover:text-white">
-                <X size={20} />
+              <button onClick={() => setIsSidebarOpen(false)} className="lg:hidden text-slate-400 hover:text-black dark:hover:text-white">
+                <X size={20} className="text-black dark:text-white" />
               </button>
             </div>
 
-            <div className="py-6 px-4 space-y-1">
-              <div className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-4 ml-2">Main Menu</div>
+            <div className="py-6 px-3 space-y-1">
+              <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-3 ml-2">Menu Utama</div>
               {navItems.map((item) => {
                 const isActive = pathname === item.href;
                 return (
@@ -93,13 +106,13 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                     key={item.href}
                     href={item.href}
                     onClick={() => setIsSidebarOpen(false)}
-                    className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all ${
+                    className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold transition-all ${
                       isActive 
-                        ? 'bg-blue-600/20 text-blue-400' 
-                        : 'text-slate-400 hover:bg-white/5 hover:text-slate-200'
+                        ? 'bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white font-extrabold shadow-2xs' 
+                        : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/50 hover:text-slate-900 dark:hover:text-white'
                     }`}
                   >
-                    <item.icon size={18} className={isActive ? 'text-blue-400' : 'text-slate-500'} />
+                    <item.icon size={18} className="text-black dark:text-white shrink-0" />
                     {item.label}
                   </Link>
                 );
@@ -108,34 +121,34 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           </div>
 
           {/* Bottom Section */}
-          <div className="p-4 border-t border-white/10 space-y-2">
+          <div className="p-3 border-t border-slate-100 dark:border-slate-800 space-y-1">
             <Link
               href="/admin/audit-logs"
-              className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors ${
+              className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold transition-colors ${
                 pathname === '/admin/audit-logs'
-                  ? 'bg-blue-600/10 text-blue-400'
-                  : 'text-slate-400 hover:text-slate-200 hover:bg-white/5'
+                  ? 'bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white font-extrabold'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-slate-800/50'
               }`}
             >
-              <FileText size={18} />
+              <FileText size={18} className="text-black dark:text-white shrink-0" />
               Catatan Sistem
             </Link>
             <Link
               href="/admin/settings"
-              className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors ${
+              className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold transition-colors ${
                 pathname === '/admin/settings'
-                  ? 'bg-blue-600/10 text-blue-400'
-                  : 'text-slate-400 hover:text-slate-200 hover:bg-white/5'
+                  ? 'bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white font-extrabold'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-slate-800/50'
               }`}
             >
-              <Settings size={18} />
+              <Settings size={18} className="text-black dark:text-white shrink-0" />
               Pengaturan Sistem
             </Link>
             <button
               onClick={() => setShowLogoutModal(true)}
-              className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-rose-400 hover:bg-rose-500/10 transition-colors w-full"
+              className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors w-full cursor-pointer"
             >
-              <LogOut size={18} />
+              <LogOut size={18} className="text-rose-600 shrink-0" />
               Keluar Sistem
             </button>
           </div>
@@ -171,16 +184,12 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
       {/* 3. AREA KONTEN UTAMA: Berikan h-screen dan overflow-y-auto di sini saja */}
       <main className="flex-1 flex flex-col h-screen min-w-0 overflow-hidden">
-        {/* Header (Sticky di Atas Konten) */}
-        <header className="h-16 shrink-0 bg-white border-b border-slate-200 flex items-center justify-between px-4 sm:px-6 z-30">
+        {/* Header (Sticky di Atas Konten - Mobile Only Toggle) */}
+        <header className="h-14 shrink-0 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between px-4 sm:px-6 z-30 lg:hidden">
           <div className="flex items-center gap-4">
             <button onClick={() => setIsSidebarOpen(true)} className="lg:hidden text-slate-500 hover:text-slate-700">
-              <Menu size={24} />
+              <Menu size={24} className="text-black dark:text-white" />
             </button>
-            <div className="relative hidden md:block">
-              <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-              <input type="text" placeholder="Cari data..." className="pl-9 pr-4 py-1.5 bg-slate-100 border-none rounded-full text-sm focus:ring-2 focus:ring-blue-500/20 outline-none w-64" />
-            </div>
           </div>
         </header>
 
