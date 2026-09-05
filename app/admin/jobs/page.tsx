@@ -326,16 +326,6 @@ function AdminJobsContent() {
               <Eye size={15} />
             </Link>
 
-            {/* View Public Page */}
-            <Link
-              href={`/jobs/${job.id}`}
-              target="_blank"
-              title="Buka Halaman Publik"
-              className="p-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-black dark:text-white hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors border border-slate-200 dark:border-slate-700"
-            >
-              <ExternalLink size={15} />
-            </Link>
-
             {/* Toggle Status */}
             <button
               onClick={() => openConfirmDialog(job)}
