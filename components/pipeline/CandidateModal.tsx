@@ -72,21 +72,21 @@ function formatDateIndo(dateStr: string | null | undefined): string {
 // Step Indicator Component
 function StepIndicator({ currentStage, isInterviewLanjutan, t }: { currentStage?: string; isInterviewLanjutan?: boolean; t: ReturnType<typeof import('@/hooks/useTranslation').useTranslation>['t'] }) {
   const steps = [
-    { key: 'upload_cv', label: t.modal.stepUploadCV, icon: <Upload size={14} /> },
-    { key: 'cv_screening', label: t.modal.stepCVScreening, icon: <FileText size={14} /> },
-    { key: 'interview', label: t.modal.stepInterview, icon: <Video size={14} /> },
-    { key: 'ai_analysis', label: t.modal.stepAIAnalysis, icon: <Brain size={14} /> },
+    { key: 'upload_cv', label: t.modal.stepUploadCV, icon: <Upload size={13} /> },
+    { key: 'cv_screening', label: t.modal.stepCVScreening, icon: <FileText size={13} /> },
+    { key: 'interview', label: t.modal.stepInterview, icon: <Video size={13} /> },
+    { key: 'ai_analysis', label: t.modal.stepAIAnalysis, icon: <Brain size={13} /> },
     { 
       key: 'human_validation', 
-      label: isInterviewLanjutan ? '5. Validasi HR (Wawancara Lanjutan)' : (t.modal.stepValidation || '5. Validasi HR'), 
-      icon: <UserCheck size={14} /> 
+      label: isInterviewLanjutan ? `${t.modal.stepValidation || 'Validasi HR'} (Wawancara)` : (t.modal.stepValidation || 'Validasi HR'), 
+      icon: <UserCheck size={13} /> 
     },
   ];
 
   const currentIndex = steps.findIndex(s => s.key === currentStage);
 
   return (
-    <div className="flex items-center justify-between px-6 py-3 bg-muted/30 border-b border-border">
+    <div className="flex items-center justify-between px-6 py-3 bg-muted/20 border-b border-border/80 overflow-x-auto no-scrollbar gap-2">
       {steps.map((step, index) => {
         const isCompleted = index < currentIndex;
         const isActive = index === currentIndex;
@@ -94,23 +94,25 @@ function StepIndicator({ currentStage, isInterviewLanjutan, t }: { currentStage?
 
         return (
           <React.Fragment key={step.key}>
-            <div className="flex items-center gap-2">
-              <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-all ${isCompleted
+            <div className="flex items-center gap-2 shrink-0">
+              <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-all shadow-xs ${isCompleted
                 ? 'bg-emerald-500 text-white'
                 : isActive
-                  ? 'bg-primary text-primary-foreground ring-2 ring-primary/30'
-                  : 'bg-muted text-muted-foreground'
+                  ? 'bg-primary text-primary-foreground ring-4 ring-primary/20 shadow-sm'
+                  : 'bg-muted text-muted-foreground border border-border/40'
                 }`}>
-                {isCompleted ? <Check size={14} /> : step.icon}
+                {isCompleted ? <Check size={13} strokeWidth={2.5} /> : step.icon}
               </div>
-              <span className={`text-xs font-medium hidden sm:inline ${isActive ? 'text-primary font-semibold' : isPending ? 'text-muted-foreground opacity-60' : 'text-foreground'
-                }`}>
+              <span className={`text-xs font-medium whitespace-nowrap hidden sm:inline ${
+                isActive ? 'text-primary font-semibold' : isPending ? 'text-muted-foreground/60' : 'text-foreground'
+              }`}>
                 {step.label}
               </span>
             </div>
             {index < steps.length - 1 && (
-              <div className={`flex-1 h-0.5 mx-2 rounded-full transition-all ${isCompleted ? 'bg-emerald-500' : 'bg-muted'
-                }`} />
+              <div className={`flex-1 min-w-3 h-0.5 mx-1.5 sm:mx-3 rounded-full transition-all ${
+                isCompleted ? 'bg-emerald-500' : 'bg-border/60'
+              }`} />
             )}
           </React.Fragment>
         );
@@ -350,14 +352,15 @@ export function CandidateModal({ candidate, onClose, onStatusUpdated }: Candidat
 
   // Define tabs with required min stage index
   const modalTabs = [
-    { id: 'upload', label: t.modal.detailPelamar, icon: <Upload size={15} />, minStageIndex: 0 },
-    { id: 'cv_analysis', label: t.modal.cvAnalysis, icon: <FileText size={15} />, minStageIndex: 1 },
-    { id: 'interview_status', label: t.modal.statusVideoWawancara, icon: <Video size={15} />, minStageIndex: 2 },
-    { id: 'video_analysis', label: t.modal.videoAnalysis, icon: <BarChart3 size={15} />, minStageIndex: 3 },
+    { id: 'upload', label: t.modal.detailPelamar, icon: <Upload size={14} />, minStageIndex: 0 },
+    { id: 'cv_analysis', label: t.modal.cvAnalysis, icon: <FileText size={14} />, minStageIndex: 1 },
+    { id: 'interview_status', label: t.modal.statusVideoWawancara, icon: <Video size={14} />, minStageIndex: 2 },
+    { id: 'video_analysis', label: t.modal.videoAnalysis, icon: <BarChart3 size={14} />, minStageIndex: 3 },
     { 
       id: 'full_validation', 
-      label: isInterviewLanjutan ? 'Validasi HR (Wawancara Lanjutan)' : (t.modal.humanValidation || 'Validasi HR'), 
-      icon: <UserCheck size={15} />, 
+      label: t.modal.humanValidation || 'Validasi HR', 
+      badge: isInterviewLanjutan ? 'Wawancara' : undefined,
+      icon: <UserCheck size={14} />, 
       minStageIndex: 4 
     },
   ];
@@ -415,8 +418,8 @@ export function CandidateModal({ candidate, onClose, onStatusUpdated }: Candidat
         <StepIndicator currentStage={stage} isInterviewLanjutan={isInterviewLanjutan} t={t} />
 
         {/* Header Navigation Tabs — ONLY allow previous & current stage tabs */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-border bg-muted/30">
-          <div className="flex gap-2 sm:gap-4 overflow-x-auto custom-scrollbar">
+        <div className="flex items-center justify-between px-6 border-b border-border bg-card/60 backdrop-blur-xs gap-4">
+          <div className="flex-1 min-w-0 flex items-center gap-1 sm:gap-2 overflow-x-auto no-scrollbar -mb-px">
             {modalTabs.map((tab) => {
               const isAccessible = stageIndex >= tab.minStageIndex || (tab.id === 'full_validation' && (stageIndex >= 4 || isVideoAnalysisCompleted));
 
@@ -424,7 +427,7 @@ export function CandidateModal({ candidate, onClose, onStatusUpdated }: Candidat
                 return (
                   <div
                     key={tab.id}
-                    className="flex items-center gap-1.5 px-3 py-2 text-xs font-medium text-muted-foreground/40 cursor-not-allowed opacity-50 select-none whitespace-nowrap"
+                    className="flex items-center gap-1.5 px-3 py-3.5 text-xs font-medium text-muted-foreground/40 cursor-not-allowed opacity-50 select-none whitespace-nowrap shrink-0"
                     title={t.modal.tahapBelumDicapai}
                   >
                     <Lock size={12} />
@@ -433,17 +436,29 @@ export function CandidateModal({ candidate, onClose, onStatusUpdated }: Candidat
                 );
               }
 
+              const isActive = activeTab === tab.id;
+
               return (
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
-                  className={`flex items-center gap-2 pb-3 -mb-[17px] font-semibold text-xs sm:text-sm transition-colors border-b-2 whitespace-nowrap ${activeTab === tab.id
-                    ? 'border-primary text-primary'
-                    : 'border-transparent text-muted-foreground hover:text-foreground'
-                    }`}
+                  className={`flex items-center gap-2 px-2.5 sm:px-3 py-3.5 font-semibold text-xs sm:text-sm transition-all border-b-2 whitespace-nowrap shrink-0 cursor-pointer ${
+                    isActive
+                      ? 'border-primary text-primary'
+                      : 'border-transparent text-muted-foreground hover:text-foreground hover:border-border/60'
+                  }`}
                 >
                   {tab.icon}
-                  {tab.label}
+                  <span>{tab.label}</span>
+                  {tab.badge && (
+                    <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-bold transition-colors ${
+                      isActive 
+                        ? 'bg-primary/15 text-primary' 
+                        : 'bg-muted text-muted-foreground'
+                    }`}>
+                      {tab.badge}
+                    </span>
+                  )}
                 </button>
               );
             })}
@@ -451,9 +466,10 @@ export function CandidateModal({ candidate, onClose, onStatusUpdated }: Candidat
 
           <button
             onClick={onClose}
-            className="p-1 rounded-md text-muted-foreground hover:bg-muted hover:text-foreground transition-colors ml-4"
+            aria-label="Tutup modal"
+            className="shrink-0 p-1.5 -mr-1 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors border border-border/50 shadow-xs cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary/20"
           >
-            <X size={20} />
+            <X size={18} />
           </button>
         </div>
 
