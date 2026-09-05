@@ -6,7 +6,7 @@ import { fetchAuth } from '@/lib/api/auth';
 import { toast } from 'react-hot-toast';
 
 export default function AdminUsersPage() {
-  const [users, setUsers] = useState([]);
+  const [users, setUsers] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [filterRole, setFilterRole] = useState('');
 
@@ -33,8 +33,21 @@ export default function AdminUsersPage() {
       const url = filterRole ? `/api/admin/users?role=${filterRole}` : '/api/admin/users';
       const res = await fetchAuth(url, { method: 'GET' });
       const data = await res.json();
-      setUsers(data);
+      
+      if (Array.isArray(data)) {
+        setUsers(data);
+      } else if (data && Array.isArray(data.users)) {
+        setUsers(data.users);
+      } else if (data && Array.isArray(data.data)) {
+        setUsers(data.data);
+      } else {
+        setUsers([]);
+        if (!res.ok && data?.detail) {
+          toast.error(data.detail);
+        }
+      }
     } catch (error) {
+      setUsers([]);
       toast.error('Gagal memuat data pengguna');
     } finally {
       setIsLoading(false);
@@ -223,7 +236,7 @@ export default function AdminUsersPage() {
                 <tr>
                   <td colSpan={6} className="px-6 py-8 text-center text-slate-400 font-medium">Memuat data...</td>
                 </tr>
-              ) : users.length === 0 ? (
+              ) : !Array.isArray(users) || users.length === 0 ? (
                 <tr>
                   <td colSpan={6} className="px-6 py-8 text-center text-slate-400 font-medium">Tidak ada pengguna ditemukan.</td>
                 </tr>
