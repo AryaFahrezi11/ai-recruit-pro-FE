@@ -24,7 +24,8 @@ import {
   Briefcase, 
   GraduationCap,
   Clock,
-  ChevronRight
+  ChevronRight,
+  UserCheck
 } from 'lucide-react';
 import { fetchAuth } from '@/lib/api/auth';
 import { api, parseErrorMessage } from '@/lib/api';
@@ -57,6 +58,8 @@ interface CandidateData {
   isPolling?: boolean;
   pollProgress?: number;
   pollMessage?: string;
+  interviewDetails?: any;
+  catatanPerusahaan?: string;
 }
 
 function formatDate(dateStr: string | null | undefined): string {
@@ -229,6 +232,7 @@ export default function PipelinePage() {
     else if (s === 'human_validation' || s === 'interview_lanjutan' || s === 'hired' || s === 'rejected') currentStage = 'human_validation';
 
     setSelectedCandidate({
+
       id: app.id,
       applicationId: app.id,
       name: app.pelamar?.nama_lengkap || 'Kandidat',
@@ -248,6 +252,8 @@ export default function PipelinePage() {
       isPolling: pollingId === app.id,
       pollProgress: pollingId === app.id ? pollProgress : undefined,
       pollMessage: pollingId === app.id ? pollMessage : undefined,
+      interviewDetails: app.interview_details || (app as any).interviewDetails,
+      catatanPerusahaan: app.catatan_perusahaan || (app as any).catatanPerusahaan,
     });
   };
 
@@ -299,6 +305,11 @@ export default function PipelinePage() {
 
   // Columns for DataTable
   const tableColumns: ColumnDef<any>[] = [
+    {
+      key: 'no',
+      header: 'No',
+      render: (app, index) => index + 1
+    },
     {
       key: 'kandidat',
       header: 'Kandidat',
@@ -396,11 +407,20 @@ export default function PipelinePage() {
           );
         }
         if (s === 'interview_lanjutan') {
+          const intv = app.interview_details;
           return (
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-bold bg-indigo-100 text-indigo-800 dark:bg-indigo-900/60 dark:text-indigo-200 border border-indigo-300 dark:border-indigo-700">
-              <Calendar size={12} className="text-indigo-600 dark:text-indigo-400" />
-              Wawancara Lanjutan
-            </span>
+            <div className="space-y-1">
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-bold bg-indigo-100 text-indigo-800 dark:bg-indigo-900/60 dark:text-indigo-200 border border-indigo-300 dark:border-indigo-700">
+                <Calendar size={12} className="text-indigo-600 dark:text-indigo-400" />
+                5. Validasi HR (Wawancara Lanjutan)
+              </span>
+              {intv?.tanggal && (
+                <div className="text-[10px] text-muted-foreground flex items-center gap-1 pl-1">
+                  <Clock size={10} />
+                  <span>{formatDate(intv.tanggal)} {intv.waktu ? `• ${intv.waktu} WIB` : ''}</span>
+                </div>
+              )}
+            </div>
           );
         }
         if (s === 'hired' || s === 'accepted') {
@@ -420,9 +440,15 @@ export default function PipelinePage() {
           );
         }
         return (
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-bold bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
-            5. Validasi HR
-          </span>
+          <div className="space-y-1">
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-bold bg-slate-100 text-slate-800 dark:bg-slate-800 dark:text-slate-200 border border-slate-300 dark:border-slate-700">
+              <UserCheck size={12} className="text-slate-600 dark:text-slate-400" />
+              5. Validasi HR
+            </span>
+            <span className="block text-[10px] text-muted-foreground pl-1 font-medium">
+              Menunggu Keputusan HR
+            </span>
+          </div>
         );
       }
     },
@@ -620,8 +646,8 @@ export default function PipelinePage() {
                 <option value="cv_screening">2. CV Screening AI</option>
                 <option value="virtual_interview">3. Wawancara Video</option>
                 <option value="video_analysis">4. Analisis AI Video</option>
-                <option value="human_validation">5. Validasi HR</option>
-                <option value="interview_lanjutan">Wawancara Lanjutan</option>
+                <option value="human_validation">5. Validasi HR (Semua)</option>
+                <option value="interview_lanjutan">5. Validasi HR (Wawancara Lanjutan)</option>
                 <option value="hired">Diterima (Hired)</option>
                 <option value="rejected">Ditolak (Rejected)</option>
               </select>
@@ -777,6 +803,9 @@ export default function PipelinePage() {
                   emotionalIntelligence: Math.round(parsePct(appAi.dimensi_psikologis['Emotional Intelligent'])),
                 } : undefined;
 
+                const isIntvLanjutan = app.status === 'interview_lanjutan';
+                const intv = app.interview_details;
+
                 return (
                   <CandidateCard
                     key={app.id}
@@ -785,7 +814,18 @@ export default function PipelinePage() {
                     appliedJob={app.job?.judul_posisi}
                     stage="human_validation"
                     status="needs_approval"
-                    timeInfo={app.status === 'interview_lanjutan' ? 'Wawancara Dijadwalkan' : 'Menunggu Keputusan'}
+                    timeInfo={
+                      isIntvLanjutan
+                        ? (intv?.tanggal ? `🗓️ ${formatDate(intv.tanggal)}` : 'Wawancara Terjadwal')
+                        : 'Menunggu Keputusan'
+                    }
+                    customActions={
+                      isIntvLanjutan ? (
+                        <span className="text-[9px] px-2 py-0.5 rounded bg-indigo-50 text-indigo-700 dark:bg-indigo-950/50 dark:text-indigo-300 font-bold border border-indigo-200 dark:border-indigo-800 flex items-center gap-1">
+                          <Calendar size={10} /> Wawancara Lanjutan
+                        </span>
+                      ) : undefined
+                    }
                     videoScores={dynamicVideoScores}
                     onClick={() => openCandidateModal(app)}
                   />

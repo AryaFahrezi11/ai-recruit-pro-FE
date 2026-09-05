@@ -9,7 +9,7 @@ import {
   Check, Lightbulb, FileText, Video, BarChart3,
   Upload, Brain, UserCheck, Scan, Download, ExternalLink,
   Clock, AlertCircle, Sparkles, Briefcase, Mail, Phone, Lock, Archive, GraduationCap, Building2, ArrowRight,
-  HelpCircle, Calendar, Send
+  HelpCircle, Calendar, Send, Edit3, Copy, MapPin
 } from 'lucide-react';
 import { fetchAuth } from '@/lib/api/auth';
 import { ParseSkills } from '@/components/ui/ParseSkills';
@@ -27,7 +27,7 @@ interface CandidateModalProps {
     education?: string;
     university?: string;
     stage?: 'upload_cv' | 'cv_screening' | 'interview' | 'ai_analysis' | 'human_validation' | string;
-    status?: 'pending' | 'processing' | 'video_uploaded' | 'awaiting_video' | 'needs_approval' | string;
+    status?: 'pending' | 'processing' | 'video_uploaded' | 'awaiting_video' | 'needs_approval' | 'interview_lanjutan' | 'hired' | 'rejected' | string;
     cvScore?: number;
     videoUploaded?: boolean;
     videoScores?: {
@@ -46,6 +46,8 @@ interface CandidateModalProps {
     isPolling?: boolean;
     pollProgress?: number;
     pollMessage?: string;
+    interviewDetails?: any;
+    catatanPerusahaan?: string;
   };
   onClose: () => void;
   onStatusUpdated?: () => void;
@@ -53,14 +55,32 @@ interface CandidateModalProps {
 
 const STAGE_ORDER = ['upload_cv', 'cv_screening', 'interview', 'ai_analysis', 'human_validation'];
 
+function formatDateIndo(dateStr: string | null | undefined): string {
+  if (!dateStr) return '-';
+  try {
+    return new Date(dateStr).toLocaleDateString('id-ID', {
+      weekday: 'long',
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric'
+    });
+  } catch {
+    return dateStr;
+  }
+}
+
 // Step Indicator Component
-function StepIndicator({ currentStage, t }: { currentStage?: string; t: ReturnType<typeof import('@/hooks/useTranslation').useTranslation>['t'] }) {
+function StepIndicator({ currentStage, isInterviewLanjutan, t }: { currentStage?: string; isInterviewLanjutan?: boolean; t: ReturnType<typeof import('@/hooks/useTranslation').useTranslation>['t'] }) {
   const steps = [
     { key: 'upload_cv', label: t.modal.stepUploadCV, icon: <Upload size={14} /> },
     { key: 'cv_screening', label: t.modal.stepCVScreening, icon: <FileText size={14} /> },
     { key: 'interview', label: t.modal.stepInterview, icon: <Video size={14} /> },
     { key: 'ai_analysis', label: t.modal.stepAIAnalysis, icon: <Brain size={14} /> },
-    { key: 'human_validation', label: t.modal.stepValidation, icon: <UserCheck size={14} /> },
+    { 
+      key: 'human_validation', 
+      label: isInterviewLanjutan ? '5. Validasi HR (Wawancara Lanjutan)' : (t.modal.stepValidation || '5. Validasi HR'), 
+      icon: <UserCheck size={14} /> 
+    },
   ];
 
   const currentIndex = steps.findIndex(s => s.key === currentStage);
@@ -103,17 +123,30 @@ export function CandidateModal({ candidate, onClose, onStatusUpdated }: Candidat
   const [decisionModal, setDecisionModal] = useState<'none' | 'interview_user' | 'reject' | 'hire'>('none');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  const isInterviewLanjutan = candidate.status === 'interview_lanjutan' || !!candidate.interviewDetails;
+  const interviewData = candidate.interviewDetails;
+
   // Wawancara Lanjutan form
   const getDefaultDate = () => {
     const d = new Date();
     d.setDate(d.getDate() + 1);
     return d.toISOString().split('T')[0];
   };
-  const [intvType, setIntvType] = useState<'online' | 'offline'>('online');
-  const [intvDate, setIntvDate] = useState<string>(getDefaultDate());
-  const [intvTime, setIntvTime] = useState('14:00');
-  const [intvLocationUrl, setIntvLocationUrl] = useState('https://meet.google.com/');
-  const [intvNotes, setIntvNotes] = useState('Mohon hadir tepat waktu dan siapkan resume portofolio.');
+  const [intvType, setIntvType] = useState<'online' | 'offline'>(interviewData?.tipe || 'online');
+  const [intvDate, setIntvDate] = useState<string>(interviewData?.tanggal || getDefaultDate());
+  const [intvTime, setIntvTime] = useState(interviewData?.waktu || '14:00');
+  const [intvLocationUrl, setIntvLocationUrl] = useState(interviewData?.lokasi_atau_link || 'https://meet.google.com/');
+  const [intvNotes, setIntvNotes] = useState(interviewData?.catatan || 'Mohon hadir tepat waktu dan siapkan resume portofolio.');
+
+  useEffect(() => {
+    if (candidate.interviewDetails) {
+      setIntvType(candidate.interviewDetails.tipe || 'online');
+      setIntvDate(candidate.interviewDetails.tanggal || getDefaultDate());
+      setIntvTime(candidate.interviewDetails.waktu || '14:00');
+      setIntvLocationUrl(candidate.interviewDetails.lokasi_atau_link || 'https://meet.google.com/');
+      setIntvNotes(candidate.interviewDetails.catatan || 'Mohon hadir tepat waktu dan siapkan resume portofolio.');
+    }
+  }, [candidate.interviewDetails]);
 
   // Tolak form
   const [rejectReasonPreset, setRejectReasonPreset] = useState('Kualifikasi pengalaman teknis belum memenuhi kriteria minimum yang dibutuhkan saat ini.');
@@ -321,7 +354,12 @@ export function CandidateModal({ candidate, onClose, onStatusUpdated }: Candidat
     { id: 'cv_analysis', label: t.modal.cvAnalysis, icon: <FileText size={15} />, minStageIndex: 1 },
     { id: 'interview_status', label: t.modal.statusVideoWawancara, icon: <Video size={15} />, minStageIndex: 2 },
     { id: 'video_analysis', label: t.modal.videoAnalysis, icon: <BarChart3 size={15} />, minStageIndex: 3 },
-    { id: 'full_validation', label: t.modal.humanValidation, icon: <UserCheck size={15} />, minStageIndex: 4 },
+    { 
+      id: 'full_validation', 
+      label: isInterviewLanjutan ? 'Validasi HR (Wawancara Lanjutan)' : (t.modal.humanValidation || 'Validasi HR'), 
+      icon: <UserCheck size={15} />, 
+      minStageIndex: 4 
+    },
   ];
 
   const safeEmailName = (candidate.name || 'candidate').toLowerCase().replaceAll(' ', '.');
@@ -374,7 +412,7 @@ export function CandidateModal({ candidate, onClose, onStatusUpdated }: Candidat
         )}
 
         {/* Flowchart Step Indicator */}
-        <StepIndicator currentStage={stage} t={t} />
+        <StepIndicator currentStage={stage} isInterviewLanjutan={isInterviewLanjutan} t={t} />
 
         {/* Header Navigation Tabs — ONLY allow previous & current stage tabs */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-border bg-muted/30">
@@ -1162,9 +1200,56 @@ export function CandidateModal({ candidate, onClose, onStatusUpdated }: Candidat
               <div>
                 <h2 className="text-xl font-bold mb-1 flex items-center gap-2">
                   <UserCheck size={22} className="text-primary" />
-                  {t.modal.semuaHasilAI}
+                  {isInterviewLanjutan ? '5. Validasi HR (Wawancara Lanjutan)' : (t.modal.semuaHasilAI || '5. Validasi HR & Keputusan')}
                 </h2>
+                <p className="text-xs text-muted-foreground">
+                  {isInterviewLanjutan 
+                    ? 'Kandidat sedang dalam tahap wawancara lanjutan bersama HR/User. Tinjau detail pelaksanaan dan tentukan keputusan kelulusan akhir.'
+                    : 'Evaluasi menyeluruh berkas CV, hasil wawancara AI, dan tentukan langkah seleksi berikutnya.'}
+                </p>
               </div>
+
+              {/* Alert Callout jika Sedang Wawancara Lanjutan */}
+              {isInterviewLanjutan && (
+                <div className="p-4 bg-indigo-50/80 dark:bg-indigo-950/40 border border-indigo-200 dark:border-indigo-800 rounded-xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 animate-in fade-in shadow-xs">
+                  <div className="flex items-start gap-3">
+                    <div className="w-9 h-9 rounded-xl bg-indigo-600 text-white flex items-center justify-center shrink-0 shadow-xs mt-0.5">
+                      <Calendar size={18} />
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <h4 className="font-extrabold text-sm text-indigo-950 dark:text-indigo-200">
+                          Tahap 5: Validasi HR (Wawancara Lanjutan)
+                        </h4>
+                        <span className="px-2 py-0.5 text-[10px] font-bold rounded-full bg-indigo-200 text-indigo-800 dark:bg-indigo-900/80 dark:text-indigo-300 border border-indigo-300 dark:border-indigo-700">
+                          🗓️ Jadwal Aktif
+                        </span>
+                      </div>
+                      <p className="text-xs text-indigo-900/80 dark:text-indigo-300/80 mt-1">
+                        Kandidat telah dijadwalkan wawancara pada <strong>{formatDateIndo(interviewData?.tanggal)} • {interviewData?.waktu || '-'} WIB</strong> ({interviewData?.tipe === 'offline' ? 'Tatap Muka di Kantor' : 'Online via Google Meet'}).
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 self-end sm:self-auto shrink-0">
+                    <button
+                      type="button"
+                      onClick={() => setDecisionModal('hire')}
+                      className="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs rounded-xl transition-all shadow-xs flex items-center gap-1.5 active:scale-95 cursor-pointer"
+                    >
+                      <CheckCircle2 size={14} />
+                      Terima (Hired)
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setDecisionModal('reject')}
+                      className="px-3.5 py-2 bg-rose-600 hover:bg-rose-700 text-white font-extrabold text-xs rounded-xl transition-all shadow-xs flex items-center gap-1.5 active:scale-95 cursor-pointer"
+                    >
+                      <XCircle size={14} />
+                      Tolak
+                    </button>
+                  </div>
+                </div>
+              )}
 
               {/* Overview Summary Bar */}
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -1443,37 +1528,166 @@ export function CandidateModal({ candidate, onClose, onStatusUpdated }: Candidat
                         ))}
                       </div>
                     </div>
-                    {/* Decision Buttons (Terima, Tolak, Wawancara Langsung) */}
-                    <div className="space-y-2 pt-4 border-t border-border/70">
-                      <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
-                        Keputusan Akhir HR
-                      </p>
-                      <div className="flex gap-2">
-                        <button
-                          type="button"
-                          onClick={() => setDecisionModal('hire')}
-                          className="flex-1 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-lg text-xs transition-colors flex items-center justify-center gap-1.5 shadow-sm active:scale-95 cursor-pointer"
-                        >
-                          <CheckCircle2 size={16} />
-                          Terima Kandidat
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setDecisionModal('reject')}
-                          className="flex-1 py-2.5 bg-rose-600 hover:bg-rose-700 text-white font-semibold rounded-lg text-xs transition-colors flex items-center justify-center gap-1.5 shadow-sm active:scale-95 cursor-pointer"
-                        >
-                          <XCircle size={16} />
-                          Tolak Lamaran
-                        </button>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => setDecisionModal('interview_user')}
-                        className="w-full py-2.5 bg-indigo-50 dark:bg-indigo-950/40 border border-indigo-200 dark:border-indigo-800 hover:bg-indigo-100 dark:hover:bg-indigo-950/70 text-indigo-700 dark:text-indigo-300 font-semibold text-xs rounded-lg transition-colors flex items-center justify-center gap-1.5 active:scale-98 shadow-2xs cursor-pointer"
-                      >
-                        <Calendar size={15} />
-                        Jadwalkan Wawancara Tatap Muka / Langsung
-                      </button>
+                    {/* Keputusan Akhir HR & Detail Wawancara Lanjutan */}
+                    <div className="space-y-3 pt-4 border-t border-border/70">
+                      {isInterviewLanjutan ? (
+                        /* DETAIL KHUSUS: WAWANCARA LANJUTAN TERJADWAL */
+                        <div className="p-4 bg-indigo-50/70 dark:bg-indigo-950/40 border border-indigo-200 dark:border-indigo-800 rounded-xl space-y-3">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                              <div className="w-7 h-7 rounded-lg bg-indigo-600 text-white flex items-center justify-center shadow-xs">
+                                <Calendar size={14} />
+                              </div>
+                              <div>
+                                <h4 className="font-extrabold text-xs text-indigo-950 dark:text-indigo-200">
+                                  Validasi HR: Detail Wawancara Lanjutan
+                                </h4>
+                                <span className="text-[10px] text-indigo-600 dark:text-indigo-400 font-semibold flex items-center gap-1">
+                                  <span className="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-pulse" />
+                                  Menunggu Pelaksanaan Sesi Wawancara
+                                </span>
+                              </div>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                if (interviewData) {
+                                  setIntvType(interviewData.tipe || 'online');
+                                  setIntvDate(interviewData.tanggal || getDefaultDate());
+                                  setIntvTime(interviewData.waktu || '14:00');
+                                  setIntvLocationUrl(interviewData.lokasi_atau_link || '');
+                                  setIntvNotes(interviewData.catatan || '');
+                                }
+                                setDecisionModal('interview_user');
+                              }}
+                              className="text-[11px] font-bold text-indigo-700 dark:text-indigo-300 hover:underline flex items-center gap-1 cursor-pointer bg-white dark:bg-slate-900 px-2.5 py-1 rounded-lg border border-indigo-200 dark:border-indigo-800 shadow-2xs"
+                            >
+                              <Edit3 size={11} /> Ubah Jadwal
+                            </button>
+                          </div>
+
+                          {/* Detail Info Card */}
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs bg-white dark:bg-slate-900 p-3 rounded-lg border border-indigo-100 dark:border-indigo-900/60 shadow-2xs">
+                            <div>
+                              <span className="text-[10px] text-muted-foreground block font-medium">Jadwal Pelaksanaan:</span>
+                              <span className="font-bold text-foreground flex items-center gap-1 mt-0.5 text-[11px]">
+                                <Clock size={12} className="text-indigo-600" />
+                                {formatDateIndo(interviewData?.tanggal)} • {interviewData?.waktu || '-'} WIB
+                              </span>
+                            </div>
+                            <div>
+                              <span className="text-[10px] text-muted-foreground block font-medium">Metode Pertemuan:</span>
+                              <span className="font-bold text-foreground flex items-center gap-1 mt-0.5 text-[11px]">
+                                {interviewData?.tipe === 'offline' ? (
+                                  <>🏢 Tatap Muka di Kantor</>
+                                ) : (
+                                  <>🌐 Online (Google Meet / Zoom)</>
+                                )}
+                              </span>
+                            </div>
+                            <div className="sm:col-span-2 pt-1 border-t border-border/40">
+                              <span className="text-[10px] text-muted-foreground block font-medium">
+                                {interviewData?.tipe === 'offline' ? 'Lokasi / Ruangan Kantor:' : 'Tautan Ruang Meeting:'}
+                              </span>
+                              {interviewData?.tipe === 'offline' ? (
+                                <span className="font-medium text-foreground block text-xs mt-0.5">
+                                  {interviewData?.lokasi_atau_link || '-'}
+                                </span>
+                              ) : (
+                                <div className="flex items-center gap-2 mt-0.5">
+                                  <a
+                                    href={interviewData?.lokasi_atau_link || '#'}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="font-bold text-indigo-600 dark:text-indigo-400 hover:underline flex items-center gap-1 text-xs truncate max-w-xs"
+                                  >
+                                    <ExternalLink size={12} />
+                                    {interviewData?.lokasi_atau_link || 'https://meet.google.com'}
+                                  </a>
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      if (interviewData?.lokasi_atau_link) {
+                                        navigator.clipboard.writeText(interviewData.lokasi_atau_link);
+                                        toast.success('Tautan Google Meet disalin!');
+                                      }
+                                    }}
+                                    className="px-2 py-0.5 text-[10px] font-bold rounded bg-muted hover:bg-muted/80 text-foreground cursor-pointer border border-border flex items-center gap-1"
+                                  >
+                                    <Copy size={10} /> Salin
+                                  </button>
+                                </div>
+                              )}
+                            </div>
+                            {interviewData?.catatan && (
+                              <div className="sm:col-span-2 pt-1 border-t border-border/40">
+                                <span className="text-[10px] text-muted-foreground block font-medium">Catatan / Arahan Tim HR:</span>
+                                <p className="text-[11px] text-muted-foreground mt-0.5 italic">
+                                  "{interviewData.catatan}"
+                                </p>
+                              </div>
+                            )}
+                          </div>
+
+                          {/* Tombol Keputusan Terima / Tolak setelah wawancara lanjutan */}
+                          <div className="space-y-1.5 pt-1">
+                            <span className="text-[10px] font-bold text-indigo-950 dark:text-indigo-300 uppercase tracking-wider block">
+                              Keputusan Akhir Hasil Wawancara Lanjutan:
+                            </span>
+                            <div className="flex gap-2">
+                              <button
+                                type="button"
+                                onClick={() => setDecisionModal('hire')}
+                                className="flex-1 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-lg text-xs transition-colors flex items-center justify-center gap-1.5 shadow-sm active:scale-95 cursor-pointer"
+                              >
+                                <CheckCircle2 size={15} />
+                                Terima Kandidat (Hired)
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => setDecisionModal('reject')}
+                                className="flex-1 py-2.5 bg-rose-600 hover:bg-rose-700 text-white font-bold rounded-lg text-xs transition-colors flex items-center justify-center gap-1.5 shadow-sm active:scale-95 cursor-pointer"
+                              >
+                                <XCircle size={15} />
+                                Tolak Lamaran
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      ) : (
+                        /* Standar: Belum Dijadwalkan Wawancara Lanjutan */
+                        <div className="space-y-2">
+                          <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
+                            Keputusan Akhir HR
+                          </p>
+                          <div className="flex gap-2">
+                            <button
+                              type="button"
+                              onClick={() => setDecisionModal('hire')}
+                              className="flex-1 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-lg text-xs transition-colors flex items-center justify-center gap-1.5 shadow-sm active:scale-95 cursor-pointer"
+                            >
+                              <CheckCircle2 size={16} />
+                              Terima Kandidat
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setDecisionModal('reject')}
+                              className="flex-1 py-2.5 bg-rose-600 hover:bg-rose-700 text-white font-semibold rounded-lg text-xs transition-colors flex items-center justify-center gap-1.5 shadow-sm active:scale-95 cursor-pointer"
+                            >
+                              <XCircle size={16} />
+                              Tolak Lamaran
+                            </button>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => setDecisionModal('interview_user')}
+                            className="w-full py-2.5 bg-indigo-50 dark:bg-indigo-950/40 border border-indigo-200 dark:border-indigo-800 hover:bg-indigo-100 dark:hover:bg-indigo-950/70 text-indigo-700 dark:text-indigo-300 font-semibold text-xs rounded-lg transition-colors flex items-center justify-center gap-1.5 active:scale-98 shadow-2xs cursor-pointer"
+                          >
+                            <Calendar size={15} />
+                            Jadwalkan Wawancara Lanjutan (User / Tatap Muka)
+                          </button>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>
