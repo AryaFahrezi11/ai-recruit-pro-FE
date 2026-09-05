@@ -11,6 +11,8 @@ import { api, parseErrorMessage } from '@/lib/api';
 import toast from 'react-hot-toast';
 
 interface CandidateData {
+  id?: string;
+  applicationId?: string;
   name: string;
   role: string;
   education?: string;
@@ -228,7 +230,7 @@ export default function PipelinePage() {
                 stage="upload_cv"
                 status="processing"
                 timeInfo="Otomatis Memproses AI..."
-                onClick={() => setSelectedCandidate({ name: app.pelamar?.nama_lengkap || 'Kandidat', role: (app as any).cvData?.jobTitle || app.job?.judul_posisi || '', stage: "upload_cv", education: app.pelamar?.pendidikan_terakhir, university: app.pelamar?.institusi_pendidikan, cvData: (app as any).cvData, cvDocument: (app as any).cv_document, jobData: app.job })}
+                onClick={() => setSelectedCandidate({ id: app.id, applicationId: app.id, name: app.pelamar?.nama_lengkap || 'Kandidat', role: (app as any).cvData?.jobTitle || app.job?.judul_posisi || '', stage: "upload_cv", education: app.pelamar?.pendidikan_terakhir, university: app.pelamar?.institusi_pendidikan, cvData: (app as any).cvData, cvDocument: (app as any).cv_document, jobData: app.job })}
               />
             ))}
 
@@ -248,24 +250,23 @@ export default function PipelinePage() {
                   {isPassed ? (
                     <button
                       onClick={(e) => { e.stopPropagation(); handleUpdateStatus(app.id, 'virtual_interview'); }}
-                      className="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white text-[10px] font-bold rounded-md transition-colors shadow-2xs whitespace-nowrap"
+                      className="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-md text-[11px] flex items-center gap-1 shadow-2xs"
                     >
-                      Lanjut Wawancara
+                      Loloskan
                     </button>
                   ) : (
                     <>
                       <button
                         onClick={(e) => { e.stopPropagation(); handleUpdateStatus(app.id, 'virtual_interview'); }}
-                        className="px-2 py-1 bg-[#2596be] hover:bg-[#1D7FA1] text-white text-[10px] font-bold rounded-md transition-colors shadow-2xs whitespace-nowrap"
-                        title="Lanjutkan ke wawancara meskipun nilai kurang dari threshold"
+                        className="px-2.5 py-1 bg-muted hover:bg-muted/80 text-foreground font-semibold rounded-md text-[11px] flex items-center gap-1 border border-border"
                       >
                         Override
                       </button>
                       <button
-                        onClick={(e) => { e.stopPropagation(); handleUpdateStatus(app.id, 'ditolak'); }}
-                        className="px-2 py-1 bg-rose-600 hover:bg-rose-700 text-white text-[10px] font-bold rounded-md transition-colors shadow-2xs whitespace-nowrap"
+                        onClick={(e) => { e.stopPropagation(); handleUpdateStatus(app.id, 'ditolak_sistem'); }}
+                        className="px-2.5 py-1 bg-rose-600 hover:bg-rose-700 text-white font-semibold rounded-md text-[11px] flex items-center gap-1 shadow-2xs"
                       >
-                        Diskualifikasi
+                        Tolak
                       </button>
                     </>
                   )}
@@ -286,7 +287,7 @@ export default function PipelinePage() {
                   status={app.status === 'lolos_cv' ? undefined : (app.status === 'ditolak_sistem' ? undefined : 'processing')}
                   timeInfo={t.pipeline.cosineSimilarity}
                   customActions={actionButtons}
-                  onClick={() => setSelectedCandidate({ name: app.pelamar?.nama_lengkap || 'Kandidat', role: (app as any).cvData?.jobTitle || app.job?.judul_posisi || '', stage: "cv_screening", cvScore: cvScore, status: app.status, education: (app as any).cv_document?.pendidikan_tertinggi || app.pelamar?.pendidikan_terakhir, university: app.pelamar?.institusi_pendidikan, cvData: (app as any).cvData, cvDocument: (app as any).cv_document, jobData: app.job, analisisCv: app.analisis_cv, aiResult: (app as any).ai_result, videoUrl: (app as any).video_url })}
+                  onClick={() => setSelectedCandidate({ id: app.id, applicationId: app.id, name: app.pelamar?.nama_lengkap || 'Kandidat', role: (app as any).cvData?.jobTitle || app.job?.judul_posisi || '', stage: "cv_screening", cvScore: cvScore, status: app.status, education: (app as any).cv_document?.pendidikan_tertinggi || app.pelamar?.pendidikan_terakhir, university: app.pelamar?.institusi_pendidikan, cvData: (app as any).cvData, cvDocument: (app as any).cv_document, jobData: app.job, analisisCv: app.analisis_cv, aiResult: (app as any).ai_result, videoUrl: (app as any).video_url })}
                 />
               );
             })}
@@ -303,7 +304,7 @@ export default function PipelinePage() {
                 stage="interview"
                 status="awaiting_video"
                 timeInfo="Menunggu Jadwal/Video"
-                onClick={() => setSelectedCandidate({ name: app.pelamar?.nama_lengkap || 'Kandidat', role: (app as any).cvData?.jobTitle || app.job?.judul_posisi || '', stage: "interview", cvScore: Math.round(app.analisis_cv?.skor_kecocokan || 0), education: app.pelamar?.pendidikan_terakhir, university: app.pelamar?.institusi_pendidikan, cvData: (app as any).cvData, cvDocument: (app as any).cv_document, jobData: app.job, analisisCv: app.analisis_cv, aiResult: (app as any).ai_result, videoUrl: (app as any).video_url })}
+                onClick={() => setSelectedCandidate({ id: app.id, applicationId: app.id, name: app.pelamar?.nama_lengkap || 'Kandidat', role: (app as any).cvData?.jobTitle || app.job?.judul_posisi || '', stage: "interview", cvScore: Math.round(app.analisis_cv?.skor_kecocokan || 0), education: app.pelamar?.pendidikan_terakhir, university: app.pelamar?.institusi_pendidikan, cvData: (app as any).cvData, cvDocument: (app as any).cv_document, jobData: app.job, analisisCv: app.analisis_cv, aiResult: (app as any).ai_result, videoUrl: (app as any).video_url })}
               />
             ))}
           </KanbanColumn>
@@ -331,6 +332,8 @@ export default function PipelinePage() {
                   actionLoading={isCurrentAnalyzing}
                   onActionClick={() => handleAnalyzeVideo(app.id)}
                   onClick={() => setSelectedCandidate({
+                    id: app.id,
+                    applicationId: app.id,
                     name: app.pelamar?.nama_lengkap || 'Kandidat',
                     role: (app as any).cvData?.jobTitle || app.job?.judul_posisi || '',
                     stage: "ai_analysis",
@@ -376,6 +379,8 @@ export default function PipelinePage() {
                   timeInfo="Menunggu Keputusan"
                   videoScores={dynamicVideoScores}
                   onClick={() => setSelectedCandidate({
+                    id: app.id,
+                    applicationId: app.id,
                     name: app.pelamar?.nama_lengkap || 'Kandidat',
                     role: (app as any).cvData?.jobTitle || app.job?.judul_posisi || '',
                     stage: "human_validation",
@@ -405,6 +410,7 @@ export default function PipelinePage() {
         <CandidateModal
           candidate={selectedCandidate}
           onClose={() => setSelectedCandidate(null)}
+          onStatusUpdated={loadApplications}
         />
       )}
     </div>

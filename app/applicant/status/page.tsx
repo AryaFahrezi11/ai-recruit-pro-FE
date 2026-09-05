@@ -6,6 +6,8 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { toast } from 'react-hot-toast';
 import { useTranslation } from '@/hooks/useTranslation';
 import {
+  Calendar,
+  ExternalLink,
   Search,
   ChevronDown,
   ChevronUp,
@@ -44,6 +46,15 @@ interface ApplicationItem {
   currentStageIndex: number; // 1 to 5
   status: 'Dalam Proses' | 'Lolos' | 'Tidak Lolos' | 'Lowongan Telah Ditutup';
   statusMessage: string;
+  rawStatus?: string;
+  catatanPerusahaan?: string;
+  interviewDetails?: {
+    tipe?: 'online' | 'offline' | string;
+    tanggal?: string;
+    waktu?: string;
+    lokasi_atau_link?: string;
+    catatan?: string;
+  };
   hasActionRequired?: boolean;
   cvScore: number;
   threshold: number;
@@ -405,11 +416,11 @@ function StatusValidasiContent() {
               stageIndex = 3;
               tahapName = 'Stage 3: VIRTUAL INTERVIEW';
               msg = `Selamat! CV Anda telah LOLOS screening AI dengan skor kecocokan ${cvScore}%. Silakan lakukan perekaman Wawancara Video Singkat.`;
-            } else if (s === 'ditolak_sistem' || s === 'ditolak') {
-              stageIndex = 2;
-              tahapName = 'Stage 2: CV SCREENING (Ditolak)';
+            } else if (s === 'ditolak_sistem' || s === 'ditolak' || s === 'rejected') {
+              stageIndex = 5;
+              tahapName = 'Stage 5: LAMARAN DITOLAK';
               statusLabel = 'Tidak Lolos';
-              msg = `Mohon maaf, profil Anda belum memenuhi kriteria threshold AI (Skor: ${cvScore}%).`;
+              msg = item.catatan_perusahaan || `Mohon maaf, profil Anda belum memenuhi kriteria yang dibutuhkan untuk posisi ini.`;
             } else if (s === 'video_analysis') {
               stageIndex = 4;
               tahapName = 'Stage 4: AI VIDEO ANALYSIS';
@@ -422,12 +433,12 @@ function StatusValidasiContent() {
               stageIndex = 5;
               tahapName = 'Stage 5: WAWANCARA LANJUTAN';
               statusLabel = 'Lolos';
-              msg = 'Selamat! Anda dinyatakan lolos tahap evaluasi AI dan diundang ke tahap Wawancara Tatap Muka langsung oleh tim rekrutmen.';
+              msg = 'Selamat! Anda dinyatakan lolos tahap evaluasi AI dan diundang ke tahap Wawancara Lanjutan bersama Tim HR/User.';
             } else if (s === 'hired' || s === 'accepted' || s === 'Lolos') {
               stageIndex = 5;
-              tahapName = 'Stage 5: DITERIMA BEKERJA';
+              tahapName = 'Stage 5: DITERIMA (HIRED)';
               statusLabel = 'Lolos';
-              msg = 'Selamat! Anda resmi dinyatakan diterima bergabung.';
+              msg = item.catatan_perusahaan || 'Selamat! Anda resmi dinyatakan DITERIMA bergabung di perusahaan ini.';
             } else if (s === 'Tidak Lolos') {
               stageIndex = 5;
               tahapName = 'Stage 5: KEPUTUSAN AKHIR';
@@ -490,6 +501,9 @@ function StatusValidasiContent() {
               currentStageIndex: stageIndex,
               status: statusLabel,
               statusMessage: msg,
+              rawStatus: s,
+              catatanPerusahaan: item.catatan_perusahaan,
+              interviewDetails: item.interview_details,
               hasActionRequired: s === 'lolos_cv' || s === 'virtual_interview',
               cvScore: cvScore,
               threshold: threshold,
@@ -880,6 +894,84 @@ function StatusValidasiContent() {
                       <p className="text-slate-700 dark:text-slate-300 text-xs sm:text-sm font-medium">
                         {app.statusMessage}
                       </p>
+
+                      {/* KARTU JADWAL WAWANCARA LANJUTAN */}
+                      {app.interviewDetails && (
+                        <div className="mt-3.5 p-5 rounded-2xl bg-indigo-50/80 dark:bg-indigo-950/40 border-2 border-indigo-200 dark:border-indigo-800 shadow-xs space-y-3">
+                          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-indigo-100 dark:border-indigo-900 pb-2.5">
+                            <div className="flex items-center gap-2">
+                              <Calendar className="text-indigo-600 dark:text-indigo-400 shrink-0" size={20} />
+                              <h4 className="font-extrabold text-sm text-indigo-950 dark:text-indigo-200">
+                                Jadwal Wawancara Lanjutan Bersama Tim Rekruter
+                              </h4>
+                            </div>
+                            <span className="text-[10px] font-extrabold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-indigo-200/60 dark:bg-indigo-900 text-indigo-800 dark:text-indigo-200 w-fit">
+                              {app.interviewDetails.tipe === 'offline' ? 'Tatap Muka di Kantor' : 'Online Meet'}
+                            </span>
+                          </div>
+
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                            <div className="p-3 bg-white dark:bg-slate-900 rounded-xl border border-indigo-100 dark:border-indigo-900/60">
+                              <span className="text-slate-400 font-bold block text-[11px] mb-1">Tanggal & Waktu:</span>
+                              <p className="font-bold text-slate-800 dark:text-slate-100">
+                                {app.interviewDetails.tanggal} {app.interviewDetails.waktu ? `• Pukul ${app.interviewDetails.waktu} WIB` : ''}
+                              </p>
+                            </div>
+                            <div className="p-3 bg-white dark:bg-slate-900 rounded-xl border border-indigo-100 dark:border-indigo-900/60">
+                              <span className="text-slate-400 font-bold block text-[11px] mb-1">Lokasi / Tautan Pertemuan:</span>
+                              {app.interviewDetails.tipe === 'online' && app.interviewDetails.lokasi_atau_link?.startsWith('http') ? (
+                                <a
+                                  href={app.interviewDetails.lokasi_atau_link}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="inline-flex items-center gap-1.5 font-bold text-indigo-600 dark:text-indigo-400 hover:underline"
+                                >
+                                  <span>Buka Tautan Google Meet / Zoom</span>
+                                  <ExternalLink size={12} />
+                                </a>
+                              ) : (
+                                <p className="font-semibold text-slate-800 dark:text-slate-200">
+                                  {app.interviewDetails.lokasi_atau_link || 'Menunggu konfirmasi HR'}
+                                </p>
+                              )}
+                            </div>
+                          </div>
+
+                          {app.interviewDetails.catatan && (
+                            <div className="p-3 bg-indigo-100/50 dark:bg-indigo-900/30 rounded-xl text-xs text-indigo-900 dark:text-indigo-200">
+                              <span className="font-bold">Instruksi dari Perusahaan:</span> {app.interviewDetails.catatan}
+                            </div>
+                          )}
+                        </div>
+                      )}
+
+                      {/* KARTU ALASAN PENOLAKAN DARI PERUSAHAAN */}
+                      {app.status === 'Tidak Lolos' && app.catatanPerusahaan && (
+                        <div className="mt-3.5 p-4 rounded-2xl bg-rose-50/80 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-800 text-xs text-rose-900 dark:text-rose-200 space-y-1">
+                          <div className="flex items-center gap-1.5 font-bold text-rose-700 dark:text-rose-300">
+                            <AlertCircle size={15} />
+                            <span>Catatan Evaluasi dari Tim Rekruter {app.companyName}:</span>
+                          </div>
+                          <p className="leading-relaxed pl-5 font-medium">
+                            "{app.catatanPerusahaan}"
+                          </p>
+                        </div>
+                      )}
+
+                      {/* KARTU DITERIMA (HIRED) */}
+                      {app.rawStatus === 'hired' && (
+                        <div className="mt-3.5 p-4 rounded-2xl bg-emerald-50/80 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800 text-xs text-emerald-900 dark:text-emerald-200 space-y-1.5">
+                          <div className="flex items-center gap-1.5 font-extrabold text-emerald-700 dark:text-emerald-300 text-sm">
+                            <CheckCircle2 size={17} />
+                            <span>Selamat! Anda Resmi Diterima di {app.companyName}</span>
+                          </div>
+                          {app.catatanPerusahaan && (
+                            <p className="leading-relaxed pl-5 font-medium text-slate-700 dark:text-slate-300">
+                              {app.catatanPerusahaan}
+                            </p>
+                          )}
+                        </div>
+                      )}
 
                       {/* DAFTAR PERTANYAAN WAWANCARA VIDEO DARI PERUSAHAAN */}
                       {app.currentStageIndex === 3 && (

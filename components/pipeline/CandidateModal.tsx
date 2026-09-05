@@ -9,8 +9,9 @@ import {
   Check, Lightbulb, FileText, Video, BarChart3,
   Upload, Brain, UserCheck, Scan, Download, ExternalLink,
   Clock, AlertCircle, Sparkles, Briefcase, Mail, Phone, Lock, Archive, GraduationCap, Building2, ArrowRight,
-  HelpCircle
+  HelpCircle, Calendar
 } from 'lucide-react';
+import { fetchAuth } from '@/lib/api/auth';
 import { ParseSkills } from '@/components/ui/ParseSkills';
 import {
   Radar, RadarChart, PolarGrid, PolarAngleAxis, ResponsiveContainer
@@ -19,6 +20,8 @@ import { ChevronDown, ChevronUp } from 'lucide-react';
 
 interface CandidateModalProps {
   candidate: {
+    id?: string;
+    applicationId?: string;
     name: string;
     role: string;
     education?: string;
@@ -45,6 +48,7 @@ interface CandidateModalProps {
     pollMessage?: string;
   };
   onClose: () => void;
+  onStatusUpdated?: () => void;
 }
 
 const STAGE_ORDER = ['upload_cv', 'cv_screening', 'interview', 'ai_analysis', 'human_validation'];
@@ -95,7 +99,73 @@ function StepIndicator({ currentStage, t }: { currentStage?: string; t: ReturnTy
   );
 }
 
-export function CandidateModal({ candidate, onClose }: CandidateModalProps) {
+export function CandidateModal({ candidate, onClose, onStatusUpdated }: CandidateModalProps) {
+  const [decisionModal, setDecisionModal] = useState<'none' | 'interview_user' | 'reject' | 'hire'>('none');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Wawancara Lanjutan form
+  const [intvType, setIntvType] = useState<'online' | 'offline'>('online');
+  const [intvDate, setIntvDate] = useState('');
+  const [intvTime, setIntvTime] = useState('14:00');
+  const [intvLocationUrl, setIntvLocationUrl] = useState('https://meet.google.com/');
+  const [intvNotes, setIntvNotes] = useState('Mohon hadir tepat waktu dan siapkan resume portofolio.');
+
+  // Tolak form
+  const [rejectReasonPreset, setRejectReasonPreset] = useState('Kualifikasi pengalaman teknis belum memenuhi kriteria minimum yang dibutuhkan saat ini.');
+  const [rejectReasonCustom, setRejectReasonCustom] = useState('');
+
+  // Terima form
+  const [hireOfferingNotes, setHireOfferingNotes] = useState('Selamat! Kandidat dinyatakan lolos seluruh tahapan seleksi dan menerima penawaran kerja.');
+
+  const targetAppId = candidate.id || candidate.applicationId;
+
+  const executeDecision = async (newStatus: string, bodyPayload: any) => {
+    if (!targetAppId) {
+      toast.error('ID Lamaran tidak ditemukan');
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      const res = await fetchAuth(`/api/applications/${targetAppId}/status`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          status: newStatus,
+          ...bodyPayload
+        })
+      });
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.detail || 'Gagal memperbarui status kandidat');
+      }
+
+      setDecisionModal('none');
+      setArchiveStatus(newStatus as any);
+      toast.success(
+        newStatus === 'interview_lanjutan'
+          ? 'Undangan wawancara lanjutan & email notifikasi berhasil dikirimkan!'
+          : newStatus === 'hired'
+          ? 'Kandidat berhasil diterima (Hired)! Email selamat telah dikirimkan.'
+          : 'Lamaran kandidat berhasil ditolak dan dipindahkan ke Arsip.'
+      );
+
+      onStatusUpdated?.();
+
+      setTimeout(() => {
+        onClose();
+        if (newStatus === 'hired' || newStatus === 'rejected') {
+          router.push('/archive');
+        }
+      }, 1500);
+
+    } catch (err: any) {
+      toast.error(err.message || 'Gagal memproses keputusan');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
   const { t } = useTranslation();
   const router = useRouter();
   const stage = candidate.stage || 'upload_cv';
@@ -1348,25 +1418,28 @@ export function CandidateModal({ candidate, onClose }: CandidateModalProps) {
                       </p>
                       <div className="flex gap-2">
                         <button
-                          onClick={() => handleDecision('hired')}
-                          className="flex-1 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-lg text-xs transition-colors flex items-center justify-center gap-1.5 shadow-sm active:scale-95"
+                          type="button"
+                          onClick={() => setDecisionModal('hire')}
+                          className="flex-1 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-lg text-xs transition-colors flex items-center justify-center gap-1.5 shadow-sm active:scale-95 cursor-pointer"
                         >
                           <CheckCircle2 size={16} />
                           Terima Kandidat
                         </button>
                         <button
-                          onClick={() => handleDecision('rejected')}
-                          className="flex-1 py-2.5 bg-rose-600 hover:bg-rose-700 text-white font-semibold rounded-lg text-xs transition-colors flex items-center justify-center gap-1.5 shadow-sm active:scale-95"
+                          type="button"
+                          onClick={() => setDecisionModal('reject')}
+                          className="flex-1 py-2.5 bg-rose-600 hover:bg-rose-700 text-white font-semibold rounded-lg text-xs transition-colors flex items-center justify-center gap-1.5 shadow-sm active:scale-95 cursor-pointer"
                         >
                           <XCircle size={16} />
                           Tolak Lamaran
                         </button>
                       </div>
                       <button
-                        onClick={() => handleDecision('interview_lanjutan')}
-                        className="w-full py-2.5 bg-indigo-50 dark:bg-indigo-950/40 border border-indigo-200 dark:border-indigo-800 hover:bg-indigo-100 dark:hover:bg-indigo-950/70 text-indigo-700 dark:text-indigo-300 font-semibold text-xs rounded-lg transition-colors flex items-center justify-center gap-1.5 active:scale-98 shadow-2xs"
+                        type="button"
+                        onClick={() => setDecisionModal('interview_user')}
+                        className="w-full py-2.5 bg-indigo-50 dark:bg-indigo-950/40 border border-indigo-200 dark:border-indigo-800 hover:bg-indigo-100 dark:hover:bg-indigo-950/70 text-indigo-700 dark:text-indigo-300 font-semibold text-xs rounded-lg transition-colors flex items-center justify-center gap-1.5 active:scale-98 shadow-2xs cursor-pointer"
                       >
-                        <Video size={15} />
+                        <Calendar size={15} />
                         Jadwalkan Wawancara Tatap Muka / Langsung
                       </button>
                     </div>
@@ -1377,6 +1450,277 @@ export function CandidateModal({ candidate, onClose }: CandidateModalProps) {
             </div>
           )}
 
+
+        {/* ================= MODAL: WAWANCARA LANJUTAN ================= */}
+        {decisionModal === 'interview_user' && (
+          <div className="fixed inset-0 z-60 flex items-center justify-center p-4 bg-background/80 backdrop-blur-xs animate-in fade-in duration-200">
+            <div className="bg-card border border-border rounded-2xl w-full max-w-lg p-6 shadow-2xl space-y-4">
+              <div className="flex items-center justify-between border-b border-border pb-3">
+                <h3 className="text-sm font-extrabold text-foreground flex items-center gap-2">
+                  <Calendar className="text-indigo-600 dark:text-indigo-400" size={18} />
+                  Jadwalkan Wawancara Lanjutan
+                </h3>
+                <button 
+                  type="button"
+                  onClick={() => setDecisionModal('none')}
+                  className="text-muted-foreground hover:text-foreground text-xs font-bold p-1 cursor-pointer"
+                >
+                  ✕
+                </button>
+              </div>
+
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                Kandidat <strong>{candidate.name}</strong> akan menerima email undangan resmi dan informasi jadwal akan tampil di portal status pelamar miliknya.
+              </p>
+
+              <div className="space-y-3.5 text-xs">
+                <div>
+                  <label className="block font-bold text-foreground mb-1.5">Tipe Wawancara</label>
+                  <div className="grid grid-cols-2 gap-2">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIntvType('online');
+                        setIntvLocationUrl('https://meet.google.com/');
+                      }}
+                      className={`py-2 rounded-xl font-bold border transition-all cursor-pointer ${
+                        intvType === 'online' 
+                          ? 'bg-indigo-50 dark:bg-indigo-950/50 border-indigo-500 text-indigo-700 dark:text-indigo-300' 
+                          : 'bg-muted/40 border-border text-muted-foreground'
+                      }`}
+                    >
+                      🌐 Online (Google Meet / Zoom)
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIntvType('offline');
+                        setIntvLocationUrl('Kantor Pusat Perusahaan, Lantai 3 Ruang Meeting A');
+                      }}
+                      className={`py-2 rounded-xl font-bold border transition-all cursor-pointer ${
+                        intvType === 'offline' 
+                          ? 'bg-indigo-50 dark:bg-indigo-950/50 border-indigo-500 text-indigo-700 dark:text-indigo-300' 
+                          : 'bg-muted/40 border-border text-muted-foreground'
+                      }`}
+                    >
+                      🏢 Tatap Muka (Offline di Kantor)
+                    </button>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block font-bold text-foreground mb-1.5">Tanggal Wawancara</label>
+                    <input
+                      type="date"
+                      value={intvDate}
+                      onChange={(e) => setIntvDate(e.target.value)}
+                      className="w-full px-3 py-2 bg-muted/40 border border-border rounded-xl text-xs text-foreground focus:ring-2 focus:ring-indigo-500/20 outline-none font-medium"
+                    />
+                  </div>
+                  <div>
+                    <label className="block font-bold text-foreground mb-1.5">Jam Waktu (WIB)</label>
+                    <input
+                      type="time"
+                      value={intvTime}
+                      onChange={(e) => setIntvTime(e.target.value)}
+                      className="w-full px-3 py-2 bg-muted/40 border border-border rounded-xl text-xs text-foreground focus:ring-2 focus:ring-indigo-500/20 outline-none font-medium"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block font-bold text-foreground mb-1.5">
+                    {intvType === 'online' ? 'Tautan Meeting (Google Meet / Zoom)' : 'Alamat & Ruangan Pertemuan'}
+                  </label>
+                  <input
+                    type="text"
+                    value={intvLocationUrl}
+                    onChange={(e) => setIntvLocationUrl(e.target.value)}
+                    placeholder={intvType === 'online' ? 'https://meet.google.com/xyz-abcd-efg' : 'Jl. Sudirman No. 12, Lantai 3 Ruang A'}
+                    className="w-full px-3 py-2 bg-muted/40 border border-border rounded-xl text-xs text-foreground focus:ring-2 focus:ring-indigo-500/20 outline-none font-medium"
+                  />
+                </div>
+
+                <div>
+                  <label className="block font-bold text-foreground mb-1.5">Instruksi Tambahan untuk Pelamar</label>
+                  <textarea
+                    rows={2}
+                    value={intvNotes}
+                    onChange={(e) => setIntvNotes(e.target.value)}
+                    className="w-full p-2.5 bg-muted/40 border border-border rounded-xl text-xs text-foreground focus:ring-2 focus:ring-indigo-500/20 outline-none resize-none font-medium"
+                  />
+                </div>
+              </div>
+
+              <div className="flex justify-end gap-2 pt-3 border-t border-border">
+                <button
+                  type="button"
+                  onClick={() => setDecisionModal('none')}
+                  className="px-4 py-2 rounded-xl text-xs font-bold bg-muted hover:bg-muted/80 text-foreground cursor-pointer"
+                >
+                  Batal
+                </button>
+                <button
+                  type="button"
+                  disabled={isSubmitting || !intvDate}
+                  onClick={() => executeDecision('interview_lanjutan', {
+                    interview_details: {
+                      tipe: intvType,
+                      tanggal: intvDate,
+                      waktu: intvTime,
+                      lokasi_atau_link: intvLocationUrl,
+                      catatan: intvNotes
+                    },
+                    catatan_perusahaan: intvNotes
+                  })}
+                  className="px-5 py-2 rounded-xl text-xs font-extrabold bg-indigo-600 hover:bg-indigo-700 text-white shadow-xs flex items-center gap-2 cursor-pointer disabled:opacity-50"
+                >
+                  {isSubmitting ? 'Mengirim Undangan...' : 'Kirim Undangan Wawancara'}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ================= MODAL: TOLAK LAMARAN ================= */}
+        {decisionModal === 'reject' && (
+          <div className="fixed inset-0 z-60 flex items-center justify-center p-4 bg-background/80 backdrop-blur-xs animate-in fade-in duration-200">
+            <div className="bg-card border border-border rounded-2xl w-full max-w-lg p-6 shadow-2xl space-y-4">
+              <div className="flex items-center justify-between border-b border-border pb-3">
+                <h3 className="text-sm font-extrabold text-foreground flex items-center gap-2">
+                  <XCircle className="text-rose-600" size={18} />
+                  Konfirmasi Penolakan Lamaran
+                </h3>
+                <button 
+                  type="button"
+                  onClick={() => setDecisionModal('none')}
+                  className="text-muted-foreground hover:text-foreground text-xs font-bold p-1 cursor-pointer"
+                >
+                  ✕
+                </button>
+              </div>
+
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                Lamaran <strong>{candidate.name}</strong> akan ditolak dan dipindahkan ke halaman Arsip. Alasan penolakan di bawah akan ditampilkan ke pelamar dan dikirimkan via email sebagai feedback transparan.
+              </p>
+
+              <div className="space-y-3 text-xs">
+                <label className="block font-bold text-foreground">Pilih Alasan Umum Penolakan:</label>
+                <div className="space-y-1.5">
+                  {[
+                    'Kualifikasi pengalaman teknis belum memenuhi kriteria minimum yang dibutuhkan saat ini.',
+                    'Hasil evaluasi skor wawancara belum mencapai passing grade kelulusan posisi ini.',
+                    'Kuota penerimaan lowongan untuk posisi ini telah terpenuhi.',
+                    'Kandidat lain memiliki kecocokan latar belakang proyek yang lebih spesifik.'
+                  ].map((reasonText) => (
+                    <button
+                      type="button"
+                      key={reasonText}
+                      onClick={() => setRejectReasonPreset(reasonText)}
+                      className={`w-full text-left p-2.5 rounded-xl border text-[11px] font-medium transition-all cursor-pointer ${
+                        rejectReasonPreset === reasonText
+                          ? 'bg-rose-50 dark:bg-rose-950/40 border-rose-400 text-rose-800 dark:text-rose-200 font-bold'
+                          : 'bg-muted/30 border-border text-muted-foreground hover:text-foreground'
+                      }`}
+                    >
+                      • {reasonText}
+                    </button>
+                  ))}
+                </div>
+
+                <div>
+                  <label className="block font-bold text-foreground mb-1.5">Catatan Tambahan Khusus (Opsional):</label>
+                  <textarea
+                    rows={2}
+                    value={rejectReasonCustom}
+                    onChange={(e) => setRejectReasonCustom(e.target.value)}
+                    placeholder="Tambahkan catatan khusus untuk kandidat jika diperlukan..."
+                    className="w-full p-2.5 bg-muted/40 border border-border rounded-xl text-xs text-foreground focus:ring-2 focus:ring-rose-500/20 outline-none resize-none font-medium"
+                  />
+                </div>
+              </div>
+
+              <div className="flex justify-end gap-2 pt-3 border-t border-border">
+                <button
+                  type="button"
+                  onClick={() => setDecisionModal('none')}
+                  className="px-4 py-2 rounded-xl text-xs font-bold bg-muted hover:bg-muted/80 text-foreground cursor-pointer"
+                >
+                  Batal
+                </button>
+                <button
+                  type="button"
+                  disabled={isSubmitting}
+                  onClick={() => {
+                    const finalReason = rejectReasonCustom.trim() 
+                      ? `${rejectReasonPreset} Catatan: ${rejectReasonCustom.trim()}`
+                      : rejectReasonPreset;
+                    executeDecision('rejected', { catatan_perusahaan: finalReason });
+                  }}
+                  className="px-5 py-2 rounded-xl text-xs font-extrabold bg-rose-600 hover:bg-rose-700 text-white shadow-xs flex items-center gap-2 cursor-pointer disabled:opacity-50"
+                >
+                  {isSubmitting ? 'Memproses...' : 'Tolak & Kirim Email'}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ================= MODAL: TERIMA KANDIDAT ================= */}
+        {decisionModal === 'hire' && (
+          <div className="fixed inset-0 z-60 flex items-center justify-center p-4 bg-background/80 backdrop-blur-xs animate-in fade-in duration-200">
+            <div className="bg-card border border-border rounded-2xl w-full max-w-lg p-6 shadow-2xl space-y-4">
+              <div className="flex items-center justify-between border-b border-border pb-3">
+                <h3 className="text-sm font-extrabold text-foreground flex items-center gap-2">
+                  <CheckCircle2 className="text-emerald-600" size={18} />
+                  Konfirmasi Penerimaan Kandidat (Hired)
+                </h3>
+                <button 
+                  type="button"
+                  onClick={() => setDecisionModal('none')}
+                  className="text-muted-foreground hover:text-foreground text-xs font-bold p-1 cursor-pointer"
+                >
+                  ✕
+                </button>
+              </div>
+
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                Selamat! Anda akan menerima <strong>{candidate.name}</strong> untuk posisi <strong>{candidate.role}</strong>. Status lamaran akan berubah menjadi <strong>Hired</strong> dan email penawaran akan dikirimkan.
+              </p>
+
+              <div className="space-y-3 text-xs">
+                <div>
+                  <label className="block font-bold text-foreground mb-1.5">Pesan Penawaran / Instruksi Onboarding:</label>
+                  <textarea
+                    rows={3}
+                    value={hireOfferingNotes}
+                    onChange={(e) => setHireOfferingNotes(e.target.value)}
+                    className="w-full p-2.5 bg-muted/40 border border-border rounded-xl text-xs text-foreground focus:ring-2 focus:ring-emerald-500/20 outline-none resize-none font-medium"
+                  />
+                </div>
+              </div>
+
+              <div className="flex justify-end gap-2 pt-3 border-t border-border">
+                <button
+                  type="button"
+                  onClick={() => setDecisionModal('none')}
+                  className="px-4 py-2 rounded-xl text-xs font-bold bg-muted hover:bg-muted/80 text-foreground cursor-pointer"
+                >
+                  Batal
+                </button>
+                <button
+                  type="button"
+                  disabled={isSubmitting}
+                  onClick={() => executeDecision('hired', { catatan_perusahaan: hireOfferingNotes })}
+                  className="px-5 py-2 rounded-xl text-xs font-extrabold bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs flex items-center gap-2 cursor-pointer disabled:opacity-50"
+                >
+                  {isSubmitting ? 'Memproses...' : 'Terima & Kirim Offering'}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
         </div>
       </div>
     </div>
