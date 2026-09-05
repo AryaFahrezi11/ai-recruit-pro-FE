@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState, useRef, Suspense } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import Footer from '@/components/Footer';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useAppStore } from '@/lib/store/useAppStore';
@@ -208,8 +209,16 @@ export default function PelamarPerfectLayout({
 
           {/* Left Side: Brand & Main Navigation Links */}
           <div className="flex items-center gap-8">
-            <Link href="/applicant/dashboard" className="flex items-center gap-2 group">
-              <span className="font-bold text-2xl tracking-tight text-slate-900 dark:text-white leading-none">
+            <Link href="/applicant/dashboard" className="flex items-center gap-3 group">
+              <Image
+                src="/Logo Ai Recruit Pro..png"
+                alt="AI-RecruitPro Logo"
+                width={70}
+                height={70}
+                className="h-13 sm:h-15 w-auto object-contain shrink-0 transition-transform group-hover:scale-105"
+                priority
+              />
+              <span className="font-extrabold text-lg sm:text-xl tracking-tight text-slate-900 dark:text-white leading-none">
                 AI-RecruitPro
               </span>
             </Link>

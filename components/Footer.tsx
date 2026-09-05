@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import Image from 'next/image';
 
 export default function Footer() {
   return (
@@ -7,7 +8,16 @@ export default function Footer() {
         
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-12 lg:gap-8">
           <div className="lg:col-span-2 space-y-6 pr-0 lg:pr-12">
-            <span className="font-bold text-2xl text-white block">AI-RecruitPro</span>
+            <Link href="/" className="flex items-center gap-3">
+              <Image
+                src="/Logo Ai Recruit Pro..png"
+                alt="AI-RecruitPro Logo"
+                width={52}
+                height={52}
+                className="h-12 w-auto object-contain shrink-0"
+              />
+              <span className="font-bold text-xl text-white block">AI-RecruitPro</span>
+            </Link>
             <p className="text-slate-400 leading-relaxed text-sm">
               Job platform yang connect Anda dengan top tech companies secara fair dan transparan.
             </p>

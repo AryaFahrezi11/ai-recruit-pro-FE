@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useTranslation } from '@/hooks/useTranslation';
 import Footer from '@/components/Footer';
 import { useAppStore } from '@/lib/store/useAppStore';
@@ -19,7 +20,8 @@ import {
   Sparkles,
   HelpCircle,
   KeyRound,
-  ArrowLeft
+  ArrowLeft,
+  User
 } from 'lucide-react';
 
 export default function CompanyLoginPage() {
@@ -91,7 +93,7 @@ export default function CompanyLoginPage() {
       }
 
       // Security check: Email Verification
-      if (response.user.is_verified === false) {
+      if ((response.user as any).is_verified === false) {
         setError('Email perusahaan Anda belum diverifikasi dengan kode OTP. Silakan lakukan verifikasi terlebih dahulu.');
         setShowOtpRedirect(true);
         setIsLoading(false);
@@ -99,13 +101,13 @@ export default function CompanyLoginPage() {
       }
 
       // Security check: Admin Approval
-      if (response.user.approval_status === 'pending' || response.user.is_approved === false) {
+      if ((response.user as any).approval_status === 'pending' || (response.user as any).is_approved === false) {
         setError('Akun perusahaan Anda sedang dalam proses peninjauan oleh tim Admin AI-RecruitPro. Akses login akan aktif setelah pendaftaran dokumen disetujui.');
         setIsLoading(false);
         return;
       }
 
-      if (response.user.approval_status === 'rejected') {
+      if ((response.user as any).approval_status === 'rejected') {
         setError('Pendaftaran akun perusahaan Anda ditolak oleh Admin. Silakan hubungi dukungan pelanggan kami.');
         setIsLoading(false);
         return;
@@ -240,13 +242,21 @@ export default function CompanyLoginPage() {
 
       {/* Top Header */}
       <header className="py-6 px-6 sm:px-12 max-w-[1600px] w-full mx-auto flex items-center justify-between">
-        <Link href="/" className="flex items-center gap-2 group">
-          <div className="flex flex-col">
-            <span className="font-bold text-2xl tracking-tight text-slate-900 dark:text-white leading-none">
+        <Link href="/" className="flex items-center gap-3 group">
+          <Image
+            src="/Logo Ai Recruit Pro..png"
+            alt="AI-RecruitPro Logo"
+            width={70}
+            height={70}
+            className="h-13 sm:h-15 w-auto object-contain shrink-0 transition-transform group-hover:scale-105"
+            priority
+          />
+          <div className="flex flex-col justify-center">
+            <span className="font-extrabold text-lg sm:text-xl tracking-tight text-slate-900 dark:text-white leading-tight">
               AI-RecruitPro
             </span>
-            <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest mt-1">
-              {t.employerAuth.loginTitle}
+            <span className="text-[10px] font-bold text-slate-400 dark:text-slate-400 uppercase tracking-widest mt-0.5">
+              Masuk ke Akun Perusahaan
             </span>
           </div>
         </Link>
@@ -256,6 +266,7 @@ export default function CompanyLoginPage() {
             href="/applicant/login"
             className="text-xs sm:text-sm font-semibold text-[#1A4B9F] hover:underline flex items-center gap-1.5"
           >
+            <User size={16} />
             {t.employerAuth.applicantPortal}
           </Link>
         </div>

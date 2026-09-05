@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useTranslation } from '@/hooks/useTranslation';
 import Footer from '@/components/Footer';
@@ -174,13 +175,21 @@ export default function PelamarLoginPage() {
 
       {/* Top Header */}
       <header className="py-6 px-6 sm:px-12 max-w-[1600px] w-full mx-auto flex items-center justify-between">
-        <Link href="/" className="flex items-center gap-2 group">
-          <div className="flex flex-col">
-            <span className="font-bold text-2xl tracking-tight text-slate-900 dark:text-white leading-none">
+        <Link href="/" className="flex items-center gap-3 group">
+          <Image
+            src="/Logo Ai Recruit Pro..png"
+            alt="AI-RecruitPro Logo"
+            width={70}
+            height={70}
+            className="h-13 sm:h-15 w-auto object-contain shrink-0 transition-transform group-hover:scale-105"
+            priority
+          />
+          <div className="flex flex-col justify-center">
+            <span className="font-extrabold text-lg sm:text-xl tracking-tight text-slate-900 dark:text-white leading-tight">
               AI-RecruitPro
             </span>
-            <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest mt-1">
-              {t.pelamar.header.portalName}
+            <span className="text-[10px] font-bold text-slate-400 dark:text-slate-400 uppercase tracking-widest mt-0.5">
+              Masuk ke Akun Pelamar
             </span>
           </div>
         </Link>
