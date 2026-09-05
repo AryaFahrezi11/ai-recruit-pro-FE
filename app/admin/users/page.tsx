@@ -28,7 +28,13 @@ import {
   Phone,
   MapPin,
   Calendar,
-  FileCheck2
+  FileCheck2,
+  GraduationCap,
+  Award,
+  Share2,
+  FileSpreadsheet,
+  Sparkles,
+  UserCheck
 } from 'lucide-react';
 import { fetchAuth } from '@/lib/api/auth';
 import { getMediaUrl } from '@/lib/api';
@@ -982,8 +988,240 @@ export default function AdminUsersPage() {
                     </div>
                   </div>
                 </div>
+              ) : selectedUserDetail.role === 'pelamar' ? (
+                /* TAMPILAN DETAIL LENGKAP KHUSUS PELAMAR (CV, PROFIL, PENDIDIKAN, PENGALAMAN) */
+                <div className="space-y-5">
+                  {/* Header Identity & Status */}
+                  <div className="flex items-start gap-3.5 bg-slate-50 dark:bg-slate-800/40 p-4 sm:p-5 rounded-2xl border border-slate-200 dark:border-slate-800">
+                    <div className="w-12 h-12 rounded-2xl bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-900/60 flex items-center justify-center font-black text-base shrink-0">
+                      {selectedUserDetail.profile?.nama_lengkap
+                        ? selectedUserDetail.profile.nama_lengkap.slice(0, 2).toUpperCase()
+                        : selectedUserDetail.email.charAt(0).toUpperCase()}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h4 className="font-extrabold text-slate-900 dark:text-white text-base truncate">
+                        {selectedUserDetail.profile?.nama_lengkap || selectedUserDetail.email}
+                      </h4>
+                      <span className="text-xs text-slate-500 dark:text-slate-400 block truncate mt-0.5">
+                        {selectedUserDetail.email} {selectedUserDetail.profile?.no_telepon ? `• ${selectedUserDetail.profile.no_telepon}` : ''}
+                      </span>
+                      <div className="flex flex-wrap gap-2 items-center mt-2">
+                        <span className="text-[10px] font-extrabold bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 px-2 py-0.5 rounded uppercase border border-emerald-200 dark:border-emerald-800">
+                          PELAMAR
+                        </span>
+                        {selectedUserDetail.is_active ? (
+                          <span className="text-[10px] font-extrabold bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 px-2.5 py-0.5 rounded-full uppercase border border-emerald-200 dark:border-emerald-800 flex items-center gap-1">
+                            <BadgeCheck size={13} className="text-emerald-600 dark:text-emerald-400 shrink-0" />
+                            Verified
+                          </span>
+                        ) : (
+                          <span className="text-[10px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-400 px-2.5 py-0.5 rounded-full uppercase border border-slate-200 dark:border-slate-700">
+                            Unverified
+                          </span>
+                        )}
+                        {selectedUserDetail.is_banned && (
+                          <span className="text-[10px] font-extrabold bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300 px-2 py-0.5 rounded uppercase border border-rose-200 dark:border-rose-800">
+                            Banned
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Dokumen CV Utama Pelamar */}
+                  <div>
+                    <span className="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider block mb-2.5">
+                      Berkas Curriculum Vitae (CV) Terunggah
+                    </span>
+                    {selectedUserDetail.profile?.latest_cv ? (
+                      <div className="p-4 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-800 rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                        <div className="flex items-center gap-3 min-w-0">
+                          <div className="w-11 h-11 rounded-xl bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0 border border-blue-200 dark:border-blue-900/60">
+                            <FileText size={22} />
+                          </div>
+                          <div className="min-w-0">
+                            <h5 className="font-bold text-slate-900 dark:text-white text-xs truncate max-w-sm" title={selectedUserDetail.profile.latest_cv.nama_file}>
+                              {selectedUserDetail.profile.latest_cv.nama_file}
+                            </h5>
+                            <span className="text-[11px] text-slate-400 block mt-0.5">
+                              Ukuran: {selectedUserDetail.profile.latest_cv.file_size_kb ? `${selectedUserDetail.profile.latest_cv.file_size_kb} KB` : '-'} • Tipe: {selectedUserDetail.profile.latest_cv.file_type?.toUpperCase() || 'PDF'}
+                            </span>
+                          </div>
+                        </div>
+
+                        <a
+                          href={getMediaUrl(selectedUserDetail.profile.latest_cv.file_url)}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="w-full sm:w-auto px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-xs transition-colors inline-flex items-center justify-center gap-1.5 shrink-0"
+                        >
+                          <Eye size={13} />
+                          <span>Buka / Unduh CV</span>
+                          <ExternalLink size={12} />
+                        </a>
+                      </div>
+                    ) : (
+                      <div className="py-6 text-center text-slate-400 bg-slate-50 dark:bg-slate-800/30 rounded-2xl border border-dashed border-slate-200 dark:border-slate-800 text-xs">
+                        <FileText size={24} className="mx-auto text-slate-300 dark:text-slate-600 mb-1.5" />
+                        Pelamar belum mengunggah dokumen CV digital ke sistem.
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Ringkasan Diri / Bio */}
+                  {selectedUserDetail.profile?.ringkasan_diri && (
+                    <div>
+                      <span className="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider block mb-1">
+                        Ringkasan Profesional
+                      </span>
+                      <p className="p-3.5 bg-slate-50 dark:bg-slate-800/40 rounded-xl border border-slate-200 dark:border-slate-800 text-xs text-slate-700 dark:text-slate-300 leading-relaxed font-normal">
+                        {selectedUserDetail.profile.ringkasan_diri}
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Rincian Kontak & Tautan */}
+                  <div>
+                    <span className="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider block mb-2">
+                      Kontak &amp; Tautan Profil
+                    </span>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                      {/* Telepon */}
+                      <div className="bg-slate-50 dark:bg-slate-800/40 p-3 rounded-xl border border-slate-200 dark:border-slate-800">
+                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">No. WhatsApp / HP</span>
+                        {selectedUserDetail.profile?.no_telepon ? (
+                          <a
+                            href={`https://wa.me/${selectedUserDetail.profile.no_telepon.replace(/[^0-9]/g, '')}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-emerald-600 dark:text-emerald-400 hover:underline font-mono font-bold inline-flex items-center gap-1 mt-1"
+                          >
+                            <Phone size={12} /> {selectedUserDetail.profile.no_telepon}
+                          </a>
+                        ) : (
+                          <span className="text-slate-400 block mt-1">-</span>
+                        )}
+                      </div>
+
+                      {/* Judul Posisi */}
+                      <div className="bg-slate-50 dark:bg-slate-800/40 p-3 rounded-xl border border-slate-200 dark:border-slate-800">
+                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Target Posisi</span>
+                        <span className="font-bold text-slate-800 dark:text-slate-100 flex items-center gap-1.5 mt-1">
+                          <Briefcase size={13} className="text-blue-500 shrink-0" />
+                          {selectedUserDetail.profile?.judul_posisi || '-'}
+                        </span>
+                      </div>
+
+                      {/* LinkedIn */}
+                      <div className="bg-slate-50 dark:bg-slate-800/40 p-3 rounded-xl border border-slate-200 dark:border-slate-800">
+                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Profil LinkedIn</span>
+                        {selectedUserDetail.profile?.linkedin_url ? (
+                          <a
+                            href={selectedUserDetail.profile.linkedin_url.startsWith('http') ? selectedUserDetail.profile.linkedin_url : `https://${selectedUserDetail.profile.linkedin_url}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-blue-600 dark:text-blue-400 hover:underline font-semibold inline-flex items-center gap-1 mt-1 truncate max-w-full"
+                          >
+                            <Share2 size={12} /> LinkedIn Profile <ExternalLink size={10} />
+                          </a>
+                        ) : (
+                          <span className="text-slate-400 block mt-1">-</span>
+                        )}
+                      </div>
+
+                      {/* Portofolio */}
+                      <div className="bg-slate-50 dark:bg-slate-800/40 p-3 rounded-xl border border-slate-200 dark:border-slate-800">
+                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Portofolio / Website</span>
+                        {selectedUserDetail.profile?.portfolio_url ? (
+                          <a
+                            href={selectedUserDetail.profile.portfolio_url.startsWith('http') ? selectedUserDetail.profile.portfolio_url : `https://${selectedUserDetail.profile.portfolio_url}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-blue-600 dark:text-blue-400 hover:underline font-semibold inline-flex items-center gap-1 mt-1 truncate max-w-full"
+                          >
+                            <Globe size={12} /> Buka Portofolio <ExternalLink size={10} />
+                          </a>
+                        ) : (
+                          <span className="text-slate-400 block mt-1">-</span>
+                        )}
+                      </div>
+
+                      {/* Alamat */}
+                      <div className="sm:col-span-2 bg-slate-50 dark:bg-slate-800/40 p-3 rounded-xl border border-slate-200 dark:border-slate-800">
+                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Domisili / Alamat</span>
+                        <span className="text-slate-800 dark:text-slate-200 font-medium block mt-1">
+                          {selectedUserDetail.profile?.alamat || '-'}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Keahlian / Skills */}
+                  {selectedUserDetail.profile?.keahlian && (
+                    <div>
+                      <span className="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider block mb-2">
+                        Keahlian &amp; Keterampilan
+                      </span>
+                      <div className="p-3 bg-slate-50 dark:bg-slate-800/40 rounded-xl border border-slate-200 dark:border-slate-800 flex flex-wrap gap-1.5">
+                        {selectedUserDetail.profile.keahlian
+                          .split(/[,;\n]+/)
+                          .map((skill: string) => skill.trim())
+                          .filter(Boolean)
+                          .map((skill: string, idx: number) => (
+                            <span
+                              key={idx}
+                              className="px-2.5 py-1 rounded-lg bg-blue-50 dark:bg-blue-950/50 text-[#1A4B9F] dark:text-blue-300 font-bold text-[11px] border border-blue-200 dark:border-blue-900/60 inline-flex items-center gap-1"
+                            >
+                              <Sparkles size={11} className="text-blue-500" />
+                              {skill}
+                            </span>
+                          ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Riwayat Pendidikan & Pengalaman Kerja */}
+                  {(selectedUserDetail.profile?.riwayat_pendidikan || selectedUserDetail.profile?.pengalaman_kerja) && (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      {selectedUserDetail.profile?.riwayat_pendidikan && (
+                        <div>
+                          <span className="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider block mb-1.5">
+                            Riwayat Pendidikan
+                          </span>
+                          <div className="p-3 bg-slate-50 dark:bg-slate-800/40 rounded-xl border border-slate-200 dark:border-slate-800 text-xs text-slate-700 dark:text-slate-300 whitespace-pre-line leading-relaxed">
+                            {selectedUserDetail.profile.riwayat_pendidikan}
+                          </div>
+                        </div>
+                      )}
+
+                      {selectedUserDetail.profile?.pengalaman_kerja && (
+                        <div>
+                          <span className="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider block mb-1.5">
+                            Pengalaman Kerja
+                          </span>
+                          <div className="p-3 bg-slate-50 dark:bg-slate-800/40 rounded-xl border border-slate-200 dark:border-slate-800 text-xs text-slate-700 dark:text-slate-300 whitespace-pre-line leading-relaxed">
+                            {selectedUserDetail.profile.pengalaman_kerja}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Teks Hasil Ekstraksi / Ringkasan Dokumen CV */}
+                  {selectedUserDetail.profile?.latest_cv?.extracted_text && (
+                    <div>
+                      <span className="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider block mb-1.5">
+                        Teks Resume Hasil Ekstraksi CV
+                      </span>
+                      <div className="p-3 bg-slate-50 dark:bg-slate-800/40 rounded-xl border border-slate-200 dark:border-slate-800 max-h-40 overflow-y-auto font-mono text-[11px] text-slate-600 dark:text-slate-400 leading-relaxed whitespace-pre-wrap">
+                        {selectedUserDetail.profile.latest_cv.extracted_text.slice(0, 1500)}
+                        {selectedUserDetail.profile.latest_cv.extracted_text.length > 1500 && '... (teks dipotong untuk preview)'}
+                      </div>
+                    </div>
+                  )}
+                </div>
               ) : (
-                /* TAMPILAN UMUM (Pelamar, Kampus, Admin) */
+                /* TAMPILAN UMUM (Kampus, Admin, dll) */
                 <div className="space-y-6">
                   {/* Executive Header Identity Card */}
                   <div className="flex items-center gap-4 bg-slate-50 dark:bg-slate-800/40 p-4 rounded-xl border border-slate-200 dark:border-slate-800">
