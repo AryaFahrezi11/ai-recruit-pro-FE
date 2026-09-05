@@ -39,7 +39,7 @@
   --card-foreground: #0f172a;
   --sidebar: #f1f5f9; /* Slate 100 */
   --sidebar-foreground: #334155;
-  --primary: #1b7b9e; /* Ocean Blue Primary Color */
+  --primary: #1A4B9F; /* Brand Navy Blue Primary Color */
   --primary-foreground: #ffffff;
   --muted: #e2e8f0;
   --muted-foreground: #475569; /* Slate 600 - High legibility */
@@ -53,7 +53,7 @@
   --card-foreground: #f8fafc;
   --sidebar: #0f172a;
   --sidebar-foreground: #cbd5e1;
-  --primary: #31A3CB; /* Ocean Blue - Dark mode */
+  --primary: #3B82F6; /* Brand Blue - Dark mode */
   --primary-foreground: #ffffff;
   --muted: #1e293b;
   --muted-foreground: #94a3b8;
@@ -83,3 +83,10 @@ body {
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
   background: var(--muted-foreground);
 }
+
+/* Hide native Edge / IE password reveal & clear buttons to prevent duplicate eye icons */
+input::-ms-reveal,
+input::-ms-clear {
+  display: none;
+}
+

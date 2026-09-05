@@ -1,15 +1,15 @@
 export const getBaseUrl = () => {
   if (process.env.NEXT_PUBLIC_API_URL) return process.env.NEXT_PUBLIC_API_URL;
   if (typeof window !== 'undefined') {
-    return `http://${window.location.hostname}:8080/api`;
+    return `http://${window.location.hostname}:8000/api`;
   }
-  return 'http://127.0.0.1:8080/api';
+  return 'http://127.0.0.1:8000/api';
 };
 
 export const getMediaUrl = (path?: string) => {
   if (!path) return '';
   if (path.startsWith('http')) return path;
-  
+
   const baseUrl = getBaseUrl().replace(/\/api$/, '');
   const cleanPath = path.startsWith('/') ? path : `/${path}`;
   return `${baseUrl}${cleanPath}`;

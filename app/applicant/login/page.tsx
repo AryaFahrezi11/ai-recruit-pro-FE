@@ -23,6 +23,8 @@ export default function PelamarLoginPage() {
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [showOtpRedirect, setShowOtpRedirect] = useState(false);
 
   // Unverified account OTP modal/step state
   const [showOtpStep, setShowOtpStep] = useState(false);
@@ -45,7 +47,7 @@ export default function PelamarLoginPage() {
       return;
     }
     if (!password) {
-      setError('Masukkan kata sandi akun Anda.');
+      setError('Masukkan password akun Anda.');
       return;
     }
 
@@ -54,6 +56,14 @@ export default function PelamarLoginPage() {
 
     try {
       const res = await api.post('/auth/login', { email, password, role: 'pelamar' });
+
+      // Security check: Email Verification
+      if (res.is_verified === false || res.is_email_verified === false) {
+        setError('Email Anda belum diverifikasi dengan kode OTP. Silakan lakukan verifikasi OTP terlebih dahulu.');
+        setShowOtpRedirect(true);
+        setIsLoading(false);
+        return;
+      }
 
       const token = res.access_token;
       const role = res.role;

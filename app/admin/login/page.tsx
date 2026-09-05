@@ -35,7 +35,7 @@ export default function AdminLoginPage() {
     } catch (error: any) {
       const errorMsg = error.message === 'Failed to fetch' 
         ? 'Tidak dapat terhubung ke server. Periksa koneksi internet Anda.' 
-        : (error.message || 'Gagal login. Periksa kembali email dan kata sandi.');
+        : (error.message || 'Gagal login. Periksa kembali email dan password.');
       toast.error(errorMsg);
     } finally {
       setIsLoading(false);
@@ -70,7 +70,7 @@ export default function AdminLoginPage() {
           </div>
           
           <div>
-            <label className="block text-xs font-medium text-slate-400 mb-1.5 ml-1">Kata Sandi Khusus</label>
+            <label className="block text-xs font-medium text-slate-400 mb-1.5 ml-1">Password</label>
             <div className="relative">
               <Lock size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" />
               <input

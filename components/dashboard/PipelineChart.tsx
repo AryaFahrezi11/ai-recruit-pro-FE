@@ -43,8 +43,8 @@ export function PipelineChart({ data }: PipelineChartProps) {
           <LineChart data={data} margin={{ top: 5, right: 10, left: -20, bottom: 0 }}>
             <defs>
               <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="#1b7b9e" stopOpacity={0.1} />
-                <stop offset="95%" stopColor="#1b7b9e" stopOpacity={0} />
+                <stop offset="5%" stopColor="#1A4B9F" stopOpacity={0.15} />
+                <stop offset="95%" stopColor="#1A4B9F" stopOpacity={0} />
               </linearGradient>
             </defs>
             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--color-border)" />
@@ -71,9 +71,9 @@ export function PipelineChart({ data }: PipelineChartProps) {
             <Line
               type="monotone"
               dataKey="value"
-              stroke="#1b7b9e"
+              stroke="#1A4B9F"
               strokeWidth={4}
-              dot={{ r: 6, fill: 'var(--color-card)', stroke: '#1b7b9e', strokeWidth: 3 }}
+              dot={{ r: 6, fill: 'var(--color-card)', stroke: '#1A4B9F', strokeWidth: 3 }}
               activeDot={{ r: 8 }}
             />
           </LineChart>

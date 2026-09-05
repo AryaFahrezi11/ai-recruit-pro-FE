@@ -10,7 +10,6 @@ import { loginUser } from '@/lib/api/auth';
 import { api, parseErrorMessage } from '@/lib/api';
 import { toast } from 'react-hot-toast';
 import {
-  Building2,
   Lock,
   Mail,
   AlertCircle,
@@ -29,6 +28,8 @@ export default function CompanyLoginPage() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showOtpRedirect, setShowOtpRedirect] = useState(false);
   const { t } = useTranslation();
 
   const setToken = useAppStore((state) => state.setToken);
@@ -88,6 +89,27 @@ export default function CompanyLoginPage() {
         setIsLoading(false);
         return;
       }
+
+      // Security check: Email Verification
+      if (response.user.is_verified === false) {
+        setError('Email perusahaan Anda belum diverifikasi dengan kode OTP. Silakan lakukan verifikasi terlebih dahulu.');
+        setShowOtpRedirect(true);
+        setIsLoading(false);
+        return;
+      }
+
+      // Security check: Admin Approval
+      if (response.user.approval_status === 'pending' || response.user.is_approved === false) {
+        setError('Akun perusahaan Anda sedang dalam proses peninjauan oleh tim Admin AI-RecruitPro. Akses login akan aktif setelah pendaftaran dokumen disetujui.');
+        setIsLoading(false);
+        return;
+      }
+
+      if (response.user.approval_status === 'rejected') {
+        setError('Pendaftaran akun perusahaan Anda ditolak oleh Admin. Silakan hubungi dukungan pelanggan kami.');
+        setIsLoading(false);
+        return;
+      }
       
       setToken(response.access_token);
       setUser(response.user);
@@ -120,6 +142,7 @@ export default function CompanyLoginPage() {
       const errorMsg = err.message === 'Failed to fetch' 
         ? t.employerAuth.errorNetwork
         : (err.message || t.employerAuth.errorGeneric);
+      
       setError(errorMsg);
 
       // Check if the account needs OTP verification

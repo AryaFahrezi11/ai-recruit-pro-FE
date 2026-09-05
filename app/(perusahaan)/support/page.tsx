@@ -71,10 +71,10 @@ export default function SupportPage() {
       </div>
 
       {/* Documentation Banner */}
-      <div className="bg-card p-6 sm:p-8 rounded-xl border border-primary/20 shadow-sm space-y-6 relative overflow-hidden">
+      <div className="bg-card p-6 sm:p-8 rounded-xl border border-border shadow-sm space-y-6 relative overflow-hidden">
         <div className="flex items-center gap-3 border-b border-border pb-4">
-          <div className="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center font-bold">
-            <BookOpen size={20} />
+          <div className="w-8 h-8 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-slate-100 flex items-center justify-center font-bold shrink-0 border border-slate-200 dark:border-slate-700">
+            <BookOpen size={18} />
           </div>
           <div>
             <h2 className="text-lg font-bold text-foreground">{t.support.aiGuideTitle}</h2>
@@ -85,7 +85,7 @@ export default function SupportPage() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {/* Card 1: PO-FIT */}
           <div className="p-4 bg-muted/30 border border-border rounded-xl space-y-2">
-            <div className="flex items-center gap-2 text-primary font-bold text-sm">
+            <div className="flex items-center gap-2 text-foreground font-bold text-sm">
               <FileText size={16} />
               1. Seleksi CV
             </div>
@@ -96,18 +96,18 @@ export default function SupportPage() {
 
           {/* Card 2: Video Analysis */}
           <div className="p-4 bg-muted/30 border border-border rounded-xl space-y-2">
-            <div className="flex items-center gap-2 text-violet-500 font-bold text-sm">
+            <div className="flex items-center gap-2 text-foreground font-bold text-sm">
               <Video size={16} />
               2. Analisis Video AI
             </div>
             <p className="text-xs text-muted-foreground leading-relaxed">
-              Mengekstraksi 5 parameter gestur: <em>Gerakan Tangan, Badan, Kepala, Interaksi Mata, & Words/Sec</em> dari rekaman wawancara virtual pelamar.
+              Mengekstraksi 5 parameter gestur: <em>Gerakan Tangan, Badan, Kepala, Interaksi Mata, &amp; Words/Sec</em> dari rekaman wawancara virtual pelamar.
             </p>
           </div>
 
           {/* Card 3: Human Validation */}
           <div className="p-4 bg-muted/30 border border-border rounded-xl space-y-2">
-            <div className="flex items-center gap-2 text-emerald-500 font-bold text-sm">
+            <div className="flex items-center gap-2 text-foreground font-bold text-sm">
               <ShieldCheck size={16} />
               3. Validasi Manusia HR
             </div>
@@ -120,8 +120,10 @@ export default function SupportPage() {
 
       {/* FAQ Accordion */}
       <div className="bg-card p-6 sm:p-8 rounded-xl border border-border shadow-sm space-y-6">
-        <div className="flex items-center gap-2 border-b border-border pb-4">
-          <HelpCircle size={20} className="text-primary" />
+        <div className="flex items-center gap-2.5 border-b border-border pb-4">
+          <div className="w-8 h-8 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-slate-100 flex items-center justify-center font-bold shrink-0 border border-slate-200 dark:border-slate-700">
+            <HelpCircle size={18} />
+          </div>
           <h2 className="text-lg font-bold text-foreground">{t.support.faqTitle}</h2>
         </div>
 
@@ -154,8 +156,10 @@ export default function SupportPage() {
 
       {/* Contact Support Form */}
       <div className="bg-card p-6 sm:p-8 rounded-xl border border-border shadow-sm space-y-6">
-        <div className="flex items-center gap-2 border-b border-border pb-4">
-          <Headphones size={20} className="text-primary" />
+        <div className="flex items-center gap-2.5 border-b border-border pb-4">
+          <div className="w-8 h-8 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-slate-100 flex items-center justify-center font-bold shrink-0 border border-slate-200 dark:border-slate-700">
+            <Headphones size={18} />
+          </div>
           <h2 className="text-lg font-bold text-foreground">{t.support.contactTitle}</h2>
         </div>
 

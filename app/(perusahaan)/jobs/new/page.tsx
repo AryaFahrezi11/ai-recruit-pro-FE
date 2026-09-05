@@ -282,8 +282,10 @@ function CreateJobForm() {
 
         {/* ==================== SECTION 1: BASIC INFO ==================== */}
         <div className="bg-card p-6 sm:p-8 rounded-xl border border-border shadow-sm space-y-6">
-          <div className="flex items-center gap-2 border-b border-border pb-4">
-            <Briefcase size={20} className="text-primary" />
+          <div className="flex items-center gap-2.5 border-b border-border pb-4">
+            <div className="w-8 h-8 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-slate-100 flex items-center justify-center font-bold shrink-0 border border-slate-200 dark:border-slate-700">
+              <Briefcase size={18} />
+            </div>
             <h2 className="text-lg font-bold text-foreground">{t.jobs.basicInfo}</h2>
           </div>
 
@@ -404,8 +406,10 @@ function CreateJobForm() {
         {/* ==================== SECTION 2: JOB DESCRIPTION & AI KEYWORDS ==================== */}
         <div className="bg-card p-6 sm:p-8 rounded-xl border border-border shadow-sm space-y-6">
           <div className="flex items-center justify-between border-b border-border pb-4">
-            <div className="flex items-center gap-2">
-              <FileText size={20} className="text-primary" />
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-slate-100 flex items-center justify-center font-bold shrink-0 border border-slate-200 dark:border-slate-700">
+                <FileText size={18} />
+              </div>
               <h2 className="text-lg font-bold text-foreground">{t.jobs.roleDescription}</h2>
             </div>
           </div>
@@ -545,8 +549,10 @@ function CreateJobForm() {
 
         {/* ==================== SECTION 3: AI SCREENING & EVALUATION RULES ==================== */}
         <div className="bg-card p-6 sm:p-8 rounded-xl border border-border shadow-sm space-y-6">
-          <div className="flex items-center gap-2 border-b border-border pb-4">
-            <Sliders size={20} className="text-primary" />
+          <div className="flex items-center gap-2.5 border-b border-border pb-4">
+            <div className="w-8 h-8 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-slate-100 flex items-center justify-center font-bold shrink-0 border border-slate-200 dark:border-slate-700">
+              <Sliders size={18} />
+            </div>
             <h2 className="text-lg font-bold text-foreground">{t.jobs.aiConfig}</h2>
           </div>
 
@@ -564,7 +570,7 @@ function CreateJobForm() {
                   {t.jobs.thresholdHelp}
                 </p>
               </div>
-              <span className={`text-2xl font-bold ${threshold >= 60 ? 'text-emerald-500' : 'text-amber-500'}`}>
+              <span className="text-2xl font-bold text-foreground">
                 {threshold}%
               </span>
             </div>
@@ -581,7 +587,7 @@ function CreateJobForm() {
 
             <div className="flex justify-between text-[10px] text-muted-foreground font-mono">
               <span>30% (Longgar)</span>
-              <span className="font-bold text-emerald-600 dark:text-emerald-400">60% (Rekomendasi AI)</span>
+              <span className="font-bold text-foreground">60% (Rekomendasi AI)</span>
               <span>80% (Ketat)</span>
             </div>
           </div>
@@ -590,7 +596,7 @@ function CreateJobForm() {
           <div>
             <div className="flex justify-between items-center mb-3">
               <label className="text-xs font-bold text-foreground flex items-center gap-1.5">
-                <Video size={16} className="text-primary" />
+                <Video size={16} className="text-foreground" />
                 {t.jobs.videoQuestions}
               </label>
               <span className="text-xs text-muted-foreground font-mono">
@@ -601,7 +607,7 @@ function CreateJobForm() {
             <div className="space-y-3 mb-4">
               {videoQuestions.map((q, i) => (
                 <div key={i} className="flex items-start gap-3 p-3 bg-muted/30 border border-border rounded-lg text-xs">
-                  <span className="w-5 h-5 rounded-full bg-primary/20 text-primary font-bold flex items-center justify-center text-[10px] shrink-0 mt-0.5">
+                  <span className="w-5 h-5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-slate-100 border border-slate-200 dark:border-slate-700 font-bold flex items-center justify-center text-[10px] shrink-0 mt-0.5">
                     Q{i + 1}
                   </span>
                   <p className="flex-1 font-medium text-foreground leading-relaxed">{q}</p>
@@ -641,8 +647,10 @@ function CreateJobForm() {
 
         {/* ==================== SECTION 4: COMPENSATION & BENEFITS ==================== */}
         <div className="bg-card p-6 sm:p-8 rounded-xl border border-border shadow-sm space-y-6">
-          <div className="flex items-center gap-2 border-b border-border pb-4">
-            <DollarSign size={20} className="text-primary" />
+          <div className="flex items-center gap-2.5 border-b border-border pb-4">
+            <div className="w-8 h-8 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-slate-100 flex items-center justify-center font-bold shrink-0 border border-slate-200 dark:border-slate-700">
+              <DollarSign size={18} />
+            </div>
             <h2 className="text-lg font-bold text-foreground">{t.jobs.compensation}</h2>
           </div>
 
@@ -738,8 +746,10 @@ function CreateJobForm() {
 
         {/* ==================== SECTION 5: TIMELINES & PUBLISHING ==================== */}
         <div className="bg-card p-6 sm:p-8 rounded-xl border border-border shadow-sm space-y-6">
-          <div className="flex items-center gap-2 border-b border-border pb-4">
-            <Calendar size={20} className="text-primary" />
+          <div className="flex items-center gap-2.5 border-b border-border pb-4">
+            <div className="w-8 h-8 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-slate-100 flex items-center justify-center font-bold shrink-0 border border-slate-200 dark:border-slate-700">
+              <Calendar size={18} />
+            </div>
             <h2 className="text-lg font-bold text-foreground">{t.jobs.timelines}</h2>
           </div>
 
@@ -788,8 +798,8 @@ function CreateJobForm() {
         </div>
 
         {/* Sticky Action Footer Bar */}
-        <div className="fixed bottom-0 left-0 right-0 z-40 bg-card/90 backdrop-blur-md border-t border-border py-4 px-6 shadow-xl">
-          <div className="max-w-5xl mx-auto flex items-center justify-between">
+        <div className="fixed bottom-0 left-0 md:left-64 right-0 z-40 bg-card/90 backdrop-blur-md border-t border-border py-3.5 px-6 md:px-8 shadow-xl transition-all">
+          <div className="max-w-7xl mx-auto flex items-center justify-between">
             <button
               type="button"
               onClick={() => router.back()}

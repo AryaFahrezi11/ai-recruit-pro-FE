@@ -9,7 +9,6 @@ import { toast } from 'react-hot-toast';
 
 import {
   HelpCircle,
-  ArrowRight,
   Building2,
   Sparkles,
   Mail,
@@ -17,7 +16,13 @@ import {
   AlertCircle,
   CheckCircle2,
   ShieldCheck,
-  KeyRound
+  KeyRound,
+  Eye,
+  EyeOff,
+  Edit3,
+  RefreshCw,
+  Info,
+  ArrowLeft,
 } from 'lucide-react';
 import { api, parseErrorMessage } from '@/lib/api';
 
@@ -34,6 +39,8 @@ export default function PelamarRegisterPage() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
 
   // Temporary auth token from backend
   const [tempToken, setTempToken] = useState('');
@@ -86,11 +93,11 @@ export default function PelamarRegisterPage() {
       return;
     }
     if (!isValidPassword) {
-      setError('Kata sandi belum memenuhi semua persyaratan keamanan.');
+      setError('Password belum memenuhi semua persyaratan di bawah.');
       return;
     }
     if (password !== confirmPassword) {
-      setError('Konfirmasi kata sandi tidak cocok dengan kata sandi.');
+      setError('Konfirmasi password tidak cocok. Silakan periksa kembali.');
       return;
     }
 
@@ -112,22 +119,77 @@ export default function PelamarRegisterPage() {
       // Move to OTP Step
       setStep(2);
     } catch (err: any) {
-      setError(parseErrorMessage(err));
+      const errMsg = parseErrorMessage(err);
+      if (errMsg.toLowerCase().includes('terdaftar') || errMsg.toLowerCase().includes('already') || errMsg.toLowerCase().includes('exist')) {
+        setError('');
+        setStep(2);
+        return;
+      }
+      setError(errMsg);
     } finally {
       setIsLoading(false);
     }
   };
 
+  const handleResendOtp = async () => {
+    if (resendTimer > 0 || isResending) return;
+    setIsResending(true);
+    setResendSuccess('');
+    setOtpError('');
+    try {
+      await api.post('/auth/register', {
+        email,
+        password,
+        role: 'pelamar'
+      });
+      setResendSuccess('Kode verifikasi baru berhasil dikirimkan ke email Anda.');
+      setResendTimer(60);
+    } catch (err: any) {
+      setOtpError(parseErrorMessage(err));
+    } finally {
+      setIsResending(false);
+    }
+  };
+
   const handleOtpChange = (index: number, value: string) => {
-    if (value.length > 1) value = value.slice(-1);
+    const cleanValue = value.replace(/\D/g, '');
+    if (!cleanValue && value !== '') return;
+
     const newOtp = [...otpCode];
-    newOtp[index] = value;
+    newOtp[index] = cleanValue.slice(-1);
     setOtpCode(newOtp);
 
     // Auto focus next input
-    if (value && index < 5) {
+    if (cleanValue && index < 5) {
       const nextInput = document.getElementById(`pelamar-otp-${index + 1}`);
       if (nextInput) nextInput.focus();
+    }
+  };
+
+  const handleOtpKeyDown = (index: number, e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Backspace' && !otpCode[index] && index > 0) {
+      const prevInput = document.getElementById(`pelamar-otp-${index - 1}`);
+      if (prevInput) {
+        prevInput.focus();
+        const newOtp = [...otpCode];
+        newOtp[index - 1] = '';
+        setOtpCode(newOtp);
+      }
+    }
+  };
+
+  const handleOtpPaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
+    e.preventDefault();
+    const pastedData = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, 6);
+    if (pastedData.length > 0) {
+      const newOtp = ['', '', '', '', '', ''];
+      for (let i = 0; i < pastedData.length; i++) {
+        newOtp[i] = pastedData[i];
+      }
+      setOtpCode(newOtp);
+      const focusIndex = Math.min(pastedData.length, 5);
+      const targetInput = document.getElementById(`pelamar-otp-${focusIndex}`);
+      if (targetInput) targetInput.focus();
     }
   };
 
@@ -246,7 +308,7 @@ export default function PelamarRegisterPage() {
                   <Lock size={18} className="absolute left-4 text-slate-400 pointer-events-none" />
                   <input
                     id="password"
-                    type="password"
+                    type={showPassword ? 'text' : 'password'}
                     value={password}
                     onChange={(e) => { setPassword(e.target.value); setError(''); }}
                     onKeyDown={(e) => {
@@ -256,8 +318,16 @@ export default function PelamarRegisterPage() {
                       }
                     }}
                     placeholder="••••••••"
-                    className="w-full pl-12 pr-4 py-3 bg-white dark:bg-slate-950 text-slate-900 dark:text-white border-2 border-slate-300 dark:border-slate-700 focus:border-[#1A4B9F] dark:focus:border-blue-400 focus:ring-2 focus:ring-blue-100 dark:focus:ring-blue-900 rounded-2xl text-sm outline-none transition-all"
+                    className="w-full pl-12 pr-12 py-3 bg-white dark:bg-slate-950 text-slate-900 dark:text-white border-2 border-slate-300 dark:border-slate-700 focus:border-[#1A4B9F] dark:focus:border-blue-400 focus:ring-2 focus:ring-blue-100 dark:focus:ring-blue-900 rounded-2xl text-sm outline-none transition-all"
                   />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-4 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
+                    tabIndex={-1}
+                  >
+                    {showPassword ? <Eye size={18} /> : <EyeOff size={18} />}
+                  </button>
                 </div>
                 
                 {/* Password Strength Indicator */}
@@ -290,13 +360,13 @@ export default function PelamarRegisterPage() {
 
               <div className="space-y-1 mt-4">
                 <label htmlFor="confirmPassword" className="block text-xs font-semibold text-slate-700 dark:text-slate-300">
-                  Confirm Password <span className="text-red-500">*</span>
+                  Konfirmasi Password <span className="text-red-500">*</span>
                 </label>
                 <div className="relative flex items-center">
                   <KeyRound size={18} className="absolute left-4 text-slate-400 pointer-events-none" />
                   <input
                     id="confirmPassword"
-                    type="password"
+                    type={showConfirm ? 'text' : 'password'}
                     value={confirmPassword}
                     onChange={(e) => { setConfirmPassword(e.target.value); setError(''); }}
                     onKeyDown={(e) => {
@@ -306,14 +376,22 @@ export default function PelamarRegisterPage() {
                       }
                     }}
                     placeholder="••••••••"
-                    className="w-full pl-12 pr-4 py-3 bg-white dark:bg-slate-950 text-slate-900 dark:text-white border-2 border-slate-300 dark:border-slate-700 focus:border-[#1A4B9F] dark:focus:border-blue-400 focus:ring-2 focus:ring-blue-100 dark:focus:ring-blue-900 rounded-2xl text-sm outline-none transition-all"
+                    className="w-full pl-12 pr-12 py-3 bg-white dark:bg-slate-950 text-slate-900 dark:text-white border-2 border-slate-300 dark:border-slate-700 focus:border-[#1A4B9F] dark:focus:border-blue-400 focus:ring-2 focus:ring-blue-100 dark:focus:ring-blue-900 rounded-2xl text-sm outline-none transition-all"
                   />
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirm(!showConfirm)}
+                    className="absolute right-4 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
+                    tabIndex={-1}
+                  >
+                    {showConfirm ? <Eye size={18} /> : <EyeOff size={18} />}
+                  </button>
                 </div>
               </div>
 
               {error && (
-                <div className="p-3.5 rounded-2xl bg-red-50 dark:bg-red-950/50 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300 text-xs font-semibold flex items-start gap-2">
-                  <AlertCircle size={16} className="shrink-0 mt-0.5" />
+                <div className="p-3.5 rounded-2xl bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300 text-xs font-semibold flex items-start gap-2.5 leading-relaxed">
+                  <AlertCircle size={18} className="shrink-0 mt-0.5" />
                   <span>{error}</span>
                 </div>
               )}
@@ -322,10 +400,9 @@ export default function PelamarRegisterPage() {
                 id="submit-btn"
                 type="submit"
                 disabled={isLoading}
-                className="w-full py-3 rounded-full bg-[#1A4B9F] hover:bg-[#133878] text-white font-semibold text-sm shadow-sm transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer"
+                className="w-full py-3 rounded-full bg-[#1A4B9F] hover:bg-[#133878] active:bg-[#0f2a5a] text-white font-semibold text-sm shadow-sm transition-all duration-200 disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer"
               >
-                <span>{isLoading ? t.pelamar.auth.processing : t.pelamar.auth.signUp}</span>
-                <ArrowRight size={16} />
+                {isLoading ? t.pelamar.auth.processing : t.pelamar.auth.signUp}
               </button>
             </form>
 
@@ -338,64 +415,110 @@ export default function PelamarRegisterPage() {
           </div>
         )}
 
-        {/* STEP 2: OTP Verification Popup/Card */}
+        {/* STEP 2: Ultra Clean Enterprise Email Verification */}
         {step === 2 && (
-          <div className="w-full max-w-md bg-white dark:bg-slate-900 rounded-3xl p-8 sm:p-10 shadow-2xl border border-slate-200 dark:border-slate-800 space-y-7 relative animate-in zoom-in-95 duration-200">
-            <div className="space-y-2 text-center">
-              <div className="w-14 h-14 bg-blue-50 dark:bg-slate-800 border border-blue-100 dark:border-slate-700 rounded-2xl flex items-center justify-center text-[#1A4B9F] dark:text-blue-400 mx-auto">
-                <KeyRound size={28} />
-              </div>
-              <h2 className="text-xl font-bold text-slate-900 dark:text-white">Verifikasi Kode OTP Email</h2>
-              <p className="text-sm text-slate-500 dark:text-slate-400 max-w-xs mx-auto leading-relaxed">
-                Kode verifikasi OTP 6-digit telah dikirimkan ke alamat email Anda: <strong className="text-[#1A4B9F] dark:text-blue-400">{email}</strong>.
+          <div className="w-full max-w-md bg-white dark:bg-slate-900 rounded-3xl p-8 sm:p-10 shadow-2xl border border-slate-200/80 dark:border-slate-800 space-y-7 animate-in zoom-in-95 duration-200 mx-auto text-center">
+            
+            {/* Clean Mail Icon Badge */}
+            <div className="mx-auto w-14 h-14 bg-blue-50 dark:bg-blue-950/80 border border-blue-100 dark:border-blue-900/80 rounded-2xl flex items-center justify-center text-[#1A4B9F] dark:text-blue-400 shadow-sm">
+              <Mail size={26} />
+            </div>
+
+            {/* Header & Email */}
+            <div className="space-y-2">
+              <h2 className="text-2xl font-extrabold text-slate-900 dark:text-white tracking-tight">
+                Verifikasi Email
+              </h2>
+              <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed max-w-xs mx-auto">
+                Masukkan 6-digit kode OTP yang dikirim ke{' '}
+                <span className="font-semibold text-slate-900 dark:text-white">{email}</span>
+                <button
+                  type="button"
+                  onClick={() => { setStep(1); setOtpError(''); setResendSuccess(''); }}
+                  className="text-[#1A4B9F] dark:text-blue-400 hover:underline font-semibold text-xs ml-1"
+                >
+                  (Ubah)
+                </button>
               </p>
             </div>
 
             <form onSubmit={handleVerifyOtp} className="space-y-6">
-
-              {/* 6 Digit Inputs */}
-              <div className="flex justify-center items-center gap-2 sm:gap-3">
-                {otpCode.map((digit, idx) => (
-                  <input
-                    key={idx}
-                    id={`pelamar-otp-${idx}`}
-                    type="text"
-                    maxLength={1}
-                    value={digit}
-                    onChange={(e) => handleOtpChange(idx, e.target.value)}
-                    className="w-11 h-13 sm:w-12 sm:h-14 text-center text-xl font-bold text-slate-900 dark:text-white bg-slate-50 dark:bg-slate-950 border-2 border-slate-200 dark:border-slate-700 focus:border-[#1A4B9F] dark:focus:border-blue-400 focus:bg-white dark:focus:bg-slate-900 rounded-2xl outline-none transition-all"
-                  />
-                ))}
+              {/* 3 x 3 Split OTP Inputs */}
+              <div className="flex justify-center items-center gap-2">
+                <div className="flex gap-1.5 sm:gap-2">
+                  {otpCode.slice(0, 3).map((digit, idx) => (
+                    <input
+                      key={idx}
+                      id={`pelamar-otp-${idx}`}
+                      type="text"
+                      inputMode="numeric"
+                      maxLength={1}
+                      value={digit}
+                      onChange={(e) => handleOtpChange(idx, e.target.value)}
+                      onKeyDown={(e) => handleOtpKeyDown(idx, e)}
+                      onPaste={handleOtpPaste}
+                      className="w-11 sm:w-12 h-13 sm:h-14 text-center text-xl font-bold font-mono text-slate-900 dark:text-white bg-slate-50 dark:bg-slate-950 border-2 border-slate-200 dark:border-slate-800 focus:border-[#1A4B9F] dark:focus:border-blue-400 focus:bg-white dark:focus:bg-slate-900 rounded-xl outline-none transition-all shadow-sm"
+                      autoFocus={idx === 0}
+                    />
+                  ))}
+                </div>
+                <span className="text-slate-300 dark:text-slate-700 font-light text-xl select-none px-0.5">—</span>
+                <div className="flex gap-1.5 sm:gap-2">
+                  {otpCode.slice(3, 6).map((digit, idx) => {
+                    const realIdx = idx + 3;
+                    return (
+                      <input
+                        key={realIdx}
+                        id={`pelamar-otp-${realIdx}`}
+                        type="text"
+                        inputMode="numeric"
+                        maxLength={1}
+                        value={digit}
+                        onChange={(e) => handleOtpChange(realIdx, e.target.value)}
+                        onKeyDown={(e) => handleOtpKeyDown(realIdx, e)}
+                        onPaste={handleOtpPaste}
+                        className="w-11 sm:w-12 h-13 sm:h-14 text-center text-xl font-bold font-mono text-slate-900 dark:text-white bg-slate-50 dark:bg-slate-950 border-2 border-slate-200 dark:border-slate-800 focus:border-[#1A4B9F] dark:focus:border-blue-400 focus:bg-white dark:focus:bg-slate-900 rounded-xl outline-none transition-all shadow-sm"
+                      />
+                    );
+                  })}
+                </div>
               </div>
 
               {otpError && (
-                <div className="p-3.5 rounded-2xl bg-red-50 dark:bg-red-950/50 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300 text-xs font-semibold text-center">
+                <div className="p-3 rounded-xl bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-300 text-xs font-medium text-center">
                   {otpError}
                 </div>
               )}
 
-              <div className="flex items-center justify-between gap-3 pt-2">
+              {resendSuccess && (
+                <div className="p-3 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 text-emerald-600 dark:text-emerald-300 text-xs font-medium text-center">
+                  {resendSuccess}
+                </div>
+              )}
+
+              {/* Primary Action Button */}
+              <button
+                type="submit"
+                disabled={isLoading || otpCode.join('').length < 6}
+                className="w-full py-3.5 rounded-xl bg-[#1A4B9F] hover:bg-[#133878] active:bg-[#0f2a5a] text-white font-bold text-sm shadow-md hover:shadow-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+              >
+                {isLoading ? 'Memverifikasi...' : 'Verifikasi Email'}
+              </button>
+
+              {/* Footer Resend */}
+              <div className="pt-2 text-xs text-slate-500 dark:text-slate-400 border-t border-slate-100 dark:border-slate-800">
+                <span>Belum menerima kode? </span>
                 <button
                   type="button"
-                  onClick={() => setStep(1)}
-                  className="px-5 py-3 rounded-full border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 font-bold text-xs hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+                  onClick={handleResendOtp}
+                  disabled={resendTimer > 0 || isResending}
+                  className="text-[#1A4B9F] dark:text-blue-400 font-bold hover:underline disabled:opacity-50 disabled:no-underline disabled:cursor-not-allowed"
                 >
-                  &larr; Ubah Email
-                </button>
-
-                <button
-                  type="submit"
-                  disabled={isLoading}
-                  className="flex-1 py-3 rounded-full bg-[#1A4B9F] hover:bg-[#133878] text-white font-semibold text-sm shadow-sm transition-all flex items-center justify-center gap-2 cursor-pointer"
-                >
-                  {isLoading ? (
-                    <span>Memverifikasi...</span>
-                  ) : (
-                    <>
-                      <span>Verifikasi &amp; Masuk Dashboard</span>
-                      <ArrowRight size={16} />
-                    </>
-                  )}
+                  {isResending
+                    ? 'Mengirim...'
+                    : resendTimer > 0
+                    ? `Kirim ulang (${resendTimer}s)`
+                    : 'Kirim Ulang Kode'}
                 </button>
               </div>
 

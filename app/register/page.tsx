@@ -10,19 +10,17 @@ import {
   Lock,
   Mail,
   AlertCircle,
-  ArrowRight,
-  ShieldCheck,
   CheckCircle2,
   FileText,
   Upload,
   User,
-  Phone,
-  Briefcase,
-  MapPin,
-  Clock,
-  Sparkles,
-  HelpCircle,
-  FileCheck
+  Eye,
+  EyeOff,
+  ShieldCheck,
+  Edit3,
+  RefreshCw,
+  Info,
+  ArrowLeft,
 } from 'lucide-react';
 
 function CompanyRegistrationInner() {
@@ -32,29 +30,40 @@ function CompanyRegistrationInner() {
   // Multi-step state: 1 (Email & Pass), 2 (OTP), 3 (Legalitas Form), 4 (Pending)
   const [step, setStep] = useState<number>(1);
 
-  // Step 1: Account & Email
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [errorStep1, setErrorStep1] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
 
-  const checkPasswordStrength = (pwd: string) => {
-    return {
-      length: pwd.length >= 8,
-      uppercase: /[A-Z]/.test(pwd),
-      lowercase: /[a-z]/.test(pwd),
-      number: /\d/.test(pwd),
-      special: /[@$!%*?&#^_\-]/.test(pwd),
-    };
-  };
+  const checkPasswordStrength = (pwd: string) => ({
+    length: pwd.length >= 8,
+    uppercase: /[A-Z]/.test(pwd),
+    lowercase: /[a-z]/.test(pwd),
+    number: /\d/.test(pwd),
+    special: /[@$!%*?&#^_\-]/.test(pwd),
+  });
+
   const strength = checkPasswordStrength(password);
   const isValidPassword = Object.values(strength).every(Boolean);
 
-  // Step 2: OTP
   const [otpCode, setOtpCode] = useState(['', '', '', '', '', '']);
   const [errorStep2, setErrorStep2] = useState('');
+  const [resendTimer, setResendTimer] = useState(60);
+  const [isResending, setIsResending] = useState(false);
+  const [resendSuccess, setResendSuccess] = useState('');
 
-  // Step 3: Legal Data - Perusahaan
+  React.useEffect(() => {
+    let interval: any;
+    if (step === 2 && resendTimer > 0) {
+      interval = setInterval(() => {
+        setResendTimer((prev) => prev - 1);
+      }, 1000);
+    }
+    return () => clearInterval(interval);
+  }, [step, resendTimer]);
+
   const [companyName, setCompanyName] = useState('');
   const [industri, setIndustri] = useState('');
   const [ukuran, setUkuran] = useState('');
@@ -63,7 +72,6 @@ function CompanyRegistrationInner() {
   const [nibFile, setNibFile] = useState<File | null>(null);
   const [companyAddress, setCompanyAddress] = useState('');
 
-  // Step 3: Legal Data - Perwakilan HR
   const [hrFullName, setHrFullName] = useState('');
   const [whatsappNumber, setWhatsappNumber] = useState('');
   const [hrPosition, setHrPosition] = useState('');
@@ -123,11 +131,7 @@ function CompanyRegistrationInner() {
 
   const handleStep1Submit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email || !email.includes('@')) {
-      setErrorStep1('Harap masukkan alamat email perusahaan yang valid.');
-      return;
-    }
-
+    if (!email || !email.includes('@')) { setErrorStep1('Masukkan alamat email perusahaan yang valid.'); return; }
     const domain = email.split('@')[1]?.toLowerCase();
     const isAcId = domain?.endsWith('.ac.id') || domain === 'ac.id';
     if (freeEmailDomains.includes(domain) && !isAcId) {
@@ -144,93 +148,131 @@ function CompanyRegistrationInner() {
       setErrorStep1('Konfirmasi kata sandi tidak cocok dengan kata sandi.');
       return;
     }
+    if (!isValidPassword) { setErrorStep1('Password belum memenuhi semua persyaratan di bawah.'); return; }
+    if (password !== confirmPassword) { setErrorStep1('Konfirmasi password tidak cocok. Silakan periksa kembali.'); return; }
 
     setErrorStep1('');
     setIsLoading(true);
-
     try {
       const res = await fetch(getApiUrl('/auth/register'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password, role: 'perusahaan' })
       });
-
       const data = await res.json();
-
       if (!res.ok) {
-        const errorMsg = typeof data.detail === 'string'
-          ? data.detail
-          : 'Terjadi kesalahan saat registrasi. Pastikan data valid.';
-        setErrorStep1(errorMsg);
+        const detail = typeof data.detail === 'string' ? data.detail : '';
+        // Otomatis langsung arahkan ke Step 2 (Verifikasi OTP) tanpa perlu klik tombol lagi
+        if (detail.toLowerCase().includes('terdaftar') || detail.toLowerCase().includes('already') || detail.toLowerCase().includes('exist')) {
+          setIsLoading(false);
+          setErrorStep1('');
+          setStep(2);
+          return;
+        }
+        setErrorStep1(detail || 'Terjadi kesalahan saat pendaftaran.');
         setIsLoading(false);
         return;
       }
-
-      // Success, move to Step 2
       setIsLoading(false);
       setStep(2);
-    } catch (err) {
-      const errorMsg = 'Tidak dapat terhubung ke server. Pastikan backend berjalan.';
-      setErrorStep1(errorMsg);
+    } catch {
+      setErrorStep1('Tidak dapat terhubung ke server. Periksa koneksi internet Anda.');
       setIsLoading(false);
     }
   };
 
-  // Validate Step 2 (OTP)
+  const handleResendOtp = async () => {
+    if (resendTimer > 0 || isResending) return;
+    setIsResending(true);
+    setResendSuccess('');
+    setErrorStep2('');
+    try {
+      const res = await fetch(getApiUrl('/auth/register'), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password, role: 'perusahaan' })
+      });
+      if (res.ok) {
+        setResendSuccess('Kode verifikasi baru berhasil dikirimkan ke email Anda.');
+        setResendTimer(60);
+      } else {
+        setErrorStep2('Gagal mengirim ulang kode. Silakan coba lagi.');
+      }
+    } catch {
+      setErrorStep2('Terjadi kesalahan saat mengirim ulang kode.');
+    } finally {
+      setIsResending(false);
+    }
+  };
+
   const handleOtpChange = (index: number, value: string) => {
-    if (value.length > 1) value = value.slice(-1);
+    const cleanValue = value.replace(/\D/g, '');
+    if (!cleanValue && value !== '') return;
+
     const newOtp = [...otpCode];
-    newOtp[index] = value;
+    newOtp[index] = cleanValue.slice(-1);
     setOtpCode(newOtp);
 
-    // Auto focus next input
-    if (value && index < 5) {
+    if (cleanValue && index < 5) {
       const nextInput = document.getElementById(`otp-input-${index + 1}`);
       if (nextInput) nextInput.focus();
+    }
+  };
+
+  const handleOtpKeyDown = (index: number, e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Backspace' && !otpCode[index] && index > 0) {
+      const prevInput = document.getElementById(`otp-input-${index - 1}`);
+      if (prevInput) {
+        prevInput.focus();
+        const newOtp = [...otpCode];
+        newOtp[index - 1] = '';
+        setOtpCode(newOtp);
+      }
+    }
+  };
+
+  const handleOtpPaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
+    e.preventDefault();
+    const pastedData = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, 6);
+    if (pastedData.length > 0) {
+      const newOtp = ['', '', '', '', '', ''];
+      for (let i = 0; i < pastedData.length; i++) {
+        newOtp[i] = pastedData[i];
+      }
+      setOtpCode(newOtp);
+      const focusIndex = Math.min(pastedData.length, 5);
+      const targetInput = document.getElementById(`otp-input-${focusIndex}`);
+      if (targetInput) targetInput.focus();
     }
   };
 
   const handleStep2Submit = async (e: React.FormEvent) => {
     e.preventDefault();
     const enteredOtp = otpCode.join('');
-    if (enteredOtp.length < 6) {
-      setErrorStep2('Harap masukkan 6 digit kode OTP yang telah dikirim ke email perusahaan Anda.');
-      return;
-    }
-
+    if (enteredOtp.length < 6) { setErrorStep2('Masukkan 6 digit kode verifikasi yang sudah dikirim ke email Anda.'); return; }
     setErrorStep2('');
     setIsLoading(true);
-
     try {
       const res = await fetch(getApiUrl('/auth/verify-otp'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, otp_code: enteredOtp })
       });
-
       const data = await res.json();
-
       if (!res.ok) {
-        const errorMsg = typeof data.detail === 'string'
-          ? data.detail
-          : 'Kode OTP tidak valid atau sudah kadaluarsa.';
-        setErrorStep2(errorMsg);
+        setErrorStep2(typeof data.detail === 'string' ? data.detail : 'Kode verifikasi tidak valid atau sudah kedaluwarsa.');
         setIsLoading(false);
         return;
       }
-
-      // Store token
       localStorage.setItem('access_token', data.access_token);
       setIsLoading(false);
       setStep(3);
-    } catch (err) {
-      const errorMsg = 'Tidak dapat terhubung ke server untuk verifikasi OTP.';
-      setErrorStep2(errorMsg);
+    } catch {
+      setErrorStep2('Tidak dapat terhubung ke server.');
       setIsLoading(false);
     }
   };
 
-  // Validate Step 3 (Legalitas Form)
   const handleStep3Submit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -278,7 +320,6 @@ function CompanyRegistrationInner() {
 
     setErrorStep3('');
     setIsLoading(true);
-
     try {
       const token = localStorage.getItem('access_token');
       const formData = new FormData();
@@ -289,7 +330,6 @@ function CompanyRegistrationInner() {
       formData.append('alamat', companyAddress);
       formData.append('nib_number', nibNpwpNumber);
       if (nibFile) formData.append('nib_file', nibFile);
-
       formData.append('hr_name', hrFullName);
       formData.append('hr_whatsapp', whatsappNumber);
       formData.append('hr_position', hrPosition);
@@ -297,328 +337,327 @@ function CompanyRegistrationInner() {
 
       const res = await fetch(getApiUrl('/users/profile'), {
         method: 'PUT',
-        headers: {
-          'Authorization': `Bearer ${token}`
-        },
+        headers: { 'Authorization': `Bearer ${token}` },
         body: formData
       });
 
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
-        let errorMsg = 'Gagal menyimpan data profil perusahaan. Sesi mungkin kadaluarsa.';
-        if (typeof data?.detail === 'string') {
-          errorMsg = data.detail;
-        } else if (Array.isArray(data?.detail)) {
-          errorMsg = 'Validation Error: ' + JSON.stringify(data.detail);
-        }
-        setErrorStep3(errorMsg);
+        setErrorStep3(typeof data?.detail === 'string' ? data.detail : 'Gagal menyimpan data. Coba lagi atau hubungi support.');
         setIsLoading(false);
         return;
       }
 
-      setIsLoading(false);
-      // Save pending registration session details
       localStorage.setItem('pendingCompanyName', companyName);
       localStorage.setItem('pendingNibNumber', nibNpwpNumber);
       localStorage.setItem('pendingHrName', hrFullName);
       localStorage.setItem('pendingWhatsapp', whatsappNumber);
       localStorage.setItem('pendingRegistrationStatus', 'PENDING');
-
       router.push('/pending-approval');
-    } catch (err) {
-      const errorMsg = 'Tidak dapat terhubung ke server.';
-      setErrorStep3(errorMsg);
+    } catch {
+      setErrorStep3('Tidak dapat terhubung ke server.');
       setIsLoading(false);
     }
   };
 
-  return (
-    <div className="min-h-screen bg-[#F0F8FB] text-[#1b7b9e] flex flex-col justify-between font-sans antialiased">
+  const inputBase =
+    'w-full px-4 py-3 bg-white dark:bg-slate-950 text-slate-900 dark:text-white border-2 border-slate-300 dark:border-slate-700 focus:border-[#1A4B9F] focus:ring-2 focus:ring-blue-100 dark:focus:ring-blue-900 rounded-2xl text-sm outline-none transition-all';
+  const inputWithIcon =
+    'w-full pl-12 pr-4 py-3 bg-white dark:bg-slate-950 text-slate-900 dark:text-white border-2 border-slate-300 dark:border-slate-700 focus:border-[#1A4B9F] focus:ring-2 focus:ring-blue-100 dark:focus:ring-blue-900 rounded-2xl text-sm outline-none transition-all';
+  const labelBase = 'block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1';
+  const sectionBox = 'space-y-5 bg-slate-50 dark:bg-slate-900/50 p-6 rounded-2xl border border-slate-200 dark:border-slate-800';
+  const outlineBtn = 'px-6 py-3 rounded-full border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 font-semibold text-sm hover:bg-slate-50 dark:hover:bg-slate-800 transition-all';
+  const primaryBtnFlex = 'flex-1 py-3 rounded-full bg-[#1A4B9F] hover:bg-[#133878] active:bg-[#0f2a5a] text-white font-semibold text-sm shadow-sm transition-all duration-200 disabled:opacity-60 disabled:cursor-not-allowed';
 
-      {/* Top Header */}
+  const steps = [
+    { label: 'Akun & Email' },
+    { label: 'Verifikasi Email' },
+    { label: 'Data Perusahaan' },
+  ];
+
+  return (
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 flex flex-col justify-between font-sans antialiased transition-colors duration-300">
+
+      {/* Header */}
       <header className="py-6 px-6 sm:px-12 max-w-[1600px] w-full mx-auto flex items-center justify-between">
-        <Link href="/" className="flex items-center gap-3 group">
-          <div className="w-10 h-10 bg-[#1b7b9e] text-white rounded-xl flex items-center justify-center font-black text-lg shadow-md group-hover:scale-105 transition-transform">
-            RP
-          </div>
+        <Link href="/" className="flex items-center gap-2 group">
           <div className="flex flex-col">
-            <span className="font-black text-xl tracking-tight text-[#0c2b3d] leading-none">
-              AI-Recruit <span className="text-[#1D7FA1]">Pro</span>
+            <span className="font-bold text-2xl tracking-tight text-slate-900 dark:text-white leading-none">
+              AI-RecruitPro
             </span>
-            <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest mt-0.5">
-              Pendaftaran Perusahaan
+            <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest mt-1">
+              Daftarkan Perusahaan
             </span>
           </div>
         </Link>
-
-        <Link
-          href="/login"
-          className="text-xs sm:text-sm font-bold text-[#1b7b9e] hover:underline flex items-center gap-1.5"
-        >
-          Sudah Memiliki Akun? Sign In &rarr;
+        <Link href="/login" className="text-xs sm:text-sm font-semibold text-[#1A4B9F] hover:underline">
+          Sudah punya akun? Masuk
         </Link>
       </header>
 
-      {/* Main Wizard Container */}
-      <main className="flex-1 max-w-3xl w-full mx-auto px-4 py-8">
+      <main className="flex-1 w-full max-w-2xl mx-auto px-4 py-8">
 
-        {/* Progress Step Header Bar */}
-        <div className="bg-white rounded-3xl p-6 shadow-md border border-[#C2E5EF] mb-8">
-          <div className="grid grid-cols-3 gap-2 text-center relative">
-
-            {/* Step 1 Indicator */}
-            <div className={`flex flex-col items-center space-y-1.5 z-10 ${step >= 1 ? 'text-[#1b7b9e]' : 'text-slate-400'}`}>
-              <div className={`w-9 h-9 rounded-full flex items-center justify-center font-black text-xs transition-all ${step >= 1 ? 'bg-[#1b7b9e] text-white shadow-sm' : 'bg-slate-100 text-slate-400'
-                }`}>
-                1
-              </div>
-              <span className="text-[11px] font-extrabold">Akun &amp; Email</span>
-            </div>
-
-            {/* Step 2 Indicator */}
-            <div className={`flex flex-col items-center space-y-1.5 z-10 ${step >= 2 ? 'text-[#1b7b9e]' : 'text-slate-400'}`}>
-              <div className={`w-9 h-9 rounded-full flex items-center justify-center font-black text-xs transition-all ${step >= 2 ? 'bg-[#1b7b9e] text-white shadow-sm' : 'bg-slate-100 text-slate-400'
-                }`}>
-                2
-              </div>
-              <span className="text-[11px] font-extrabold">Verifikasi OTP</span>
-            </div>
-
-            {/* Step 3 Indicator */}
-            <div className={`flex flex-col items-center space-y-1.5 z-10 ${step >= 3 ? 'text-[#1b7b9e]' : 'text-slate-400'}`}>
-              <div className={`w-9 h-9 rounded-full flex items-center justify-center font-black text-xs transition-all ${step >= 3 ? 'bg-[#1b7b9e] text-white shadow-sm' : 'bg-slate-100 text-slate-400'
-                }`}>
-                3
-              </div>
-              <span className="text-[11px] font-extrabold">Bukti Legalitas</span>
-            </div>
-
+        {/* Step Progress */}
+        <div className="bg-white dark:bg-slate-900 rounded-2xl p-5 shadow-sm border border-slate-200 dark:border-slate-800 mb-6">
+          <div className="flex items-center justify-between relative">
+            <div className="absolute top-4 left-[calc(16.66%)] right-[calc(16.66%)] h-px bg-slate-200 dark:bg-slate-700 z-0" />
+            {steps.map((s, i) => {
+              const num = i + 1;
+              const isActive = step === num;
+              const isDone = step > num;
+              return (
+                <div key={num} className="flex flex-col items-center gap-2 z-10 flex-1">
+                  <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-all ${
+                    isDone ? 'bg-[#1A4B9F] text-white'
+                    : isActive ? 'bg-[#1A4B9F] text-white shadow-md ring-4 ring-blue-100 dark:ring-blue-900'
+                    : 'bg-slate-100 dark:bg-slate-800 text-slate-400'
+                  }`}>
+                    {isDone ? <CheckCircle2 size={14} /> : num}
+                  </div>
+                  <span className={`text-[11px] font-semibold text-center leading-tight ${isActive || isDone ? 'text-[#1A4B9F]' : 'text-slate-400'}`}>
+                    {s.label}
+                  </span>
+                </div>
+              );
+            })}
           </div>
         </div>
 
-        {/* STEP 1: Registration Form */}
+        {/* STEP 1 */}
         {step === 1 && (
-          <div className="bg-white rounded-3xl p-8 sm:p-10 shadow-2xl border border-[#C2E5EF] space-y-7">
-            <div className="space-y-2">
-              <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-[#E0F1F7] text-[#1b7b9e] text-xs font-extrabold border border-[#B8E1ED]">
-                <Building2 size={14} /> Step 1 of 3: Employer Registration
-              </div>
-              <h1 className="text-3xl font-black text-[#1b7b9e]">Buat Akun Perusahaan Baru</h1>
-              <p className="text-xs sm:text-sm text-slate-500">
-                Gunakan email domain perusahaan resmi Anda untuk memulai verifikasi akun HR.
+          <div className="bg-white dark:bg-slate-900 rounded-3xl p-8 sm:p-10 shadow-2xl border border-slate-200 dark:border-slate-800 space-y-6">
+            <div className="space-y-1.5">
+              <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Buat Akun Perusahaan</h1>
+              <p className="text-sm text-slate-500 dark:text-slate-400">
+                Gunakan email domain perusahaan Anda untuk memulai proses pendaftaran.
               </p>
             </div>
 
             <form onSubmit={handleStep1Submit} className="space-y-5">
-
-              {/* Corporate Email */}
-              <div className="space-y-1">
-                <label className="block text-xs font-bold text-slate-700">
-                  Official Company Email <span className="text-red-500">*</span>
-                </label>
+              <div>
+                <label className={labelBase}>Email Resmi Perusahaan <span className="text-red-500">*</span></label>
                 <div className="relative flex items-center">
                   <Mail size={18} className="absolute left-4 text-slate-400 pointer-events-none" />
                   <input
                     type="email"
                     value={email}
                     onChange={(e) => { setEmail(e.target.value); setErrorStep1(''); }}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') {
-                        e.preventDefault();
-                        document.getElementById('password')?.focus();
-                      }
-                    }}
-                    placeholder="Contoh: hrd@tokopedia.com, recruitment@bankmandiri.co.id"
-                    className="w-full pl-12 pr-4 py-3.5 bg-white border-2 border-slate-300 focus:border-[#1b7b9e] focus:ring-2 focus:ring-cyan-100 rounded-2xl text-sm outline-none transition-all"
+                    onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); document.getElementById('reg-password')?.focus(); } }}
+                    placeholder="contoh: hrd@perusahaan.com"
+                    className={inputWithIcon}
                   />
                 </div>
-                <p className="text-[11px] text-slate-500 pt-0.5">
-                  ⚠️ Email pribadi (Gmail/Yahoo/Outlook) otomatis ditolak oleh sistem.
+                <p className="text-[11px] text-slate-400 mt-1">
+                  Email pribadi (Gmail, Yahoo, Outlook) tidak dapat digunakan.
                 </p>
               </div>
 
-              {/* Password */}
-              <div className="space-y-1">
-                <label className="block text-xs font-bold text-slate-700">
-                  Password <span className="text-red-500">*</span>
-                </label>
+              <div>
+                <label className={labelBase}>Password <span className="text-red-500">*</span></label>
                 <div className="relative flex items-center">
                   <Lock size={18} className="absolute left-4 text-slate-400 pointer-events-none" />
                   <input
-                    id="password"
-                    type="password"
+                    id="reg-password"
+                    type={showPassword ? 'text' : 'password'}
                     value={password}
                     onChange={(e) => { setPassword(e.target.value); setErrorStep1(''); }}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') {
-                        e.preventDefault();
-                        document.getElementById('confirmPassword')?.focus();
-                      }
-                    }}
+                    onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); document.getElementById('reg-confirm-password')?.focus(); } }}
                     placeholder="••••••••"
-                    className="w-full pl-12 pr-4 py-3.5 bg-white border-2 border-slate-300 focus:border-[#1b7b9e] focus:ring-2 focus:ring-cyan-100 rounded-2xl text-sm outline-none transition-all"
+                    className="w-full pl-12 pr-12 py-3 bg-white dark:bg-slate-950 text-slate-900 dark:text-white border-2 border-slate-300 dark:border-slate-700 focus:border-[#1A4B9F] focus:ring-2 focus:ring-blue-100 dark:focus:ring-blue-900 rounded-2xl text-sm outline-none transition-all"
                   />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-4 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
+                    tabIndex={-1}
+                  >
+                    {showPassword ? <Eye size={18} /> : <EyeOff size={18} />}
+                  </button>
                 </div>
-
-                {/* Password Strength Indicator */}
-                <div className="mt-3 bg-slate-50 p-3 rounded-xl border border-slate-100">
-                  <p className="text-[10px] font-bold text-slate-500 mb-2">Persyaratan Kata Sandi:</p>
-                  <div className="grid grid-cols-2 gap-2 text-[10px]">
-                    <div className={`flex items-center gap-1.5 ${strength.length ? 'text-green-600 font-bold' : 'text-slate-500'}`}>
-                      {strength.length ? <CheckCircle2 size={12} /> : <div className="w-3 h-3 rounded-full border border-slate-300" />}
-                      Minimal 8 Karakter
-                    </div>
-                    <div className={`flex items-center gap-1.5 ${strength.uppercase ? 'text-green-600 font-bold' : 'text-slate-500'}`}>
-                      {strength.uppercase ? <CheckCircle2 size={12} /> : <div className="w-3 h-3 rounded-full border border-slate-300" />}
-                      Huruf Kapital (A-Z)
-                    </div>
-                    <div className={`flex items-center gap-1.5 ${strength.lowercase ? 'text-green-600 font-bold' : 'text-slate-500'}`}>
-                      {strength.lowercase ? <CheckCircle2 size={12} /> : <div className="w-3 h-3 rounded-full border border-slate-300" />}
-                      Huruf Kecil (a-z)
-                    </div>
-                    <div className={`flex items-center gap-1.5 ${strength.number ? 'text-green-600 font-bold' : 'text-slate-500'}`}>
-                      {strength.number ? <CheckCircle2 size={12} /> : <div className="w-3 h-3 rounded-full border border-slate-300" />}
-                      Angka (0-9)
-                    </div>
-                    <div className={`flex items-center gap-1.5 ${strength.special ? 'text-green-600 font-bold' : 'text-slate-500'}`}>
-                      {strength.special ? <CheckCircle2 size={12} /> : <div className="w-3 h-3 rounded-full border border-slate-300" />}
-                      Karakter Spesial
+                {password.length > 0 && (
+                  <div className="mt-3 bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800 rounded-xl p-3 space-y-2">
+                    <p className="text-[11px] font-semibold text-slate-500 dark:text-slate-400">Persyaratan password:</p>
+                    <div className="grid grid-cols-2 gap-1.5 text-[11px]">
+                      {([
+                        [strength.length, 'Minimal 8 karakter'],
+                        [strength.uppercase, 'Huruf kapital (A-Z)'],
+                        [strength.lowercase, 'Huruf kecil (a-z)'],
+                        [strength.number, 'Angka (0-9)'],
+                        [strength.special, 'Karakter khusus (!@#...)'],
+                      ] as [boolean, string][]).map(([ok, label], i) => (
+                        <div key={i} className={`flex items-center gap-1.5 ${ok ? 'text-green-600 font-semibold' : 'text-slate-400'}`}>
+                          {ok ? <CheckCircle2 size={12} /> : <div className="w-3 h-3 rounded-full border border-slate-300 dark:border-slate-600" />}
+                          {label}
+                        </div>
+                      ))}
                     </div>
                   </div>
-                </div>
+                )}
               </div>
 
-              {/* Confirm Password */}
-              <div className="space-y-1">
-                <label className="block text-xs font-bold text-slate-700">
-                  Confirm Password <span className="text-red-500">*</span>
-                </label>
+              <div>
+                <label className={labelBase}>Konfirmasi Password <span className="text-red-500">*</span></label>
                 <div className="relative flex items-center">
                   <Lock size={18} className="absolute left-4 text-slate-400 pointer-events-none" />
                   <input
-                    id="confirmPassword"
-                    type="password"
+                    id="reg-confirm-password"
+                    type={showConfirm ? 'text' : 'password'}
                     value={confirmPassword}
                     onChange={(e) => { setConfirmPassword(e.target.value); setErrorStep1(''); }}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') {
-                        e.preventDefault();
-                        document.getElementById('submit-btn')?.click();
-                      }
-                    }}
-                    placeholder="Ulangi Kata Sandi"
-                    className="w-full pl-12 pr-4 py-3.5 bg-white border-2 border-slate-300 focus:border-[#1b7b9e] focus:ring-2 focus:ring-cyan-100 rounded-2xl text-sm outline-none transition-all"
+                    onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); document.getElementById('reg-submit-btn')?.click(); } }}
+                    placeholder="Ulangi password"
+                    className={`w-full pl-12 pr-12 py-3 bg-white dark:bg-slate-950 text-slate-900 dark:text-white border-2 ${confirmPassword && confirmPassword !== password ? 'border-red-400' : confirmPassword && confirmPassword === password ? 'border-green-400' : 'border-slate-300 dark:border-slate-700 focus:border-[#1A4B9F] focus:ring-2 focus:ring-blue-100 dark:focus:ring-blue-900'} rounded-2xl text-sm outline-none transition-all`}
                   />
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirm(!showConfirm)}
+                    className="absolute right-4 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
+                    tabIndex={-1}
+                  >
+                    {showConfirm ? <Eye size={18} /> : <EyeOff size={18} />}
+                  </button>
                 </div>
+                {confirmPassword && confirmPassword !== password && (
+                  <p className="text-[11px] text-red-500 mt-1">Password tidak cocok.</p>
+                )}
               </div>
 
-              {/* Error Message */}
               {errorStep1 && (
-                <div className="p-4 rounded-2xl bg-red-50 border border-red-200 text-red-700 text-xs font-semibold flex items-start gap-3 leading-relaxed">
-                  <AlertCircle size={20} className="shrink-0 mt-0.5" />
+                <div className="p-3.5 rounded-2xl bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300 text-xs font-semibold flex items-start gap-2.5 leading-relaxed">
+                  <AlertCircle size={18} className="shrink-0 mt-0.5" />
                   <span>{errorStep1}</span>
                 </div>
               )}
 
-
-
               <button
-                id="submit-btn"
+                id="reg-submit-btn"
                 type="submit"
                 disabled={isLoading}
-                className="w-full py-4 rounded-full bg-[#1b7b9e] hover:bg-[#1D7FA1] text-white font-black text-xs sm:text-sm shadow-md transition-all flex items-center justify-center gap-2"
+                className="w-full py-3 rounded-full bg-[#1A4B9F] hover:bg-[#133878] active:bg-[#0f2a5a] text-white font-semibold text-sm shadow-sm transition-all duration-200 disabled:opacity-60 disabled:cursor-not-allowed"
               >
-                {isLoading ? (
-                  <span>Mengirim Kode OTP...</span>
-                ) : (
-                  <>
-                    <span>Lanjutkan &amp; Kirim Kode OTP</span>
-                    <ArrowRight size={16} />
-                  </>
-                )}
+                {isLoading ? 'Mengirim kode verifikasi...' : 'Lanjutkan'}
               </button>
-
             </form>
           </div>
         )}
 
-        {/* STEP 2: OTP Verification */}
+        {/* STEP 2: Ultra Clean Enterprise Email Verification */}
         {step === 2 && (
-          <div className="bg-white rounded-3xl p-8 sm:p-10 shadow-2xl border border-[#C2E5EF] space-y-7">
-            <div className="space-y-2 text-center">
-              <div className="w-14 h-14 bg-[#E0F1F7] border border-[#B8E1ED] rounded-2xl flex items-center justify-center text-[#1b7b9e] mx-auto">
-                <Mail size={28} />
-              </div>
-              <h2 className="text-2xl font-black text-[#1b7b9e]">Masukkan Kode OTP Email</h2>
-              <p className="text-xs sm:text-sm text-slate-500 max-w-md mx-auto leading-relaxed">
-                Kami telah mengirimkan 6-digit kode verifikasi OTP ke email perusahaan resmi: <strong className="text-[#1b7b9e]">{email}</strong>.
+          <div className="bg-white dark:bg-slate-900 rounded-3xl p-8 sm:p-10 shadow-2xl border border-slate-200/80 dark:border-slate-800 space-y-7 max-w-md mx-auto text-center">
+            
+            {/* Clean Mail Icon Badge */}
+            <div className="mx-auto w-14 h-14 bg-blue-50 dark:bg-blue-950/80 border border-blue-100 dark:border-blue-900/80 rounded-2xl flex items-center justify-center text-[#1A4B9F] dark:text-blue-400 shadow-sm">
+              <Mail size={26} />
+            </div>
+
+            {/* Header & Email */}
+            <div className="space-y-2">
+              <h2 className="text-2xl font-extrabold text-slate-900 dark:text-white tracking-tight">
+                Verifikasi Email
+              </h2>
+              <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed max-w-xs mx-auto">
+                Masukkan 6-digit kode OTP yang dikirim ke{' '}
+                <span className="font-semibold text-slate-900 dark:text-white">{email}</span>
+                <button
+                  type="button"
+                  onClick={() => { setStep(1); setErrorStep2(''); setResendSuccess(''); }}
+                  className="text-[#1A4B9F] dark:text-blue-400 hover:underline font-semibold text-xs ml-1"
+                >
+                  (Ubah)
+                </button>
               </p>
             </div>
 
             <form onSubmit={handleStep2Submit} className="space-y-6">
-
-              {/* 6 Digit Inputs */}
-              <div className="flex justify-center items-center gap-2 sm:gap-3">
-                {otpCode.map((digit, idx) => (
-                  <input
-                    key={idx}
-                    id={`otp-input-${idx}`}
-                    type="text"
-                    maxLength={1}
-                    value={digit}
-                    onChange={(e) => handleOtpChange(idx, e.target.value)}
-                    className="w-11 h-13 sm:w-13 sm:h-15 text-center text-xl font-black text-[#1b7b9e] bg-[#F0F8FB] border-2 border-[#C2E5EF] focus:border-[#1b7b9e] focus:bg-white rounded-2xl outline-none transition-all"
-                  />
-                ))}
+              {/* 3 x 3 Split OTP Inputs */}
+              <div className="flex justify-center items-center gap-2">
+                <div className="flex gap-1.5 sm:gap-2">
+                  {otpCode.slice(0, 3).map((digit, idx) => (
+                    <input
+                      key={idx}
+                      id={`otp-input-${idx}`}
+                      type="text"
+                      inputMode="numeric"
+                      maxLength={1}
+                      value={digit}
+                      onChange={(e) => handleOtpChange(idx, e.target.value)}
+                      onKeyDown={(e) => handleOtpKeyDown(idx, e)}
+                      onPaste={handleOtpPaste}
+                      className="w-11 sm:w-12 h-13 sm:h-14 text-center text-xl font-bold font-mono text-slate-900 dark:text-white bg-slate-50 dark:bg-slate-950 border-2 border-slate-200 dark:border-slate-800 focus:border-[#1A4B9F] dark:focus:border-blue-400 focus:bg-white dark:focus:bg-slate-900 rounded-xl outline-none transition-all shadow-sm"
+                      autoFocus={idx === 0}
+                    />
+                  ))}
+                </div>
+                <span className="text-slate-300 dark:text-slate-700 font-light text-xl select-none px-0.5">—</span>
+                <div className="flex gap-1.5 sm:gap-2">
+                  {otpCode.slice(3, 6).map((digit, idx) => {
+                    const realIdx = idx + 3;
+                    return (
+                      <input
+                        key={realIdx}
+                        id={`otp-input-${realIdx}`}
+                        type="text"
+                        inputMode="numeric"
+                        maxLength={1}
+                        value={digit}
+                        onChange={(e) => handleOtpChange(realIdx, e.target.value)}
+                        onKeyDown={(e) => handleOtpKeyDown(realIdx, e)}
+                        onPaste={handleOtpPaste}
+                        className="w-11 sm:w-12 h-13 sm:h-14 text-center text-xl font-bold font-mono text-slate-900 dark:text-white bg-slate-50 dark:bg-slate-950 border-2 border-slate-200 dark:border-slate-800 focus:border-[#1A4B9F] dark:focus:border-blue-400 focus:bg-white dark:focus:bg-slate-900 rounded-xl outline-none transition-all shadow-sm"
+                      />
+                    );
+                  })}
+                </div>
               </div>
 
               {errorStep2 && (
-                <div className="p-3.5 rounded-2xl bg-red-50 border border-red-200 text-red-700 text-xs font-semibold text-center">
+                <div className="p-3 rounded-xl bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-300 text-xs font-medium text-center">
                   {errorStep2}
                 </div>
               )}
 
+              {resendSuccess && (
+                <div className="p-3 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 text-emerald-600 dark:text-emerald-300 text-xs font-medium text-center">
+                  {resendSuccess}
+                </div>
+              )}
 
+              {/* Primary Action Button */}
+              <button
+                type="submit"
+                disabled={isLoading || otpCode.join('').length < 6}
+                className="w-full py-3.5 rounded-xl bg-[#1A4B9F] hover:bg-[#133878] active:bg-[#0f2a5a] text-white font-bold text-sm shadow-md hover:shadow-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+              >
+                {isLoading ? 'Memverifikasi...' : 'Verifikasi Email'}
+              </button>
 
-              <div className="flex items-center justify-between gap-4 pt-2">
+              {/* Footer Resend */}
+              <div className="pt-2 text-xs text-slate-500 dark:text-slate-400 border-t border-slate-100 dark:border-slate-800">
+                <span>Belum menerima kode? </span>
                 <button
                   type="button"
-                  onClick={() => setStep(1)}
-                  className="px-6 py-3 rounded-full border border-slate-300 text-slate-700 font-bold text-xs hover:bg-slate-50"
+                  onClick={handleResendOtp}
+                  disabled={resendTimer > 0 || isResending}
+                  className="text-[#1A4B9F] dark:text-blue-400 font-bold hover:underline disabled:opacity-50 disabled:no-underline disabled:cursor-not-allowed"
                 >
-                  &larr; Kembali
-                </button>
-
-                <button
-                  type="submit"
-                  disabled={isLoading}
-                  className="flex-1 py-3.5 rounded-full bg-[#1b7b9e] hover:bg-[#1D7FA1] text-white font-extrabold text-xs sm:text-sm shadow-md transition-all flex items-center justify-center gap-2"
-                >
-                  {isLoading ? (
-                    <span>Memverifikasi OTP...</span>
-                  ) : (
-                    <>
-                      <span>Verifikasi &amp; Lanjut Form Legalitas</span>
-                      <ArrowRight size={16} />
-                    </>
-                  )}
+                  {isResending
+                    ? 'Mengirim...'
+                    : resendTimer > 0
+                    ? `Kirim ulang (${resendTimer}s)`
+                    : 'Kirim Ulang Kode'}
                 </button>
               </div>
-
             </form>
           </div>
         )}
 
-        {/* STEP 3: Company Legal Verification Form */}
+        {/* STEP 3 */}
         {step === 3 && (
-          <div className="bg-white rounded-3xl p-8 sm:p-10 shadow-2xl border border-[#C2E5EF] space-y-8">
-            <div className="space-y-2 border-b border-slate-100 pb-5">
-              <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-[#E0F1F7] text-[#1b7b9e] text-xs font-extrabold border border-[#B8E1ED]">
-                <FileCheck size={14} /> Langkah 3 dari 3: Verifikasi Bukti Legalitas Perusahaan
-              </div>
-              <h2 className="text-2xl sm:text-3xl font-black text-[#1b7b9e]">Formulir Dokumen Resmi &amp; Perwakilan HR</h2>
-              <p className="text-xs sm:text-sm text-slate-500">
-                Lengkapi berkas hukum perusahaan untuk ditinjau oleh Administrator Developer AI-Recruit Pro.
+          <div className="bg-white dark:bg-slate-900 rounded-3xl p-8 sm:p-10 shadow-2xl border border-slate-200 dark:border-slate-800 space-y-8">
+            <div className="space-y-1.5 border-b border-slate-100 dark:border-slate-800 pb-5">
+              <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Dokumen & Data Perusahaan</h2>
+              <p className="text-sm text-slate-500 dark:text-slate-400">
+                Lengkapi informasi berikut untuk diverifikasi oleh tim AI-RecruitPro. Proses verifikasi umumnya membutuhkan 1-2 hari kerja.
               </p>
             </div>
 
@@ -634,39 +673,24 @@ function CompanyRegistrationInner() {
 
             <form onSubmit={handleStep3Submit} className="space-y-8">
 
-              {/* BAGIAN 1: DATA PERUSAHAAN (SESUAI DOKUMEN RESMI) */}
-              <div className="space-y-5 bg-[#F0F8FB] p-6 rounded-3xl border border-[#C2E5EF]">
-                <div className="flex items-center gap-2 text-sm font-black text-[#1b7b9e] uppercase tracking-wider border-b border-[#C2E5EF] pb-3">
-                  <Building2 size={18} />
-                  <span>BAGIAN 1: DATA PERUSAHAAN (SESUAI DOKUMEN RESMI)</span>
+              {/* Data Perusahaan */}
+              <div className={sectionBox}>
+                <div className="flex items-center gap-2.5 text-sm font-semibold text-slate-700 dark:text-slate-200 border-b border-slate-200 dark:border-slate-700 pb-3">
+                  <Building2 size={16} className="text-[#1A4B9F]" />
+                  <span>Data Perusahaan</span>
                 </div>
 
-                {/* Nama Perusahaan */}
-                <div className="space-y-1">
-                  <label className="block text-xs font-bold text-slate-700">
-                    Nama Perusahaan Resmi <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    value={companyName}
-                    onChange={(e) => setCompanyName(e.target.value)}
-                    placeholder="Contoh: PT Tokopedia Indonesia"
-                    className="w-full px-4 py-3 bg-white border border-slate-300 focus:border-[#1b7b9e] rounded-2xl text-sm outline-none"
-                  />
+                <div>
+                  <label className={labelBase}>Nama Perusahaan Resmi <span className="text-red-500">*</span></label>
+                  <input type="text" value={companyName} onChange={(e) => setCompanyName(e.target.value)}
+                    placeholder="Contoh: PT Tokopedia Indonesia" className={inputBase} />
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  {/* Sektor Industri */}
-                  <div className="space-y-1">
-                    <label className="block text-xs font-bold text-slate-700">
-                      Sektor Industri <span className="text-red-500">*</span>
-                    </label>
-                    <select
-                      value={industri}
-                      onChange={(e) => setIndustri(e.target.value)}
-                      className="w-full px-4 py-3 bg-white border border-slate-300 focus:border-[#1b7b9e] rounded-2xl text-sm outline-none"
-                    >
-                      <option value="">-- Pilih Sektor --</option>
+                  <div>
+                    <label className={labelBase}>Sektor Industri <span className="text-red-500">*</span></label>
+                    <select value={industri} onChange={(e) => setIndustri(e.target.value)} className={inputBase}>
+                      <option value="">Pilih sektor</option>
                       <option value="Teknologi Informasi">Teknologi Informasi</option>
                       <option value="Keuangan & Perbankan">Keuangan & Perbankan</option>
                       <option value="Kesehatan">Kesehatan</option>
@@ -676,77 +700,49 @@ function CompanyRegistrationInner() {
                       <option value="Lainnya">Lainnya</option>
                     </select>
                   </div>
-
-                  {/* Ukuran Perusahaan */}
-                  <div className="space-y-1">
-                    <label className="block text-xs font-bold text-slate-700">
-                      Ukuran Perusahaan <span className="text-red-500">*</span>
-                    </label>
-                    <select
-                      value={ukuran}
-                      onChange={(e) => setUkuran(e.target.value)}
-                      className="w-full px-4 py-3 bg-white border border-slate-300 focus:border-[#1b7b9e] rounded-2xl text-sm outline-none"
-                    >
-                      <option value="">-- Pilih Ukuran --</option>
-                      <option value="1-50 Karyawan (Startup/Kecil)">1-50 Karyawan (Startup/Kecil)</option>
-                      <option value="51-200 Karyawan (Menengah)">51-200 Karyawan (Menengah)</option>
-                      <option value="201-1000 Karyawan (Besar)">201-1000 Karyawan (Besar)</option>
-                      <option value="> 1000 Karyawan (Enterprise)">-1000 Karyawan (Enterprise)</option>
+                  <div>
+                    <label className={labelBase}>Jumlah Karyawan <span className="text-red-500">*</span></label>
+                    <select value={ukuran} onChange={(e) => setUkuran(e.target.value)} className={inputBase}>
+                      <option value="">Pilih rentang</option>
+                      <option value="1-50 Karyawan (Startup/Kecil)">1-50 karyawan</option>
+                      <option value="51-200 Karyawan (Menengah)">51-200 karyawan</option>
+                      <option value="201-1000 Karyawan (Besar)">201-1.000 karyawan</option>
+                      <option value="> 1000 Karyawan (Enterprise)">Lebih dari 1.000 karyawan</option>
                     </select>
                   </div>
                 </div>
 
-                {/* Website URL */}
-                <div className="space-y-1">
-                  <label className="block text-xs font-bold text-slate-700">
-                    Website URL
-                  </label>
-                  <input
-                    type="url"
-                    value={websiteUrl}
-                    onChange={(e) => setWebsiteUrl(e.target.value)}
-                    placeholder="https://www.perusahaananda.com"
-                    className="w-full px-4 py-3 bg-white border border-slate-300 focus:border-[#1b7b9e] rounded-2xl text-sm outline-none"
-                  />
+                <div>
+                  <label className={labelBase}>Website Perusahaan <span className="text-slate-400 font-normal">(opsional)</span></label>
+                  <input type="url" value={websiteUrl} onChange={(e) => setWebsiteUrl(e.target.value)}
+                    placeholder="https://www.perusahaan.com" className={inputBase} />
                 </div>
 
-                {/* NIB / NPWP Number */}
-                <div className="space-y-1">
-                  <label className="block text-xs font-bold text-slate-700">
-                    Nomor Induk Berusaha (NIB) / NPWP Perusahaan <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    value={nibNpwpNumber}
+                <div>
+                  <label className={labelBase}>Nomor NIB / NPWP <span className="text-red-500">*</span></label>
+                  <input type="text" value={nibNpwpNumber}
                     onChange={(e) => setNibNpwpNumber(e.target.value.replace(/\D/g, ''))}
-                    placeholder="Input angka NIB/NPWP (misal: 9120101928123)"
-                    className="w-full px-4 py-3 bg-white border border-slate-300 focus:border-[#1b7b9e] rounded-2xl text-sm outline-none font-mono"
-                  />
+                    placeholder="Angka saja, contoh: 9120101928123"
+                    className={`${inputBase} font-mono`} />
                 </div>
 
-                {/* Upload NIB / NPWP Document */}
-                <div className="space-y-1">
-                  <label className="block text-xs font-bold text-slate-700">
-                    Upload Dokumen NIB / NPWP (File Fisik) <span className="text-red-500">*</span>
-                  </label>
-                  <div className="border-2 border-dashed border-[#B8E1ED] hover:border-[#1b7b9e] bg-white p-5 rounded-2xl text-center space-y-2 cursor-pointer relative">
-                    <input
-                      type="file"
-                      accept=".pdf,.jpg,.jpeg,.png"
+                <div>
+                  <label className={labelBase}>Dokumen NIB / NPWP <span className="text-red-500">*</span></label>
+                  <div className="border-2 border-dashed border-slate-300 dark:border-slate-700 hover:border-[#1A4B9F] bg-white dark:bg-slate-950 p-5 rounded-2xl text-center space-y-2 cursor-pointer relative transition-colors">
+                    <input type="file" accept=".pdf,.jpg,.jpeg,.png"
                       onChange={(e) => setNibFile(e.target.files?.[0] || null)}
-                      className="absolute inset-0 opacity-0 cursor-pointer z-10"
-                    />
+                      className="absolute inset-0 opacity-0 cursor-pointer z-10" />
                     {nibFile ? (
                       <div className="flex flex-col items-center gap-2">
                         {nibFile.type.startsWith('image/') ? (
-                          <img src={URL.createObjectURL(nibFile)} alt="Preview NIB" className="max-h-32 object-contain rounded-lg border border-slate-200" />
+                          <img src={URL.createObjectURL(nibFile)} alt="Preview NIB" className="max-h-28 object-contain rounded-lg border border-slate-200" />
                         ) : (
-                          <div className="p-4 bg-slate-100 rounded-lg border border-slate-200 flex flex-col items-center">
-                            <FileText size={32} className="text-[#1b7b9e] mb-1" />
-                            <span className="text-xs font-semibold text-slate-700 truncate max-w-[200px]">{nibFile.name}</span>
+                          <div className="p-4 bg-slate-100 dark:bg-slate-800 rounded-lg flex flex-col items-center">
+                            <FileText size={28} className="text-[#1A4B9F] mb-1" />
+                            <span className="text-xs font-medium text-slate-700 dark:text-slate-300 truncate max-w-[180px]">{nibFile.name}</span>
                           </div>
                         )}
-                        <span className="text-[11px] font-bold text-[#1b7b9e] underline relative z-20 pointer-events-none">Klik untuk ganti file</span>
+                        <span className="text-[11px] text-[#1A4B9F] underline z-20 relative pointer-events-none">Klik untuk ganti</span>
                       </div>
                     ) : existingNibUrl ? (
                       <div className="flex flex-col items-center gap-2 py-2">
@@ -760,99 +756,59 @@ function CompanyRegistrationInner() {
                       </div>
                     ) : (
                       <>
-                        <Upload size={24} className="text-[#1b7b9e] mx-auto" />
-                        <span className="text-xs font-bold text-[#1b7b9e] block">
-                          Klik / Drag & Drop Dokumen NIB / NPWP (PDF, JPG, PNG)
-                        </span>
-                        <span className="text-[11px] text-slate-400 block">Maksimal Ukuran File: 5MB</span>
+                        <Upload size={22} className="text-slate-400 mx-auto" />
+                        <span className="text-xs font-medium text-slate-600 dark:text-slate-400 block">Klik atau seret file ke sini</span>
+                        <span className="text-[11px] text-slate-400 block">PDF, JPG, PNG — maks. 5 MB</span>
                       </>
                     )}
                   </div>
                 </div>
 
-                {/* Address Textarea */}
-                <div className="space-y-1">
-                  <label className="block text-xs font-bold text-slate-700">
-                    Alamat Lengkap Perusahaan <span className="text-red-500">*</span>
-                  </label>
-                  <textarea
-                    rows={3}
-                    value={companyAddress}
-                    onChange={(e) => setCompanyAddress(e.target.value)}
-                    placeholder="Alamat Kantor Pusat Sesuai Akta Pendirian / NIB..."
-                    className="w-full px-4 py-3 bg-white border border-slate-300 focus:border-[#1b7b9e] rounded-2xl text-sm outline-none"
-                  />
+                <div>
+                  <label className={labelBase}>Alamat Kantor <span className="text-red-500">*</span></label>
+                  <textarea rows={3} value={companyAddress} onChange={(e) => setCompanyAddress(e.target.value)}
+                    placeholder="Alamat lengkap sesuai NIB atau akta pendirian"
+                    className={`${inputBase} resize-none`} />
                 </div>
-
               </div>
 
-              {/* BAGIAN 2: DATA PERWAKILAN (HRD/REKRUTER) */}
-              <div className="space-y-5 bg-[#F0F8FB] p-6 rounded-3xl border border-[#C2E5EF]">
-                <div className="flex items-center gap-2 text-sm font-black text-[#1b7b9e] uppercase tracking-wider border-b border-[#C2E5EF] pb-3">
-                  <User size={18} />
-                  <span>BAGIAN 2: DATA PERWAKILAN (HRD / REKRUTER)</span>
+              {/* Data HR */}
+              <div className={sectionBox}>
+                <div className="flex items-center gap-2.5 text-sm font-semibold text-slate-700 dark:text-slate-200 border-b border-slate-200 dark:border-slate-700 pb-3">
+                  <User size={16} className="text-[#1A4B9F]" />
+                  <span>Data Perwakilan HR</span>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  {/* Nama HR */}
-                  <div className="space-y-1">
-                    <label className="block text-xs font-bold text-slate-700">
-                      Nama Lengkap Pendaftar <span className="text-red-500">*</span>
-                    </label>
-                    <input
-                      type="text"
-                      value={hrFullName}
-                      onChange={(e) => setHrFullName(e.target.value)}
-                      placeholder="Nama Lengkap Sesuai ID Card"
-                      className="w-full px-4 py-3 bg-white border border-slate-300 focus:border-[#1b7b9e] rounded-2xl text-sm outline-none"
-                    />
+                  <div>
+                    <label className={labelBase}>Nama Lengkap <span className="text-red-500">*</span></label>
+                    <input type="text" value={hrFullName} onChange={(e) => setHrFullName(e.target.value)}
+                      placeholder="Sesuai identitas resmi" className={inputBase} />
                   </div>
-
-                  {/* WhatsApp */}
-                  <div className="space-y-1">
-                    <label className="block text-xs font-bold text-slate-700">
-                      Nomor WhatsApp / Telepon Aktif <span className="text-red-500">*</span>
-                    </label>
-                    <input
-                      type="text"
-                      value={whatsappNumber}
+                  <div>
+                    <label className={labelBase}>Nomor WhatsApp <span className="text-red-500">*</span></label>
+                    <input type="text" value={whatsappNumber}
                       onChange={(e) => setWhatsappNumber(e.target.value.replace(/\D/g, ''))}
-                      placeholder="081234567890 (Angka Only)"
-                      className="w-full px-4 py-3 bg-white border border-slate-300 focus:border-[#1b7b9e] rounded-2xl text-sm outline-none font-mono"
-                    />
+                      placeholder="081234567890" className={`${inputBase} font-mono`} />
                   </div>
                 </div>
 
-                {/* Jabatan */}
-                <div className="space-y-1">
-                  <label className="block text-xs font-bold text-slate-700">
-                    Jabatan Dalam Perusahaan <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    value={hrPosition}
-                    onChange={(e) => setHrPosition(e.target.value)}
-                    placeholder="Contoh: HR Manager / Talent Acquisition Lead"
-                    className="w-full px-4 py-3 bg-white border border-slate-300 focus:border-[#1b7b9e] rounded-2xl text-sm outline-none"
-                  />
+                <div>
+                  <label className={labelBase}>Jabatan <span className="text-red-500">*</span></label>
+                  <input type="text" value={hrPosition} onChange={(e) => setHrPosition(e.target.value)}
+                    placeholder="Contoh: HR Manager, Talent Acquisition" className={inputBase} />
                 </div>
 
-                {/* Upload ID Card / KTP */}
-                <div className="space-y-1">
-                  <label className="block text-xs font-bold text-slate-700">
-                    Upload ID Card Karyawan / KTP Pendaftar <span className="text-red-500">*</span>
-                  </label>
-                  <div className="border-2 border-dashed border-[#B8E1ED] hover:border-[#1b7b9e] bg-white p-5 rounded-2xl text-center space-y-2 cursor-pointer relative">
-                    <input
-                      type="file"
-                      accept=".jpg,.jpeg,.png"
+                <div>
+                  <label className={labelBase}>Foto ID Card / KTP <span className="text-red-500">*</span></label>
+                  <div className="border-2 border-dashed border-slate-300 dark:border-slate-700 hover:border-[#1A4B9F] bg-white dark:bg-slate-950 p-5 rounded-2xl text-center space-y-2 cursor-pointer relative transition-colors">
+                    <input type="file" accept=".jpg,.jpeg,.png"
                       onChange={(e) => setIdCardFile(e.target.files?.[0] || null)}
-                      className="absolute inset-0 opacity-0 cursor-pointer z-10"
-                    />
+                      className="absolute inset-0 opacity-0 cursor-pointer z-10" />
                     {idCardFile ? (
                       <div className="flex flex-col items-center gap-2">
-                        <img src={URL.createObjectURL(idCardFile)} alt="Preview ID Card" className="max-h-32 object-contain rounded-lg border border-slate-200" />
-                        <span className="text-[11px] font-bold text-[#1b7b9e] underline relative z-20 pointer-events-none">Klik untuk ganti file</span>
+                        <img src={URL.createObjectURL(idCardFile)} alt="Preview ID" className="max-h-28 object-contain rounded-lg border border-slate-200" />
+                        <span className="text-[11px] text-[#1A4B9F] underline z-20 relative pointer-events-none">Klik untuk ganti</span>
                       </div>
                     ) : existingIdCardUrl ? (
                       <div className="flex flex-col items-center gap-2 py-2">
@@ -866,51 +822,26 @@ function CompanyRegistrationInner() {
                       </div>
                     ) : (
                       <>
-                        <Upload size={24} className="text-[#1b7b9e] mx-auto" />
-                        <span className="text-xs font-bold text-[#1b7b9e] block">
-                          Klik / Drag & Drop Foto ID Card Karyawan / KTP (JPG, PNG)
-                        </span>
-                        <span className="text-[11px] text-slate-400 block">Untuk memastikan keabsahan perwakilan perusahaan</span>
+                        <Upload size={22} className="text-slate-400 mx-auto" />
+                        <span className="text-xs font-medium text-slate-600 dark:text-slate-400 block">Klik atau seret foto KTP / ID Card</span>
+                        <span className="text-[11px] text-slate-400 block">JPG, PNG — maks. 5 MB</span>
                       </>
                     )}
                   </div>
                 </div>
-
               </div>
 
-              {/* Error Message */}
               {errorStep3 && (
-                <div className="p-4 rounded-2xl bg-red-50 border border-red-200 text-red-700 text-xs font-semibold flex items-start gap-3">
-                  <AlertCircle size={20} className="shrink-0 mt-0.5" />
+                <div className="p-3.5 rounded-2xl bg-red-50 border border-red-200 text-red-700 text-xs font-semibold flex items-start gap-2.5 leading-relaxed">
+                  <AlertCircle size={18} className="shrink-0 mt-0.5" />
                   <span>{errorStep3}</span>
                 </div>
               )}
 
-
-
-              {/* Submit Buttons */}
-              <div className="flex items-center justify-between gap-4 pt-4 border-t border-slate-100">
-                <button
-                  type="button"
-                  onClick={() => setStep(2)}
-                  className="px-6 py-3.5 rounded-full border border-slate-300 text-slate-700 font-bold text-xs hover:bg-slate-50"
-                >
-                  &larr; Kembali
-                </button>
-
-                <button
-                  type="submit"
-                  disabled={isLoading}
-                  className="flex-1 py-4 rounded-full bg-[#1b7b9e] hover:bg-[#1D7FA1] text-white font-black text-xs sm:text-sm shadow-lg transition-all flex items-center justify-center gap-2"
-                >
-                  {isLoading ? (
-                    <span>Mengirimkan Berkas Legalitas...</span>
-                  ) : (
-                    <>
-                      <span>Kirim Data Legalitas &amp; Ajukan Verifikasi</span>
-                      <ArrowRight size={16} />
-                    </>
-                  )}
+              <div className="flex items-center gap-3 pt-2 border-t border-slate-100 dark:border-slate-800">
+                <button type="button" onClick={() => setStep(2)} className={outlineBtn}>Kembali</button>
+                <button type="submit" disabled={isLoading} className={primaryBtnFlex}>
+                  {isLoading ? 'Mengirim data...' : 'Kirim & Ajukan Verifikasi'}
                 </button>
               </div>
 
@@ -921,7 +852,6 @@ function CompanyRegistrationInner() {
       </main>
 
       <Footer />
-
     </div>
   );
 }
