@@ -170,6 +170,7 @@ export interface DataTableProps<T> {
   currentPage?: number;
   onPageChange?: (page: number) => void;
   showPagination?: boolean;
+  onRowClick?: (item: T, index: number) => void;
   className?: string;
   tableClassName?: string;
 }
@@ -187,6 +188,7 @@ export function DataTable<T>({
   currentPage: controlledPage,
   onPageChange: controlledOnPageChange,
   showPagination = true,
+  onRowClick,
   className = '',
   tableClassName = ''
 }: DataTableProps<T>) {
@@ -266,7 +268,10 @@ export function DataTable<T>({
                 return (
                   <tr
                     key={rowKey}
-                    className="hover:bg-blue-50/40 dark:hover:bg-slate-800/50 transition-colors"
+                    onClick={() => onRowClick && onRowClick(item, globalIndex)}
+                    className={`hover:bg-blue-50/40 dark:hover:bg-slate-800/50 transition-colors ${
+                      onRowClick ? 'cursor-pointer' : ''
+                    }`}
                   >
                     {columns.map((col) => (
                       <td
