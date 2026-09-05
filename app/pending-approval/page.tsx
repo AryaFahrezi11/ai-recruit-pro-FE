@@ -4,6 +4,8 @@ import React, { useEffect, useState } from 'react';
 import Footer from '@/components/Footer';
 import Link from 'next/link';
 import { toast } from 'react-hot-toast';
+import { useRouter } from 'next/navigation';
+import { getApiUrl } from '@/lib/api';
 import {
   Clock,
   ShieldCheck,
@@ -17,17 +19,27 @@ import {
   MessageSquare,
   HelpCircle,
   FileCheck2,
-  Lock
+  Lock,
+  RefreshCw,
+  LogOut,
+  Edit
 } from 'lucide-react';
 
 export default function PendingApprovalPage() {
-  const [companyName, setCompanyName] = useState('PT Tokopedia Indonesia');
-  const [nibNumber, setNibNumber] = useState('9120101928123');
-  const [hrName, setHrName] = useState('Bambang Setyono');
-  const [whatsapp, setWhatsapp] = useState('081298765432');
+  const router = useRouter();
+  const [companyName, setCompanyName] = useState('-');
+  const [nibNumber, setNibNumber] = useState('-');
+  const [hrName, setHrName] = useState('-');
+  const [whatsapp, setWhatsapp] = useState('-');
+  const [isChecking, setIsChecking] = useState(false);
+  const [isApproved, setIsApproved] = useState(false);
+  const [isIncomplete, setIsIncomplete] = useState(false);
 
-  useEffect(() => {
-    // Read submitted details from localStorage if present
+  const fetchStatus = async () => {
+    setIsChecking(true);
+    const token = typeof window !== 'undefined' ? localStorage.getItem('access_token') : null;
+    
+    // Read saved details from localStorage as fallback
     const savedCompany = localStorage.getItem('pendingCompanyName');
     const savedNib = localStorage.getItem('pendingNibNumber');
     const savedHr = localStorage.getItem('pendingHrName');
@@ -37,7 +49,44 @@ export default function PendingApprovalPage() {
     if (savedNib) setNibNumber(savedNib);
     if (savedHr) setHrName(savedHr);
     if (savedWa) setWhatsapp(savedWa);
+
+    if (token) {
+      try {
+        const res = await fetch(getApiUrl('/users/profile'), {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (res.ok) {
+          const data = await res.json();
+          const p = data.profil;
+          if (p) {
+            if (p.nama_perusahaan) setCompanyName(p.nama_perusahaan);
+            if (p.nib_number) setNibNumber(p.nib_number);
+            if (p.hr_name) setHrName(p.hr_name);
+            if (p.hr_whatsapp) setWhatsapp(p.hr_whatsapp);
+
+            if (!p.has_completed_profile) {
+              setIsIncomplete(true);
+            } else if (p.is_verified) {
+              setIsApproved(true);
+              toast.success('Selamat! Akun perusahaan Anda telah disetujui Admin!');
+            }
+          }
+        }
+      } catch (e) {
+        // network issue
+      }
+    }
+    setIsChecking(false);
+  };
+
+  useEffect(() => {
+    fetchStatus();
   }, []);
+
+  const handleLogout = () => {
+    localStorage.clear();
+    router.push('/login');
+  };
 
   return (
     <div className="min-h-screen bg-[#F0F8FB] text-[#1b7b9e] flex flex-col justify-between font-sans antialiased">
@@ -58,9 +107,19 @@ export default function PendingApprovalPage() {
           </div>
         </Link>
 
-        <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-[#E0F1F7] text-[#1b7b9e] text-xs font-bold border border-[#B8E1ED]">
-          <span className="w-2.5 h-2.5 rounded-full bg-amber-500 animate-pulse"></span>
-          Status Akun: PENDING APPROVAL
+        <div className="flex items-center gap-3">
+          <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-[#E0F1F7] text-[#1b7b9e] text-xs font-bold border border-[#B8E1ED]">
+            <span className={`w-2.5 h-2.5 rounded-full ${isApproved ? 'bg-emerald-500' : 'bg-amber-500 animate-pulse'}`}></span>
+            Status Akun: {isApproved ? 'APPROVED' : 'PENDING APPROVAL'}
+          </div>
+
+          <button
+            onClick={handleLogout}
+            title="Keluar / Ganti Akun"
+            className="p-2 rounded-xl border border-[#B8E1ED] text-slate-600 hover:text-red-600 hover:border-red-200 hover:bg-red-50 transition-colors"
+          >
+            <LogOut size={16} />
+          </button>
         </div>
       </header>
 
@@ -91,11 +150,45 @@ export default function PendingApprovalPage() {
             </p>
           </div>
 
-          {/* Time Estimate Banner */}
-          <div className="p-4 rounded-2xl bg-[#F0F8FB] border border-[#C2E5EF] flex items-center justify-center gap-3 text-xs sm:text-sm font-bold text-[#1b7b9e]">
-            <ShieldCheck size={20} className="shrink-0" />
-            <span>Estimasi Waktu Persetujuan: Maksimal 1 x 24 Jam Kerja</span>
-          </div>
+          {/* Conditional Alerts */}
+          {isApproved ? (
+            <div className="p-5 rounded-2xl bg-emerald-50 border border-emerald-200 flex flex-col sm:flex-row items-center justify-between gap-4 text-emerald-900 text-left">
+              <div className="flex items-center gap-3">
+                <CheckCircle2 size={28} className="text-emerald-600 shrink-0" />
+                <div>
+                  <h3 className="font-extrabold text-sm sm:text-base">Akun Perusahaan Berhasil Disetujui!</h3>
+                  <p className="text-xs text-emerald-700">Verifikasi dokumen Anda telah selesai. Anda sekarang dapat mengakses dashboard rekrutmen secara penuh.</p>
+                </div>
+              </div>
+              <Link
+                href="/dashboard"
+                className="shrink-0 px-6 py-3 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs sm:text-sm shadow-md transition-all"
+              >
+                Masuk ke Dashboard &rarr;
+              </Link>
+            </div>
+          ) : isIncomplete ? (
+            <div className="p-5 rounded-2xl bg-amber-50 border border-amber-200 flex flex-col sm:flex-row items-center justify-between gap-4 text-amber-900 text-left">
+              <div className="flex items-center gap-3">
+                <AlertCircle size={28} className="text-amber-600 shrink-0" />
+                <div>
+                  <h3 className="font-extrabold text-sm sm:text-base">Data &amp; Dokumen Belum Lengkap!</h3>
+                  <p className="text-xs text-amber-700">Mohon lengkapi profil perusahaan dan berkas fisik NIB serta KTP/ID Card di Tahap 3.</p>
+                </div>
+              </div>
+              <Link
+                href="/register?step=3"
+                className="shrink-0 px-6 py-3 rounded-full bg-amber-600 hover:bg-amber-700 text-white font-extrabold text-xs sm:text-sm shadow-md transition-all inline-flex items-center gap-2"
+              >
+                <Edit size={16} /> Lengkapi Dokumen (Tahap 3)
+              </Link>
+            </div>
+          ) : (
+            <div className="p-4 rounded-2xl bg-[#F0F8FB] border border-[#C2E5EF] flex items-center justify-center gap-3 text-xs sm:text-sm font-bold text-[#1b7b9e]">
+              <ShieldCheck size={20} className="shrink-0" />
+              <span>Estimasi Waktu Persetujuan: Maksimal 1 x 24 Jam Kerja</span>
+            </div>
+          )}
 
           {/* Submitted Data Summary Box */}
           <div className="bg-slate-50 p-6 rounded-3xl border border-slate-200 space-y-4 text-left">
@@ -103,8 +196,14 @@ export default function PendingApprovalPage() {
               <span className="font-extrabold text-xs text-[#1b7b9e] uppercase tracking-wider flex items-center gap-2">
                 <FileCheck2 size={16} /> Rincian Berkas Legalitas Yang Dikirim
               </span>
-              <span className="text-[11px] font-bold text-amber-600 bg-amber-100 px-2.5 py-0.5 rounded-md">
-                Menunggu Acc Admin
+              <span className={`text-[11px] font-bold px-2.5 py-0.5 rounded-md ${
+                isApproved 
+                  ? 'text-emerald-700 bg-emerald-100' 
+                  : isIncomplete 
+                    ? 'text-red-700 bg-red-100' 
+                    : 'text-amber-700 bg-amber-100'
+              }`}>
+                {isApproved ? 'Telah Disetujui' : isIncomplete ? 'Belum Lengkap' : 'Menunggu Acc Admin'}
               </span>
             </div>
 
@@ -128,26 +227,37 @@ export default function PendingApprovalPage() {
             </div>
 
             <div className="pt-2 text-[11px] text-slate-500 italic">
-              *Setelah disetujui oleh admin, pemberitahuan resmi dan akses penuh ke Dashboard HR akan otomatis dikirimkan melalui email perusahaan Anda.
+              *Setelah disetujui oleh admin, akses penuh ke Dashboard HR otomatis aktif untuk akun email perusahaan Anda.
             </div>
           </div>
 
           {/* Action CTAs */}
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-2">
-            <Link
-              href="/"
-              className="w-full sm:w-auto px-8 py-3.5 rounded-full border border-slate-300 text-slate-700 font-bold text-xs hover:bg-slate-50 transition-colors inline-flex items-center justify-center gap-2"
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
+            <button
+              onClick={fetchStatus}
+              disabled={isChecking}
+              className="w-full sm:w-auto px-6 py-3 rounded-full border border-[#1b7b9e] text-[#1b7b9e] hover:bg-[#E0F1F7] font-extrabold text-xs sm:text-sm transition-all inline-flex items-center justify-center gap-2"
             >
-              <ArrowLeft size={16} />
-              Kembali ke Beranda
-            </Link>
+              <RefreshCw size={16} className={isChecking ? 'animate-spin' : ''} />
+              <span>{isChecking ? 'Memeriksa...' : 'Periksa Status Ulang'}</span>
+            </button>
+
+            {isIncomplete && (
+              <Link
+                href="/register?step=3"
+                className="w-full sm:w-auto px-6 py-3 rounded-full bg-amber-600 hover:bg-amber-700 text-white font-extrabold text-xs sm:text-sm shadow-md transition-all inline-flex items-center justify-center gap-2"
+              >
+                <Edit size={16} />
+                Lengkapi Data Tahap 3
+              </Link>
+            )}
 
             <button
               onClick={() => toast('Customer Support Administrator AI-Recruit Pro dapat dihubungi melalui WhatsApp Admin: 0812-9900-8800 (Jam Kerja: 08.00 - 17.00 WIB)', { duration: 5000, icon: '📞' })}
-              className="w-full sm:w-auto px-8 py-3.5 rounded-full bg-[#1b7b9e] hover:bg-[#1D7FA1] text-white font-extrabold text-xs sm:text-sm shadow-md transition-all inline-flex items-center justify-center gap-2"
+              className="w-full sm:w-auto px-6 py-3 rounded-full bg-[#1b7b9e] hover:bg-[#1D7FA1] text-white font-extrabold text-xs sm:text-sm shadow-md transition-all inline-flex items-center justify-center gap-2"
             >
               <MessageSquare size={16} />
-              Hubungi Support Admin Developer
+              Hubungi Admin
             </button>
           </div>
 

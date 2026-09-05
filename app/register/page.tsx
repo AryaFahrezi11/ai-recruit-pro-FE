@@ -1,9 +1,9 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
 import Footer from '@/components/Footer';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { getApiUrl } from '@/lib/api';
 import {
   Building2,
@@ -25,8 +25,9 @@ import {
   FileCheck
 } from 'lucide-react';
 
-export default function CompanyRegistrationFlow() {
+function CompanyRegistrationInner() {
   const router = useRouter();
+  const searchParams = useSearchParams();
 
   // Multi-step state: 1 (Email & Pass), 2 (OTP), 3 (Legalitas Form), 4 (Pending)
   const [step, setStep] = useState<number>(1);
@@ -67,9 +68,51 @@ export default function CompanyRegistrationFlow() {
   const [whatsappNumber, setWhatsappNumber] = useState('');
   const [hrPosition, setHrPosition] = useState('');
   const [idCardFile, setIdCardFile] = useState<File | null>(null);
+  const [existingNibUrl, setExistingNibUrl] = useState<string | null>(null);
+  const [existingIdCardUrl, setExistingIdCardUrl] = useState<string | null>(null);
+  const [isFromIncomplete, setIsFromIncomplete] = useState(false);
   const [errorStep3, setErrorStep3] = useState('');
 
   const [isLoading, setIsLoading] = useState(false);
+
+  // Auto-detect step=3 from URL query or incomplete login
+  useEffect(() => {
+    const stepQuery = searchParams.get('step');
+    const token = typeof window !== 'undefined' ? localStorage.getItem('access_token') : null;
+
+    if (stepQuery === '3' && token) {
+      setStep(3);
+      setIsFromIncomplete(true);
+
+      // Pre-fill existing data from profile if available
+      fetch(getApiUrl('/users/profile'), {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      })
+        .then(res => res.json())
+        .then(data => {
+          if (data && data.profil) {
+            const p = data.profil;
+            if (p.nama_perusahaan) setCompanyName(p.nama_perusahaan);
+            if (p.industri) setIndustri(p.industri);
+            if (p.ukuran) setUkuran(p.ukuran);
+            if (p.website_url) setWebsiteUrl(p.website_url);
+            if (p.alamat) setCompanyAddress(p.alamat);
+            if (p.nib_number) setNibNpwpNumber(p.nib_number);
+            if (p.hr_name) setHrFullName(p.hr_name);
+            if (p.hr_whatsapp) setWhatsappNumber(p.hr_whatsapp);
+            if (p.hr_position) setHrPosition(p.hr_position);
+            if (p.nib_document_url) setExistingNibUrl(p.nib_document_url);
+            if (p.hr_id_card_url) setExistingIdCardUrl(p.hr_id_card_url);
+          }
+          if (data && data.email) {
+            setEmail(data.email);
+          }
+        })
+        .catch(() => {});
+    }
+  }, [searchParams]);
 
   // List of blocked free email domains
   const freeEmailDomains = [
@@ -86,8 +129,9 @@ export default function CompanyRegistrationFlow() {
     }
 
     const domain = email.split('@')[1]?.toLowerCase();
-    if (freeEmailDomains.includes(domain)) {
-      setErrorStep1('Pendaftaran Ditolak: Anda menggunakan email pribadi (Gmail/Yahoo). Harap gunakan email domain perusahaan resmi (contoh: hrd@tokopedia.com, recruitment@bankmandiri.co.id).');
+    const isAcId = domain?.endsWith('.ac.id') || domain === 'ac.id';
+    if (freeEmailDomains.includes(domain) && !isAcId) {
+      setErrorStep1('Pendaftaran Ditolak: Anda menggunakan email pribadi (Gmail/Yahoo). Harap gunakan email domain perusahaan resmi atau .ac.id untuk testing.');
       return;
     }
 
@@ -206,7 +250,7 @@ export default function CompanyRegistrationFlow() {
       setErrorStep3('Nomor NIB / NPWP wajib berupa angka.');
       return;
     }
-    if (!nibFile) {
+    if (!nibFile && !existingNibUrl) {
       setErrorStep3('Harap unggah bukti dokumen NIB / NPWP Perusahaan (PDF/JPG/PNG).');
       return;
     }
@@ -227,7 +271,7 @@ export default function CompanyRegistrationFlow() {
       setErrorStep3('Harap isi Jabatan Pendaftar.');
       return;
     }
-    if (!idCardFile) {
+    if (!idCardFile && !existingIdCardUrl) {
       setErrorStep3('Harap unggah foto ID Card Karyawan atau KTP Pendaftar.');
       return;
     }
@@ -578,6 +622,16 @@ export default function CompanyRegistrationFlow() {
               </p>
             </div>
 
+            {isFromIncomplete && (
+              <div className="p-4 rounded-2xl bg-amber-50 border border-amber-200 flex items-start gap-3 text-amber-800 text-xs sm:text-sm">
+                <AlertCircle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+                <div>
+                  <strong className="font-bold block">Pemeriksaan Kelengkapan Akun Perusahaan</strong>
+                  <span>Akun Anda telah melewati verifikasi OTP. Untuk mengaktifkan akun dan melanjutkan ke dashboard, Anda wajib melengkapi data profil perusahaan serta mengunggah dokumen legalitas resmi (NIB &amp; KTP/ID Card) di bawah ini.</span>
+                </div>
+              </div>
+            )}
+
             <form onSubmit={handleStep3Submit} className="space-y-8">
 
               {/* BAGIAN 1: DATA PERUSAHAAN (SESUAI DOKUMEN RESMI) */}
@@ -694,6 +748,16 @@ export default function CompanyRegistrationFlow() {
                         )}
                         <span className="text-[11px] font-bold text-[#1b7b9e] underline relative z-20 pointer-events-none">Klik untuk ganti file</span>
                       </div>
+                    ) : existingNibUrl ? (
+                      <div className="flex flex-col items-center gap-2 py-2">
+                        <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-100 text-emerald-800 rounded-full text-xs font-bold">
+                          <CheckCircle2 size={14} className="text-emerald-600" />
+                          Dokumen NIB/NPWP sudah tersimpan di sistem
+                        </div>
+                        <span className="text-[11px] font-bold text-[#1b7b9e] underline relative z-20 pointer-events-none">
+                          Klik untuk mengganti dengan file baru (Opsional)
+                        </span>
+                      </div>
                     ) : (
                       <>
                         <Upload size={24} className="text-[#1b7b9e] mx-auto" />
@@ -790,6 +854,16 @@ export default function CompanyRegistrationFlow() {
                         <img src={URL.createObjectURL(idCardFile)} alt="Preview ID Card" className="max-h-32 object-contain rounded-lg border border-slate-200" />
                         <span className="text-[11px] font-bold text-[#1b7b9e] underline relative z-20 pointer-events-none">Klik untuk ganti file</span>
                       </div>
+                    ) : existingIdCardUrl ? (
+                      <div className="flex flex-col items-center gap-2 py-2">
+                        <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-100 text-emerald-800 rounded-full text-xs font-bold">
+                          <CheckCircle2 size={14} className="text-emerald-600" />
+                          Foto ID Card/KTP sudah tersimpan di sistem
+                        </div>
+                        <span className="text-[11px] font-bold text-[#1b7b9e] underline relative z-20 pointer-events-none">
+                          Klik untuk mengganti dengan file baru (Opsional)
+                        </span>
+                      </div>
                     ) : (
                       <>
                         <Upload size={24} className="text-[#1b7b9e] mx-auto" />
@@ -849,5 +923,22 @@ export default function CompanyRegistrationFlow() {
       <Footer />
 
     </div>
+  );
+}
+
+export default function CompanyRegistrationFlow() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center bg-[#F0F8FB] text-[#1b7b9e] font-sans">
+          <div className="flex flex-col items-center gap-3">
+            <div className="w-8 h-8 border-4 border-[#1b7b9e] border-t-transparent rounded-full animate-spin"></div>
+            <span className="text-xs font-bold">Memuat Formulir Pendaftaran Perusahaan...</span>
+          </div>
+        </div>
+      }
+    >
+      <CompanyRegistrationInner />
+    </Suspense>
   );
 }

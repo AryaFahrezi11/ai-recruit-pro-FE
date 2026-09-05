@@ -94,7 +94,6 @@ export default function PelamarPerfectLayout({
 }) {
   const pathname = usePathname();
   const router = useRouter();
-  const { language, setLanguage } = useAppStore();
   const { t } = useTranslation();
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
   const [isProfileOpen, setIsProfileOpen] = useState(false);

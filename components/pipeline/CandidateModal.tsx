@@ -1147,22 +1147,6 @@ export function CandidateModal({ candidate, onClose }: CandidateModalProps) {
                       )}
                     </div>
 
-                    {/* Info Tambahan Rekaman Video (Sebelumnya di Tab 3) */}
-                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 pt-2 border-t border-border/70 text-xs">
-                      <div className="p-2.5 bg-muted/40 rounded-lg border border-border/60">
-                        <span className="text-muted-foreground block text-[10px]">Status Jawaban</span>
-                        <span className="font-bold text-emerald-600 dark:text-emerald-400 text-xs truncate block">
-                          {candidate.aiResult?.status_jawaban_teks || 'Lengkap Terjawab'}
-                        </span>
-                      </div>
-                      <div className="p-2.5 bg-muted/40 rounded-lg border border-border/60">
-                        <span className="text-muted-foreground block text-[10px]">Kualitas Media</span>
-                        <span className="font-semibold text-foreground text-xs truncate block">
-                          {candidate.aiResult?.kualitas_teks || '1080p / Jelas'}
-                        </span>
-                      </div>
-                    </div>
-
                     {/* Evaluasi & Rangkuman Jawaban Tiap Soal Wawancara */}
                     {candidateQuestions.length > 0 && (
                       <div className="pt-3 border-t border-border/70 space-y-2.5">
@@ -1357,18 +1341,6 @@ export function CandidateModal({ candidate, onClose }: CandidateModalProps) {
                         ))}
                       </div>
                     </div>
-
-                    {/* Catatan Pertimbangan HR */}
-                    <div className="pt-2 border-t border-border/50">
-                      <label className="block text-xs font-semibold text-foreground mb-1.5">
-                        {t.modal.catatanHR}
-                      </label>
-                      <textarea
-                        className="w-full p-2.5 bg-muted/30 border border-border rounded-lg text-xs resize-none h-16 focus:outline-none focus:border-primary transition-all"
-                        placeholder="Tuliskan catatan observasi atau pertimbangan internal HR di sini..."
-                      ></textarea>
-                    </div>
-
                     {/* Decision Buttons (Terima, Tolak, Wawancara Langsung) */}
                     <div className="space-y-2 pt-4 border-t border-border/70">
                       <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">

@@ -7,6 +7,7 @@ import { toast } from 'react-hot-toast';
 import { Sidebar } from '@/components/dashboard/Sidebar';
 import { useAppStore } from '@/lib/store/useAppStore';
 import { useTranslation } from '@/hooks/useTranslation';
+import { fetchAuth } from '@/lib/api/auth';
 import { 
   Globe, Search, Bell, HelpCircle, Menu, 
   CheckCircle2, Video, FileText, User, Settings, LogOut, X, ArrowRight 
@@ -68,7 +69,35 @@ export default function PerusahaanLayout({
       } else {
         router.push('/login');
       }
+      return;
     }
+
+    // Guard: Verify if company data & documents are complete and approved
+    const checkCompanyStatus = async () => {
+      try {
+        const res = await fetchAuth('/users/profile');
+        if (res.ok) {
+          const data = await res.json();
+          const profil = data.profil;
+          if (profil) {
+            if (!profil.has_completed_profile) {
+              toast.error('Data diri dan dokumen legalitas perusahaan belum lengkap. Mengalihkan ke Tahap 3...', { id: 'incomplete-profile' });
+              router.push('/register?step=3');
+              return;
+            }
+            if (!profil.is_verified) {
+              toast('Akun perusahaan Anda sedang menunggu peninjauan dokumen oleh Admin.', { icon: '⏳', id: 'pending-approval' });
+              router.push('/pending-approval');
+              return;
+            }
+          }
+        }
+      } catch (err) {
+        // Ignore network offline errors
+      }
+    };
+
+    checkCompanyStatus();
   }, [router]);
 
   const markAllRead = () => {

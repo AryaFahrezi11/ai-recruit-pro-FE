@@ -29,6 +29,8 @@ export const loginUser = async (email: string, password: string, role?: string) 
       role: data.role,
       email: email,
     },
+    has_completed_profile: data.has_completed_profile ?? true,
+    is_verified: data.is_verified ?? true,
   };
 };
 
