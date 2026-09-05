@@ -9,7 +9,7 @@ import {
   Check, Lightbulb, FileText, Video, BarChart3,
   Upload, Brain, UserCheck, Scan, Download, ExternalLink,
   Clock, AlertCircle, Sparkles, Briefcase, Mail, Phone, Lock, Archive, GraduationCap, Building2, ArrowRight,
-  HelpCircle, Calendar
+  HelpCircle, Calendar, Send
 } from 'lucide-react';
 import { fetchAuth } from '@/lib/api/auth';
 import { ParseSkills } from '@/components/ui/ParseSkills';
@@ -104,8 +104,13 @@ export function CandidateModal({ candidate, onClose, onStatusUpdated }: Candidat
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Wawancara Lanjutan form
+  const getDefaultDate = () => {
+    const d = new Date();
+    d.setDate(d.getDate() + 1);
+    return d.toISOString().split('T')[0];
+  };
   const [intvType, setIntvType] = useState<'online' | 'offline'>('online');
-  const [intvDate, setIntvDate] = useState('');
+  const [intvDate, setIntvDate] = useState<string>(getDefaultDate());
   const [intvTime, setIntvTime] = useState('14:00');
   const [intvLocationUrl, setIntvLocationUrl] = useState('https://meet.google.com/');
   const [intvNotes, setIntvNotes] = useState('Mohon hadir tepat waktu dan siapkan resume portofolio.');
@@ -911,6 +916,33 @@ export function CandidateModal({ candidate, onClose, onStatusUpdated }: Candidat
                   </div>
                 )}
               </div>
+
+              {/* Action Bar for CV Screening / Tahap Awal */}
+              {(stage === 'cv_screening' || stage === 'upload_cv') && (
+                <div className="p-4 bg-muted/30 border border-border rounded-2xl flex flex-col sm:flex-row items-center justify-between gap-3 shadow-2xs">
+                  <div className="text-xs text-muted-foreground font-medium">
+                    Loloskan kandidat ini untuk melanjutkan ke tahap <strong className="text-foreground">Wawancara Video AI</strong>.
+                  </div>
+                  <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
+                    <button
+                      type="button"
+                      onClick={() => setDecisionModal('reject')}
+                      className="px-4 py-2 text-xs font-semibold text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/40 hover:bg-rose-100 dark:hover:bg-rose-900/60 border border-rose-200 dark:border-rose-800 rounded-xl transition-colors cursor-pointer"
+                    >
+                      Tolak Lamaran
+                    </button>
+                    <button
+                      type="button"
+                      disabled={isSubmitting}
+                      onClick={() => executeDecision('virtual_interview', {})}
+                      className="px-5 py-2 text-xs font-extrabold text-white bg-emerald-600 hover:bg-emerald-700 rounded-xl shadow-xs transition-colors flex items-center gap-1.5 cursor-pointer disabled:opacity-50 active:scale-95"
+                    >
+                      <Video size={14} />
+                      Loloskan & Kirim Undangan Wawancara Video
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
@@ -1563,20 +1595,36 @@ export function CandidateModal({ candidate, onClose, onStatusUpdated }: Candidat
                 </button>
                 <button
                   type="button"
-                  disabled={isSubmitting || !intvDate}
-                  onClick={() => executeDecision('interview_lanjutan', {
-                    interview_details: {
-                      tipe: intvType,
-                      tanggal: intvDate,
-                      waktu: intvTime,
-                      lokasi_atau_link: intvLocationUrl,
-                      catatan: intvNotes
-                    },
-                    catatan_perusahaan: intvNotes
-                  })}
-                  className="px-5 py-2 rounded-xl text-xs font-extrabold bg-indigo-600 hover:bg-indigo-700 text-white shadow-xs flex items-center gap-2 cursor-pointer disabled:opacity-50"
+                  disabled={isSubmitting}
+                  onClick={() => {
+                    if (!intvDate) {
+                      toast.error('Silakan tentukan tanggal wawancara terlebih dahulu');
+                      return;
+                    }
+                    executeDecision('interview_lanjutan', {
+                      interview_details: {
+                        tipe: intvType,
+                        tanggal: intvDate,
+                        waktu: intvTime,
+                        lokasi_atau_link: intvLocationUrl,
+                        catatan: intvNotes
+                      },
+                      catatan_perusahaan: intvNotes
+                    });
+                  }}
+                  className="px-5 py-2.5 rounded-xl text-xs font-extrabold bg-indigo-600 hover:bg-indigo-700 text-white shadow-xs flex items-center gap-2 cursor-pointer disabled:opacity-50 active:scale-95 transition-all"
                 >
-                  {isSubmitting ? 'Mengirim Undangan...' : 'Kirim Undangan Wawancara'}
+                  {isSubmitting ? (
+                    <>
+                      <div className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                      <span>Mengirim Undangan...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Send size={14} />
+                      <span>Kirim Undangan Wawancara</span>
+                    </>
+                  )}
                 </button>
               </div>
             </div>
