@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   ShieldCheck,
   Building2,
@@ -14,15 +14,11 @@ import {
   X,
   Globe,
   Phone,
-  MapPin,
-  Calendar,
-  Briefcase,
   LayoutGrid,
   List,
   AlertCircle,
-  User,
   RefreshCw,
-  FileCheck2
+  CornerDownLeft
 } from 'lucide-react';
 import { fetchAuth } from '@/lib/api/auth';
 import { getMediaUrl } from '@/lib/api';
@@ -54,15 +50,21 @@ interface CompanyVerificationItem {
 export default function AdminVerificationPage() {
   const [companies, setCompanies] = useState<CompanyVerificationItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchInput, setSearchInput] = useState('');
+  const [activeSearch, setActiveSearch] = useState('');
   const [viewMode, setViewMode] = useState<'table' | 'grid'>('table');
   const [selectedCompany, setSelectedCompany] = useState<CompanyVerificationItem | null>(null);
   const [approvingId, setApprovingId] = useState<string | null>(null);
 
-  const loadPendingCompanies = async () => {
+  // Fetch pending companies with GET search query parameter
+  const loadPendingCompanies = async (searchQuery: string = activeSearch) => {
     setIsLoading(true);
     try {
-      const res = await fetchAuth('/api/admin/perusahaan/pending', { method: 'GET' });
+      const q = typeof searchQuery === 'string' ? searchQuery.trim() : '';
+      const endpoint = q
+        ? `/api/admin/perusahaan/pending?search=${encodeURIComponent(q)}`
+        : '/api/admin/perusahaan/pending';
+      const res = await fetchAuth(endpoint, { method: 'GET' });
       if (res.ok) {
         const data = await res.json();
         setCompanies(Array.isArray(data) ? data : []);
@@ -80,6 +82,18 @@ export default function AdminVerificationPage() {
     loadPendingCompanies();
   }, []);
 
+  const handleSearchSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    setActiveSearch(searchInput);
+    loadPendingCompanies(searchInput);
+  };
+
+  const handleClearSearch = () => {
+    setSearchInput('');
+    setActiveSearch('');
+    loadPendingCompanies('');
+  };
+
   const handleApprove = async (companyId: string, companyName: string) => {
     if (
       !window.confirm(
@@ -96,7 +110,7 @@ export default function AdminVerificationPage() {
         if (selectedCompany?.id === companyId) {
           setSelectedCompany(null);
         }
-        loadPendingCompanies();
+        loadPendingCompanies(activeSearch);
       } else {
         toast.error('Gagal memverifikasi perusahaan');
       }
@@ -106,26 +120,6 @@ export default function AdminVerificationPage() {
       setApprovingId(null);
     }
   };
-
-  // Filter companies based on search
-  const filteredCompanies = useMemo(() => {
-    const q = searchQuery.toLowerCase().trim();
-    if (!q) return companies;
-    return companies.filter((c) => {
-      const name = (c.nama_perusahaan || '').toLowerCase();
-      const nib = (c.nib_number || '').toLowerCase();
-      const hr = (c.hr_name || '').toLowerCase();
-      const kota = (c.kota || '').toLowerCase();
-      const industri = (c.industri || '').toLowerCase();
-      return (
-        name.includes(q) ||
-        nib.includes(q) ||
-        hr.includes(q) ||
-        kota.includes(q) ||
-        industri.includes(q)
-      );
-    });
-  }, [companies, searchQuery]);
 
   return (
     <div className="space-y-6">
@@ -147,28 +141,47 @@ export default function AdminVerificationPage() {
           </p>
         </div>
 
-        {/* Toolbar: Search, Refresh, View Toggle */}
-        <div className="flex items-center gap-2.5">
-          <div className="relative flex-1 sm:w-64">
-            <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Cari perusahaan, NIB, PIC..."
-              className="w-full pl-9 pr-3 py-2 text-xs bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 text-slate-800 dark:text-slate-200"
-            />
-            {searchQuery && (
-              <button
-                onClick={() => setSearchQuery('')}
-                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
-              >
-                <X size={13} />
-              </button>
-            )}
-          </div>
+        {/* Toolbar: GET Search Form, Refresh, View Toggle */}
+        <div className="flex items-center gap-2.5 flex-wrap sm:flex-nowrap">
+          {/* Search Form via GET */}
+          <form onSubmit={handleSearchSubmit} className="flex items-center gap-1.5 w-full sm:w-auto">
+            <div className="relative flex-1 sm:w-72">
+              <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+              <input
+                type="text"
+                value={searchInput}
+                onChange={(e) => setSearchInput(e.target.value)}
+                placeholder="Cari perusahaan, NIB, PIC..."
+                className="w-full pl-9 pr-24 py-2 text-xs bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 text-slate-800 dark:text-slate-200 shadow-xs"
+              />
+              {searchInput && (
+                <button
+                  type="button"
+                  onClick={handleClearSearch}
+                  className="absolute right-16 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+                  title="Hapus pencarian"
+                >
+                  <X size={13} />
+                </button>
+              )}
+              <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] text-slate-400 dark:text-slate-500 bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded border border-slate-200 dark:border-slate-700 font-mono inline-flex items-center gap-0.5 select-none pointer-events-none">
+                <CornerDownLeft size={10} /> Enter
+              </span>
+            </div>
 
-          <div className="inline-flex rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 p-1">
+            <button
+              type="submit"
+              disabled={isLoading}
+              className="px-3.5 py-2 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white rounded-xl text-xs font-semibold shadow-xs transition-colors inline-flex items-center gap-1.5 shrink-0"
+              title="Cari (GET)"
+            >
+              <Search size={13} />
+              <span className="hidden sm:inline">Cari</span>
+            </button>
+          </form>
+
+          {/* View Mode Toggle */}
+          <div className="inline-flex rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 p-1 shrink-0">
             <button
               onClick={() => setViewMode('table')}
               title="Tampilan Tabel Kompak"
@@ -193,16 +206,35 @@ export default function AdminVerificationPage() {
             </button>
           </div>
 
+          {/* Refresh Button */}
           <button
-            onClick={loadPendingCompanies}
+            onClick={() => loadPendingCompanies(activeSearch)}
             disabled={isLoading}
             title="Muat Ulang"
-            className="p-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 hover:bg-slate-50 transition-colors"
+            className="p-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 hover:bg-slate-50 transition-colors shrink-0"
           >
             <RefreshCw size={16} className={isLoading ? 'animate-spin' : ''} />
           </button>
         </div>
       </div>
+
+      {/* Active Search Filter Banner */}
+      {activeSearch && (
+        <div className="flex items-center justify-between px-4 py-2.5 rounded-xl bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-900 text-xs text-blue-900 dark:text-blue-300">
+          <div className="flex items-center gap-2">
+            <Search size={14} className="text-blue-600 dark:text-blue-400 shrink-0" />
+            <span>
+              Hasil pencarian untuk: <strong className="font-bold underline">"{activeSearch}"</strong> ({companies.length} data ditemukan)
+            </span>
+          </div>
+          <button
+            onClick={handleClearSearch}
+            className="text-xs text-blue-700 dark:text-blue-400 hover:underline font-bold inline-flex items-center gap-1 shrink-0 ml-3"
+          >
+            <X size={13} /> Reset Filter
+          </button>
+        </div>
+      )}
 
       {/* Main Content Area */}
       {isLoading ? (
@@ -212,26 +244,37 @@ export default function AdminVerificationPage() {
         </div>
       ) : companies.length === 0 ? (
         <div className="p-12 text-center flex flex-col items-center bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
-          <div className="w-16 h-16 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-500 rounded-2xl flex items-center justify-center mb-4 border border-emerald-100 dark:border-emerald-800/60">
-            <CheckCircle2 size={32} />
-          </div>
-          <h3 className="text-lg font-bold text-slate-800 dark:text-white">Tidak Ada Antrean Verifikasi</h3>
-          <p className="text-slate-500 dark:text-slate-400 text-xs sm:text-sm max-w-sm mt-1.5">
-            Semua pendaftaran perusahaan telah selesai diverifikasi atau belum ada pendaftaran baru.
-          </p>
-        </div>
-      ) : filteredCompanies.length === 0 ? (
-        <div className="p-10 text-center bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800">
-          <AlertCircle size={28} className="mx-auto text-slate-400 mb-2" />
-          <p className="text-sm font-semibold text-slate-700 dark:text-slate-300">
-            Tidak ada perusahaan yang cocok dengan pencarian "{searchQuery}"
-          </p>
-          <button
-            onClick={() => setSearchQuery('')}
-            className="mt-2 text-xs text-blue-600 hover:underline font-semibold"
-          >
-            Reset Pencarian
-          </button>
+          {activeSearch ? (
+            <>
+              <div className="w-16 h-16 bg-amber-50 dark:bg-amber-950/40 text-amber-500 rounded-2xl flex items-center justify-center mb-4 border border-amber-100 dark:border-amber-800/60">
+                <AlertCircle size={32} />
+              </div>
+              <h3 className="text-lg font-bold text-slate-800 dark:text-white">
+                Tidak Ada Perusahaan Ditemukan
+              </h3>
+              <p className="text-slate-500 dark:text-slate-400 text-xs sm:text-sm max-w-sm mt-1.5">
+                Tidak ada perusahaan antrean yang sesuai dengan kata kunci pencarian "{activeSearch}".
+              </p>
+              <button
+                onClick={handleClearSearch}
+                className="mt-4 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold transition-colors inline-flex items-center gap-1.5"
+              >
+                <X size={14} /> Reset Pencarian
+              </button>
+            </>
+          ) : (
+            <>
+              <div className="w-16 h-16 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-500 rounded-2xl flex items-center justify-center mb-4 border border-emerald-100 dark:border-emerald-800/60">
+                <CheckCircle2 size={32} />
+              </div>
+              <h3 className="text-lg font-bold text-slate-800 dark:text-white">
+                Tidak Ada Antrean Verifikasi
+              </h3>
+              <p className="text-slate-500 dark:text-slate-400 text-xs sm:text-sm max-w-sm mt-1.5">
+                Semua pendaftaran perusahaan telah selesai diverifikasi atau belum ada pendaftaran baru.
+              </p>
+            </>
+          )}
         </div>
       ) : viewMode === 'table' ? (
         /* TABLE VIEW (Kompak & Muat Banyak) */
@@ -249,7 +292,7 @@ export default function AdminVerificationPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                {filteredCompanies.map((c) => {
+                {companies.map((c) => {
                   const isApproving = approvingId === c.id;
                   return (
                     <tr
@@ -392,9 +435,9 @@ export default function AdminVerificationPage() {
           </div>
         </div>
       ) : (
-        /* GRID VIEW (Ringkas 2-3 Kolom, Tidak Boros Tempat) */
+        /* GRID VIEW (Ringkas 2-3 Kolom) */
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {filteredCompanies.map((c) => {
+          {companies.map((c) => {
             const isApproving = approvingId === c.id;
             return (
               <div
