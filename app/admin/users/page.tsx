@@ -228,6 +228,7 @@ export default function AdminUsersPage() {
       const data = await res.json();
       setUsers(Array.isArray(data) ? data : []);
     } catch (error) {
+      setUsers([]);
       toast.error('Gagal memuat data pengguna');
     } finally {
       setIsLoading(false);
