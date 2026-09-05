@@ -21,7 +21,8 @@ import {
   CornerDownLeft,
   Users,
   Briefcase,
-  XCircle
+  XCircle,
+  Edit
 } from 'lucide-react';
 import { fetchAuth } from '@/lib/api/auth';
 import { getMediaUrl } from '@/lib/api';
@@ -476,39 +477,62 @@ export default function AdminVerificationPage() {
 
                       {/* Aksi Buttons */}
                       <td className="px-5 py-3.5 text-center">
-                        <div className="flex items-center justify-center gap-1.5">
-                          <button
-                            onClick={() => setSelectedCompany(c)}
-                            className="p-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-                            title="Lihat Rincian Lengkap"
-                          >
-                            <Eye size={15} />
-                          </button>
+                        {c.status === 'REJECTED' ? (
+                          <div className="flex items-center justify-center gap-1.5">
+                            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-800 text-[11px] font-bold">
+                              <Clock size={12} className="animate-pulse text-amber-600 dark:text-amber-400" />
+                              Menunggu upload ulang
+                            </span>
+                            <button
+                              onClick={() => setSelectedCompany(c)}
+                              className="p-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                              title="Lihat Rincian Lengkap"
+                            >
+                              <Eye size={14} />
+                            </button>
+                            <button
+                              onClick={() => handleOpenRejectModal(c)}
+                              className="p-1.5 rounded-lg border border-rose-200 dark:border-rose-800/80 text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/50 transition-colors"
+                              title="Ubah Catatan Penolakan"
+                            >
+                              <Edit size={13} />
+                            </button>
+                          </div>
+                        ) : (
+                          <div className="flex items-center justify-center gap-1.5">
+                            <button
+                              onClick={() => setSelectedCompany(c)}
+                              className="p-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                              title="Lihat Rincian Lengkap"
+                            >
+                              <Eye size={15} />
+                            </button>
 
-                          <button
-                            onClick={() => handleApprove(c.id, c.nama_perusahaan)}
-                            disabled={isApproving || isRejecting}
-                            className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-xs transition-all disabled:opacity-50"
-                            title="Setujui Akun Perusahaan"
-                          >
-                            {isApproving ? (
-                              <RefreshCw size={13} className="animate-spin" />
-                            ) : (
-                              <ShieldCheck size={14} />
-                            )}
-                            <span>Setujui</span>
-                          </button>
+                            <button
+                              onClick={() => handleApprove(c.id, c.nama_perusahaan)}
+                              disabled={isApproving || isRejecting}
+                              className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-xs transition-all disabled:opacity-50"
+                              title="Setujui Akun Perusahaan"
+                            >
+                              {isApproving ? (
+                                <RefreshCw size={13} className="animate-spin" />
+                              ) : (
+                                <ShieldCheck size={14} />
+                              )}
+                              <span>Setujui</span>
+                            </button>
 
-                          <button
-                            onClick={() => handleOpenRejectModal(c)}
-                            disabled={isApproving || isRejecting}
-                            className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 hover:bg-rose-100 dark:hover:bg-rose-900/60 font-bold text-xs border border-rose-200 dark:border-rose-800 transition-all disabled:opacity-50"
-                            title="Tolak Verifikasi & Minta Perbaikan Dokumen"
-                          >
-                            <XCircle size={14} />
-                            <span>Tolak</span>
-                          </button>
-                        </div>
+                            <button
+                              onClick={() => handleOpenRejectModal(c)}
+                              disabled={isApproving || isRejecting}
+                              className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 hover:bg-rose-100 dark:hover:bg-rose-900/60 font-bold text-xs border border-rose-200 dark:border-rose-800 transition-all disabled:opacity-50"
+                              title="Tolak Verifikasi & Minta Perbaikan Dokumen"
+                            >
+                              <XCircle size={14} />
+                              <span>Tolak</span>
+                            </button>
+                          </div>
+                        )}
                       </td>
                     </tr>
                   );
@@ -622,35 +646,60 @@ export default function AdminVerificationPage() {
 
                 {/* Bottom Actions */}
                 <div className="pt-2 border-t border-slate-100 dark:border-slate-800 flex items-center gap-2">
-                  <button
-                    onClick={() => setSelectedCompany(c)}
-                    className="py-2 px-3 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-semibold inline-flex items-center justify-center gap-1 transition-colors"
-                    title="Lihat Rincian"
-                  >
-                    <Eye size={13} />
-                  </button>
+                  {c.status === 'REJECTED' ? (
+                    <>
+                      <div className="flex-1 py-2 px-2.5 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 text-amber-700 dark:text-amber-400 text-[11px] font-bold inline-flex items-center justify-center gap-1.5">
+                        <Clock size={12} className="animate-pulse text-amber-600 dark:text-amber-400 shrink-0" />
+                        <span>Menunggu upload ulang</span>
+                      </div>
+                      <button
+                        onClick={() => setSelectedCompany(c)}
+                        className="py-2 px-3 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-semibold inline-flex items-center justify-center gap-1 transition-colors"
+                        title="Lihat Rincian"
+                      >
+                        <Eye size={13} />
+                      </button>
+                      <button
+                        onClick={() => handleOpenRejectModal(c)}
+                        className="py-2 px-2.5 rounded-xl border border-rose-200 dark:border-rose-800 text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/50 text-xs font-semibold inline-flex items-center justify-center transition-colors"
+                        title="Ubah Catatan Penolakan"
+                      >
+                        <Edit size={13} />
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      <button
+                        onClick={() => setSelectedCompany(c)}
+                        className="py-2 px-3 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-semibold inline-flex items-center justify-center gap-1 transition-colors"
+                        title="Lihat Rincian"
+                      >
+                        <Eye size={13} />
+                      </button>
 
-                  <button
-                    onClick={() => handleOpenRejectModal(c)}
-                    disabled={isApproving || isRejecting}
-                    className="flex-1 py-2 rounded-xl bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 hover:bg-rose-100 dark:hover:bg-rose-900/60 border border-rose-200 dark:border-rose-800 text-xs font-bold transition-all inline-flex items-center justify-center gap-1 disabled:opacity-50"
-                  >
-                    <XCircle size={13} />
-                    <span>Tolak</span>
-                  </button>
+                      <button
+                        onClick={() => handleOpenRejectModal(c)}
+                        disabled={isApproving || isRejecting}
+                        className="flex-1 py-2 rounded-xl bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 hover:bg-rose-100 dark:hover:bg-rose-900/60 border border-rose-200 dark:border-rose-800 text-xs font-bold transition-all inline-flex items-center justify-center gap-1 disabled:opacity-50"
+                      >
+                        <XCircle size={13} />
+                        <span>Tolak</span>
+                      </button>
 
-                  <button
-                    onClick={() => handleApprove(c.id, c.nama_perusahaan)}
-                    disabled={isApproving || isRejecting}
-                    className="flex-1 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow-xs transition-all inline-flex items-center justify-center gap-1 disabled:opacity-50"
-                  >
-                    {isApproving ? (
-                      <RefreshCw size={13} className="animate-spin" />
-                    ) : (
-                      <ShieldCheck size={14} />
-                    )}
-                    <span>Setujui</span>
-                  </button>
+                      <button
+                        onClick={() => handleApprove(c.id, c.nama_perusahaan)}
+                        disabled={isApproving || isRejecting}
+                        className="flex-1 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow-xs transition-all inline-flex items-center justify-center gap-1 disabled:opacity-50"
+                      >
+                        {isApproving ? (
+                          <RefreshCw size={13} className="animate-spin" />
+                        ) : (
+                          <ShieldCheck size={14} />
+                        )}
+                        <span>Setujui</span>
+                      </button>
+                    </>
+                  )}
                 </div>
               </div>
             );
@@ -688,6 +737,21 @@ export default function AdminVerificationPage() {
 
             {/* Modal Body */}
             <div className="p-6 overflow-y-auto space-y-5 text-xs text-slate-700 dark:text-slate-300">
+              {/* Rejection Alert Banner if Rejected */}
+              {selectedCompany.status === 'REJECTED' && (
+                <div className="p-3.5 bg-amber-50/90 dark:bg-amber-950/40 rounded-2xl border border-amber-200 dark:border-amber-800 flex items-start gap-2.5 text-amber-900 dark:text-amber-200">
+                  <Clock size={16} className="text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
+                  <div>
+                    <span className="font-bold block text-xs text-amber-800 dark:text-amber-300">
+                      Status: Menunggu Upload Ulang dari Perusahaan
+                    </span>
+                    <span className="text-[11px] text-amber-700 dark:text-amber-400 block mt-0.5">
+                      Catatan penolakan sebelumnya: &ldquo;{selectedCompany.rejection_reason || 'Persyaratan dokumen belum lengkap'}&rdquo;.
+                    </span>
+                  </div>
+                </div>
+              )}
+
               {/* Deskripsi */}
               <div>
                 <span className="block font-semibold text-slate-400 text-[11px] mb-1">
@@ -867,27 +931,59 @@ export default function AdminVerificationPage() {
               </button>
 
               <div className="flex items-center gap-2">
-                <button
-                  onClick={() => handleOpenRejectModal(selectedCompany)}
-                  disabled={isRejecting || approvingId === selectedCompany.id}
-                  className="px-4 py-2.5 rounded-xl bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 hover:bg-rose-100 dark:hover:bg-rose-900/60 border border-rose-200 dark:border-rose-800 text-xs font-bold transition-all inline-flex items-center gap-1.5 disabled:opacity-50"
-                >
-                  <XCircle size={15} />
-                  <span>Tolak Verifikasi</span>
-                </button>
+                {selectedCompany.status === 'REJECTED' ? (
+                  <>
+                    <div className="px-3 py-2 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 text-amber-700 dark:text-amber-400 text-xs font-bold inline-flex items-center gap-1.5">
+                      <Clock size={13} className="animate-pulse text-amber-600 dark:text-amber-400" />
+                      <span>Menunggu upload ulang</span>
+                    </div>
 
-                <button
-                  onClick={() => handleApprove(selectedCompany.id, selectedCompany.nama_perusahaan)}
-                  disabled={approvingId === selectedCompany.id || isRejecting}
-                  className="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow-sm transition-all inline-flex items-center gap-1.5 disabled:opacity-50"
-                >
-                  {approvingId === selectedCompany.id ? (
-                    <RefreshCw size={14} className="animate-spin" />
-                  ) : (
-                    <ShieldCheck size={16} />
-                  )}
-                  <span>Setujui Akun Perusahaan</span>
-                </button>
+                    <button
+                      onClick={() => handleOpenRejectModal(selectedCompany)}
+                      disabled={isRejecting}
+                      className="px-3 py-2 rounded-xl border border-rose-200 dark:border-rose-800 text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 text-xs font-semibold transition-colors"
+                    >
+                      Ubah Alasan
+                    </button>
+
+                    <button
+                      onClick={() => handleApprove(selectedCompany.id, selectedCompany.nama_perusahaan)}
+                      disabled={approvingId === selectedCompany.id || isRejecting}
+                      className="px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow-sm transition-all inline-flex items-center gap-1.5 disabled:opacity-50"
+                    >
+                      {approvingId === selectedCompany.id ? (
+                        <RefreshCw size={14} className="animate-spin" />
+                      ) : (
+                        <ShieldCheck size={15} />
+                      )}
+                      <span>Setujui</span>
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <button
+                      onClick={() => handleOpenRejectModal(selectedCompany)}
+                      disabled={isRejecting || approvingId === selectedCompany.id}
+                      className="px-4 py-2.5 rounded-xl bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 hover:bg-rose-100 dark:hover:bg-rose-900/60 border border-rose-200 dark:border-rose-800 text-xs font-bold transition-all inline-flex items-center gap-1.5 disabled:opacity-50"
+                    >
+                      <XCircle size={15} />
+                      <span>Tolak Verifikasi</span>
+                    </button>
+
+                    <button
+                      onClick={() => handleApprove(selectedCompany.id, selectedCompany.nama_perusahaan)}
+                      disabled={approvingId === selectedCompany.id || isRejecting}
+                      className="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow-sm transition-all inline-flex items-center gap-1.5 disabled:opacity-50"
+                    >
+                      {approvingId === selectedCompany.id ? (
+                        <RefreshCw size={14} className="animate-spin" />
+                      ) : (
+                        <ShieldCheck size={16} />
+                      )}
+                      <span>Setujui Akun Perusahaan</span>
+                    </button>
+                  </>
+                )}
               </div>
             </div>
           </div>
@@ -932,7 +1028,7 @@ export default function AdminVerificationPage() {
                   Pemberitahuan Instruksi Otomatis
                 </p>
                 <span>
-                  Alasan yang Anda tulis di bawah akan langsung ditampilkan kepada perwakilan perusahaan di halaman status akun mereka, dan sistem akan menginstruksikan mereka untuk memperbaiki data serta mengunggah ulang dokumen di Tahap 3.
+                  Alasan yang Anda tulis di bawah akan langsung ditampilkan kepada perwakilan perusahaan di halaman status akun mereka, dan sistem akan menginstruksikan mereka untuk memperbaiki data serta mengunggah ulang dokumen.
                 </span>
               </div>
 
