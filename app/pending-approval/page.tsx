@@ -53,6 +53,7 @@ interface UserProfileData {
 export default function PendingApprovalPage() {
   const router = useRouter();
   const [profileData, setProfileData] = useState<UserProfileData | null>(null);
+  const [adminEmail, setAdminEmail] = useState('');
   const [isChecking, setIsChecking] = useState(false);
   const [initialLoading, setInitialLoading] = useState(true);
 
@@ -60,25 +61,32 @@ export default function PendingApprovalPage() {
     setIsChecking(true);
     const token = typeof window !== 'undefined' ? localStorage.getItem('access_token') : null;
 
-    if (!token) {
-      setInitialLoading(false);
-      setIsChecking(false);
-      return;
-    }
-
     try {
-      const res = await fetch(getApiUrl('/users/profile'), {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      if (res.ok) {
-        const data: UserProfileData = await res.json();
+      const [profileRes, configRes] = await Promise.all([
+        token
+          ? fetch(getApiUrl('/users/profile'), {
+              headers: { Authorization: `Bearer ${token}` }
+            })
+          : Promise.resolve(null),
+        fetch(getApiUrl('/config/public')).catch(() => null)
+      ]);
+
+      if (configRes && configRes.ok) {
+        const configData = await configRes.json();
+        if (configData.admin_email) {
+          setAdminEmail(configData.admin_email);
+        }
+      }
+
+      if (profileRes && profileRes.ok) {
+        const data: UserProfileData = await profileRes.json();
         setProfileData(data);
 
         const p = data.profil;
         if (p?.is_verified) {
           toast.success('Selamat! Akun perusahaan Anda telah disetujui Admin!');
         }
-      } else if (res.status === 401) {
+      } else if (profileRes && profileRes.status === 401) {
         localStorage.clear();
         router.push('/login');
       }
@@ -121,15 +129,37 @@ export default function PendingApprovalPage() {
     return raw.length > 25 ? `${raw.slice(0, 12)}...${raw.slice(-8)}` : raw;
   };
 
-  const supportEmailUrl = `mailto:admin@airecruitpro.com?subject=${encodeURIComponent(
-    `Pertanyaan Status Verifikasi Akun Perusahaan: ${profileData?.profil?.nama_perusahaan || ''}`
-  )}&body=${encodeURIComponent(
-    `Halo Tim Admin AI-Recruit Pro,\n\nKami ingin mengonfirmasi status peninjauan akun perusahaan kami:\n• Perusahaan: ${
-      profileData?.profil?.nama_perusahaan || '-'
-    }\n• Email Akun: ${profileData?.email || '-'}\n• NIB / NPWP: ${
-      profileData?.profil?.nib_number || '-'
-    }\n\nTerima kasih.`
-  )}`;
+  const targetAdminEmail = adminEmail || 'admin@airecruitpro.com';
+  const companyName = profileData?.profil?.nama_perusahaan || '-';
+  const nibNumber = profileData?.profil?.nib_number || '-';
+  const accountEmail = profileData?.email || '-';
+  const hrName = profileData?.profil?.hr_name || '-';
+  const hrPos = profileData?.profil?.hr_position ? ` (${profileData.profil.hr_position})` : '';
+  const hrWhatsapp = profileData?.profil?.hr_whatsapp || '-';
+
+  const emailSubject = `Konfirmasi Verifikasi Akun Perusahaan - ${companyName}`;
+  const emailBody =
+`Yth. Tim Administrator AI-Recruit Pro,
+
+Saya ingin mengonfirmasi status peninjauan dan verifikasi akun perusahaan kami:
+
+• Nama Perusahaan Resmi : ${companyName}
+• Nomor NIB / NPWP       : ${nibNumber}
+• Email Akun Terdaftar  : ${accountEmail}
+• Perwakilan HRD         : ${hrName}${hrPos}
+• Nomor WhatsApp HRD     : ${hrWhatsapp}
+• Waktu Pendaftaran      : ${formattedRegistrationDate}
+
+Seluruh dokumen persyaratan legalitas (NIB/NPWP dan ID Card HRD) telah berhasil kami unggah ke sistem. Mohon bantuannya untuk meninjau dan mengaktifkan akun perusahaan kami agar kami dapat mulai menggunakan platform AI-Recruit Pro.
+
+Terima kasih atas perhatian dan kerja samanya.
+
+Hormat kami,
+${profileData?.profil?.hr_name || companyName}`;
+
+  const supportEmailUrl = `mailto:${targetAdminEmail}?subject=${encodeURIComponent(
+    emailSubject
+  )}&body=${encodeURIComponent(emailBody)}`;
 
   return (
     <div className="min-h-screen bg-[#F0F8FB] text-[#1b7b9e] flex flex-col justify-between font-sans antialiased">
@@ -150,15 +180,6 @@ export default function PendingApprovalPage() {
         </Link>
 
         <div className="flex items-center gap-3">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#E0F1F7] text-[#1b7b9e] text-xs font-bold border border-[#B8E1ED]">
-            <span
-              className={`w-2.5 h-2.5 rounded-full ${
-                isApproved ? 'bg-emerald-500' : 'bg-amber-500 animate-pulse'
-              }`}
-            ></span>
-            Status Akun: {isApproved ? 'APPROVED' : isIncomplete ? 'BELUM LENGKAP' : 'PENDING APPROVAL'}
-          </div>
-
           <button
             onClick={handleLogout}
             title="Keluar / Ganti Akun"
@@ -229,10 +250,7 @@ export default function PendingApprovalPage() {
               </Link>
             </div>
           ) : (
-            <div className="p-4 rounded-2xl bg-[#F0F8FB] border border-[#C2E5EF] flex items-center justify-center gap-3 text-xs sm:text-sm font-bold text-[#1b7b9e]">
-              <ShieldCheck size={20} className="shrink-0" />
-              <span>Estimasi Waktu Persetujuan: Maksimal 1 x 24 Jam Kerja</span>
-            </div>
+            <></>
           )}
 
           {/* Real Data Details Container */}
@@ -413,15 +431,6 @@ export default function PendingApprovalPage() {
 
           {/* Action CTAs */}
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
-            <button
-              onClick={fetchStatus}
-              disabled={isChecking}
-              className="w-full sm:w-auto px-6 py-3 rounded-full border border-[#1b7b9e] text-[#1b7b9e] hover:bg-[#E0F1F7] font-extrabold text-xs sm:text-sm transition-all inline-flex items-center justify-center gap-2"
-            >
-              <RefreshCw size={16} className={isChecking ? 'animate-spin' : ''} />
-              <span>{isChecking ? 'Memeriksa...' : 'Periksa Status Ulang'}</span>
-            </button>
-
             {isIncomplete && (
               <Link
                 href="/register?step=3"
