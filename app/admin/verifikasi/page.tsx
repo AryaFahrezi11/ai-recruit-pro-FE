@@ -20,7 +20,8 @@ import {
   RefreshCw,
   CornerDownLeft,
   Users,
-  Briefcase
+  Briefcase,
+  XCircle
 } from 'lucide-react';
 import { fetchAuth } from '@/lib/api/auth';
 import { getMediaUrl } from '@/lib/api';
@@ -47,6 +48,8 @@ interface CompanyVerificationItem {
   hr_position?: string;
   hr_id_card_url?: string;
   is_verified?: boolean;
+  status?: string;
+  rejection_reason?: string;
 }
 
 export default function AdminVerificationPage() {
@@ -57,6 +60,10 @@ export default function AdminVerificationPage() {
   const [viewMode, setViewMode] = useState<'table' | 'grid'>('table');
   const [selectedCompany, setSelectedCompany] = useState<CompanyVerificationItem | null>(null);
   const [approvingId, setApprovingId] = useState<string | null>(null);
+  const [rejectModalOpen, setRejectModalOpen] = useState(false);
+  const [companyToReject, setCompanyToReject] = useState<CompanyVerificationItem | null>(null);
+  const [rejectReason, setRejectReason] = useState('');
+  const [isRejecting, setIsRejecting] = useState(false);
 
   // Fetch pending companies with GET search query parameter
   const loadPendingCompanies = async (searchQuery: string = activeSearch) => {
@@ -123,6 +130,50 @@ export default function AdminVerificationPage() {
     }
   };
 
+  const handleOpenRejectModal = (company: CompanyVerificationItem) => {
+    setCompanyToReject(company);
+    setRejectReason(company.rejection_reason || '');
+    setRejectModalOpen(true);
+  };
+
+  const handleConfirmReject = async () => {
+    if (!companyToReject) return;
+    if (!rejectReason.trim()) {
+      toast.error('Harap masukkan alasan penolakan.');
+      return;
+    }
+
+    setIsRejecting(true);
+    try {
+      const res = await fetchAuth(`/api/admin/perusahaan/${companyToReject.id}/reject`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ reason: rejectReason.trim() })
+      });
+
+      if (res.ok) {
+        toast.success(
+          `Verifikasi "${companyToReject.nama_perusahaan}" berhasil ditolak. Instruksi perbaikan telah dikirimkan ke perusahaan.`,
+          { icon: '⚠️' }
+        );
+        if (selectedCompany?.id === companyToReject.id) {
+          setSelectedCompany(null);
+        }
+        setRejectModalOpen(false);
+        setCompanyToReject(null);
+        setRejectReason('');
+        loadPendingCompanies(activeSearch);
+      } else {
+        const err = await res.json().catch(() => ({}));
+        toast.error(typeof err.detail === 'string' ? err.detail : 'Gagal menolak verifikasi perusahaan');
+      }
+    } catch {
+      toast.error('Terjadi kesalahan saat memproses penolakan.');
+    } finally {
+      setIsRejecting(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* Page Header */}
@@ -139,7 +190,7 @@ export default function AdminVerificationPage() {
             )}
           </div>
           <p className="text-slate-500 dark:text-slate-400 text-xs sm:text-sm mt-1">
-            Tinjau berkas legalitas (NIB &amp; KTP HR) dan setujui perusahaan baru yang mendaftar.
+            Tinjau berkas legalitas (NIB &amp; ID Card HR) dan setujui perusahaan baru yang mendaftar.
           </p>
         </div>
 
@@ -285,23 +336,25 @@ export default function AdminVerificationPage() {
             <table className="w-full text-xs text-left">
               <thead className="bg-slate-50 dark:bg-slate-950/60 text-slate-500 dark:text-slate-400 font-bold border-b border-slate-200 dark:border-slate-800 uppercase tracking-wider text-[10px]">
                 <tr>
+                  <th className="px-5 py-3.5 text-center">No</th>
                   <th className="px-5 py-3.5">Perusahaan</th>
                   <th className="px-4 py-3.5">Sektor &amp; Skala Karyawan</th>
                   <th className="px-4 py-3.5">NIB / NPWP</th>
                   <th className="px-4 py-3.5">Perwakilan HRD</th>
                   <th className="px-4 py-3.5">Berkas Legalitas</th>
                   <th className="px-4 py-3.5">Status</th>
-                  <th className="px-5 py-3.5 text-right">Aksi</th>
+                  <th className="px-5 py-3.5 text-center">Aksi</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                {companies.map((c) => {
+                {companies.map((c, index) => {
                   const isApproving = approvingId === c.id;
                   return (
                     <tr
                       key={c.id}
                       className="hover:bg-blue-50/40 dark:hover:bg-slate-800/50 transition-colors"
                     >
+                      <td className="px-5 text-center py-3.5">{index + 1}</td>
                       {/* Perusahaan Info */}
                       <td className="px-5 py-3.5">
                         <div className="flex items-center gap-3">
@@ -398,11 +451,11 @@ export default function AdminVerificationPage() {
                               className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-100 dark:hover:bg-emerald-900/50 text-[11px] font-bold border border-emerald-200 dark:border-emerald-900/60 transition-colors"
                               title="Lihat Berkas KTP / ID Card HRD"
                             >
-                              <CreditCard size={12} /> KTP <ExternalLink size={10} />
+                              <CreditCard size={12} /> ID Card <ExternalLink size={10} />
                             </a>
                           ) : (
                             <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] bg-slate-100 dark:bg-slate-800 text-slate-400">
-                              KTP -
+                              ID Card -
                             </span>
                           )}
                         </div>
@@ -410,14 +463,20 @@ export default function AdminVerificationPage() {
 
                       {/* Status */}
                       <td className="px-4 py-3.5">
-                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 text-[10px] font-bold border border-amber-200 dark:border-amber-800">
-                          <Clock size={10} /> Menunggu
-                        </span>
+                        {c.status === 'REJECTED' ? (
+                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-400 text-[10px] font-bold border border-rose-200 dark:border-rose-800" title={c.rejection_reason || 'Verifikasi ditolak'}>
+                            <XCircle size={10} /> Ditolak
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 text-[10px] font-bold border border-amber-200 dark:border-amber-800">
+                            <Clock size={10} /> Menunggu
+                          </span>
+                        )}
                       </td>
 
                       {/* Aksi Buttons */}
-                      <td className="px-5 py-3.5 text-right">
-                        <div className="flex items-center justify-end gap-1.5">
+                      <td className="px-5 py-3.5 text-center">
+                        <div className="flex items-center justify-center gap-1.5">
                           <button
                             onClick={() => setSelectedCompany(c)}
                             className="p-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
@@ -428,7 +487,7 @@ export default function AdminVerificationPage() {
 
                           <button
                             onClick={() => handleApprove(c.id, c.nama_perusahaan)}
-                            disabled={isApproving}
+                            disabled={isApproving || isRejecting}
                             className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-xs transition-all disabled:opacity-50"
                             title="Setujui Akun Perusahaan"
                           >
@@ -438,6 +497,16 @@ export default function AdminVerificationPage() {
                               <ShieldCheck size={14} />
                             )}
                             <span>Setujui</span>
+                          </button>
+
+                          <button
+                            onClick={() => handleOpenRejectModal(c)}
+                            disabled={isApproving || isRejecting}
+                            className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 hover:bg-rose-100 dark:hover:bg-rose-900/60 font-bold text-xs border border-rose-200 dark:border-rose-800 transition-all disabled:opacity-50"
+                            title="Tolak Verifikasi & Minta Perbaikan Dokumen"
+                          >
+                            <XCircle size={14} />
+                            <span>Tolak</span>
                           </button>
                         </div>
                       </td>
@@ -478,9 +547,15 @@ export default function AdminVerificationPage() {
                         </span>
                       </div>
                     </div>
-                    <span className="shrink-0 px-2 py-0.5 rounded-full bg-amber-50 dark:bg-amber-950/50 text-amber-700 dark:text-amber-400 text-[10px] font-bold border border-amber-200 dark:border-amber-800">
-                      Pending
-                    </span>
+                    {c.status === 'REJECTED' ? (
+                      <span className="shrink-0 px-2 py-0.5 rounded-full bg-rose-50 dark:bg-rose-950/50 text-rose-700 dark:text-rose-400 text-[10px] font-bold border border-rose-200 dark:border-rose-800">
+                        Ditolak
+                      </span>
+                    ) : (
+                      <span className="shrink-0 px-2 py-0.5 rounded-full bg-amber-50 dark:bg-amber-950/50 text-amber-700 dark:text-amber-400 text-[10px] font-bold border border-amber-200 dark:border-amber-800">
+                        Pending
+                      </span>
+                    )}
                   </div>
 
                   {/* Compact Info Grid: Sektor, Ukuran, NIB, PIC */}
@@ -535,11 +610,11 @@ export default function AdminVerificationPage() {
                         rel="noopener noreferrer"
                         className="flex-1 text-center py-1 px-2 rounded-lg bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-100 text-[10px] font-bold border border-emerald-200 dark:border-emerald-900 inline-flex items-center justify-center gap-1"
                       >
-                        <CreditCard size={11} /> KTP HR
+                        <CreditCard size={11} /> ID Card HR
                       </a>
                     ) : (
                       <span className="flex-1 text-center py-1 px-2 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-400 text-[10px]">
-                        KTP (-)
+                        ID Card (-)
                       </span>
                     )}
                   </div>
@@ -549,14 +624,24 @@ export default function AdminVerificationPage() {
                 <div className="pt-2 border-t border-slate-100 dark:border-slate-800 flex items-center gap-2">
                   <button
                     onClick={() => setSelectedCompany(c)}
-                    className="flex-1 py-2 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-semibold inline-flex items-center justify-center gap-1 transition-colors"
+                    className="py-2 px-3 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-semibold inline-flex items-center justify-center gap-1 transition-colors"
+                    title="Lihat Rincian"
                   >
-                    <Eye size={13} /> Rincian
+                    <Eye size={13} />
+                  </button>
+
+                  <button
+                    onClick={() => handleOpenRejectModal(c)}
+                    disabled={isApproving || isRejecting}
+                    className="flex-1 py-2 rounded-xl bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 hover:bg-rose-100 dark:hover:bg-rose-900/60 border border-rose-200 dark:border-rose-800 text-xs font-bold transition-all inline-flex items-center justify-center gap-1 disabled:opacity-50"
+                  >
+                    <XCircle size={13} />
+                    <span>Tolak</span>
                   </button>
 
                   <button
                     onClick={() => handleApprove(c.id, c.nama_perusahaan)}
-                    disabled={isApproving}
+                    disabled={isApproving || isRejecting}
                     className="flex-1 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow-xs transition-all inline-flex items-center justify-center gap-1 disabled:opacity-50"
                   >
                     {isApproving ? (
@@ -564,7 +649,7 @@ export default function AdminVerificationPage() {
                     ) : (
                       <ShieldCheck size={14} />
                     )}
-                    <span>Approve</span>
+                    <span>Setujui</span>
                   </button>
                 </div>
               </div>
@@ -739,7 +824,7 @@ export default function AdminVerificationPage() {
                     )}
                   </div>
 
-                  {/* Dokumen KTP */}
+                  {/* Dokumen ID Card*/}
                   <div className="p-3 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl flex items-center justify-between gap-2 shadow-xs">
                     <div className="flex items-center gap-2.5 overflow-hidden">
                       <div className="w-8 h-8 rounded-lg bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 flex items-center justify-center shrink-0">
@@ -773,7 +858,7 @@ export default function AdminVerificationPage() {
             </div>
 
             {/* Modal Footer */}
-            <div className="p-5 border-t border-slate-100 dark:border-slate-800 flex items-center justify-end gap-2.5 bg-slate-50/50 dark:bg-slate-950/40">
+            <div className="p-5 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between gap-2.5 bg-slate-50/50 dark:bg-slate-950/40">
               <button
                 onClick={() => setSelectedCompany(null)}
                 className="px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-semibold transition-colors"
@@ -781,17 +866,142 @@ export default function AdminVerificationPage() {
                 Tutup
               </button>
 
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => handleOpenRejectModal(selectedCompany)}
+                  disabled={isRejecting || approvingId === selectedCompany.id}
+                  className="px-4 py-2.5 rounded-xl bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 hover:bg-rose-100 dark:hover:bg-rose-900/60 border border-rose-200 dark:border-rose-800 text-xs font-bold transition-all inline-flex items-center gap-1.5 disabled:opacity-50"
+                >
+                  <XCircle size={15} />
+                  <span>Tolak Verifikasi</span>
+                </button>
+
+                <button
+                  onClick={() => handleApprove(selectedCompany.id, selectedCompany.nama_perusahaan)}
+                  disabled={approvingId === selectedCompany.id || isRejecting}
+                  className="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow-sm transition-all inline-flex items-center gap-1.5 disabled:opacity-50"
+                >
+                  {approvingId === selectedCompany.id ? (
+                    <RefreshCw size={14} className="animate-spin" />
+                  ) : (
+                    <ShieldCheck size={16} />
+                  )}
+                  <span>Setujui Akun Perusahaan</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* REJECT MODAL DIALOG */}
+      {rejectModalOpen && companyToReject && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-4 animate-in fade-in duration-200">
+          <div className="bg-white dark:bg-slate-900 rounded-3xl w-full max-w-lg border border-slate-200 dark:border-slate-800 shadow-2xl overflow-hidden flex flex-col">
+            {/* Header */}
+            <div className="p-5 sm:p-6 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-rose-50 dark:bg-rose-950/50 border border-rose-200 dark:border-rose-800 text-rose-600 dark:text-rose-400 flex items-center justify-center font-bold shrink-0">
+                  <XCircle size={22} />
+                </div>
+                <div>
+                  <h2 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white">
+                    Tolak Verifikasi Perusahaan
+                  </h2>
+                  <span className="text-xs text-slate-400">
+                    {companyToReject.nama_perusahaan}
+                  </span>
+                </div>
+              </div>
               <button
-                onClick={() => handleApprove(selectedCompany.id, selectedCompany.nama_perusahaan)}
-                disabled={approvingId === selectedCompany.id}
-                className="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow-sm transition-all inline-flex items-center gap-1.5 disabled:opacity-50"
+                onClick={() => {
+                  setRejectModalOpen(false);
+                  setCompanyToReject(null);
+                }}
+                className="w-8 h-8 rounded-full flex items-center justify-center text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
               >
-                {approvingId === selectedCompany.id ? (
+                <X size={18} />
+              </button>
+            </div>
+
+            {/* Body */}
+            <div className="p-6 space-y-4 text-xs text-slate-700 dark:text-slate-300">
+              <div className="p-3.5 bg-rose-50/80 dark:bg-rose-950/30 rounded-xl border border-rose-200/80 dark:border-rose-900/50 text-rose-800 dark:text-rose-300 leading-relaxed">
+                <p className="font-semibold flex items-center gap-1.5 mb-1">
+                  <AlertCircle size={14} className="shrink-0" />
+                  Pemberitahuan Instruksi Otomatis
+                </p>
+                <span>
+                  Alasan yang Anda tulis di bawah akan langsung ditampilkan kepada perwakilan perusahaan di halaman status akun mereka, dan sistem akan menginstruksikan mereka untuk memperbaiki data serta mengunggah ulang dokumen di Tahap 3.
+                </span>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-200 mb-1.5">
+                  Alasan Penolakan <span className="text-red-500">*</span>
+                </label>
+                <textarea
+                  rows={4}
+                  value={rejectReason}
+                  onChange={(e) => setRejectReason(e.target.value)}
+                  placeholder="Tuliskan catatan perbaikan atau alasan penolakan secara spesifik, misalnya: Dokumen NIB buram tidak terbaca, mohon unggah scan PDF resmi yang jelas..."
+                  className="w-full px-3.5 py-2.5 bg-white dark:bg-slate-950 border-2 border-slate-200 dark:border-slate-700 focus:border-rose-500 focus:ring-2 focus:ring-rose-500/20 rounded-xl text-xs outline-none text-slate-900 dark:text-white placeholder:text-slate-400"
+                  autoFocus
+                />
+              </div>
+
+              {/* Quick Template Chips */}
+              <div className="space-y-1.5">
+                <span className="text-[11px] font-semibold text-slate-400 block">
+                  Pilihan Alasan Cepat (Klik untuk memilih):
+                </span>
+                <div className="flex flex-wrap gap-1.5">
+                  {[
+                    'Dokumen NIB / NPWP buram atau tidak terbaca dengan jelas.',
+                    'Foto ID Card / KTP HR tidak sesuai dengan nama PIC pendaftar.',
+                    'Nomor NIB tidak valid atau belum terdaftar resmi di OSS.',
+                    'Data profil perusahaan belum lengkap, mohon lengkapi alamat & sektor.',
+                    'Website resmi perusahaan tidak dapat diakses atau tidak aktif.'
+                  ].map((preset, idx) => (
+                    <button
+                      key={idx}
+                      type="button"
+                      onClick={() => setRejectReason(preset)}
+                      className="px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-rose-50 dark:hover:bg-rose-950/40 hover:text-rose-600 dark:hover:text-rose-400 border border-slate-200 dark:border-slate-700 text-[10px] text-slate-600 dark:text-slate-300 text-left transition-colors"
+                    >
+                      + {preset}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div className="p-5 border-t border-slate-100 dark:border-slate-800 flex items-center justify-end gap-2.5 bg-slate-50/50 dark:bg-slate-950/40">
+              <button
+                type="button"
+                onClick={() => {
+                  setRejectModalOpen(false);
+                  setCompanyToReject(null);
+                }}
+                disabled={isRejecting}
+                className="px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-semibold transition-colors"
+              >
+                Batal
+              </button>
+
+              <button
+                type="button"
+                onClick={handleConfirmReject}
+                disabled={isRejecting || !rejectReason.trim()}
+                className="px-5 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold shadow-sm transition-all inline-flex items-center gap-1.5 disabled:opacity-50"
+              >
+                {isRejecting ? (
                   <RefreshCw size={14} className="animate-spin" />
                 ) : (
-                  <ShieldCheck size={16} />
+                  <XCircle size={15} />
                 )}
-                <span>Setujui Akun Perusahaan</span>
+                <span>Kirim Penolakan &amp; Minta Lengkapi Ulang</span>
               </button>
             </div>
           </div>

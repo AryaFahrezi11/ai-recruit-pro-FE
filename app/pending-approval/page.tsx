@@ -22,7 +22,8 @@ import {
   ExternalLink,
   RefreshCw,
   LogOut,
-  Edit
+  Edit,
+  XCircle
 } from 'lucide-react';
 
 interface UserProfileData {
@@ -41,6 +42,8 @@ interface UserProfileData {
     hr_position?: string;
     hr_id_card_url?: string;
     is_verified?: boolean;
+    status?: string;
+    rejection_reason?: string;
     has_completed_profile?: boolean;
     alamat?: string;
     kota?: string;
@@ -103,6 +106,7 @@ export default function PendingApprovalPage() {
   };
 
   const isApproved = Boolean(profileData?.profil?.is_verified);
+  const isRejected = profileData?.profil?.status === 'REJECTED';
   const isIncomplete = profileData ? !profileData.profil?.has_completed_profile : false;
 
   // Format real registration timestamp
@@ -187,25 +191,41 @@ ${profileData?.profil?.hr_name || companyName}`;
       <main className="flex-1 w-full max-w-3xl mx-auto px-4 py-8 flex items-center justify-center">
         <div className="w-full bg-white dark:bg-slate-900 rounded-3xl p-8 sm:p-12 shadow-2xl border border-slate-200 dark:border-slate-800 space-y-8 text-center relative overflow-hidden">
           {/* Animated Status Icon */}
-          <div className="w-20 h-20 bg-blue-50 dark:bg-blue-950/40 border-2 border-blue-200 dark:border-blue-800/60 rounded-3xl flex items-center justify-center text-[#1A4B9F] dark:text-blue-400 mx-auto shadow-sm relative">
-            <Clock size={36} className="animate-spin" style={{ animationDuration: '8s' }} />
-            <div className="absolute -top-1 -right-1 w-6 h-6 bg-amber-500 text-white rounded-full flex items-center justify-center font-black text-[10px] shadow-sm">
-              !
+          {isRejected ? (
+            <div className="w-20 h-20 bg-rose-50 dark:bg-rose-950/40 border-2 border-rose-200 dark:border-rose-800/60 rounded-3xl flex items-center justify-center text-rose-600 dark:text-rose-400 mx-auto shadow-sm relative">
+              <XCircle size={40} />
             </div>
-          </div>
+          ) : (
+            <div className="w-20 h-20 bg-blue-50 dark:bg-blue-950/40 border-2 border-blue-200 dark:border-blue-800/60 rounded-3xl flex items-center justify-center text-[#1A4B9F] dark:text-blue-400 mx-auto shadow-sm relative">
+              <Clock size={36} className="animate-spin" style={{ animationDuration: '8s' }} />
+              <div className="absolute -top-1 -right-1 w-6 h-6 bg-amber-500 text-white rounded-full flex items-center justify-center font-black text-[10px] shadow-sm">
+                !
+              </div>
+            </div>
+          )}
 
           {/* Heading & Notice */}
           <div className="space-y-3 max-w-xl mx-auto">
-            <span className="inline-block px-4 py-1.5 rounded-full bg-amber-50 dark:bg-amber-950/50 text-amber-700 dark:text-amber-400 font-extrabold text-xs border border-amber-200 dark:border-amber-800 uppercase tracking-wider">
-              Verifikasi Dalam Proses
-            </span>
+            {isRejected ? (
+              <span className="inline-block px-4 py-1.5 rounded-full bg-rose-50 dark:bg-rose-950/50 text-rose-700 dark:text-rose-400 font-extrabold text-xs border border-rose-200 dark:border-rose-800 uppercase tracking-wider">
+                Verifikasi Ditolak / Perlu Perbaikan
+              </span>
+            ) : (
+              <span className="inline-block px-4 py-1.5 rounded-full bg-amber-50 dark:bg-amber-950/50 text-amber-700 dark:text-amber-400 font-extrabold text-xs border border-amber-200 dark:border-amber-800 uppercase tracking-wider">
+                Verifikasi Dalam Proses
+              </span>
+            )}
 
             <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-white leading-tight">
-              Pendaftaran Berhasil Dikirim &amp; Dalam Peninjauan Admin
+              {isRejected
+                ? 'Pengajuan Verifikasi Akun Belum Disetujui'
+                : 'Pendaftaran Berhasil Dikirim & Dalam Peninjauan Admin'}
             </h1>
 
             <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 leading-relaxed pt-2">
-              Terima kasih telah melengkapi data legalitas perusahaan &amp; perwakilan HRD. Tim Administrator AI-Recruit Pro saat ini sedang memverifikasi keabsahan Dokumen NIB/NPWP dan ID Card Perusahaan Anda demi menjaga keamanan &amp; kualitas ekosistem rekrutmen.
+              {isRejected
+                ? 'Admin telah meninjau pengajuan akun perusahaan Anda. Terdapat berkas legalitas atau data profil yang belum memenuhi kualifikasi. Silakan periksa catatan perbaikan dari admin di bawah ini.'
+                : 'Terima kasih telah melengkapi data legalitas perusahaan & perwakilan HRD. Tim Administrator AI-Recruit Pro saat ini sedang memverifikasi keabsahan Dokumen NIB/NPWP dan ID Card Perusahaan Anda demi menjaga keamanan & kualitas ekosistem rekrutmen.'}
             </p>
           </div>
 
@@ -225,6 +245,41 @@ ${profileData?.profil?.hr_name || companyName}`;
               >
                 Masuk ke Dashboard &rarr;
               </Link>
+            </div>
+          ) : isRejected ? (
+            <div className="p-6 rounded-2xl bg-rose-50 dark:bg-rose-950/30 border-2 border-rose-200 dark:border-rose-800/80 text-left space-y-4 shadow-sm">
+              <div className="flex items-start gap-3.5">
+                <div className="w-10 h-10 rounded-xl bg-rose-100 dark:bg-rose-900/50 text-rose-600 dark:text-rose-400 flex items-center justify-center shrink-0 mt-0.5">
+                  <XCircle size={24} />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h3 className="font-bold text-sm sm:text-base text-rose-900 dark:text-rose-200">
+                    Pengajuan Verifikasi Memerlukan Perbaikan
+                  </h3>
+                  <p className="text-xs sm:text-sm text-rose-700 dark:text-rose-300 mt-1">
+                    Berikut adalah catatan perbaikan resmi dari Administrator untuk perusahaan Anda:
+                  </p>
+
+                  <div className="mt-3 p-3.5 bg-white dark:bg-slate-900 rounded-xl border border-rose-200 dark:border-rose-900/60 text-xs sm:text-sm text-slate-800 dark:text-slate-200 font-medium leading-relaxed">
+                    <span className="block text-[11px] font-bold text-rose-600 dark:text-rose-400 uppercase tracking-wider mb-1">
+                      Catatan / Alasan Penolakan:
+                    </span>
+                    &ldquo;{profileData?.profil?.rejection_reason || 'Persyaratan dokumen legalitas (NIB & ID Card) belum sesuai kriteria. Mohon lengkapi dan unggah kembali dokumen resmi yang valid.'}&rdquo;
+                  </div>
+                </div>
+              </div>
+
+              <div className="pt-2 border-t border-rose-200/70 dark:border-rose-900/50 flex flex-col sm:flex-row items-center justify-between gap-3">
+                <p className="text-xs text-rose-700 dark:text-rose-400 font-medium">
+                  Perbaiki data atau unggah dokumen terbaru pada Formulir Tahap 3 untuk ditinjau ulang oleh Admin.
+                </p>
+                <Link
+                  href="/register?step=3"
+                  className="shrink-0 w-full sm:w-auto px-6 py-2.5 rounded-full bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs sm:text-sm shadow-sm transition-all inline-flex items-center justify-center gap-2"
+                >
+                  <Edit size={16} /> Lengkapi Ulang Dokumen (Tahap 3) &rarr;
+                </Link>
+              </div>
             </div>
           ) : isIncomplete ? (
             <div className="p-5 rounded-2xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 flex flex-col sm:flex-row items-center justify-between gap-4 text-amber-900 dark:text-amber-300 text-left">
@@ -254,12 +309,14 @@ ${profileData?.profil?.hr_name || companyName}`;
                 className={`text-[11px] font-bold px-2.5 py-0.5 rounded-md ${
                   isApproved
                     ? 'text-emerald-700 bg-emerald-100 dark:text-emerald-300 dark:bg-emerald-950/60'
+                    : isRejected
+                    ? 'text-rose-700 bg-rose-100 dark:text-rose-300 dark:bg-rose-950/60'
                     : isIncomplete
                     ? 'text-red-700 bg-red-100 dark:text-red-300 dark:bg-red-950/60'
                     : 'text-amber-700 bg-amber-100 dark:text-amber-300 dark:bg-amber-950/60'
                 }`}
               >
-                {isApproved ? 'Telah Disetujui' : isIncomplete ? 'Belum Lengkap' : 'Menunggu Peninjauan Admin'}
+                {isApproved ? 'Telah Disetujui' : isRejected ? 'Perlu Perbaikan (Ditolak)' : isIncomplete ? 'Belum Lengkap' : 'Menunggu Peninjauan Admin'}
               </span>
             </div>
 
@@ -422,13 +479,17 @@ ${profileData?.profil?.hr_name || companyName}`;
 
           {/* Action CTAs */}
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
-            {isIncomplete && (
+            {(isRejected || isIncomplete) && (
               <Link
                 href="/register?step=3"
-                className="w-full sm:w-auto px-7 py-3 rounded-full bg-amber-600 hover:bg-amber-700 active:bg-amber-800 text-white font-semibold text-sm shadow-sm transition-all duration-200 inline-flex items-center justify-center gap-2"
+                className={`w-full sm:w-auto px-7 py-3 rounded-full text-white font-semibold text-sm shadow-sm transition-all duration-200 inline-flex items-center justify-center gap-2 ${
+                  isRejected
+                    ? 'bg-rose-600 hover:bg-rose-700 active:bg-rose-800'
+                    : 'bg-amber-600 hover:bg-amber-700 active:bg-amber-800'
+                }`}
               >
                 <Edit size={16} />
-                Lengkapi Data Tahap 3
+                Lengkapi Ulang Dokumen (Tahap 3)
               </Link>
             )}
 

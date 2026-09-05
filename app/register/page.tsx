@@ -80,6 +80,7 @@ function CompanyRegistrationInner() {
   const [existingNibUrl, setExistingNibUrl] = useState<string | null>(null);
   const [existingIdCardUrl, setExistingIdCardUrl] = useState<string | null>(null);
   const [isFromIncomplete, setIsFromIncomplete] = useState(false);
+  const [rejectionReason, setRejectionReason] = useState<string | null>(null);
   const [errorStep3, setErrorStep3] = useState('');
 
   const [isLoading, setIsLoading] = useState(false);
@@ -130,6 +131,7 @@ function CompanyRegistrationInner() {
             if (p.hr_position) setHrPosition(p.hr_position);
             if (p.nib_document_url) setExistingNibUrl(p.nib_document_url);
             if (p.hr_id_card_url) setExistingIdCardUrl(p.hr_id_card_url);
+            if (p.rejection_reason) setRejectionReason(p.rejection_reason);
           }
           if (data && data.email) {
             setEmail(data.email);
@@ -685,7 +687,22 @@ function CompanyRegistrationInner() {
               <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Dokumen & Data Perusahaan</h2>
             </div>
 
-            {isFromIncomplete && (
+            {rejectionReason ? (
+              <div className="p-5 rounded-2xl bg-rose-50 dark:bg-rose-950/40 border-2 border-rose-200 dark:border-rose-800/80 flex items-start gap-3.5 text-rose-900 dark:text-rose-200 text-xs sm:text-sm">
+                <AlertCircle className="w-5 h-5 text-rose-600 dark:text-rose-400 shrink-0 mt-0.5" />
+                <div className="space-y-1.5 flex-1">
+                  <strong className="font-bold block text-rose-800 dark:text-rose-300">
+                    Pengajuan Verifikasi Memerlukan Perbaikan (Catatan Admin):
+                  </strong>
+                  <div className="p-3 bg-white dark:bg-slate-900 rounded-xl border border-rose-200 dark:border-rose-900/60 font-medium text-slate-800 dark:text-slate-200">
+                    &ldquo;{rejectionReason}&rdquo;
+                  </div>
+                  <span className="text-[11px] text-rose-700 dark:text-rose-400 block pt-0.5">
+                    Silakan perbaiki isian formulir atau unggah berkas yang sesuai di bawah ini, lalu klik <strong>&ldquo;Simpan &amp; Kirim Ulang Verifikasi&rdquo;</strong>.
+                  </span>
+                </div>
+              </div>
+            ) : isFromIncomplete ? (
               <div className="p-4 rounded-2xl bg-amber-50 border border-amber-200 flex items-start gap-3 text-amber-800 text-xs sm:text-sm">
                 <AlertCircle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
                 <div>
@@ -693,7 +710,7 @@ function CompanyRegistrationInner() {
                   <span>Akun Anda telah melewati verifikasi OTP. Untuk mengaktifkan akun dan melanjutkan ke dashboard, Anda wajib melengkapi data profil perusahaan serta mengunggah dokumen legalitas resmi (NIB &amp; KTP/ID Card) di bawah ini.</span>
                 </div>
               </div>
-            )}
+            ) : null}
 
             <form onSubmit={handleStep3Submit} className="space-y-8">
 
@@ -734,18 +751,6 @@ function CompanyRegistrationInner() {
                       <option value="Lainnya">Lainnya</option>
                     </select>
                   </div>
-                  <div>
-                    <label className={labelBase}>Jumlah Karyawan <span className="text-red-500">*</span></label>
-                    <select value={ukuran} onChange={(e) => setUkuran(e.target.value)} className={inputBase}>
-                      <option value="">Pilih rentang</option>
-                      <option value="1-50 Karyawan (Startup/Kecil)">1-50 karyawan</option>
-                      <option value="51-200 Karyawan (Menengah)">51-200 karyawan</option>
-                      <option value="201-1000 Karyawan (Besar)">201-1.000 karyawan</option>
-                      <option value="> 1000 Karyawan (Enterprise)">Lebih dari 1.000 karyawan</option>
-                    </select>
-                  </div>
-                </div>
-
                 {industri === 'Lainnya' && (
                   <div className="animate-in fade-in duration-200">
                     <label className={labelBase}>
@@ -761,6 +766,18 @@ function CompanyRegistrationInner() {
                     />
                   </div>
                 )}
+                  <div>
+                    <label className={labelBase}>Jumlah Karyawan <span className="text-red-500">*</span></label>
+                    <select value={ukuran} onChange={(e) => setUkuran(e.target.value)} className={inputBase}>
+                      <option value="">Pilih rentang</option>
+                      <option value="1-50 Karyawan (Startup/Kecil)">1-50 karyawan</option>
+                      <option value="51-200 Karyawan (Menengah)">51-200 karyawan</option>
+                      <option value="201-1000 Karyawan (Besar)">201-1.000 karyawan</option>
+                      <option value="> 1000 Karyawan (Enterprise)">Lebih dari 1.000 karyawan</option>
+                    </select>
+                  </div>
+                </div>
+
 
                 <div>
                   <label className={labelBase}>Website Perusahaan <span className="text-red-500">*</span></label>
@@ -890,7 +907,11 @@ function CompanyRegistrationInner() {
 
               <div className="flex items-center gap-3 pt-2 border-t border-slate-100 dark:border-slate-800">
                 <button type="submit" disabled={isLoading} className={primaryBtnFlex}>
-                  {isLoading ? 'Mengirim data...' : 'Kirim & Ajukan Verifikasi'}
+                  {isLoading
+                    ? 'Mengirim data...'
+                    : rejectionReason
+                    ? 'Simpan & Kirim Ulang Verifikasi'
+                    : 'Kirim & Ajukan Verifikasi'}
                 </button>
               </div>
 
