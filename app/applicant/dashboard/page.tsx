@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useMemo, Suspense } from 'react';
+import React, { useState, useEffect, useMemo, useRef, Suspense } from 'react';
 import Link from 'next/link';
 import { toast } from 'react-hot-toast';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -36,7 +36,8 @@ import {
   Copy,
   MessageCircle,
   Mail,
-  Globe
+  Globe,
+  Loader2
 } from 'lucide-react';
 import { ApplyJobModal } from '@/components/ApplyJobModal';
 import { api, parseErrorMessage, getMediaUrl } from '@/lib/api';
@@ -88,12 +89,42 @@ function DashboardContent() {
     initialView === 'companies' ? 'companies' : initialView === 'saved' ? 'saved' : 'recommended'
   );
 
-  const [searchQuery, setSearchQuery] = useState(searchParams.get('keyword') || '');
+  // Search & Location
+  const [searchQuery, setSearchQuery] = useState(searchParams.get('keyword') || searchParams.get('search') || '');
   const [locationQuery, setLocationQuery] = useState(searchParams.get('location') || '');
-  const [educationFilter, setEducationFilter] = useState(searchParams.get('education') || 'Semua');
-  const [workPolicyFilter, setWorkPolicyFilter] = useState(searchParams.get('workPolicy') || 'Semua');
+  const [suggestedLocations, setSuggestedLocations] = useState<string[]>([]);
+  const [showLocationSuggestions, setShowLocationSuggestions] = useState(false);
+  const locationContainerRef = useRef<HTMLDivElement>(null);
+
+  // 5 Job Filters (matching Employer Job Posting)
+  const [categories, setCategories] = useState<Array<{ id: string; nama_kategori: string }>>([]);
+  const [categoryFilter, setCategoryFilter] = useState(searchParams.get('kategori_id') || 'Semua');
+  const [employmentTypeFilter, setEmploymentTypeFilter] = useState(searchParams.get('tipe_pekerjaan') || 'Semua');
+  const [workModeFilter, setWorkModeFilter] = useState(searchParams.get('lokasi_kerja') || 'Semua');
+  const [experienceFilter, setExperienceFilter] = useState(searchParams.get('experience_level') || 'Semua');
+  const [educationFilter, setEducationFilter] = useState(searchParams.get('pendidikan_min') || 'Semua');
   const [sortOrder, setSortOrder] = useState(searchParams.get('sort') || 'rekomendasi');
+  const [userHasCv, setUserHasCv] = useState<boolean>(true);
+
+  // Industry filter (for Companies tab)
   const [industryFilter, setIndustryFilter] = useState(searchParams.get('industry') || 'Semua');
+  const [isSearching, setIsSearching] = useState(false);
+  const activeFetchId = useRef(0);
+  const isFormSubmittingRef = useRef(false);
+
+  const switchTab = (newTab: 'recommended' | 'companies' | 'saved') => {
+    setActiveTab(newTab);
+    const params = new URLSearchParams(searchParams.toString());
+    if (newTab === 'companies') {
+      params.set('view', 'companies');
+    } else if (newTab === 'saved') {
+      params.set('view', 'saved');
+    } else {
+      params.delete('view');
+    }
+    const queryString = params.toString();
+    router.push(queryString ? `?${queryString}` : '/applicant/dashboard', { scroll: false });
+  };
 
   const updateUrlParams = (updates: Record<string, string>) => {
     const params = new URLSearchParams(searchParams.toString());
@@ -121,6 +152,36 @@ function DashboardContent() {
   const [companiesList, setCompaniesList] = useState<Company[]>([]);
   const [isLoadingJobs, setIsLoadingJobs] = useState<boolean>(true);
 
+  // Close location dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (locationContainerRef.current && !locationContainerRef.current.contains(event.target as Node)) {
+        setShowLocationSuggestions(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  // Synchronize filter input states with URL search params
+  useEffect(() => {
+    setSearchQuery(searchParams.get('keyword') || searchParams.get('search') || '');
+    setLocationQuery(searchParams.get('location') || '');
+    setCategoryFilter(searchParams.get('kategori_id') || 'Semua');
+    setEmploymentTypeFilter(searchParams.get('tipe_pekerjaan') || 'Semua');
+    setWorkModeFilter(searchParams.get('lokasi_kerja') || 'Semua');
+    setExperienceFilter(searchParams.get('experience_level') || 'Semua');
+    setEducationFilter(searchParams.get('pendidikan_min') || 'Semua');
+    const paramSort = searchParams.get('sort');
+    if (paramSort) {
+      setSortOrder(paramSort);
+    } else {
+      setSortOrder(userHasCv ? 'rekomendasi' : 'terbaru');
+    }
+    setIndustryFilter(searchParams.get('industry') || 'Semua');
+  }, [searchParams, userHasCv]);
+
+  // 1. Initial Load: Auxiliary filters, profile, verified companies, applications, saved jobs (runs once on mount)
   useEffect(() => {
     const savedEmail = localStorage.getItem('user_email') || 'pelamar@example.com';
     const derivedName = savedEmail.split('@')[0].replace(/[._-]/g, ' ');
@@ -155,41 +216,147 @@ function DashboardContent() {
       try { setSavedJobIds(JSON.parse(storedSaved)); } catch (e) { }
     }
 
-    fetchRealData();
-  }, [searchParams]);
+    const loadInitialData = async () => {
+      try {
+        const [locRes, catRes, resComp, resProfile, resApps] = await Promise.all([
+          api.get('/jobs/locations').catch(() => null),
+          api.get('/jobs/categories').catch(() => null),
+          api.get('/perusahaan/verified').catch(() => null),
+          api.get('/users/profile').catch(() => null),
+          api.get('/applications/').catch(() => null)
+        ]);
 
-  const fetchRealData = async () => {
+        if (locRes?.locations && Array.isArray(locRes.locations)) {
+          setSuggestedLocations(locRes.locations);
+        }
+        if (Array.isArray(catRes)) {
+          setCategories(catRes);
+        } else if (catRes?.data && Array.isArray(catRes.data)) {
+          setCategories(catRes.data);
+        }
+
+        const rawCompList = Array.isArray(resComp) ? resComp : (resComp?.data && Array.isArray(resComp.data) ? resComp.data : []);
+        if (rawCompList.length > 0) {
+          const mappedComp: Company[] = rawCompList.map((c: any) => ({
+            id: c.id,
+            name: c.nama_perusahaan,
+            logo: (c.logo_url && c.logo_url !== '')
+              ? getMediaUrl(c.logo_url)
+              : 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=120&auto=format&fit=crop&q=80',
+            industry: c.industri || 'Umum & Teknologi',
+            location: c.kota || c.alamat || 'Indonesia',
+            openJobsCount: c.jobs_count || c.open_jobs_count || 0,
+            description: c.deskripsi || 'Perusahaan terverifikasi di platform AI Recruit Pro.'
+          }));
+          setCompaniesList(mappedComp);
+        }
+
+        if (resApps) {
+          const rawList = Array.isArray(resApps) ? resApps : (resApps?.data || []);
+          const appliedIds = rawList.map((app: any) => String(app.job_id || app.job?.id || '')).filter(Boolean);
+          setAppliedJobs(appliedIds);
+          localStorage.setItem('appliedJobsList', JSON.stringify(appliedIds));
+        }
+
+        if (resProfile && resProfile.profil) {
+          const p = resProfile.profil;
+
+          let parsedExp = [];
+          if (p.pengalaman_kerja) {
+            try {
+              parsedExp = typeof p.pengalaman_kerja === 'string' ? JSON.parse(p.pengalaman_kerja) : p.pengalaman_kerja;
+              if (!Array.isArray(parsedExp)) parsedExp = [];
+            } catch (_) { }
+          }
+
+          let parsedEdu = [];
+          if (p.riwayat_pendidikan) {
+            try {
+              parsedEdu = typeof p.riwayat_pendidikan === 'string' ? JSON.parse(p.riwayat_pendidikan) : p.riwayat_pendidikan;
+              if (!Array.isArray(parsedEdu)) parsedEdu = [];
+            } catch (_) { }
+          }
+
+          let parsedCert = [];
+          if (p.sertifikasi) {
+            try {
+              parsedCert = typeof p.sertifikasi === 'string' ? JSON.parse(p.sertifikasi) : p.sertifikasi;
+              if (!Array.isArray(parsedCert)) parsedCert = [];
+            } catch (_) {
+              if (p.sertifikasi.trim()) parsedCert = [{ name: p.sertifikasi, credentialUrl: '' }];
+            }
+          }
+
+          let parsedSocial = [];
+          if (p.social_links) {
+            try {
+              parsedSocial = typeof p.social_links === 'string' ? JSON.parse(p.social_links) : p.social_links;
+              if (!Array.isArray(parsedSocial)) parsedSocial = [];
+            } catch (_) { }
+          }
+
+          setCvDetails({
+            fullName: p.nama_lengkap && p.nama_lengkap !== 'Nama Pelamar' ? p.nama_lengkap : (resProfile.email?.split('@')[0] || 'Pelamar'),
+            jobTitle: p.judul_posisi || 'Pelamar AI Recruit Pro',
+            email: resProfile.email || p.email,
+            phone: p.no_telepon || '',
+            location: p.alamat || '',
+            linkedinUrl: p.linkedin_url || '',
+            portfolioUrl: p.portfolio_url || '',
+            socialLinks: parsedSocial,
+            skills: p.keahlian || (language === 'id' ? 'Belum ada skill yang ditambahkan' : 'No skills added yet'),
+            summary: p.ringkasan_diri || '',
+            experiences: parsedExp,
+            education: parsedEdu,
+            certifications: parsedCert,
+            updatedAt: language === 'id' ? 'Baru Saja' : 'Just Now'
+          });
+        }
+      } catch (err) {
+        console.error("Gagal memuat data awal:", err);
+      }
+    };
+
+    loadInitialData();
+  }, [language]);
+
+  // 2. Dedicated function to fetch jobs (fast & responsive)
+  const fetchJobsData = async (queryOverride?: Record<string, string>) => {
+    const fetchId = ++activeFetchId.current;
     setIsLoadingJobs(true);
     try {
       const apiParams = new URLSearchParams();
       apiParams.append('limit', '100');
-      const kw = searchParams.get('keyword');
-      const loc = searchParams.get('location');
-      const edu = searchParams.get('education');
-      const wp = searchParams.get('workPolicy');
-      const ind = searchParams.get('industry');
 
-      if (kw) apiParams.append('keyword', kw);
-      if (loc) apiParams.append('location', loc);
+      const kw = queryOverride?.keyword !== undefined ? queryOverride.keyword : (searchParams.get('keyword') || searchParams.get('search'));
+      const loc = queryOverride?.location !== undefined ? queryOverride.location : searchParams.get('location');
+      const cat = queryOverride?.kategori_id !== undefined ? queryOverride.kategori_id : searchParams.get('kategori_id');
+      const emp = queryOverride?.tipe_pekerjaan !== undefined ? queryOverride.tipe_pekerjaan : searchParams.get('tipe_pekerjaan');
+      const wm = queryOverride?.lokasi_kerja !== undefined ? queryOverride.lokasi_kerja : searchParams.get('lokasi_kerja');
+      const exp = queryOverride?.experience_level !== undefined ? queryOverride.experience_level : searchParams.get('experience_level');
+      const edu = queryOverride?.pendidikan_min !== undefined ? queryOverride.pendidikan_min : searchParams.get('pendidikan_min');
+      const sort = queryOverride?.sort !== undefined ? queryOverride.sort : (searchParams.get('sort') || sortOrder || 'rekomendasi');
+
+      if (kw && kw.trim()) apiParams.append('keyword', kw.trim());
+      if (loc && loc !== 'Semua' && loc.trim()) apiParams.append('location', loc.trim());
+      if (cat && cat !== 'Semua') apiParams.append('kategori_id', cat);
+      if (emp && emp !== 'Semua') apiParams.append('tipe_pekerjaan', emp);
+      if (wm && wm !== 'Semua') apiParams.append('lokasi_kerja', wm);
+      if (exp && exp !== 'Semua') apiParams.append('experience_level', exp);
       if (edu && edu !== 'Semua') apiParams.append('pendidikan_min', edu);
-      if (wp && wp !== 'Semua') apiParams.append('tipe_pekerjaan', wp);
-      if (ind && ind !== 'Semua') apiParams.append('industry', ind);
+      if (sort) apiParams.append('sort_by', sort);
 
       const qs = apiParams.toString();
+      const resJobs = await api.get(`/jobs/?${qs}`);
 
-      // Fetch jobs and companies in parallel
-      const [resJobs, resComp, resProfile, resApps] = await Promise.all([
-        api.get(`/jobs/?${qs}`),
-        api.get('/perusahaan/verified'),
-        api.get('/users/profile').catch(() => null),
-        api.get('/applications/').catch(() => null)
-      ]);
+      if (fetchId !== activeFetchId.current) return;
 
-      if (resApps) {
-        const rawList = Array.isArray(resApps) ? resApps : (resApps?.data || []);
-        const appliedIds = rawList.map((app: any) => String(app.job_id || app.job?.id || '')).filter(Boolean);
-        setAppliedJobs(appliedIds);
-        localStorage.setItem('appliedJobsList', JSON.stringify(appliedIds));
+      if (resJobs && typeof resJobs.user_has_cv === 'boolean') {
+        const hasCv = resJobs.user_has_cv;
+        setUserHasCv(hasCv);
+        if (!hasCv && (!searchParams.get('sort') || searchParams.get('sort') === 'rekomendasi')) {
+          setSortOrder('terbaru');
+        }
       }
 
       const rawJobsList = Array.isArray(resJobs) ? resJobs : (resJobs?.data && Array.isArray(resJobs.data) ? resJobs.data : []);
@@ -280,94 +447,36 @@ function DashboardContent() {
         setJobsList(mappedJobs);
         if (urlJobId && mappedJobs.some(j => String(j.id) === String(urlJobId))) {
           setSelectedJobId(urlJobId);
-        } else {
+        } else if (mappedJobs.length > 0) {
           setSelectedJobId(mappedJobs[0].id);
         }
-      }
-
-      const rawCompList = Array.isArray(resComp) ? resComp : (resComp?.data && Array.isArray(resComp.data) ? resComp.data : []);
-
-      if (rawCompList.length > 0) {
-        const mappedComp: Company[] = rawCompList.map((c: any) => ({
-          id: c.id,
-          name: c.nama_perusahaan,
-          logo: (c.logo_url && c.logo_url !== '')
-            ? getMediaUrl(c.logo_url)
-            : 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=120&auto=format&fit=crop&q=80',
-          industry: c.industri || 'Umum & Teknologi',
-          location: c.kota || c.alamat || 'Indonesia',
-          openJobsCount: c.jobs_count || c.open_jobs_count || 0,
-          description: c.deskripsi || 'Perusahaan terverifikasi di platform AI Recruit Pro.'
-        }));
-        setCompaniesList(mappedComp);
-      }
-
-      if (resProfile && resProfile.profil) {
-        const p = resProfile.profil;
-
-        let parsedExp = [];
-        if (p.pengalaman_kerja) {
-          try {
-            parsedExp = typeof p.pengalaman_kerja === 'string' ? JSON.parse(p.pengalaman_kerja) : p.pengalaman_kerja;
-            if (!Array.isArray(parsedExp)) parsedExp = [];
-          } catch (_) { }
-        }
-
-        let parsedEdu = [];
-        if (p.riwayat_pendidikan) {
-          try {
-            parsedEdu = typeof p.riwayat_pendidikan === 'string' ? JSON.parse(p.riwayat_pendidikan) : p.riwayat_pendidikan;
-            if (!Array.isArray(parsedEdu)) parsedEdu = [];
-          } catch (_) { }
-        }
-
-        let parsedCert = [];
-        if (p.sertifikasi) {
-          try {
-            parsedCert = typeof p.sertifikasi === 'string' ? JSON.parse(p.sertifikasi) : p.sertifikasi;
-            if (!Array.isArray(parsedCert)) parsedCert = [];
-          } catch (_) {
-            if (p.sertifikasi.trim()) parsedCert = [{ name: p.sertifikasi, credentialUrl: '' }];
-          }
-        }
-
-        let parsedSocial = [];
-        if (p.social_links) {
-          try {
-            parsedSocial = typeof p.social_links === 'string' ? JSON.parse(p.social_links) : p.social_links;
-            if (!Array.isArray(parsedSocial)) parsedSocial = [];
-          } catch (_) { }
-        }
-
-        setCvDetails({
-          fullName: p.nama_lengkap && p.nama_lengkap !== 'Nama Pelamar' ? p.nama_lengkap : (resProfile.email?.split('@')[0] || 'Pelamar'),
-          jobTitle: p.judul_posisi || 'Pelamar AI Recruit Pro',
-          email: resProfile.email || p.email,
-          phone: p.no_telepon || '',
-          location: p.alamat || '',
-          linkedinUrl: p.linkedin_url || '',
-          portfolioUrl: p.portfolio_url || '',
-          socialLinks: parsedSocial,
-          skills: p.keahlian || (language === 'id' ? 'Belum ada skill yang ditambahkan' : 'No skills added yet'),
-          summary: p.ringkasan_diri || '',
-          experiences: parsedExp,
-          education: parsedEdu,
-          certifications: parsedCert,
-          updatedAt: language === 'id' ? 'Baru Saja' : 'Just Now'
-        });
+      } else {
+        setJobsList([]);
       }
     } catch (err) {
-      console.error('Gagal mengambil data real dari backend:', err);
+      console.error('Gagal mengambil data jobs:', err);
+      setJobsList([]);
     } finally {
-      setIsLoadingJobs(false);
+      if (fetchId === activeFetchId.current) {
+        setIsLoadingJobs(false);
+      }
     }
   };
 
+  // 3. Synchronize active tab and fetch jobs whenever URL search params change
   useEffect(() => {
     const view = searchParams.get('view');
-    if (view === 'companies') setActiveTab('companies');
-    else if (view === 'saved') setActiveTab('saved');
-    else setActiveTab('recommended');
+    if (view === 'companies') {
+      setActiveTab('companies');
+    } else if (view === 'saved') {
+      setActiveTab('saved');
+    } else {
+      setActiveTab('recommended');
+    }
+
+    if (!isFormSubmittingRef.current) {
+      fetchJobsData();
+    }
   }, [searchParams]);
 
   // Save Job Toggle
@@ -413,31 +522,11 @@ function DashboardContent() {
 
   // Filter Jobs List
   const filteredJobs = useMemo(() => {
-    let result = jobsList.filter((job) => {
-      if (activeTab === 'saved') return savedJobIds.some(id => String(id) === String(job.id));
-
-      const matchesSearch = !searchQuery ||
-        job.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        job.company.toLowerCase().includes(searchQuery.toLowerCase());
-
-      const matchesLocation = !locationQuery || job.location.toLowerCase().includes(locationQuery.toLowerCase());
-
-      const matchesEdu = educationFilter === 'Semua' || job.education.includes(educationFilter) || job.educationLevel.includes(educationFilter);
-      const matchesWork = workPolicyFilter === 'Semua' || job.workPolicy.includes(workPolicyFilter) || (workPolicyFilter === 'On-site' && job.workPolicy.includes('WFO'));
-
-      return matchesSearch && matchesLocation && matchesEdu && matchesWork;
-    });
-
-    if (sortOrder === 'terbaru') {
-      result.sort((a, b) => b.createdAtMs - a.createdAtMs);
-    } else if (sortOrder === 'terlama') {
-      result.sort((a, b) => a.createdAtMs - b.createdAtMs);
-    } else if (sortOrder === 'rekomendasi') {
-      result.sort((a, b) => b.matchScore - a.matchScore);
+    if (activeTab === 'saved') {
+      return jobsList.filter((job) => savedJobIds.some(id => String(id) === String(job.id)));
     }
-
-    return result;
-  }, [jobsList, savedJobIds, activeTab, searchQuery, locationQuery, educationFilter, workPolicyFilter, sortOrder]);
+    return jobsList;
+  }, [jobsList, savedJobIds, activeTab]);
 
   const filteredCompanies = useMemo(() => {
     return companiesList.filter((comp) => {
@@ -463,16 +552,38 @@ function DashboardContent() {
       {/* TOP SEARCH BANNER (Enterprise Solid Blue) */}
       <div className="bg-[#1A4B9F] rounded-2xl p-6 sm:p-8 text-white shadow-md space-y-5">
         <form
-          onSubmit={(e) => {
+          method="GET"
+          onSubmit={async (e) => {
             e.preventDefault();
-            updateUrlParams({
+            setShowLocationSuggestions(false);
+            setIsSearching(true);
+            isFormSubmittingRef.current = true;
+
+            const updates: Record<string, string> = {
               keyword: searchQuery,
               location: locationQuery,
-              industry: industryFilter,
-              education: educationFilter,
-              workPolicy: workPolicyFilter
-            });
-            if (activeTab !== 'companies') setActiveTab('recommended');
+              kategori_id: categoryFilter,
+              tipe_pekerjaan: employmentTypeFilter,
+              lokasi_kerja: workModeFilter,
+              experience_level: experienceFilter,
+              pendidikan_min: educationFilter,
+              sort: sortOrder,
+            };
+
+            updateUrlParams(updates);
+
+            if (activeTab !== 'companies') {
+              setActiveTab('recommended');
+            }
+
+            try {
+              await fetchJobsData(updates);
+            } finally {
+              setIsSearching(false);
+              setTimeout(() => {
+                isFormSubmittingRef.current = false;
+              }, 600);
+            }
           }}
           className="grid grid-cols-1 md:grid-cols-12 gap-3"
         >
@@ -481,6 +592,7 @@ function DashboardContent() {
             <Search className="absolute left-4 text-slate-400 w-5 h-5 pointer-events-none" />
             <input
               type="text"
+              name="keyword"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder={activeTab === 'companies' ? (language === 'id' ? 'Cari nama perusahaan atau industri...' : 'Search company or industry...') : t.pelamar.dashboard.searchPlaceholder}
@@ -488,37 +600,125 @@ function DashboardContent() {
             />
           </div>
 
-          {/* Right Input: Location */}
-          <div className="md:col-span-5 relative flex items-center">
+          {/* Right Input: Location with Suggestions */}
+          <div className="md:col-span-5 relative flex items-center" ref={locationContainerRef}>
             <MapPin className="absolute left-4 text-slate-400 w-5 h-5 pointer-events-none" />
             <input
               type="text"
+              name="location"
               value={locationQuery}
-              onChange={(e) => setLocationQuery(e.target.value)}
+              onFocus={() => setShowLocationSuggestions(true)}
+              onChange={(e) => {
+                setLocationQuery(e.target.value);
+                setShowLocationSuggestions(true);
+              }}
               placeholder={t.pelamar.dashboard.locationPlaceholder}
               className="w-full pl-12 pr-4 py-3.5 bg-white text-slate-800 rounded-2xl text-sm font-semibold placeholder:text-slate-400 outline-none focus:ring-2 focus:ring-[#1A4B9F] shadow-inner"
             />
+            {/* Location Suggestions Dropdown */}
+            {showLocationSuggestions && suggestedLocations.length > 0 && (
+              <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-xl shadow-xl border border-slate-200 py-2 z-50 text-slate-800 max-h-60 overflow-y-auto">
+                <div className="px-3 py-1.5 text-[11px] font-bold text-slate-400 uppercase tracking-wider flex items-center justify-between border-b border-slate-100">
+                  <span>{language === 'id' ? 'Lokasi Sering Dicari' : 'Suggested Locations'}</span>
+                  <X className="w-3.5 h-3.5 cursor-pointer hover:text-slate-700" onClick={() => setShowLocationSuggestions(false)} />
+                </div>
+                {suggestedLocations
+                  .filter(loc => !locationQuery || loc.toLowerCase().includes(locationQuery.toLowerCase()))
+                  .map((loc, idx) => (
+                    <div
+                      key={idx}
+                      onMouseDown={(e) => {
+                        e.preventDefault();
+                        setLocationQuery(loc);
+                        setShowLocationSuggestions(false);
+                        updateUrlParams({ location: loc });
+                      }}
+                      className="px-4 py-2.5 hover:bg-blue-50 text-xs font-semibold cursor-pointer flex items-center gap-2.5 transition-colors border-b border-slate-50 last:border-0"
+                    >
+                      <MapPin className="w-3.5 h-3.5 text-[#1A4B9F]" />
+                      <span>{loc}</span>
+                    </div>
+                  ))}
+              </div>
+            )}
           </div>
 
           {/* Search Button */}
-          <div className="md:col-span-2">
-            <button type="submit" className="w-full h-full py-3.5 bg-white/20 hover:bg-white/30 text-white rounded-2xl font-bold flex items-center justify-center gap-2 border border-white/30 transition-colors shadow-inner">
-              <Search className="w-4 h-4" /> {language === 'id' ? 'Cari' : 'Search'}
+          <div className="md:col-span-2 flex justify-center md:block">
+            <button
+              type="submit"
+              disabled={isSearching}
+              className="w-auto md:w-full px-6 py-2.5 md:py-3.5 bg-white/20 hover:bg-white/30 active:scale-[0.98] disabled:opacity-75 disabled:cursor-not-allowed text-white rounded-xl md:rounded-2xl font-bold flex items-center justify-center gap-2 border border-white/30 transition-all shadow-sm cursor-pointer text-xs md:text-sm"
+            >
+              {isSearching ? (
+                <Loader2 className="w-3.5 h-3.5 md:w-4 md:h-4 animate-spin shrink-0 text-white" />
+              ) : (
+                <Search className="w-3.5 h-3.5 md:w-4 md:h-4 shrink-0" />
+              )}
+              <span>{isSearching ? (language === 'id' ? 'Mencari...' : 'Searching...') : (language === 'id' ? 'Cari' : 'Search')}</span>
             </button>
           </div>
         </form>
 
-        <div className="flex flex-wrap items-center gap-2 pt-1 text-xs">
+        {/* Mobile View Switcher (Cari Pekerjaan vs Perusahaan) */}
+        <div className="grid grid-cols-2 gap-1.5 p-1 bg-black/20 rounded-xl sm:hidden w-full text-xs font-bold">
           <button
-            onClick={() => {
-              setSearchQuery(''); setLocationQuery('');
-              setEducationFilter('Semua'); setWorkPolicyFilter('Semua');
-              setIndustryFilter('Semua');
-              updateUrlParams({ keyword: '', location: '', education: 'Semua', workPolicy: 'Semua', industry: 'Semua' });
-            }}
-            className="px-4 py-2 rounded-full bg-white/20 hover:bg-white/30 text-white font-bold border border-white/30 transition-all cursor-pointer flex items-center gap-1.5"
+            type="button"
+            onClick={() => switchTab('recommended')}
+            className={`py-2 px-3 rounded-lg flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
+              activeTab !== 'companies'
+                ? 'bg-white text-slate-900 shadow-sm'
+                : 'text-white/80 hover:text-white'
+            }`}
           >
-            <span>{language === 'id' ? 'Semua Filter' : 'All Filters'}</span>
+            <Briefcase className="w-3.5 h-3.5" />
+            <span>{t.pelamar.nav.findJobs}</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => switchTab('companies')}
+            className={`py-2 px-3 rounded-lg flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
+              activeTab === 'companies'
+                ? 'bg-white text-slate-900 shadow-sm'
+                : 'text-white/80 hover:text-white'
+            }`}
+          >
+            <Building2 className="w-3.5 h-3.5" />
+            <span>{t.pelamar.nav.companies} ({companiesList.length})</span>
+          </button>
+        </div>
+
+        {/* 5 Filters Matching Employer Job Posting + Reset Button */}
+        <div className="grid grid-cols-2 sm:flex sm:flex-wrap items-center gap-2 pt-1 text-xs w-full">
+          {/* Reset Filters */}
+          <button
+            type="button"
+            onClick={() => {
+              setSearchQuery('');
+              setLocationQuery('');
+              setCategoryFilter('Semua');
+              setEmploymentTypeFilter('Semua');
+              setWorkModeFilter('Semua');
+              setExperienceFilter('Semua');
+              setEducationFilter('Semua');
+              setIndustryFilter('Semua');
+              updateUrlParams({
+                keyword: '',
+                location: '',
+                kategori_id: 'Semua',
+                tipe_pekerjaan: 'Semua',
+                lokasi_kerja: 'Semua',
+                experience_level: 'Semua',
+                pendidikan_min: 'Semua',
+                industry: 'Semua'
+              });
+            }}
+            className="w-full sm:w-auto px-3.5 py-2 rounded-xl sm:rounded-full bg-white/20 hover:bg-white/30 text-white font-bold border border-white/30 transition-all cursor-pointer flex items-center justify-center gap-1.5"
+            title="Reset semua filter ke default"
+          >
+            <RefreshCw className="w-3.5 h-3.5 shrink-0" />
+            <span className="truncate">{language === 'id' ? 'Semua Filter' : 'All Filters'}</span>
           </button>
 
           {activeTab === 'companies' ? (
@@ -526,8 +726,9 @@ function DashboardContent() {
               value={industryFilter}
               onChange={(e) => {
                 setIndustryFilter(e.target.value);
+                updateUrlParams({ industry: e.target.value });
               }}
-              className="px-4 py-2 rounded-full bg-white/15 hover:bg-white/25 text-white font-bold border border-white/30 outline-none cursor-pointer text-xs"
+              className="w-full sm:w-auto px-3.5 py-2 rounded-xl sm:rounded-full bg-white/15 hover:bg-white/25 text-white font-bold border border-white/30 outline-none cursor-pointer text-xs truncate"
             >
               <option className="text-slate-800" value="Semua">{language === 'id' ? 'Semua Industri' : 'All Industries'}</option>
               <option className="text-slate-800" value="Teknologi">{language === 'id' ? 'Teknologi & IT' : 'Tech & IT'}</option>
@@ -538,58 +739,118 @@ function DashboardContent() {
             </select>
           ) : (
             <>
+              {/* 1. Filter Kategori Pekerjaan (from database) */}
+              <select
+                value={categoryFilter}
+                onChange={(e) => {
+                  setCategoryFilter(e.target.value);
+                  updateUrlParams({ kategori_id: e.target.value });
+                }}
+                className="w-full sm:w-auto sm:max-w-[190px] px-3.5 py-2 rounded-xl sm:rounded-full bg-white/15 hover:bg-white/25 text-white font-bold border border-white/30 outline-none cursor-pointer text-xs truncate"
+              >
+                <option className="text-slate-800" value="Semua">{language === 'id' ? 'Semua Kategori' : 'All Categories'}</option>
+                {categories.map((cat) => (
+                  <option key={cat.id} className="text-slate-800" value={cat.id}>
+                    {cat.nama_kategori}
+                  </option>
+                ))}
+              </select>
+
+              {/* 2. Filter Jenis Pekerjaan */}
+              <select
+                value={employmentTypeFilter}
+                onChange={(e) => {
+                  setEmploymentTypeFilter(e.target.value);
+                  updateUrlParams({ tipe_pekerjaan: e.target.value });
+                }}
+                className="w-full sm:w-auto px-3.5 py-2 rounded-xl sm:rounded-full bg-white/15 hover:bg-white/25 text-white font-bold border border-white/30 outline-none cursor-pointer text-xs truncate"
+              >
+                <option className="text-slate-800" value="Semua">{language === 'id' ? 'Jenis Pekerjaan' : 'Job Type'}</option>
+                <option className="text-slate-800" value="Full-time">Full-time</option>
+                <option className="text-slate-800" value="Contract">Contract</option>
+                <option className="text-slate-800" value="Part-time">Part-time</option>
+                <option className="text-slate-800" value="Internship">Internship</option>
+                <option className="text-slate-800" value="Freelance">Freelance</option>
+              </select>
+
+              {/* 3. Filter Mode Kerja */}
+              <select
+                value={workModeFilter}
+                onChange={(e) => {
+                  setWorkModeFilter(e.target.value);
+                  updateUrlParams({ lokasi_kerja: e.target.value });
+                }}
+                className="w-full sm:w-auto px-3.5 py-2 rounded-xl sm:rounded-full bg-white/15 hover:bg-white/25 text-white font-bold border border-white/30 outline-none cursor-pointer text-xs truncate"
+              >
+                <option className="text-slate-800" value="Semua">{language === 'id' ? 'Mode Kerja' : 'Work Mode'}</option>
+                <option className="text-slate-800" value="Hybrid">Hybrid</option>
+                <option className="text-slate-800" value="Remote">Remote</option>
+                <option className="text-slate-800" value="On-site">On-site</option>
+              </select>
+
+              {/* 4. Filter Tingkat Pengalaman (Tahunnya saja sesuai instruksi user) */}
+              <select
+                value={experienceFilter}
+                onChange={(e) => {
+                  setExperienceFilter(e.target.value);
+                  updateUrlParams({ experience_level: e.target.value });
+                }}
+                className="w-full sm:w-auto px-3.5 py-2 rounded-xl sm:rounded-full bg-white/15 hover:bg-white/25 text-white font-bold border border-white/30 outline-none cursor-pointer text-xs truncate"
+              >
+                <option className="text-slate-800" value="Semua">{language === 'id' ? 'Tingkat Pengalaman' : 'Experience'}</option>
+                <option className="text-slate-800" value="0 - 1 Tahun">0 - 1 Tahun</option>
+                <option className="text-slate-800" value="2 - 4 Tahun">2 - 4 Tahun</option>
+                <option className="text-slate-800" value="5+ Tahun">5+ Tahun</option>
+                <option className="text-slate-800" value="8+ Tahun">8+ Tahun</option>
+              </select>
+
+              {/* 5. Filter Min. Pendidikan */}
               <select
                 value={educationFilter}
                 onChange={(e) => {
                   setEducationFilter(e.target.value);
+                  updateUrlParams({ pendidikan_min: e.target.value });
                 }}
-                className="px-4 py-2 rounded-full bg-white/15 hover:bg-white/25 text-white font-bold border border-white/30 outline-none cursor-pointer text-xs"
+                className="w-full sm:w-auto px-3.5 py-2 rounded-xl sm:rounded-full bg-white/15 hover:bg-white/25 text-white font-bold border border-white/30 outline-none cursor-pointer text-xs truncate"
               >
-                <option className="text-slate-800" value="Semua">{language === 'id' ? 'Minimum Pendidikan' : 'Minimum Education'}</option>
-                <option className="text-slate-800" value="SMA">{language === 'id' ? 'SMA/SMK/Sederajat' : 'High School'}</option>
-                <option className="text-slate-800" value="D3">{language === 'id' ? 'D3' : 'Diploma'}</option>
-                <option className="text-slate-800" value="S1">{language === 'id' ? 'D4/S1' : 'Bachelor'}</option>
-                <option className="text-slate-800" value="S2">{language === 'id' ? 'S2' : 'Master'}</option>
-              </select>
-
-              <select
-                value={workPolicyFilter}
-                onChange={(e) => {
-                  setWorkPolicyFilter(e.target.value);
-                }}
-                className="px-4 py-2 rounded-full bg-white/15 hover:bg-white/25 text-white font-bold border border-white/30 outline-none cursor-pointer text-xs"
-              >
-                <option className="text-slate-800" value="Semua">{language === 'id' ? 'Kebijakan Kerja' : 'Work Policy'}</option>
-                <option className="text-slate-800" value="On-site">{language === 'id' ? 'On-site (WFO)' : 'On-site'}</option>
-                <option className="text-slate-800" value="Remote">Remote</option>
-                <option className="text-slate-800" value="Hybrid">Hybrid</option>
+                <option className="text-slate-800" value="Semua">{language === 'id' ? 'Min. Pendidikan' : 'Min. Education'}</option>
+                <option className="text-slate-800" value="SMA/SMK">SMA / SMK Sederajat</option>
+                <option className="text-slate-800" value="D3">D3</option>
+                <option className="text-slate-800" value="S1">S1</option>
+                <option className="text-slate-800" value="S2">S2</option>
+                <option className="text-slate-800" value="S3">S3</option>
               </select>
             </>
           )}
 
-          <button
-            onClick={() => setActiveTab('recommended')}
-            className={`px-4 py-2 rounded-full font-bold border transition-all cursor-pointer flex items-center gap-1.5 ${
-              activeTab !== 'companies'
-                ? 'bg-[#EFF6FF] text-slate-900 border-[#DBEAFE] font-semibold'
-                : 'bg-white/15 hover:bg-white/25 text-white border-white/30'
-              }`}
-          >
-            <Briefcase className="w-4 h-4" />
-            <span>{t.pelamar.nav.findJobs}</span>
-          </button>
+          {/* Desktop View Switcher */}
+          <div className="ml-auto hidden sm:flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => switchTab('recommended')}
+              className={`px-4 py-2 rounded-full font-bold border transition-all cursor-pointer flex items-center gap-1.5 ${
+                activeTab !== 'companies'
+                  ? 'bg-[#EFF6FF] text-slate-900 border-[#DBEAFE] font-semibold'
+                  : 'bg-white/15 hover:bg-white/25 text-white border-white/30'
+                }`}
+            >
+              <Briefcase className="w-4 h-4" />
+              <span>{t.pelamar.nav.findJobs}</span>
+            </button>
 
-          <button
-            onClick={() => setActiveTab('companies')}
-            className={`px-4 py-2 rounded-full font-bold border transition-all cursor-pointer flex items-center gap-1.5 ${
-              activeTab === 'companies'
-                ? 'bg-[#EFF6FF] text-slate-900 border-[#DBEAFE] font-semibold'
-                : 'bg-white/15 hover:bg-white/25 text-white border-white/30'
-              }`}
-          >
-            <Building2 className="w-4 h-4" />
-            <span>{t.pelamar.nav.companies} ({filteredCompanies.length})</span>
-          </button>
+            <button
+              type="button"
+              onClick={() => switchTab('companies')}
+              className={`px-4 py-2 rounded-full font-bold border transition-all cursor-pointer flex items-center gap-1.5 ${
+                activeTab === 'companies'
+                  ? 'bg-[#EFF6FF] text-slate-900 border-[#DBEAFE] font-semibold'
+                  : 'bg-white/15 hover:bg-white/25 text-white border-white/30'
+                }`}
+            >
+              <Building2 className="w-4 h-4" />
+              <span>{t.pelamar.nav.companies} ({companiesList.length})</span>
+            </button>
+          </div>
         </div>
       </div>
 
@@ -785,19 +1046,65 @@ function DashboardContent() {
                 </p>
               </div>
 
-              <div className="flex items-center gap-1 text-xs text-slate-500 font-bold">
-                <span>{language === 'id' ? 'Urut berdasarkan:' : 'Sort by:'}</span>
+              <div className="flex items-center gap-1.5 text-xs text-slate-500 font-bold">
+                <span>{language === 'id' ? 'Urutkan:' : 'Sort by:'}</span>
                 <select
                   value={sortOrder}
-                  onChange={(e) => setSortOrder(e.target.value)}
-                  className="text-slate-900 font-semibold cursor-pointer bg-transparent outline-none"
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    if (val === 'rekomendasi' && !userHasCv) {
+                      toast(
+                        language === 'id'
+                          ? 'Lengkapi profil / CV Anda terlebih dahulu untuk mengaktifkan rekomendasi PO-Fit.'
+                          : 'Please complete your profile / CV first to enable PO-Fit recommendation.',
+                        { icon: 'ℹ️' }
+                      );
+                      router.push('/applicant/profile');
+                      return;
+                    }
+                    setSortOrder(val);
+                    updateUrlParams({ sort: val });
+                  }}
+                  className="text-slate-900 dark:text-slate-100 font-bold cursor-pointer bg-slate-100 dark:bg-slate-800 px-2.5 py-1 rounded-lg border border-slate-200 dark:border-slate-700 outline-none hover:bg-slate-200/70 dark:hover:bg-slate-700 transition-colors"
                 >
-                  <option className="text-slate-700" value="rekomendasi">{language === 'id' ? 'Rekomendasi PO-FIT' : 'PO-FIT Recommendation'}</option>
-                  <option className="text-slate-700" value="terbaru">{language === 'id' ? 'Terbaru' : 'Newest'}</option>
-                  <option className="text-slate-700" value="terlama">{language === 'id' ? 'Terlama' : 'Oldest'}</option>
+                  <option
+                    className="text-slate-800 dark:text-slate-200 font-medium"
+                    value="rekomendasi"
+                    disabled={!userHasCv}
+                  >
+                    {language === 'id'
+                      ? (!userHasCv ? 'Rekomendasi PO-FIT (Perlu CV)' : 'Rekomendasi PO-FIT')
+                      : (!userHasCv ? 'PO-FIT Recommendation (Needs CV)' : 'PO-FIT Recommendation')}
+                  </option>
+                  <option className="text-slate-800 dark:text-slate-200 font-medium" value="terbaru">
+                    {language === 'id' ? 'Terbaru' : 'Newest'}
+                  </option>
+                  <option className="text-slate-800 dark:text-slate-200 font-medium" value="terlama">
+                    {language === 'id' ? 'Terlama' : 'Oldest'}
+                  </option>
                 </select>
               </div>
             </div>
+
+            {/* Incomplete CV Banner / Fallback Info */}
+            {!userHasCv && (
+              <div className="p-3.5 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 rounded-2xl flex items-center justify-between gap-3 text-xs text-amber-800 dark:text-amber-200">
+                <div className="flex items-center gap-2.5">
+                  <Info className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0" />
+                  <p className="text-[11px] leading-relaxed">
+                    {language === 'id'
+                      ? 'Profil / CV Anda belum lengkap. Rekomendasi diurutkan dari yang terbaru. Lengkapi CV untuk mencocokkan lowongan dengan keahlian Anda.'
+                      : 'Your CV profile is incomplete. Showing newest jobs first. Complete your CV to unlock personalized PO-Fit matching.'}
+                  </p>
+                </div>
+                <Link
+                  href="/applicant/profile"
+                  className="px-3 py-1.5 bg-amber-600 hover:bg-amber-700 text-white font-bold text-[11px] rounded-xl shrink-0 transition-colors shadow-2xs whitespace-nowrap"
+                >
+                  {language === 'id' ? 'Lengkapi CV' : 'Complete CV'}
+                </Link>
+              </div>
+            )}
 
             {/* Job Cards List */}
             <div className="space-y-3.5 max-h-[85vh] overflow-y-auto pr-1">
@@ -808,7 +1115,24 @@ function DashboardContent() {
                     {t.pelamar.dashboard.requirements}
                   </p>
                   <button
-                    onClick={() => { setSearchQuery(''); setLocationQuery(''); setEducationFilter('Semua'); setWorkPolicyFilter('Semua'); }}
+                    onClick={() => {
+                      setSearchQuery('');
+                      setLocationQuery('');
+                      setCategoryFilter('Semua');
+                      setEmploymentTypeFilter('Semua');
+                      setWorkModeFilter('Semua');
+                      setExperienceFilter('Semua');
+                      setEducationFilter('Semua');
+                      updateUrlParams({
+                        keyword: '',
+                        location: '',
+                        kategori_id: 'Semua',
+                        tipe_pekerjaan: 'Semua',
+                        lokasi_kerja: 'Semua',
+                        experience_level: 'Semua',
+                        pendidikan_min: 'Semua'
+                      });
+                    }}
                     className="px-4 py-2 rounded-full bg-[#1A4B9F] text-white font-bold text-xs cursor-pointer"
                   >
                     {language === 'id' ? 'Reset Filter' : 'Reset Filters'}
@@ -842,6 +1166,12 @@ function DashboardContent() {
                               <span className="font-semibold text-xs text-slate-700 dark:text-slate-300">
                                 {job.company}
                               </span>
+                              {job.matchScore > 0 && userHasCv && (
+                                <span className="px-2 py-0.5 rounded-md bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 font-bold text-[10px] border border-emerald-200 dark:border-emerald-800 flex items-center gap-1">
+                                  <Sparkles size={11} className="text-emerald-600 dark:text-emerald-400" />
+                                  {job.matchScore}% Match PO-Fit
+                                </span>
+                              )}
                               {job.isNew && (
                                 <span className="px-2 py-0.5 rounded-md bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 font-semibold text-[10px] border border-amber-200 dark:border-amber-800">
                                   {language === 'id' ? 'Loker Terbaru' : 'New Job'}
@@ -979,6 +1309,46 @@ function DashboardContent() {
                       )}
                     </div>
                   </div>
+
+                  {/* PO-Fit Match Assessment Card */}
+                  {userHasCv ? (
+                    <div className="p-4 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-slate-800 dark:to-slate-800/80 rounded-2xl border border-blue-100 dark:border-slate-700 flex items-center justify-between gap-4">
+                      <div className="flex items-center gap-3.5">
+                        <div className="w-12 h-12 rounded-xl bg-[#1A4B9F] text-white flex flex-col items-center justify-center font-black text-sm shadow-sm shrink-0">
+                          <span>{selectedJob.matchScore}%</span>
+                          <span className="text-[9px] font-normal uppercase tracking-tight">Match</span>
+                        </div>
+                        <div>
+                          <div className="flex items-center gap-1.5">
+                            <Sparkles className="w-4 h-4 text-[#1A4B9F]" />
+                            <h4 className="font-bold text-sm text-slate-900 dark:text-white">
+                              {language === 'id' ? 'Skor Kecocokan PO-Fit' : 'PO-Fit Match Score'}
+                            </h4>
+                          </div>
+                          <p className="text-xs text-slate-600 dark:text-slate-300 mt-0.5 leading-relaxed">
+                            {selectedJob.reason}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="p-3.5 bg-amber-50 dark:bg-amber-950/30 rounded-2xl border border-amber-200 dark:border-amber-800/60 flex items-center justify-between gap-3">
+                      <div className="flex items-center gap-2.5">
+                        <Info className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0" />
+                        <p className="text-xs text-amber-800 dark:text-amber-200 font-medium">
+                          {language === 'id'
+                            ? 'Lengkapi profil CV Anda untuk melihat analisis kecocokan PO-Fit personal dengan lowongan ini.'
+                            : 'Complete your profile/CV to see personalized PO-Fit score for this job.'}
+                        </p>
+                      </div>
+                      <Link
+                        href="/applicant/profile"
+                        className="px-3 py-1.5 bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs rounded-xl shrink-0 transition-colors"
+                      >
+                        {language === 'id' ? 'Lengkapi' : 'Complete'}
+                      </Link>
+                    </div>
+                  )}
 
                   {/* Info Grid Cards */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 text-xs text-slate-700 dark:text-slate-300 font-semibold pt-1">
