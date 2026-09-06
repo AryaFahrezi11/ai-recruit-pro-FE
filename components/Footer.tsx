@@ -41,7 +41,7 @@ export default function Footer() {
           <div className="space-y-5">
             <h4 className="font-bold text-white text-sm tracking-wider uppercase">Perusahaan</h4>
             <ul className="space-y-3 text-sm">
-              <li><Link href="#" className="hover:text-white transition-colors">Tentang Kami</Link></li>
+              <li><Link href="/about" className="hover:text-white transition-colors">Tentang Kami</Link></li>
               <li><Link href="#" className="hover:text-white transition-colors">Karier</Link></li>
               <li><Link href="#" className="hover:text-white transition-colors">Blog</Link></li>
               <li><Link href="#" className="hover:text-white transition-colors">Kontak</Link></li>

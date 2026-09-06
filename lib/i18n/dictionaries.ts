@@ -349,9 +349,9 @@ export const dictionaries = {
     },
     landing: {
       findJob: 'Jelajahi Pekerjaan',
-      categories: 'Kategori Pekerjaan',
       poFitJobs: 'Lowongan Terbaru',
-      aiFeatures: 'Fitur Utama',
+      categories: 'Kategori Pekerjaan',
+      aiFeatures: 'Perusahaan',
       successStories: 'Kisah Sukses',
       companyPortal: 'Untuk Perusahaan',
       applicantPortal: 'Masuk',
@@ -989,9 +989,9 @@ export const dictionaries = {
     },
     landing: {
       findJob: 'Explore Jobs',
+      poFitJobs: 'Latest Jobs',
       categories: 'Job Categories',
-      poFitJobs: 'Latest Openings',
-      aiFeatures: 'Top Features',
+      aiFeatures: 'Companies',
       successStories: 'Success Stories',
       companyPortal: 'For Employers',
       applicantPortal: 'Login',

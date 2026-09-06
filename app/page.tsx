@@ -181,7 +181,7 @@ function LandingPageContent() {
           company: j.perusahaan?.nama_perusahaan || 'Perusahaan',
           logo: (j.perusahaan?.logo_url && j.perusahaan.logo_url !== '')
             ? getMediaUrl(j.perusahaan.logo_url)
-            : 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=120&auto=format&fit=crop&q=80',
+            : '',
           location: j.kota || 'Remote',
           workType: (() => {
             const type = j.tipe_pekerjaan ? j.tipe_pekerjaan.split('_').map((w: string) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ') : 'Full Time';
@@ -243,10 +243,11 @@ function LandingPageContent() {
       if (resComp.ok) {
         const compData = await resComp.json();
         const mappedComp = compData.map((c: any) => ({
+          id: c.id,
           name: c.nama_perusahaan,
           logo: (c.logo_url && c.logo_url !== '')
             ? getMediaUrl(c.logo_url)
-            : 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=120&auto=format&fit=crop&q=80',
+            : '',
           jobsCount: c.jobs_count || 0,
           rating: c.rating || 5.0
         }));
@@ -343,8 +344,17 @@ function LandingPageContent() {
   }, [realJobs]);
 
   const combinedCompanies = useMemo(() => {
-    return realCompanies.slice(0, 8); // maximum 8 companies
+    return realCompanies || [];
   }, [realCompanies]);
+
+  const marqueeCompanies = useMemo(() => {
+    if (!combinedCompanies || combinedCompanies.length === 0) return [];
+    let list = [...combinedCompanies];
+    while (list.length > 0 && list.length < 12) {
+      list = [...list, ...combinedCompanies];
+    }
+    return list;
+  }, [combinedCompanies]);
 
   // Job Categories dynamically from Real Data
   const jobCategories = useMemo(() => {
@@ -433,29 +443,36 @@ function LandingPageContent() {
 
           {/* Clean Nav Links */}
           <nav className="hidden md:flex items-center gap-8 text-sm font-semibold text-slate-900 dark:text-slate-200">
-
-            <a href="#categories-section" onClick={() => setActiveSection('categories-section')} className={`transition-colors relative ${activeSection === 'categories-section' ? 'text-[#1A4B9F] font-bold after:content-[""] after:absolute after:bottom-[-29px] after:left-0 after:right-0 after:h-1 after:bg-[#1A4B9F]' : 'hover:text-[#1A4B9F]'}`}>
-              {lang.categories}
-            </a>
             <a href="#job-feed-section" onClick={() => setActiveSection('job-feed-section')} className={`transition-colors relative ${activeSection === 'job-feed-section' ? 'text-[#1A4B9F] font-bold after:content-[""] after:absolute after:bottom-[-29px] after:left-0 after:right-0 after:h-1 after:bg-[#1A4B9F]' : 'hover:text-[#1A4B9F]'}`}>
-              {lang.poFitJobs}
+              {lang.poFitJobs || 'Lowongan Terbaru'}
             </a>
-            <a href="#features-pillars" onClick={() => setActiveSection('features-pillars')} className={`transition-colors relative ${activeSection === 'features-pillars' ? 'text-[#1A4B9F] font-bold after:content-[""] after:absolute after:bottom-[-29px] after:left-0 after:right-0 after:h-1 after:bg-[#1A4B9F]' : 'hover:text-[#1A4B9F]'}`}>
-              {lang.aiFeatures}
+            <a href="#categories-section" onClick={() => setActiveSection('categories-section')} className={`transition-colors relative ${activeSection === 'categories-section' ? 'text-[#1A4B9F] font-bold after:content-[""] after:absolute after:bottom-[-29px] after:left-0 after:right-0 after:h-1 after:bg-[#1A4B9F]' : 'hover:text-[#1A4B9F]'}`}>
+              {lang.categories || 'Kategori Pekerjaan'}
             </a>
+            <Link href="/companies" className="transition-colors relative hover:text-[#1A4B9F]">
+              Perusahaan
+            </Link>
             <a href="#success-stories" onClick={() => setActiveSection('success-stories')} className={`transition-colors relative ${activeSection === 'success-stories' ? 'text-[#1A4B9F] font-bold after:content-[""] after:absolute after:bottom-[-29px] after:left-0 after:right-0 after:h-1 after:bg-[#1A4B9F]' : 'hover:text-[#1A4B9F]'}`}>
-              {lang.successStories}
+              {lang.successStories || 'Kisah Sukses'}
             </a>
           </nav>
 
           {/* Right Action Controls */}
-          <div className="flex items-center gap-3 sm:gap-4">
+          <div className="flex items-center gap-3 sm:gap-4 shrink-0">
             <Link
               href="/applicant/login"
-              className="hidden sm:inline-flex px-5 py-2.5 bg-[#1A4B9F] hover:bg-[#1C41C5] text-white text-sm font-semibold rounded-md transition-colors items-center gap-1.5"
+              className="hidden sm:inline-flex px-4 py-2.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-[#1A4B9F] dark:text-blue-400 text-sm font-bold rounded-md transition-colors items-center gap-1.5 border border-slate-200 dark:border-slate-700 shrink-0"
             >
               <User size={16} />
-              {lang.applicantPortal}
+              <span>Masuk Sebagai Pelamar</span>
+            </Link>
+
+            <Link
+              href="/perusahaan/login"
+              className="hidden sm:inline-flex px-4 py-2.5 bg-[#1A4B9F] hover:bg-[#1C41C5] text-white text-sm font-bold rounded-md transition-colors items-center gap-1.5 shrink-0"
+            >
+              <Building2 size={16} />
+              <span>Masuk Sebagai Perusahaan</span>
             </Link>
 
             {/* Mobile Menu Toggle */}
@@ -473,26 +490,33 @@ function LandingPageContent() {
         {isMobileMenuOpen && (
           <div className="md:hidden absolute top-full left-0 w-full bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 shadow-lg px-6 py-4 flex flex-col gap-4 max-h-[80vh] overflow-y-auto">
 
-            <a href="#categories-section" onClick={() => setIsMobileMenuOpen(false)} className="text-slate-700 dark:text-slate-200 font-bold py-2 border-t border-slate-100 dark:border-slate-800">
-              {lang.categories}
-            </a>
             <a href="#job-feed-section" onClick={() => setIsMobileMenuOpen(false)} className="text-slate-700 dark:text-slate-200 font-bold py-2 border-t border-slate-100 dark:border-slate-800">
-              {lang.poFitJobs}
+              Lowongan Terbaru
             </a>
-            <a href="#features-pillars" onClick={() => setIsMobileMenuOpen(false)} className="text-slate-700 dark:text-slate-200 font-bold py-2 border-t border-slate-100 dark:border-slate-800">
-              {lang.aiFeatures}
+            <a href="#categories-section" onClick={() => setIsMobileMenuOpen(false)} className="text-slate-700 dark:text-slate-200 font-bold py-2 border-t border-slate-100 dark:border-slate-800">
+              Kategori Pekerjaan
             </a>
+            <Link href="/companies" onClick={() => setIsMobileMenuOpen(false)} className="text-slate-700 dark:text-slate-200 font-bold py-2 border-t border-slate-100 dark:border-slate-800">
+              Perusahaan
+            </Link>
             <a href="#success-stories" onClick={() => setIsMobileMenuOpen(false)} className="text-slate-700 dark:text-slate-200 font-bold py-2 border-t border-slate-100 dark:border-slate-800">
-              {lang.successStories}
+              Kisah Sukses
             </a>
 
-            <div className="pt-4 border-t border-slate-100 dark:border-slate-800 flex flex-col gap-3 sm:hidden">
+            <div className="pt-4 border-t border-slate-100 dark:border-slate-800 flex flex-col gap-2.5 sm:hidden">
               <Link
                 href="/applicant/login"
-                className="w-full flex justify-center items-center gap-2 px-4 py-3 rounded-full bg-[#1A4B9F] hover:bg-[#133878] text-white text-sm font-bold shadow-md"
+                className="w-full flex justify-center items-center gap-2 px-4 py-2.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-[#1A4B9F] dark:text-blue-400 text-sm font-bold border border-slate-200 dark:border-slate-700"
               >
                 <User size={16} />
-                {lang.applicantPortal}
+                <span>Masuk Sebagai Pelamar</span>
+              </Link>
+              <Link
+                href="/perusahaan/login"
+                className="w-full flex justify-center items-center gap-2 px-4 py-2.5 rounded-lg bg-[#1A4B9F] hover:bg-[#133878] text-white text-sm font-bold shadow-sm"
+              >
+                <Building2 size={16} />
+                <span>Masuk Sebagai Perusahaan</span>
               </Link>
             </div>
           </div>
@@ -510,8 +534,6 @@ function LandingPageContent() {
             <path d="M800 1000 C 1200 800, 1300 400, 1600 200" fill="none" stroke="white" strokeWidth="80" opacity="0.15" />
           </svg>
         </div>
-        
-        
 
         {/* Content Container (Stable Grid Layout) */}
         <div className="max-w-[1400px] mx-auto relative z-10 flex py-4">
@@ -529,90 +551,19 @@ function LandingPageContent() {
               </p>
             </div>
 
-            {/* Standard Corporate Search Widget */}
-            <form 
-              onSubmit={(e) => {
-                e.preventDefault();
-                updateUrlParams({ keyword, location });
-                document.getElementById('job-feed-section')?.scrollIntoView({ behavior: 'smooth' });
-              }}
-              className="mt-6 shadow-2xl shadow-[#1A4B9F]/30 rounded-md"
-            >
-              <div className="flex flex-col sm:flex-row bg-white rounded-md overflow-hidden p-1.5 gap-1">
-                
-                {/* Keyword Input */}
-                <div className="flex-1 relative flex items-center border-b sm:border-b-0 sm:border-r border-slate-200">
-                  <Search size={22} className="absolute left-4 text-slate-400 pointer-events-none" />
-                  <input
-                    type="text"
-                    value={keyword}
-                    onChange={(e) => setKeyword(e.target.value)}
-                    placeholder={lang.searchPlaceholder}
-                    className="w-full pl-12 pr-4 py-3.5 bg-white text-base text-slate-900 font-medium placeholder-slate-400 focus:outline-none"
-                  />
-                  {keyword && (
-                    <button type="button" onClick={() => setKeyword('')} className="absolute right-4 text-slate-400 hover:text-slate-600">
-                      <X size={18} />
-                    </button>
-                  )}
-                </div>
-
-                {/* Location Input */}
-                <div className="flex-1 relative flex items-center">
-                  <MapPin size={22} className="absolute left-4 text-slate-400 pointer-events-none" />
-                  <input
-                    type="text"
-                    value={location}
-                    onChange={(e) => setLocation(e.target.value)}
-                    placeholder={lang.locationPlaceholder}
-                    className="w-full pl-12 pr-4 py-3.5 bg-white text-base text-slate-900 font-medium placeholder-slate-400 focus:outline-none"
-                  />
-                  {location && (
-                    <button type="button" onClick={() => setLocation('')} className="absolute right-4 text-slate-400 hover:text-slate-600">
-                      <X size={18} />
-                    </button>
-                  )}
-                </div>
-                
-                <button
-                  type="submit"
-                  className="w-full sm:w-auto px-10 py-3.5 bg-[#1A4B9F] hover:bg-[#1C41C5] text-white text-base font-bold rounded transition-colors"
-                >
-                  {lang.searchBtn}
-                </button>
-              </div>
-
-              {/* Clean Trending Tags */}
-              <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 pt-4 text-sm text-blue-100">
-                <span className="font-semibold shrink-0">{lang.trending}</span>
-                <div className="flex flex-wrap gap-2">
-                  {['Software Engineer', 'Data Analyst', 'Product Manager'].map((tag, idx) => (
-                    <button
-                      key={idx}
-                      type="button"
-                      onClick={() => setKeyword(tag)}
-                      className="hover:underline hover:text-white transition-colors text-left"
-                    >
-                      {tag}{idx < 2 ? <span className="hidden sm:inline">,</span> : ''}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </form>
-
             {/* Clean Corporate Stats */}
             <div className="grid grid-cols-3 sm:flex sm:flex-nowrap items-start sm:items-center gap-4 sm:gap-12 pt-8 mt-8 border-t border-white/20">
               <div>
-                <span className="text-xl sm:text-3xl font-bold block text-white">{lang.accuracyStat}</span>
-                <span className="text-[9px] sm:text-xs text-blue-200 uppercase tracking-wider font-semibold mt-1 block leading-tight">98% Match</span>
+                <span className="text-2xl sm:text-4xl font-extrabold block text-white">{lang.accuracyStat}</span>
+                <span className="text-xs sm:text-sm text-blue-200 uppercase tracking-wider font-semibold mt-1 block leading-tight">98% Match</span>
               </div>
               <div>
-                <span className="text-xl sm:text-3xl font-bold block text-white">10k+</span>
-                <span className="text-[9px] sm:text-xs text-blue-200 uppercase tracking-wider font-semibold mt-1 block leading-tight">{lang.successfulApplicants}</span>
+                <span className="text-2xl sm:text-4xl font-extrabold block text-white">10k+</span>
+                <span className="text-xs sm:text-sm text-blue-200 uppercase tracking-wider font-semibold mt-1 block leading-tight">{lang.successfulApplicants}</span>
               </div>
               <div>
-                <span className="text-xl sm:text-3xl font-bold block text-white">5 Mnt</span>
-                <span className="text-[9px] sm:text-xs text-blue-200 uppercase tracking-wider font-semibold mt-1 block leading-tight">{lang.screeningProcessTime}</span>
+                <span className="text-2xl sm:text-4xl font-extrabold block text-white">5 Mnt</span>
+                <span className="text-xs sm:text-sm text-blue-200 uppercase tracking-wider font-semibold mt-1 block leading-tight">{lang.screeningProcessTime}</span>
               </div>
             </div>
 
@@ -636,41 +587,60 @@ function LandingPageContent() {
 
       </section>
 
-      {/* Top Employers Banner (Jobstreet Style) */}
-      <section className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 py-16 transition-colors">
+      {/* Top Employers Banner (Infinite Marquee Auto-Scroll) */}
+      <section className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 py-16 transition-colors overflow-hidden">
         <div className="max-w-[1400px] mx-auto px-6 sm:px-10 lg:px-16 space-y-8">
           
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-slate-200">
+              <h2 className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-slate-100">
                 {lang.topEmployersTitle || 'Perusahaan Populer'}
               </h2>
-              <p className="text-sm text-slate-500 mt-2">
+              <p className="text-base text-slate-600 dark:text-slate-400 mt-2 font-normal leading-relaxed">
                 {'Temukan lowongan baru dan bergabung dengan perusahaan teratas pilihan kami.'}
               </p>
             </div>
           </div>
 
-          <div className="flex gap-4 overflow-x-auto pb-6 snap-x snap-mandatory [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-            {combinedCompanies.map((emp, idx) => (
-              <div key={idx} className="shrink-0 w-[240px] p-5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:shadow-lg hover:border-slate-300 transition-all flex flex-col justify-between min-h-[190px] snap-start cursor-pointer">
-                
-                <div className="space-y-6">
-                  <div className="h-12 flex items-center">
-                    <img src={emp.logo} alt={emp.name} className="max-w-[120px] max-h-12 object-contain rounded-md" />
-                  </div>
-                  <h3 className="font-bold text-base text-slate-900 dark:text-slate-200 line-clamp-2">{emp.name}</h3>
-                </div>
+          {/* Marquee Wrapper or Empty State */}
+          {combinedCompanies.length > 0 ? (
+            <div className="relative w-full overflow-hidden py-2 [mask-image:linear-gradient(to_right,transparent,black_4%,black_96%,transparent)]">
+              <div className="animate-marquee flex gap-5">
+                {marqueeCompanies.map((emp, idx) => (
+                  <div 
+                    key={idx} 
+                    onClick={() => router.push(emp.id ? `/companies/${emp.id}` : '/companies')}
+                    className="shrink-0 w-[240px] p-5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:shadow-xl hover:border-[#1A4B9F] dark:hover:border-blue-500 transition-all duration-300 flex flex-col justify-between min-h-[190px] cursor-pointer group"
+                  >
+                    <div className="space-y-6">
+                      <div className="h-12 flex items-center">
+                        {emp.logo ? (
+                          <img src={emp.logo} alt={emp.name} className="max-w-[120px] max-h-12 object-contain rounded-md group-hover:scale-105 transition-transform" />
+                        ) : (
+                          <div className="w-10 h-10 rounded-lg bg-blue-50 dark:bg-blue-950/50 border border-blue-100 dark:border-blue-900 flex items-center justify-center text-[#1A4B9F] dark:text-blue-400 group-hover:scale-105 transition-transform">
+                            <Building2 size={22} />
+                          </div>
+                        )}
+                      </div>
+                      <h3 className="font-bold text-base text-slate-900 dark:text-slate-200 line-clamp-2 group-hover:text-[#1A4B9F] dark:group-hover:text-blue-400 transition-colors">{emp.name}</h3>
+                    </div>
 
-                <div className="mt-6">
-                  <div className="inline-block px-3 py-1.5 bg-[#E8F1FC] dark:bg-blue-900/30 text-[#1A4B9F] dark:text-blue-400 text-xs font-bold rounded">
-                    {emp.jobsCount} {'Pekerjaan'}
+                    <div className="mt-6">
+                      <div className="inline-block px-3 py-1.5 bg-[#E8F1FC] dark:bg-blue-900/30 text-[#1A4B9F] dark:text-blue-400 text-xs font-bold rounded group-hover:bg-[#1A4B9F] group-hover:text-white transition-colors">
+                        {emp.jobsCount} {'Pekerjaan'}
+                      </div>
+                    </div>
                   </div>
-                </div>
-
+                ))}
               </div>
-            ))}
-          </div>
+            </div>
+          ) : (
+            <div className="p-8 text-center rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700">
+              <Building2 className="w-10 h-10 text-slate-400 mx-auto mb-3" />
+              <p className="text-slate-600 dark:text-slate-300 font-semibold text-base">Belum ada perusahaan terverifikasi yang ditampilkan.</p>
+              <p className="text-slate-400 text-sm mt-1">Mitra perusahaan resmi AI-RecruitPro akan segera muncul di sini.</p>
+            </div>
+          )}
         </div>
       </section>
       {/* 3 Pillars AI Feature Showcase Section */}
@@ -695,10 +665,10 @@ function LandingPageContent() {
             <div className="space-y-10 order-1 lg:order-2">
               <div className="space-y-4">
                 
-                <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-slate-900 dark:text-slate-200 leading-tight">
+                <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-slate-900 dark:text-slate-100 leading-tight">
                   {lang.pillarsTitle}
                 </h2>
-                <p className="text-base sm:text-lg text-slate-600 dark:text-slate-400">
+                <p className="text-base sm:text-lg text-slate-700 dark:text-slate-300 font-normal leading-relaxed">
                   {lang.pillarsSub}
                 </p>
               </div>
@@ -710,8 +680,8 @@ function LandingPageContent() {
                     <FileUp size={26} />
                   </div>
                   <div className="space-y-1.5">
-                    <h3 className="text-xl font-bold text-slate-900 dark:text-slate-200">{lang.pillar1Title}</h3>
-                    <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
+                    <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100">{lang.pillar1Title}</h3>
+                    <p className="text-base text-slate-700 dark:text-slate-300 leading-relaxed font-normal">
                       {lang.pillar1Desc}
                     </p>
                   </div>
@@ -723,8 +693,8 @@ function LandingPageContent() {
                     <Video size={26} />
                   </div>
                   <div className="space-y-1.5">
-                    <h3 className="text-xl font-bold text-slate-900 dark:text-slate-200">{lang.pillar2Title}</h3>
-                    <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
+                    <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100">{lang.pillar2Title}</h3>
+                    <p className="text-base text-slate-700 dark:text-slate-300 leading-relaxed font-normal">
                       {lang.pillar2Desc}
                     </p>
                   </div>
@@ -736,8 +706,8 @@ function LandingPageContent() {
                     <ShieldCheck size={26} />
                   </div>
                   <div className="space-y-1.5">
-                    <h3 className="text-xl font-bold text-slate-900 dark:text-slate-200">{lang.pillar3Title}</h3>
-                    <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
+                    <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100">{lang.pillar3Title}</h3>
+                    <p className="text-base text-slate-700 dark:text-slate-300 leading-relaxed font-normal">
                       {lang.pillar3Desc}
                     </p>
                   </div>
@@ -1151,7 +1121,7 @@ function LandingPageContent() {
             <h2 className="text-3xl sm:text-4xl font-extrabold text-slate-900 dark:text-white tracking-tight">
               {lang.faqTitle}
             </h2>
-            <p className="text-slate-600 dark:text-slate-400 text-sm sm:text-base max-w-xl mx-auto">
+            <p className="text-base sm:text-lg text-slate-600 dark:text-slate-300 max-w-xl mx-auto font-normal">
               {language === 'en' 
                 ? 'Still confused? Find the answers below.' 
                 : 'Masih bingung? Temukan jawabannya di bawah ini.'}
@@ -1173,7 +1143,7 @@ function LandingPageContent() {
                     </span>
                   </button>
                   <div className={`overflow-hidden transition-all duration-300 ease-in-out ${isOpen ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'}`}>
-                    <div className="pb-8 pr-12 text-sm sm:text-base text-slate-600 dark:text-slate-400 leading-relaxed font-medium">
+                    <div className="pb-8 pr-12 text-base sm:text-lg text-slate-700 dark:text-slate-300 leading-relaxed font-normal">
                       {faq.a}
                     </div>
                   </div>
