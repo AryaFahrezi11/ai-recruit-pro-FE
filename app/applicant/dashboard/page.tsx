@@ -603,12 +603,23 @@ function DashboardContent() {
                 <p className="text-slate-500 font-semibold">{language === 'id' ? 'Tidak ada perusahaan yang sesuai dengan pencarian Anda.' : 'No companies match your search.'}</p>
               </div>
             ) : (
-              filteredCompanies.map((comp) => (
-                <div
-                key={comp.id}
-                onClick={() => router.push(`/applicant/companies/${comp.id}`)}
-                className="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-2xs hover:shadow-md hover:border-[#1A4B9F]/40 transition-all space-y-4 flex flex-col justify-between cursor-pointer group"
-              >
+              filteredCompanies.map((comp) => {
+                const compName = (comp as any).name || (comp as any).nama_perusahaan || '';
+                const compSlug = (compName || '')
+                  .toString()
+                  .toLowerCase()
+                  .trim()
+                  .replace(/\s+/g, '-')
+                  .replace(/[^\w\-]+/g, '')
+                  .replace(/\-\-+/g, '-');
+                const compPath = `/applicant/companies/${compSlug}/${comp.id}`;
+
+                return (
+                  <div
+                    key={comp.id}
+                    onClick={() => router.push(compPath)}
+                    className="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-2xs hover:shadow-md hover:border-[#1A4B9F]/40 transition-all space-y-4 flex flex-col justify-between cursor-pointer group"
+                  >
                 <div className="space-y-3">
                   <div className="flex items-start justify-between gap-3">
                     <img
@@ -634,12 +645,12 @@ function DashboardContent() {
                     className="w-full py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 group-hover:border-[#1A4B9F] group-hover:text-[#1A4B9F] group-hover:bg-[#EFF6FF] dark:group-hover:bg-slate-800 text-slate-600 dark:text-slate-400 text-xs font-bold transition-all flex items-center justify-center gap-2"
                   >
                     <span>{language === 'id' ? 'Lihat' : 'View'} {comp.openJobsCount} {language === 'id' ? 'Lowongan Buka' : 'Open Jobs'}</span>
-                    <ChevronRight className="w-4 h-4" />
                   </div>
                 </div>
-
               </div>
-            )))}
+              );
+            })
+          )}
           </div>
         </div>
       ) : (

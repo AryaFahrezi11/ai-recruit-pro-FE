@@ -80,18 +80,18 @@ export default function AboutPage() {
           <div className="flex items-center gap-3 sm:gap-4">
             <Link
               href="/applicant/login"
-              className="hidden sm:inline-flex px-4 py-2.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-[#1A4B9F] dark:text-blue-400 text-sm font-bold rounded-md transition-colors items-center gap-1.5 border border-slate-200 dark:border-slate-700"
+              className="hidden sm:inline-flex px-4 py-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 text-sm font-bold rounded-lg transition-colors items-center gap-1.5 border border-slate-200 dark:border-slate-700"
             >
-              <User size={16} />
-              <span>Masuk Sebagai Pelamar</span>
+              <User size={15} />
+              <span>Masuk</span>
             </Link>
 
             <Link
               href="/perusahaan/login"
-              className="hidden sm:inline-flex px-4 py-2.5 bg-[#1A4B9F] hover:bg-[#1C41C5] text-white text-sm font-bold rounded-md transition-colors items-center gap-1.5"
+              className="hidden sm:inline-flex px-4 py-2 bg-[#1A4B9F] hover:bg-[#133878] text-white text-sm font-bold rounded-lg transition-colors items-center gap-1.5 shadow-2xs"
             >
-              <Building2 size={16} />
-              <span>Masuk Sebagai Perusahaan</span>
+              <Building2 size={15} />
+              <span>Untuk Perusahaan</span>
             </Link>
 
             {/* Mobile Menu Toggle */}
@@ -124,17 +124,17 @@ export default function AboutPage() {
             <div className="pt-4 border-t border-slate-100 dark:border-slate-800 flex flex-col gap-2.5 sm:hidden">
               <Link
                 href="/applicant/login"
-                className="w-full flex justify-center items-center gap-2 px-4 py-2.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-[#1A4B9F] dark:text-blue-400 text-sm font-bold border border-slate-200 dark:border-slate-700"
+                className="w-full flex justify-center items-center gap-2 px-4 py-2.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 text-sm font-bold border border-slate-200 dark:border-slate-700"
               >
                 <User size={16} />
-                <span>Masuk Sebagai Pelamar</span>
+                <span>Masuk</span>
               </Link>
               <Link
                 href="/perusahaan/login"
                 className="w-full flex justify-center items-center gap-2 px-4 py-2.5 rounded-lg bg-[#1A4B9F] hover:bg-[#133878] text-white text-sm font-bold shadow-sm"
               >
                 <Building2 size={16} />
-                <span>Masuk Sebagai Perusahaan</span>
+                <span>Untuk Perusahaan</span>
               </Link>
             </div>
           </div>
@@ -157,21 +157,7 @@ export default function AboutPage() {
                 AI-RecruitPro adalah platform rekrutmen berbasis kecerdasan buatan (AI) dan Natural Language Processing (NLP) yang dirancang untuk menciptakan proses seleksi kerja yang transparan, cepat, dan objektif bagi pencari kerja dan perusahaan.
               </p>
 
-              <div className="flex flex-wrap items-center justify-center lg:justify-start gap-4 pt-2">
-                <Link
-                  href="/applicant/register"
-                  className="px-7 py-3.5 bg-[#1A4B9F] hover:bg-[#133878] text-white font-bold text-sm rounded-md transition-colors shadow-md flex items-center gap-2"
-                >
-                  <span>Daftar Sebagai Pelamar</span>
-                  <ArrowRight size={16} />
-                </Link>
-                <Link
-                  href="/perusahaan/register"
-                  className="px-7 py-3.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-900 dark:text-white font-semibold text-sm rounded-md border border-slate-200 dark:border-slate-700 transition-colors"
-                >
-                  Pasang Lowongan Perusahaan
-                </Link>
-              </div>
+
 
               {/* Stats Strip */}
               <div className="grid grid-cols-3 sm:flex sm:flex-nowrap items-start sm:items-center gap-4 sm:gap-12 pt-8 mt-8 border-t border-slate-200 dark:border-slate-800">
@@ -435,15 +421,9 @@ export default function AboutPage() {
           <div className="flex flex-wrap items-center justify-center gap-4 pt-2">
             <Link
               href="/applicant/register"
-              className="px-8 py-3.5 bg-white text-[#1A4B9F] hover:bg-blue-50 font-bold text-sm rounded-md transition-all shadow-md"
+              className="px-8 py-3.5 bg-white text-slate-900 hover:bg-slate-100 font-bold text-sm rounded-md transition-all shadow-md"
             >
               Cari Lowongan Kerja
-            </Link>
-            <Link
-              href="/perusahaan/register"
-              className="px-8 py-3.5 bg-[#133878] hover:bg-[#0f2c5e] text-white font-semibold text-sm rounded-md border border-white/20 transition-all"
-            >
-              Pasang Lowongan Perusahaan
             </Link>
           </div>
         </div>

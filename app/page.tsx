@@ -43,8 +43,20 @@ import {
   Globe,
   SlidersHorizontal,
   Check,
-  Menu
+  Menu,
+  RotateCcw,
+  Quote
 } from 'lucide-react';
+
+const slugify = (text: string) => {
+  return (text || '')
+    .toString()
+    .toLowerCase()
+    .trim()
+    .replace(/\s+/g, '-')
+    .replace(/[^\w\-]+/g, '')
+    .replace(/\-\-+/g, '-');
+};
 
 interface Job {
   id: number | string;
@@ -147,29 +159,36 @@ function LandingPageContent() {
   useEffect(() => {
     setMounted(true);
     fetchRealData();
-  }, [searchParams]);
+
+    // Read initial searchParams if any
+    const cat = searchParams.get('category');
+    if (cat !== null) setSelectedCategory(cat || 'Semua');
+
+    const kw = searchParams.get('keyword');
+    if (kw !== null) setKeyword(kw);
+
+    const loc = searchParams.get('location');
+    if (loc !== null) setLocation(loc);
+
+    const wt = searchParams.get('workType');
+    if (wt !== null) setSelectedWorkType(wt);
+
+    const exp = searchParams.get('statusKerja') || searchParams.get('expLevel');
+    if (exp !== null) setSelectedStatusKerja(exp);
+
+    // Immediately clean URL address bar so browser refresh (F5) always reloads clean default state
+    if (typeof window !== 'undefined' && window.location.search) {
+      window.history.replaceState(null, '', window.location.pathname);
+    }
+  }, []);
 
   const [realJobs, setRealJobs] = useState<Job[]>([]);
   const [realCompanies, setRealCompanies] = useState<any[]>([]);
 
   const fetchRealData = async () => {
     try {
-      // Fetch Jobs with Query Params
-      const apiParams = new URLSearchParams();
-      const kw = searchParams.get('keyword');
-      const loc = searchParams.get('location');
-      const cat = searchParams.get('category');
-      const type = searchParams.get('workType');
-      const exp = searchParams.get('expLevel');
-
-      if (kw) apiParams.append('keyword', kw);
-      if (loc) apiParams.append('location', loc);
-      if (cat && cat !== 'Semua' && cat !== 'All') apiParams.append('category', cat);
-      if (type && type !== 'Semua' && type !== 'All') apiParams.append('tipe_pekerjaan', type);
-      if (exp && exp !== 'Semua' && exp !== 'All') apiParams.append('experience_level', exp);
-
-      const qs = apiParams.toString();
-      const fetchUrl = qs ? getApiUrl(`/jobs/?${qs}`) : getApiUrl('/jobs/');
+      // Fetch all active jobs for full categories breakdown and seamless client-side filtering
+      const fetchUrl = getApiUrl('/jobs/');
 
       const resJobs = await fetch(fetchUrl);
       if (resJobs.ok) {
@@ -262,18 +281,12 @@ function LandingPageContent() {
   const [location, setLocation] = useState(searchParams.get('location') || '');
   const [selectedCategory, setSelectedCategory] = useState(searchParams.get('category') || 'Semua');
   const [selectedWorkType, setSelectedWorkType] = useState(searchParams.get('workType') || 'Semua');
-  const [selectedExpLevel, setSelectedExpLevel] = useState(searchParams.get('expLevel') || 'Semua');
+  const [selectedStatusKerja, setSelectedStatusKerja] = useState(searchParams.get('statusKerja') || searchParams.get('expLevel') || 'Semua');
 
   const updateUrlParams = (updates: Record<string, string>) => {
-    const params = new URLSearchParams(searchParams.toString());
-    Object.entries(updates).forEach(([key, value]) => {
-      if (value && value !== 'Semua' && value !== 'All') {
-        params.set(key, value);
-      } else {
-        params.delete(key);
-      }
-    });
-    router.push(`/?${params.toString()}`, { scroll: false });
+    if (typeof window !== 'undefined' && window.location.search) {
+      window.history.replaceState(null, '', window.location.pathname);
+    }
   };
   const [savedJobs, setSavedJobs] = useState<(number | string)[]>([]);
   const [previewJobId, setPreviewJobId] = useState<number | string>(1);
@@ -325,16 +338,24 @@ function LandingPageContent() {
   // FAQ Items
   const faqItems = [
     {
-      q: 'Apakah AI-RecruitPro gratis untuk pelamar?',
-      a: 'Tentu saja! Platform ini 100% gratis untuk pencari kerja. Kamu tidak akan dipungut biaya sepeser pun dari awal daftar sampai diterima kerja.'
+      q: 'Apa itu platform pencarian kerja ini?',
+      a: 'AI-RecruitPro adalah platform rekrutmen berbasis AI yang menghubungkan pencari kerja dengan perusahaan secara transparan, adil, dan efisien.'
     },
     {
-      q: 'Siapa saja yang bisa melihat CV dan rekaman video saya?',
-      a: 'Privasi kamu sangat kami jaga. Data, CV, dan rekaman wawancara kamu hanya bisa dilihat oleh HRD atau tim rekrutmen dari perusahaan yang kamu lamar secara langsung.'
+      q: 'Apakah perlu membuat akun untuk mencari lowongan?',
+      a: 'Kamu bisa menjelajahi seluruh lowongan pekerjaan secara bebas. Namun untuk melamar dan mengunggah profil, kamu perlu masuk atau mendaftar akun terlebih dahulu.'
     },
     {
-      q: 'Gimana sih sebenarnya proses seleksi di sini?',
-      a: 'Gampang banget kok. Begitu kamu upload CV, sistem akan otomatis nyari lowongan yang paling cocok buat kamu. Kalau udah match, kamu tinggal ikutin wawancara video singkat biar perusahaan bisa lihat langsung potensi kamu.'
+      q: 'Dari mana sumber lowongan ditampilkan?',
+      a: 'Seluruh lowongan dipublikasikan langsung oleh perusahaan mitra yang terverifikasi dan secara aktif merekrut talenta terbaik.'
+    },
+    {
+      q: 'Bagaimana cara kerja pencocokan skor AI?',
+      a: 'Sistem AI menganalisis kesesuaian antara keahlian di CV Anda dengan kualifikasi pekerjaan secara objektif untuk memberikan perkiraan persentase kecocokan.'
+    },
+    {
+      q: 'Apakah layanan ini gratis untuk pelamar kerja?',
+      a: 'Ya! Seluruh layanan pencarian kerja dan pengiriman lamaran di AI-RecruitPro 100% gratis untuk pelamar.'
     }
   ];
 
@@ -385,25 +406,46 @@ function LandingPageContent() {
       }));
   }, [combinedJobs]);
 
+  const marqueeCategories = useMemo(() => {
+    if (!jobCategories || jobCategories.length === 0) return [];
+    let list = [...jobCategories];
+    while (list.length > 0 && list.length < 12) {
+      list = [...list, ...jobCategories];
+    }
+    return list;
+  }, [jobCategories]);
+
   // Filter jobs
   const filteredJobs = useMemo(() => {
     return combinedJobs.filter((job) => {
       const matchKey = keyword === '' ||
         job.title.toLowerCase().includes(keyword.toLowerCase()) ||
         job.company.toLowerCase().includes(keyword.toLowerCase()) ||
+        job.location.toLowerCase().includes(keyword.toLowerCase()) ||
+        job.description.toLowerCase().includes(keyword.toLowerCase()) ||
         job.tags.some(t => t.toLowerCase().includes(keyword.toLowerCase()));
 
       const matchLoc = location === '' ||
         job.location.toLowerCase().includes(location.toLowerCase()) ||
         job.workType.toLowerCase().includes(location.toLowerCase());
 
-      const matchCat = selectedCategory === 'Semua' || selectedCategory === 'All' || job.category === selectedCategory;
-      const matchWork = selectedWorkType === 'Semua' || selectedWorkType === 'All' || job.workType.toLowerCase().includes(selectedWorkType.toLowerCase());
-      const matchExp = selectedExpLevel === 'Semua' || selectedExpLevel === 'All' || job.experienceLevel.toLowerCase().includes(selectedExpLevel.toLowerCase());
+      const matchCat =
+        selectedCategory === 'Semua' ||
+        selectedCategory === 'All' ||
+        job.category.toLowerCase().trim() === selectedCategory.toLowerCase().trim() ||
+        slugify(job.category) === slugify(selectedCategory);
 
-      return matchKey && matchLoc && matchCat && matchWork && matchExp;
+      const matchWork = selectedWorkType === 'Semua' || selectedWorkType === 'All' || job.workType.toLowerCase().includes(selectedWorkType.toLowerCase());
+
+      const matchStatus =
+        selectedStatusKerja === 'Semua' ||
+        selectedStatusKerja === 'All' ||
+        job.workType.toLowerCase().includes(selectedStatusKerja.toLowerCase()) ||
+        job.tags.some(t => t.toLowerCase().includes(selectedStatusKerja.toLowerCase()));
+
+      return matchKey && matchLoc && matchCat && matchWork && matchStatus;
     });
-  }, [keyword, location, selectedCategory, selectedWorkType, selectedExpLevel, combinedJobs]);
+  }, [keyword, location, selectedCategory, selectedWorkType, selectedStatusKerja, combinedJobs]);
 
   const selectedPreviewJob = useMemo(() => {
     return combinedJobs.find(j => j.id === previewJobId) || combinedJobs[0];
@@ -461,18 +503,18 @@ function LandingPageContent() {
           <div className="flex items-center gap-3 sm:gap-4 shrink-0">
             <Link
               href="/applicant/login"
-              className="hidden sm:inline-flex px-4 py-2.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-[#1A4B9F] dark:text-blue-400 text-sm font-bold rounded-md transition-colors items-center gap-1.5 border border-slate-200 dark:border-slate-700 shrink-0"
+              className="hidden sm:inline-flex px-4 py-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 text-sm font-bold rounded-lg transition-colors items-center gap-1.5 border border-slate-200 dark:border-slate-700 shrink-0"
             >
-              <User size={16} />
-              <span>Masuk Sebagai Pelamar</span>
+              <User size={15} />
+              <span>Masuk</span>
             </Link>
 
             <Link
               href="/perusahaan/login"
-              className="hidden sm:inline-flex px-4 py-2.5 bg-[#1A4B9F] hover:bg-[#1C41C5] text-white text-sm font-bold rounded-md transition-colors items-center gap-1.5 shrink-0"
+              className="hidden sm:inline-flex px-4 py-2 bg-[#1A4B9F] hover:bg-[#133878] text-white text-sm font-bold rounded-lg transition-colors items-center gap-1.5 shrink-0 shadow-2xs"
             >
-              <Building2 size={16} />
-              <span>Masuk Sebagai Perusahaan</span>
+              <Building2 size={15} />
+              <span>Untuk Perusahaan</span>
             </Link>
 
             {/* Mobile Menu Toggle */}
@@ -506,27 +548,27 @@ function LandingPageContent() {
             <div className="pt-4 border-t border-slate-100 dark:border-slate-800 flex flex-col gap-2.5 sm:hidden">
               <Link
                 href="/applicant/login"
-                className="w-full flex justify-center items-center gap-2 px-4 py-2.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-[#1A4B9F] dark:text-blue-400 text-sm font-bold border border-slate-200 dark:border-slate-700"
+                className="w-full flex justify-center items-center gap-2 px-4 py-2.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 text-sm font-bold border border-slate-200 dark:border-slate-700"
               >
                 <User size={16} />
-                <span>Masuk Sebagai Pelamar</span>
+                <span>Masuk</span>
               </Link>
               <Link
                 href="/perusahaan/login"
                 className="w-full flex justify-center items-center gap-2 px-4 py-2.5 rounded-lg bg-[#1A4B9F] hover:bg-[#133878] text-white text-sm font-bold shadow-sm"
               >
                 <Building2 size={16} />
-                <span>Masuk Sebagai Perusahaan</span>
+                <span>Untuk Perusahaan</span>
               </Link>
             </div>
           </div>
         )}
       </header>
       
-      {/* Hero Section */}
-      <section id="hero-search" className="relative pt-12 pb-16 sm:pt-28 sm:pb-32 px-6 sm:px-10 lg:px-16 bg-[#1A4B9F] text-white overflow-hidden">
+      {/* Hero Section (Exact 1-to-1 Reference Layout) */}
+      <section id="hero-search" className="relative bg-[#1A4B9F] text-white overflow-hidden min-h-[580px] flex items-stretch">
         
-        {/* Jobstreet/SEEK Style Abstract Background Curves */}
+        {/* Abstract Background Curve Stripes */}
         <div className="absolute inset-0 z-0 pointer-events-none opacity-40">
           <svg className="absolute w-full h-full" viewBox="0 0 1440 800" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
             <path d="M-200 800 C 400 800, 600 200, 1000 -100" fill="none" stroke="white" strokeWidth="60" opacity="0.25" />
@@ -535,43 +577,8 @@ function LandingPageContent() {
           </svg>
         </div>
 
-        {/* Content Container (Stable Grid Layout) */}
-        <div className="max-w-[1400px] mx-auto relative z-10 flex py-4">
-          
-          {/* Left Content Container */}
-          <div className="flex-1 w-full max-w-[650px] lg:max-w-[480px] xl:max-w-[560px] 2xl:max-w-[650px] space-y-8 relative z-10">
-            
-            <div className="space-y-4">
-              <h1 className="text-4xl sm:text-5xl lg:text-[56px] font-sans font-bold tracking-tight leading-[1.15] text-white">
-                {lang.heroTitleLine1} <br/> 
-                <span className="text-white">{lang.heroTitleLine2}</span>
-              </h1>
-              <p className="text-lg text-blue-100 max-w-xl font-normal leading-relaxed">
-                {lang.heroSubtitle}
-              </p>
-            </div>
-
-            {/* Clean Corporate Stats */}
-            <div className="grid grid-cols-3 sm:flex sm:flex-nowrap items-start sm:items-center gap-4 sm:gap-12 pt-8 mt-8 border-t border-white/20">
-              <div>
-                <span className="text-2xl sm:text-4xl font-extrabold block text-white">{lang.accuracyStat}</span>
-                <span className="text-xs sm:text-sm text-blue-200 uppercase tracking-wider font-semibold mt-1 block leading-tight">98% Match</span>
-              </div>
-              <div>
-                <span className="text-2xl sm:text-4xl font-extrabold block text-white">10k+</span>
-                <span className="text-xs sm:text-sm text-blue-200 uppercase tracking-wider font-semibold mt-1 block leading-tight">{lang.successfulApplicants}</span>
-              </div>
-              <div>
-                <span className="text-2xl sm:text-4xl font-extrabold block text-white">5 Mnt</span>
-                <span className="text-xs sm:text-sm text-blue-200 uppercase tracking-wider font-semibold mt-1 block leading-tight">{lang.screeningProcessTime}</span>
-              </div>
-            </div>
-
-          </div>
-        </div>
-
-        {/* Right Content: Fully Visible Image with Perfect Clean Curve */}
-        <div className="absolute inset-y-0 right-0 w-[100%] lg:w-[65%] xl:w-[60%] z-0 pointer-events-none">
+        {/* Right Photo (Spans Full Height Edge-to-Edge with Curved Edge Cut) */}
+        <div className="absolute inset-y-0 right-0 w-full lg:w-[62%] xl:w-[58%] z-0 pointer-events-none">
           <div 
             className="w-full h-full hidden lg:block"
             style={{ clipPath: 'ellipse(95% 120% at 100% 50%)' }}
@@ -581,7 +588,40 @@ function LandingPageContent() {
               alt="Corporate Professionals" 
               className="w-full h-full object-cover object-[20%_center]"
             />
-            <div className="absolute inset-0 ring-1 ring-inset ring-white/10"></div>
+          </div>
+        </div>
+
+        {/* Left Content Container */}
+        <div className="max-w-[1400px] mx-auto w-full px-6 sm:px-10 lg:px-16 relative z-10 py-14 sm:py-20 flex items-center">
+          <div className="w-full max-w-[620px] lg:max-w-[480px] xl:max-w-[540px] 2xl:max-w-[600px] space-y-6">
+            
+            {/* Title & Subtitle */}
+            <div className="space-y-3.5">
+              <h1 className="text-3xl sm:text-4xl lg:text-[42px] xl:text-[45px] font-sans font-bold tracking-tight leading-[1.15] text-white">
+                {lang.heroTitleLine1} <br/> 
+                <span className="text-white">{lang.heroTitleLine2}</span>
+              </h1>
+              <p className="text-sm sm:text-base text-blue-100/90 font-normal leading-relaxed max-w-md">
+                {lang.heroSubtitle}
+              </p>
+            </div>
+
+            {/* Bottom Stats (Exact Balanced Proportion matching reference screenshot) */}
+            <div className="grid grid-cols-3 items-start gap-4 sm:gap-8 pt-6 mt-6 border-t border-white/20">
+              <div>
+                <span className="text-2xl sm:text-3xl lg:text-[34px] font-extrabold block text-white leading-none">98%</span>
+                <span className="text-xs sm:text-sm text-blue-100/90 font-normal mt-1.5 block leading-tight">{lang.accuracyStat}</span>
+              </div>
+              <div>
+                <span className="text-2xl sm:text-3xl lg:text-[34px] font-extrabold block text-white leading-none">10k+</span>
+                <span className="text-xs sm:text-sm text-blue-100/90 font-normal mt-1.5 block leading-tight">{lang.successfulApplicants}</span>
+              </div>
+              <div>
+                <span className="text-2xl sm:text-3xl lg:text-[34px] font-extrabold block text-white leading-none">5 Mnt</span>
+                <span className="text-xs sm:text-sm text-blue-100/90 font-normal mt-1.5 block leading-tight">{lang.screeningProcessTime}</span>
+              </div>
+            </div>
+
           </div>
         </div>
 
@@ -609,26 +649,30 @@ function LandingPageContent() {
                 {marqueeCompanies.map((emp, idx) => (
                   <div 
                     key={idx} 
-                    onClick={() => router.push(emp.id ? `/companies/${emp.id}` : '/companies')}
-                    className="shrink-0 w-[240px] p-5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:shadow-xl hover:border-[#1A4B9F] dark:hover:border-blue-500 transition-all duration-300 flex flex-col justify-between min-h-[190px] cursor-pointer group"
+                    onClick={() => {
+                      const compSlug = slugify(emp.name);
+                      const targetUrl = compSlug && emp.id ? `/companies/${compSlug}/${emp.id}` : '/companies';
+                      router.push(targetUrl);
+                    }}
+                    className="shrink-0 w-[240px] p-5 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 hover:border-slate-400 hover:shadow-md transition-all duration-300 flex flex-col justify-between min-h-[190px] cursor-pointer group"
                   >
-                    <div className="space-y-6">
+                    <div className="space-y-4">
                       <div className="h-12 flex items-center">
                         {emp.logo ? (
                           <img src={emp.logo} alt={emp.name} className="max-w-[120px] max-h-12 object-contain rounded-md group-hover:scale-105 transition-transform" />
                         ) : (
-                          <div className="w-10 h-10 rounded-lg bg-blue-50 dark:bg-blue-950/50 border border-blue-100 dark:border-blue-900 flex items-center justify-center text-[#1A4B9F] dark:text-blue-400 group-hover:scale-105 transition-transform">
+                          <div className="w-12 h-12 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-center text-slate-800 dark:text-slate-200 group-hover:scale-110 transition-transform">
                             <Building2 size={22} />
                           </div>
                         )}
                       </div>
-                      <h3 className="font-bold text-base text-slate-900 dark:text-slate-200 line-clamp-2 group-hover:text-[#1A4B9F] dark:group-hover:text-blue-400 transition-colors">{emp.name}</h3>
+                      <h3 className="font-bold text-sm text-slate-900 dark:text-white truncate">{emp.name}</h3>
                     </div>
 
-                    <div className="mt-6">
-                      <div className="inline-block px-3 py-1.5 bg-[#E8F1FC] dark:bg-blue-900/30 text-[#1A4B9F] dark:text-blue-400 text-xs font-bold rounded group-hover:bg-[#1A4B9F] group-hover:text-white transition-colors">
-                        {emp.jobsCount} {'Pekerjaan'}
-                      </div>
+                    <div className="pt-2">
+                      <span className="text-xs font-normal text-slate-500 dark:text-slate-400">
+                        {emp.jobsCount} Lowongan
+                      </span>
                     </div>
                   </div>
                 ))}
@@ -665,7 +709,7 @@ function LandingPageContent() {
             <div className="space-y-10 order-1 lg:order-2">
               <div className="space-y-4">
                 
-                <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-slate-900 dark:text-slate-100 leading-tight">
+                <h2 className="text-2xl sm:text-3xl lg:text-[38px] font-bold text-slate-900 dark:text-slate-100 leading-snug tracking-tight">
                   {lang.pillarsTitle}
                 </h2>
                 <p className="text-base sm:text-lg text-slate-700 dark:text-slate-300 font-normal leading-relaxed">
@@ -719,62 +763,64 @@ function LandingPageContent() {
         </div>
       </section>
 
-      {/* Categories Grid Section */}
-      <section id="categories-section" className="py-16 px-6 sm:px-10 lg:px-16 max-w-[1600px] mx-auto w-full space-y-8">
-        <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-4">
-          <div>
-            <h2 className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-slate-200">
-              {lang.exploreCategoriesTitle}
-            </h2>
-            <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400">{lang.exploreCategoriesSub}</p>
+      {/* Categories Animated Marquee Section */}
+      <section id="categories-section" className="py-14 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 transition-colors overflow-hidden">
+        <div className="max-w-[1400px] mx-auto px-6 sm:px-10 lg:px-16 space-y-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-slate-100">
+                {lang.exploreCategoriesTitle}
+              </h2>
+              <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">{lang.exploreCategoriesSub}</p>
+            </div>
           </div>
-          <button
-            onClick={() => {
-              setSelectedCategory('Semua');
-            }}
-            className="text-xs sm:text-sm font-bold text-slate-900 dark:text-slate-200 hover:underline cursor-pointer"
-          >
-            {lang.showAllCategories}
-          </button>
-        </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-5">
-          {jobCategories.map((cat, idx) => {
-            const Icon = cat.icon;
-            const isSelected = selectedCategory === cat.name;
-            return (
-              <button
-                key={idx}
-                onClick={() => {
-                  const newCat = isSelected ? 'Semua' : cat.name;
-                  setSelectedCategory(newCat);
-                }}
-                className={`p-5 rounded-3xl border text-left flex flex-col justify-between space-y-4 transition-all duration-200 group cursor-pointer ${isSelected
-                  ? 'bg-[#1A4B9F] text-white border-[#1A4B9F] shadow-lg ring-2 ring-slate-400/20'
-                  : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 hover:border-[#1A4B9F] dark:hover:border-slate-300 hover:shadow-md'
-                  }`}
-              >
-                <div className={`w-12 h-12 rounded-2xl flex items-center justify-center font-bold shrink-0 ${isSelected ? 'bg-white text-slate-900' : 'bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-slate-200 group-hover:scale-105 transition-transform'
-                  }`}>
-                  <Icon size={24} />
-                </div>
+          <div className="relative w-full overflow-hidden py-2 [mask-image:linear-gradient(to_right,transparent,black_4%,black_96%,transparent)]">
+            <div className="animate-marquee flex gap-5">
+              {marqueeCategories.map((cat, idx) => {
+                const Icon = cat.icon;
+                const isSelected =
+                  selectedCategory !== 'Semua' &&
+                  selectedCategory !== 'All' &&
+                  (selectedCategory.toLowerCase().trim() === cat.name.toLowerCase().trim() ||
+                   slugify(selectedCategory) === slugify(cat.name));
+                return (
+                  <div
+                    key={idx}
+                    onClick={() => {
+                      const newCat = isSelected ? 'Semua' : cat.name;
+                      setSelectedCategory(newCat);
+                      if (window.location.search) {
+                        window.history.replaceState(null, '', window.location.pathname);
+                      }
+                      const feedElem = document.getElementById('job-feed-section');
+                      if (feedElem) feedElem.scrollIntoView({ behavior: 'smooth' });
+                    }}
+                    className={`shrink-0 w-[240px] p-5 rounded-2xl border text-left flex flex-col justify-between space-y-4 transition-all duration-300 cursor-pointer group ${
+                      isSelected
+                        ? 'bg-white dark:bg-slate-900 border-slate-900 dark:border-white ring-2 ring-slate-900/20 shadow-md'
+                        : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 hover:border-slate-400 hover:shadow-md'
+                    }`}
+                  >
+                    <div className={`w-12 h-12 rounded-xl flex items-center justify-center font-bold shrink-0 ${
+                      isSelected ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900' : 'bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 group-hover:scale-110 transition-transform'
+                    }`}>
+                      <Icon size={22} />
+                    </div>
 
-                <div className="space-y-1">
-                  <div className="flex items-center justify-between gap-2">
-                    <h3 className={`font-bold text-sm truncate ${isSelected ? 'text-white' : 'text-slate-900 dark:text-white'}`}>
-                      {cat.name}
-                    </h3>
+                    <div className="space-y-1">
+                      <h3 className="font-bold text-sm truncate text-slate-900 dark:text-white">
+                        {cat.name}
+                      </h3>
+                      <p className="text-xs text-slate-500 dark:text-slate-400">
+                        {cat.count}
+                      </p>
+                    </div>
                   </div>
-                  <span className={`text-xs font-bold block ${isSelected ? 'text-white' : 'text-[#1A4B9F] dark:text-slate-200'}`}>
-                    {cat.count}
-                  </span>
-                  <p className={`text-xs ${isSelected ? 'text-white/80' : 'text-slate-500 dark:text-slate-400'}`}>
-                    Skill: {cat.skills}
-                  </p>
-                </div>
-              </button>
-            );
-          })}
+                );
+              })}
+            </div>
+          </div>
         </div>
       </section>
 
@@ -782,76 +828,116 @@ function LandingPageContent() {
       <section id="job-feed-section" className="py-12 px-6 sm:px-10 lg:px-16 max-w-[1600px] mx-auto w-full space-y-8">
 
         {/* Quick Filter Toolbar */}
-        <div className="bg-white dark:bg-slate-900 p-5 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-2xs space-y-4">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 dark:border-slate-800 pb-4">
+        <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-2xs space-y-4">
+          <div className="flex items-center justify-between gap-4 border-b border-slate-100 dark:border-slate-800 pb-4">
             <div className="flex items-center gap-3">
-              <Briefcase size={24} className="text-slate-900 dark:text-slate-200" />
+              <div className="w-10 h-10 rounded-2xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-center text-slate-900 dark:text-white shrink-0">
+                <Briefcase size={20} className="text-slate-900 dark:text-white" />
+              </div>
               <div>
                 <h2 className="text-lg font-bold text-slate-900 dark:text-slate-200">
                   {lang.highPrecisionJobsTitle}
                 </h2>
-                <span className="text-xs sm:text-sm text-slate-500 dark:text-slate-400">
-                  {lang.activeJobsCount} <strong className="text-slate-900 dark:text-white">{filteredJobs.length}</strong> {lang.activeJobsSuffix}
-                </span>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="text-xs sm:text-sm text-slate-500 dark:text-slate-400">
+                    {lang.activeJobsCount} <strong className="text-slate-900 dark:text-white">{filteredJobs.length}</strong> {lang.activeJobsSuffix}
+                  </span>
+                  {selectedCategory !== 'Semua' && selectedCategory !== 'All' && (
+                    <span className="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full bg-[#1A4B9F]/10 dark:bg-blue-900/40 border border-[#1A4B9F]/30 dark:border-blue-700 text-[#1A4B9F] dark:text-blue-300 text-xs font-bold">
+                      <span>Kategori: {selectedCategory}</span>
+                      <button
+                        onClick={() => {
+                          setSelectedCategory('Semua');
+                          if (window.location.search) {
+                            window.history.replaceState(null, '', window.location.pathname);
+                          }
+                        }}
+                        className="hover:bg-blue-200 dark:hover:bg-blue-800 rounded-full p-0.5 transition-colors cursor-pointer"
+                        title="Hapus filter kategori"
+                      >
+                        <X size={12} />
+                      </button>
+                    </span>
+                  )}
+                </div>
               </div>
             </div>
 
-            {(selectedCategory !== 'Semua' || selectedWorkType !== 'Semua' || selectedExpLevel !== 'Semua') && (
-              <button
-                onClick={() => {
-                  setSelectedCategory('Semua');
-                  setSelectedWorkType('Semua');
-                  setSelectedExpLevel('Semua');
-                  updateUrlParams({ category: 'Semua', workType: 'Semua', expLevel: 'Semua' });
-                }}
-                className="text-xs font-bold text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white underline cursor-pointer"
-              >
-                {lang.resetFilters}
-              </button>
-            )}
+            {/* Refresh Icon Button replacing Atur Ulang Penyaring text */}
+            <button
+              onClick={() => {
+                setKeyword('');
+                setLocation('');
+                setSelectedCategory('Semua');
+                setSelectedWorkType('Semua');
+                setSelectedStatusKerja('Semua');
+                if (window.location.search) {
+                  window.history.replaceState(null, '', window.location.pathname);
+                }
+              }}
+              title="Atur Ulang Penyaring"
+              className="p-2.5 rounded-2xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-slate-700 transition-all cursor-pointer border border-slate-200 dark:border-slate-700 flex items-center justify-center shrink-0 group"
+            >
+              <RotateCcw size={18} className="group-hover:-rotate-180 transition-transform duration-300" />
+            </button>
           </div>
 
-          <div className="flex flex-wrap items-center gap-3 text-xs font-bold">
-            <span className="text-slate-400 uppercase tracking-wider text-[11px]">{lang.workSystem}</span>
-            {['Semua', 'Remote', 'Hybrid', 'On-site'].map((wt) => (
-              <button
-                key={wt}
-                onClick={() => {
-                  setSelectedWorkType(wt);
-                }}
-                className={`px-4 py-1.5 rounded-full transition-colors cursor-pointer ${selectedWorkType === wt
-                  ? 'bg-[#1A4B9F] text-white shadow-xs'
-                  : 'bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700'
-                  }`}
-              >
-                {wt}
-              </button>
-            ))}
+          {/* Controls Row: Search Input & Dropdowns */}
+          <div className="grid grid-cols-1 md:grid-cols-12 gap-3 items-center">
+            {/* Search Input (6 cols) */}
+            <div className="md:col-span-6 relative">
+              <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+              <input
+                type="text"
+                value={keyword}
+                onChange={(e) => setKeyword(e.target.value)}
+                placeholder="Cari judul posisi, keahlian, atau perusahaan..."
+                className="w-full pl-11 pr-9 py-2.5 bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-2xl text-xs sm:text-sm font-medium text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#1A4B9F] transition-all"
+              />
+              {keyword && (
+                <button
+                  onClick={() => setKeyword('')}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+                >
+                  <X size={15} />
+                </button>
+              )}
+            </div>
 
-            <div className="h-4 w-[1px] bg-slate-200 dark:bg-slate-700 mx-2 hidden sm:block"></div>
+            {/* Dropdown: Sistem Kerja (3 cols) */}
+            <div className="md:col-span-3">
+              <div className="relative">
+                <select
+                  value={selectedWorkType}
+                  onChange={(e) => setSelectedWorkType(e.target.value)}
+                  className="w-full appearance-none px-4 py-2.5 pr-9 bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-2xl text-xs sm:text-sm font-bold text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-[#1A4B9F] cursor-pointer"
+                >
+                  <option value="Semua">Sistem Kerja: Semua</option>
+                  <option value="Remote">Sistem Kerja: Remote</option>
+                  <option value="Hybrid">Sistem Kerja: Hybrid</option>
+                  <option value="On-site">Sistem Kerja: On-site</option>
+                </select>
+                <ChevronDown size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+              </div>
+            </div>
 
-            <span className="text-slate-400 uppercase tracking-wider text-[11px]">{lang.experienceLevel}</span>
-            {['Semua', 'Senior Level', 'Mid Level'].map((exp) => (
-              <button
-                key={exp}
-                onClick={() => {
-                  setSelectedExpLevel(exp);
-                }}
-                className={`px-4 py-1.5 rounded-full transition-colors cursor-pointer ${selectedExpLevel === exp
-                  ? 'bg-[#1A4B9F] text-white shadow-xs'
-                  : 'bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700'
-                  }`}
-              >
-                {exp}
-              </button>
-            ))}
-
-            <button
-              onClick={() => updateUrlParams({ category: selectedCategory, workType: selectedWorkType, expLevel: selectedExpLevel })}
-              className="ml-auto px-5 py-1.5 rounded-full bg-[#1A4B9F] hover:bg-[#133878] text-white font-bold shadow-md transition-all cursor-pointer"
-            >
-              {'Terapkan Filter'}
-            </button>
+            {/* Dropdown: Status Kerja (3 cols) */}
+            <div className="md:col-span-3">
+              <div className="relative">
+                <select
+                  value={selectedStatusKerja}
+                  onChange={(e) => setSelectedStatusKerja(e.target.value)}
+                  className="w-full appearance-none px-4 py-2.5 pr-9 bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-2xl text-xs sm:text-sm font-bold text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-[#1A4B9F] cursor-pointer"
+                >
+                  <option value="Semua">Status Kerja: Semua</option>
+                  <option value="Full Time">Status Kerja: Full Time</option>
+                  <option value="Part Time">Status Kerja: Part Time</option>
+                  <option value="Kontrak">Status Kerja: Kontrak</option>
+                  <option value="Magang">Status Kerja: Magang</option>
+                </select>
+                <ChevronDown size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+              </div>
+            </div>
           </div>
         </div>
 
@@ -869,90 +955,83 @@ function LandingPageContent() {
                   <div
                     key={job.id}
                     onClick={() => setPreviewJobId(job.id)}
-                    className={`bg-white dark:bg-slate-900 rounded-3xl border p-6 sm:p-7 flex flex-col justify-between space-y-5 cursor-pointer hover:shadow-xl transition-all duration-200 relative group ${isSelected ? 'border-[#1A4B9F] shadow-md ring-2 ring-slate-400/20' : 'border-slate-200 dark:border-slate-800'
+                    className={`bg-white dark:bg-slate-900 rounded-2xl border p-6 flex flex-col justify-between space-y-4 cursor-pointer hover:shadow-md transition-all duration-200 relative group ${isSelected ? 'border-[#1A4B9F] shadow-sm ring-1 ring-[#1A4B9F]/30' : 'border-slate-200/90 dark:border-slate-800'
                       }`}
                   >
-                    <div className="space-y-4">
+                    <div className="space-y-3.5">
 
                       {/* Top Header */}
                       <div className="flex items-start justify-between gap-3">
-                        <div className="flex items-center gap-4">
+                        <div className="flex items-center gap-3.5">
                           <img
                             src={job.logo}
                             alt={job.company}
-                            className="w-14 h-14 rounded-2xl object-cover border border-slate-200 dark:border-slate-700 shadow-2xs group-hover:scale-105 transition-transform"
+                            className="w-12 h-12 rounded-xl object-contain border border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800 p-1 shrink-0 group-hover:scale-105 transition-transform"
                           />
-                          <div>
+                          <div className="space-y-0.5">
                             <div className="flex items-center gap-2">
-                              <span className="text-xs font-bold text-slate-500 dark:text-slate-400 block truncate">{job.company}</span>
+                              <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 block truncate">{job.company}</span>
                               {job.isNew && (
-                                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 dark:bg-amber-900/50 dark:text-amber-400 border border-amber-200 dark:border-amber-800">
-                                  {'Loker Terbaru'}
+                                <span className="text-xs font-semibold text-emerald-600 dark:text-emerald-400 shrink-0">
+                                  • Baru
                                 </span>
                               )}
                             </div>
-                            <h3 className="font-bold text-lg text-slate-900 dark:text-slate-200 group-hover:text-[#1A4B9F] dark:group-hover:text-white transition-colors line-clamp-1">
+                            <h3 className="font-bold text-base sm:text-lg text-slate-900 dark:text-white line-clamp-1">
                               {job.title}
                             </h3>
                           </div>
                         </div>
 
-                        <button
-                          onClick={(e) => { e.stopPropagation(); toggleSaveJob(job.id); }}
-                          className={`p-2.5 rounded-xl border transition-colors cursor-pointer ${isSaved ? 'bg-slate-100 dark:bg-slate-800 border-slate-300 dark:border-slate-700 text-slate-900 dark:text-slate-200' : 'bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200'
-                            }`}
+                        <Link
+                          href="/applicant/login"
+                          onClick={(e) => e.stopPropagation()}
+                          title="Simpan Lowongan"
+                          className="p-2 rounded-xl border transition-colors cursor-pointer bg-slate-50 dark:bg-slate-800/60 border-slate-200/70 dark:border-slate-700/70 text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-700"
                         >
-                          <Bookmark size={18} className="fill-current" />
-                        </button>
+                          <Bookmark size={18} />
+                        </Link>
                       </div>
 
-                      {/* Kuota Lowongan Badge */}
-                      <div className="flex items-center justify-between flex-wrap gap-2">
-                        <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white text-xs font-bold">
-                          <Users size={15} className="text-slate-900 dark:text-slate-200" />
-                          <span>{'Kuota:'} {job.openingsCount} {'Posisi'}</span>
-                        </div>
-                      </div>
-
-                      {/* Location & Salary */}
+                      {/* Location, WorkType & Salary Metadata */}
                       <div className="space-y-1.5 text-xs sm:text-sm text-slate-600 dark:text-slate-300">
-                        <div className="flex items-center gap-2">
-                          <MapPin size={16} className="text-slate-400 shrink-0" />
-                          <span>{job.location} • <strong className="text-slate-700 dark:text-slate-200">{job.workType}</strong> ({job.experienceLevel} • {job.educationLevel})</span>
+                        <div className="flex items-center gap-2 font-medium">
+                          <MapPin size={15} className="text-slate-400 shrink-0" />
+                          <span>{job.location} • <strong className="text-slate-800 dark:text-slate-200">{job.workType}</strong> ({job.experienceLevel} • {job.educationLevel})</span>
                         </div>
-                        <div className="flex items-center gap-2">
-                          <DollarSign size={16} className="text-slate-400 shrink-0" />
-                          <span className="font-semibold text-slate-900 dark:text-slate-200">{job.salary}</span>
+                        <div className="flex items-center gap-2 font-medium">
+                          <DollarSign size={15} className="text-slate-400 shrink-0" />
+                          <span className="font-bold text-slate-900 dark:text-slate-100">{job.salary}</span>
+                          <span className="text-slate-300 dark:text-slate-700">•</span>
+                          <span className="text-slate-500 text-xs">{job.openingsCount} Kuota Posisi</span>
                         </div>
                       </div>
 
-                      {/* Benefits Pills */}
-                      <div className="flex flex-wrap gap-2 pt-1">
-                        {job.benefits.map((b, i) => (
-                          <span key={i} className="text-[11px] font-semibold text-slate-900 dark:text-white bg-slate-100 dark:bg-slate-800 px-2.5 py-0.5 rounded-full border border-slate-300 dark:border-slate-700">
-                            ✓ {b}
-                          </span>
-                        ))}
-                      </div>
+                      {/* Benefits Tag Chips (Clean International Style - No checkmark, No button appearance) */}
+                      {job.benefits && job.benefits.length > 0 && (
+                        <div className="flex flex-wrap gap-1.5 pt-1">
+                          {job.benefits.map((b: string, i: number) => (
+                            <span key={i} className="text-xs font-normal text-slate-600 dark:text-slate-300 bg-slate-100/80 dark:bg-slate-800/60 px-3 py-1 rounded-lg border border-slate-200/60 dark:border-slate-700/60">
+                              {b}
+                            </span>
+                          ))}
+                        </div>
+                      )}
 
                     </div>
 
                     {/* Bottom CTA */}
-                    <div className="pt-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between gap-2 text-xs sm:text-sm">
-                      <span className="text-slate-400 font-medium">{language === 'en' ? 'Published:' : 'Diterbitkan:'} {job.publishDate} <span className="text-slate-300 mx-1">•</span> {job.postedAgo}</span>
+                    <div className="pt-3.5 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between gap-2 text-xs">
+                      <span className="text-slate-400 font-medium">
+                        {language === 'en' ? 'Published:' : 'Diterbitkan:'} {job.publishDate} <span className="text-slate-300 dark:text-slate-700 mx-1">•</span> {job.postedAgo}
+                      </span>
 
                       <div className="flex items-center gap-3">
                         <Link
                           href="/applicant/login"
-                          className="px-4 py-2 rounded-full border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 font-bold hover:bg-slate-50 dark:hover:bg-slate-800 text-xs text-center inline-block"
+                          className="inline-flex items-center justify-center px-5 py-2 rounded-xl bg-[#1A4B9F] hover:bg-[#133878] text-white font-bold text-xs shadow-xs transition-colors"
                         >
-                          {language === 'en' ? 'View Details' : 'Lihat Detail'}
-                        </Link>
-                        <Link
-                          href="/applicant/login"
-                          className="inline-flex items-center gap-2 px-5 py-2 rounded-full bg-[#1A4B9F] hover:bg-[#133878] text-white font-bold text-xs shadow-xs"
-                        >
-                          {language === 'en' ? 'Apply Now' : 'Lamar'} <ArrowRight size={15} className="text-white" />
+                          {language === 'en' ? 'Apply Now' : 'Lamar'}
                         </Link>
                       </div>
                     </div>
@@ -964,7 +1043,7 @@ function LandingPageContent() {
                 <Search size={44} className="text-slate-300 mx-auto" />
                 <h3 className="text-base font-bold text-slate-900 dark:text-slate-200">{lang.noJobsFound}</h3>
                 <button
-                  onClick={() => { setKeyword(''); setLocation(''); setSelectedCategory('Semua'); setSelectedWorkType('Semua'); setSelectedExpLevel('Semua'); }}
+                  onClick={() => { setKeyword(''); setLocation(''); setSelectedCategory('Semua'); setSelectedWorkType('Semua'); setSelectedStatusKerja('Semua'); if (window.location.search) { window.history.replaceState(null, '', window.location.pathname); } }}
                   className="px-5 py-2.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white text-xs font-bold cursor-pointer"
                 >
                   {lang.resetFilterBtn}
@@ -1057,101 +1136,144 @@ function LandingPageContent() {
         </div>
       </section>
 
-      {/* Success Candidate Stories (Bento Box Style) */}
-      <section id="success-stories" className="bg-slate-50 dark:bg-slate-950 border-t border-b border-slate-200 dark:border-slate-800 py-24 transition-colors">
-        <div className="max-w-[1200px] mx-auto px-6 sm:px-10 space-y-12">
-          
-          <div className="text-center space-y-4 max-w-2xl mx-auto">
-            
-            <h2 className="text-3xl sm:text-4xl font-bold text-slate-900 dark:text-slate-100">
-              {lang.hiredInDaysTitle}
+      {/* Success Candidate Stories (Exact 1-to-1 Reference Image Concept) */}
+      <section id="success-stories" className="bg-white dark:bg-slate-950 py-16 sm:py-20 border-t border-b border-slate-100 dark:border-slate-800 transition-colors overflow-hidden">
+        <div className="max-w-[960px] mx-auto px-6 sm:px-8 space-y-12">
+
+          {/* Section Header */}
+          <div className="text-center space-y-2 max-w-xl mx-auto">
+            <h2 className="text-2xl sm:text-3xl lg:text-[38px] font-bold text-slate-900 dark:text-white tracking-tight leading-tight">
+              {language === 'en' ? 'A calmer, clearer job search.' : 'Cari kerja lebih tenang & transparan.'}
             </h2>
-            <p className="text-slate-600 dark:text-slate-400">
-              {lang.hiredInDaysSub}
+            <p className="text-sm sm:text-base text-slate-500 dark:text-slate-400 font-normal leading-relaxed">
+              {language === 'en' 
+                ? 'A few notes from people using AI-RecruitPro to make their next move with more confidence.'
+                : 'Pengalaman dari mereka yang menggunakan AI-RecruitPro untuk melangkah ke karier berikutnya dengan lebih percaya diri.'}
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-4">
-            {successStories.slice(0, 3).map((story, idx) => (
-              <div key={idx} className="w-full p-8 rounded-3xl bg-white dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 space-y-6 shadow-sm hover:shadow-xl transition-all duration-300 relative flex flex-col justify-between min-h-[250px]">
-                <MessageSquareQuote size={48} className="text-slate-100 dark:text-slate-700 absolute right-6 top-6 z-0" />
-                <p className="text-sm sm:text-base text-slate-800 dark:text-slate-200 italic leading-relaxed font-medium z-10 relative">
-                  "{story.comment}"
-                </p>
+          {/* 3 Focus Cards (Compact Squarish Proportions Matching Reference) */}
+          <div className="flex flex-col md:flex-row items-center justify-center gap-4 sm:gap-5 lg:gap-6 pt-4">
 
-                <div className="flex items-end justify-between pt-6 border-t border-slate-100 dark:border-slate-700/50 mt-auto z-10 relative">
-                  <div className="flex items-center gap-4">
-                    <img src={story.avatar} alt={story.name} className="w-12 h-12 rounded-full object-cover shadow-sm border-2 border-white dark:border-slate-800" />
-                    <div>
-                      <h4 className="font-bold text-sm text-slate-900 dark:text-white">{story.name}</h4>
-                      <span className="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 block mt-0.5 leading-tight">{story.role}</span>
-                    </div>
-                  </div>
-
-                  <div className="flex flex-col items-end">
-                    <span className="text-[9px] uppercase font-bold text-slate-400 mb-1">{language === 'en' ? 'Hired In' : 'Diproses'}</span>
-                    <span className="text-xs font-bold text-[#1A4B9F] dark:text-blue-400 bg-[#E8F1FC] dark:bg-blue-900/30 px-3 py-1 rounded-full whitespace-nowrap">
-                      {story.timeDays}
-                    </span>
-                  </div>
-                </div>
+            {/* Left Card */}
+            <div className="w-full md:w-[270px] lg:w-[285px] shrink-0 bg-[#F8FAFC] dark:bg-slate-900/60 border border-slate-200/70 dark:border-slate-800 rounded-[22px] p-6 flex flex-col justify-between min-h-[190px] space-y-5">
+              <p className="text-slate-700 dark:text-slate-300 text-sm leading-relaxed font-normal">
+                {language === 'en' 
+                  ? '"The job matching process is super transparent. I didn\'t have to wait weeks just to hear back!"'
+                  : '"Proses pencocokan kerjanya sangat transparan. Saya tidak perlu menunggu berminggu-minggu hanya untuk kabar panggilan kerja!"'}
+              </p>
+              <div className="space-y-0.5">
+                <h4 className="font-bold text-slate-900 dark:text-white text-sm">Rian Pratama</h4>
+                <p className="text-xs text-slate-400 font-medium">Staf Administrasi</p>
               </div>
-            ))}
-          </div>
+            </div>
 
-          <div className="flex justify-center pt-6">
-            <button className="group flex items-center gap-3 px-8 py-3.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-full font-bold text-sm text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:border-slate-300 dark:hover:border-slate-500 transition-all shadow-sm hover:shadow-md cursor-pointer">
-              {language === 'en' ? 'View 500+ Success Stories' : 'Lihat 500+ Kisah Sukses Lainnya'}
-              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-slate-400 group-hover:text-[#1A4B9F] dark:group-hover:text-blue-400 group-hover:translate-x-1 transition-transform">
-                <path d="M5 12h14"></path>
-                <path d="m12 5 7 7-7 7"></path>
-              </svg>
-            </button>
+            {/* Middle Card (Hero Card with Circular Blue Quote Badge) */}
+            <div className="w-full md:w-[350px] lg:w-[370px] shrink-0 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-[26px] p-7 sm:p-8 flex flex-col justify-between min-h-[240px] space-y-5 shadow-[0_16px_40px_rgba(0,0,0,0.06)] dark:shadow-none text-center relative z-10">
+              {/* Circular Blue Quote Icon Badge */}
+              <div className="w-11 h-11 rounded-full bg-[#3b82f6] text-white flex items-center justify-center mx-auto -mt-11 sm:-mt-12 shadow-md shadow-blue-500/20 shrink-0">
+                <Quote size={18} className="fill-current text-white" />
+              </div>
+
+              <p className="text-slate-900 dark:text-slate-100 text-base sm:text-lg leading-relaxed font-medium px-2">
+                {language === 'en'
+                  ? '"The virtual video interview feature gave me more confidence to showcase my communication skills than just a flat CV."'
+                  : '"Fitur wawancara video virtual memberikan rasa percaya diri lebih untuk menunjukkan kemampuan komunikasi saya dibanding sekadar CV."'}
+              </p>
+
+              <div className="space-y-0.5">
+                <h4 className="font-bold text-slate-900 dark:text-white text-sm sm:text-base">Siti Rahmawati</h4>
+                <p className="text-xs text-slate-400 font-medium">
+                  Marketing Executive
+                </p>
+              </div>
+            </div>
+
+            {/* Right Card */}
+            <div className="w-full md:w-[270px] lg:w-[285px] shrink-0 bg-[#F8FAFC] dark:bg-slate-900/60 border border-slate-200/70 dark:border-slate-800 rounded-[22px] p-6 flex flex-col justify-between min-h-[190px] space-y-5">
+              <p className="text-slate-700 dark:text-slate-300 text-sm leading-relaxed font-normal">
+                {language === 'en'
+                  ? '"The AI analysis of my technical test was spot on and incredibly fast. It felt like they truly understood my capabilities."'
+                  : '"Analisis AI dari tes teknikal saya sangat akurat dan luar biasa cepat. Rasanya mereka benar-benar memahami kapasitas saya."'}
+              </p>
+              <div className="space-y-0.5">
+                <h4 className="font-bold text-slate-900 dark:text-white text-sm">Kevin Jonathan</h4>
+                <p className="text-xs text-slate-400 font-medium">Software Engineer</p>
+              </div>
+            </div>
+
           </div>
 
         </div>
       </section>
 
-      {/* FAQ Section (Clean Naked Accordion) */}
-      <section className="bg-white dark:bg-slate-950 py-12 border-t border-slate-100 dark:border-slate-800 transition-colors">
-        <div className="max-w-3xl mx-auto px-6 sm:px-10 space-y-10">
-          
-          <div className="text-center space-y-3">
+      {/* FAQ Section (Exact 2-Column Split UI/UX & Typography matching Reference Image) */}
+      <section id="faq" className="bg-white dark:bg-slate-950 py-16 sm:py-24 border-t border-slate-100 dark:border-slate-800 transition-colors">
+        <div className="max-w-[1350px] mx-auto px-6 sm:px-10 lg:px-14">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-20 items-start">
             
-            <h2 className="text-3xl sm:text-4xl font-extrabold text-slate-900 dark:text-white tracking-tight">
-              {lang.faqTitle}
-            </h2>
-            <p className="text-base sm:text-lg text-slate-600 dark:text-slate-300 max-w-xl mx-auto font-normal">
-              {language === 'en' 
-                ? 'Still confused? Find the answers below.' 
-                : 'Masih bingung? Temukan jawabannya di bawah ini.'}
-            </p>
-          </div>
+            {/* Left Column (Heading, Badge & Support Link) */}
+            <div className="lg:col-span-5 space-y-6">
+              {/* Pill Badge */}
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full border border-slate-200/90 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-500 dark:text-slate-400 text-xs font-medium tracking-wide shadow-2xs">
+                <SlidersHorizontal size={12} className="text-slate-400" />
+                <span>FAQ</span>
+              </div>
 
-          <div className="border-t border-slate-200 dark:border-slate-800">
-            {faqItems.map((faq, idx) => {
-              const isOpen = openFaqIndex === idx;
-              return (
-                <div key={idx} className="border-b border-slate-200 dark:border-slate-800">
-                  <button
-                    onClick={() => setOpenFaqIndex(isOpen ? null : idx)}
-                    className="w-full py-4 sm:py-5 text-left font-bold text-slate-900 dark:text-white flex items-start justify-between gap-6 cursor-pointer hover:opacity-70 transition-opacity"
-                  >
-                    <span className="text-base sm:text-lg leading-snug">{faq.q}</span>
-                    <span className={`flex-shrink-0 transition-transform duration-300 mt-0.5 ${isOpen ? 'rotate-180' : ''}`}>
-                      <ChevronDown size={22} strokeWidth={2.5} className="text-slate-900 dark:text-white" />
-                    </span>
-                  </button>
-                  <div className={`overflow-hidden transition-all duration-300 ease-in-out ${isOpen ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'}`}>
-                    <div className="pb-8 pr-12 text-base sm:text-lg text-slate-700 dark:text-slate-300 leading-relaxed font-normal">
-                      {faq.a}
+              {/* Title */}
+              <h2 className="text-3xl sm:text-4xl lg:text-[42px] font-bold text-slate-900 dark:text-white tracking-[-0.02em] leading-[1.12]">
+                {language === 'en' ? 'Frequently Asked Questions' : 'Pertanyaan yang sering ditanyakan'}
+              </h2>
+
+              {/* Subtitle */}
+              <p className="text-sm sm:text-base text-slate-500 dark:text-slate-400 leading-relaxed font-normal max-w-md">
+                {language === 'en'
+                  ? 'Still confused? Find the answers below.'
+                  : 'Masih bingung? Temukan jawabannya di bawah ini.'}
+              </p>
+
+              {/* Support Link */}
+              <div className="pt-3">
+                <a
+                  href="mailto:support@airecruitpro.com"
+                  className="inline-flex items-center gap-1.5 text-blue-500 dark:text-blue-400 font-medium text-sm sm:text-base hover:text-blue-600 dark:hover:text-blue-300 transition-colors group"
+                >
+                  <span>{language === 'en' ? 'Contact support' : 'Hubungi tim support'}</span>
+                  <ArrowRight size={16} className="transition-transform group-hover:translate-x-1" />
+                </a>
+              </div>
+            </div>
+
+            {/* Right Column (Accordion List) */}
+            <div className="lg:col-span-7">
+              <div className="border-t border-slate-200/80 dark:border-slate-800 divide-y divide-slate-200/80 dark:divide-slate-800">
+                {faqItems.map((faq, idx) => {
+                  const isOpen = openFaqIndex === idx;
+                  return (
+                    <div key={idx} className="transition-colors">
+                      <button
+                        onClick={() => setOpenFaqIndex(isOpen ? null : idx)}
+                        className="w-full py-6 sm:py-7 text-left font-semibold text-slate-900 dark:text-white flex items-center justify-between gap-6 cursor-pointer hover:text-blue-600 dark:hover:text-blue-400 transition-colors group"
+                      >
+                        <span className="text-[17px] sm:text-[19px] leading-snug font-semibold text-slate-900 dark:text-slate-100 tracking-[-0.01em]">
+                          {faq.q}
+                        </span>
+                        <span className={`flex-shrink-0 transition-transform duration-300 ${isOpen ? 'rotate-180 text-blue-500 dark:text-blue-400' : 'text-slate-400 dark:text-slate-500'}`}>
+                          <ChevronDown size={18} strokeWidth={1.5} />
+                        </span>
+                      </button>
+                      <div className={`overflow-hidden transition-all duration-300 ease-in-out ${isOpen ? 'max-h-96 opacity-100 pb-6' : 'max-h-0 opacity-0 pb-0'}`}>
+                        <p className="text-sm sm:text-base text-slate-500 dark:text-slate-400 leading-relaxed font-normal">
+                          {faq.a}
+                        </p>
+                      </div>
                     </div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
+                  );
+                })}
+              </div>
+            </div>
 
+          </div>
         </div>
       </section>
 
