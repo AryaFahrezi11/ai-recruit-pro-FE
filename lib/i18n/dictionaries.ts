@@ -613,7 +613,6 @@ export const dictionaries = {
         loginNow: 'Masuk di sini',
         backToHome: 'Kembali ke Beranda',
         processing: 'Memproses...',
-        help: 'Bantuan',
       },
     },
     employerAuth: {

@@ -26,6 +26,7 @@ import {
   ArrowLeft,
 } from 'lucide-react';
 import { api, parseErrorMessage } from '@/lib/api';
+import OtpVerificationCard from '@/components/auth/OtpVerificationCard';
 
 export default function PelamarRegisterPage() {
   const router = useRouter();
@@ -42,6 +43,8 @@ export default function PelamarRegisterPage() {
   const [error, setError] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
+  const [agreedConsent, setAgreedConsent] = useState(false);
+  const [isCheckingEmail, setIsCheckingEmail] = useState(false);
 
   // Temporary auth token from backend
   const [tempToken, setTempToken] = useState('');
@@ -73,10 +76,30 @@ export default function PelamarRegisterPage() {
   const strength = checkPasswordStrength(password);
   const isValidPassword = Object.values(strength).every(Boolean);
 
+  const handleCheckEmail = async () => {
+    if (!email || !email.includes('@')) return;
+    setIsCheckingEmail(true);
+    try {
+      const res = await api.get(`/auth/check-email?email=${encodeURIComponent(email.trim())}`);
+      if (res.exists && res.is_active) {
+        setError('Alamat email ini sudah terdaftar sebagai akun aktif. Silakan langsung masuk ke akun Anda.');
+      } else if (error.toLowerCase().includes('terdaftar')) {
+        setError('');
+      }
+    } catch {
+      // ignore network errors on passive check
+    } finally {
+      setIsCheckingEmail(false);
+    }
+  };
+
   const handleRegisterSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email || !email.includes('@')) {
       setError('Masukkan alamat email yang valid.');
+      return;
+    }
+    if (error && error.includes('sudah terdaftar sebagai akun aktif')) {
       return;
     }
     if (!isValidPassword) {
@@ -85,6 +108,10 @@ export default function PelamarRegisterPage() {
     }
     if (password !== confirmPassword) {
       setError('Konfirmasi password tidak cocok. Silakan periksa kembali.');
+      return;
+    }
+    if (!agreedConsent) {
+      setError('Anda harus menyetujui persetujuan pemrosesan dan penyimpanan data diri untuk melanjutkan pendaftaran.');
       return;
     }
 
@@ -107,11 +134,6 @@ export default function PelamarRegisterPage() {
       setStep(2);
     } catch (err: any) {
       const errMsg = parseErrorMessage(err);
-      if (errMsg.toLowerCase().includes('terdaftar') || errMsg.toLowerCase().includes('already') || errMsg.toLowerCase().includes('exist')) {
-        setError('');
-        setStep(2);
-        return;
-      }
       setError(errMsg);
     } finally {
       setIsLoading(false);
@@ -178,9 +200,8 @@ export default function PelamarRegisterPage() {
     }
   };
 
-  const handleVerifyOtp = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const enteredOtp = otpCode.join('');
+  const handleVerifyOtp = async (enteredOtpOrEvent?: any) => {
+    const enteredOtp = typeof enteredOtpOrEvent === 'string' ? enteredOtpOrEvent : otpCode.join('');
     if (enteredOtp.length < 6) {
       setOtpError('Harap masukkan 6 digit kode OTP yang dikirimkan ke email Anda.');
       return;
@@ -267,20 +288,19 @@ export default function PelamarRegisterPage() {
 
             <form onSubmit={handleRegisterSubmit} className="space-y-4">
               <div className="space-y-1">
-                <div className="flex items-center justify-between text-xs font-semibold text-slate-700 dark:text-slate-300">
-                  <label htmlFor="email">{t.pelamar.auth.emailLabel}</label>
-                  <button type="button" className="text-[#1A4B9F] dark:text-blue-400 hover:underline flex items-center gap-1">
-                    <HelpCircle size={14} /> {t.pelamar.auth.help}
-                  </button>
-                </div>
-
                 <div className="relative flex items-center">
                   <Mail size={18} className="absolute left-4 text-slate-400 pointer-events-none" />
                   <input
                     id="email"
                     type="email"
                     value={email}
-                    onChange={(e) => { setEmail(e.target.value); setError(''); }}
+                    onChange={(e) => {
+                      setEmail(e.target.value);
+                      if (error.toLowerCase().includes('email') || error.toLowerCase().includes('terdaftar')) {
+                        setError('');
+                      }
+                    }}
+                    onBlur={handleCheckEmail}
                     onKeyDown={(e) => {
                       if (e.key === 'Enter') {
                         e.preventDefault();
@@ -288,9 +308,18 @@ export default function PelamarRegisterPage() {
                       }
                     }}
                     placeholder={t.pelamar.auth.emailPlaceholder}
-                    className="w-full pl-12 pr-4 py-3 bg-white dark:bg-slate-950 text-slate-900 dark:text-white border-2 border-slate-300 dark:border-slate-700 focus:border-[#1A4B9F] dark:focus:border-blue-400 focus:ring-2 focus:ring-blue-100 dark:focus:ring-blue-900 rounded-2xl text-sm outline-none transition-all"
+                    className={`w-full pl-12 pr-4 py-3 bg-white dark:bg-slate-950 text-slate-900 dark:text-white border-2 ${
+                      error && (error.toLowerCase().includes('email') || error.toLowerCase().includes('terdaftar'))
+                        ? 'border-red-400 dark:border-red-600 focus:border-red-500'
+                        : 'border-slate-300 dark:border-slate-700 focus:border-[#1A4B9F] dark:focus:border-blue-400'
+                    } focus:ring-2 focus:ring-blue-100 dark:focus:ring-blue-900 rounded-2xl text-sm outline-none transition-all`}
                   />
                 </div>
+                {isCheckingEmail && (
+                  <p className="text-[11px] text-slate-400 dark:text-slate-500 mt-1 pl-1">
+                    Memeriksa ketersediaan email...
+                  </p>
+                )}
               </div>
 
               <div className="space-y-1">
@@ -382,10 +411,36 @@ export default function PelamarRegisterPage() {
                 </div>
               </div>
 
+              {/* Checkbox Persetujuan Pemrosesan & Penyimpanan Data Diri */}
+              <div className="flex items-start gap-2.5 pt-2">
+                <input
+                  id="register-consent"
+                  type="checkbox"
+                  checked={agreedConsent}
+                  onChange={(e) => {
+                    setAgreedConsent(e.target.checked);
+                    if (e.target.checked && error.includes('persetujuan')) setError('');
+                  }}
+                  className="mt-1 w-4 h-4 text-[#1A4B9F] rounded border-slate-300 dark:border-slate-700 focus:ring-[#1A4B9F] dark:focus:ring-blue-400 cursor-pointer shrink-0"
+                />
+                <label htmlFor="register-consent" className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed cursor-pointer select-none">
+                  Saya menyetujui pemrosesan dan penyimpanan data diri (seperti biodata, riwayat pendidikan, pengalaman kerja, dan berkas CV) untuk keperluan melengkapi CV dan lamaran pekerjaan di platform AI-RecruitPro.
+                </label>
+              </div>
+
               {error && (
                 <div className="p-3.5 rounded-2xl bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300 text-xs font-semibold flex items-start gap-2.5 leading-relaxed">
                   <AlertCircle size={18} className="shrink-0 mt-0.5" />
-                  <span>{error}</span>
+                  <div className="space-y-1">
+                    <span>{error}</span>
+                    {error.toLowerCase().includes('terdaftar') && (
+                      <div>
+                        <Link href="/applicant/login" className="font-bold underline text-[#1A4B9F] dark:text-blue-400">
+                          Masuk ke Akun Anda di sini &rarr;
+                        </Link>
+                      </div>
+                    )}
+                  </div>
                 </div>
               )}
 
@@ -393,7 +448,7 @@ export default function PelamarRegisterPage() {
                 id="submit-btn"
                 type="submit"
                 disabled={isLoading}
-                className="w-full py-3 rounded-full bg-[#1A4B9F] hover:bg-[#133878] active:bg-[#0f2a5a] text-white font-semibold text-sm shadow-sm transition-all duration-200 disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer"
+                className="w-full py-3.5 rounded-full bg-[#1A4B9F] hover:bg-[#133878] active:bg-[#0f2a5a] text-white font-semibold text-sm shadow-sm transition-all duration-200 disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer"
               >
                 {isLoading ? t.pelamar.auth.processing : t.pelamar.auth.signUp}
               </button>
@@ -408,109 +463,20 @@ export default function PelamarRegisterPage() {
           </div>
         )}
 
-        {/* STEP 2: Ultra Clean Enterprise Email Verification */}
+        {/* STEP 2: Reusable Enterprise Email Verification Template */}
         {step === 2 && (
-          <div className="w-full max-w-md bg-white dark:bg-slate-900 rounded-3xl p-8 sm:p-10 shadow-2xl border border-slate-200/80 dark:border-slate-800 space-y-7 animate-in zoom-in-95 duration-200 mx-auto text-center">
-            
-            {/* Clean Mail Icon Badge */}
-            <div className="mx-auto w-14 h-14 bg-blue-50 dark:bg-blue-950/80 border border-blue-100 dark:border-blue-900/80 rounded-2xl flex items-center justify-center text-[#1A4B9F] dark:text-blue-400 shadow-sm">
-              <Mail size={26} />
-            </div>
-
-            {/* Header & Email */}
-            <div className="space-y-2">
-              <h2 className="text-2xl font-extrabold text-slate-900 dark:text-white tracking-tight">
-                Verifikasi Email
-              </h2>
-              <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed max-w-xs mx-auto">
-                Masukkan 6-digit kode OTP yang dikirim ke{' '}
-                <span className="font-semibold text-slate-900 dark:text-white">{email}</span>
-                <button
-                  type="button"
-                  onClick={() => { setStep(1); setOtpError(''); }}
-                  className="text-[#1A4B9F] dark:text-blue-400 hover:underline font-semibold text-xs ml-1"
-                >
-                  (Ubah)
-                </button>
-              </p>
-            </div>
-
-            <form onSubmit={handleVerifyOtp} className="space-y-6">
-              {/* 3 x 3 Split OTP Inputs */}
-              <div className="flex justify-center items-center gap-2">
-                <div className="flex gap-1.5 sm:gap-2">
-                  {otpCode.slice(0, 3).map((digit, idx) => (
-                    <input
-                      key={idx}
-                      id={`pelamar-otp-${idx}`}
-                      type="text"
-                      inputMode="numeric"
-                      maxLength={1}
-                      value={digit}
-                      onChange={(e) => handleOtpChange(idx, e.target.value)}
-                      onKeyDown={(e) => handleOtpKeyDown(idx, e)}
-                      onPaste={handleOtpPaste}
-                      className="w-11 sm:w-12 h-13 sm:h-14 text-center text-xl font-bold font-mono text-slate-900 dark:text-white bg-slate-50 dark:bg-slate-950 border-2 border-slate-200 dark:border-slate-800 focus:border-[#1A4B9F] dark:focus:border-blue-400 focus:bg-white dark:focus:bg-slate-900 rounded-xl outline-none transition-all shadow-sm"
-                      autoFocus={idx === 0}
-                    />
-                  ))}
-                </div>
-                <span className="text-slate-300 dark:text-slate-700 font-light text-xl select-none px-0.5">—</span>
-                <div className="flex gap-1.5 sm:gap-2">
-                  {otpCode.slice(3, 6).map((digit, idx) => {
-                    const realIdx = idx + 3;
-                    return (
-                      <input
-                        key={realIdx}
-                        id={`pelamar-otp-${realIdx}`}
-                        type="text"
-                        inputMode="numeric"
-                        maxLength={1}
-                        value={digit}
-                        onChange={(e) => handleOtpChange(realIdx, e.target.value)}
-                        onKeyDown={(e) => handleOtpKeyDown(realIdx, e)}
-                        onPaste={handleOtpPaste}
-                        className="w-11 sm:w-12 h-13 sm:h-14 text-center text-xl font-bold font-mono text-slate-900 dark:text-white bg-slate-50 dark:bg-slate-950 border-2 border-slate-200 dark:border-slate-800 focus:border-[#1A4B9F] dark:focus:border-blue-400 focus:bg-white dark:focus:bg-slate-900 rounded-xl outline-none transition-all shadow-sm"
-                      />
-                    );
-                  })}
-                </div>
-              </div>
-
-              {otpError && (
-                <div className="p-3 rounded-xl bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-300 text-xs font-medium text-center">
-                  {otpError}
-                </div>
-              )}
-
-              {/* Primary Action Button */}
-              <button
-                type="submit"
-                disabled={isLoading || otpCode.join('').length < 6}
-                className="w-full py-3.5 rounded-xl bg-[#1A4B9F] hover:bg-[#133878] active:bg-[#0f2a5a] text-white font-bold text-sm shadow-md hover:shadow-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
-              >
-                {isLoading ? 'Memverifikasi...' : 'Verifikasi Email'}
-              </button>
-
-              {/* Footer Resend */}
-              <div className="pt-2 text-xs text-slate-500 dark:text-slate-400 border-t border-slate-100 dark:border-slate-800">
-                <span>Belum menerima kode? </span>
-                <button
-                  type="button"
-                  onClick={handleResendOtp}
-                  disabled={resendTimer > 0 || isResending}
-                  className="text-[#1A4B9F] dark:text-blue-400 font-bold hover:underline disabled:opacity-50 disabled:no-underline disabled:cursor-not-allowed"
-                >
-                  {isResending
-                    ? 'Mengirim...'
-                    : resendTimer > 0
-                    ? `Kirim ulang (${resendTimer}s)`
-                    : 'Kirim Ulang Kode'}
-                </button>
-              </div>
-
-            </form>
-          </div>
+          <OtpVerificationCard
+            email={email}
+            onVerify={handleVerifyOtp}
+            onResend={handleResendOtp}
+            onBack={() => { setStep(1); setOtpError(''); }}
+            backButtonText="(Ubah)"
+            isLoading={isLoading}
+            error={otpError}
+            buttonText="Verifikasi Email"
+            inputPrefix="pelamar-reg-otp"
+            initialCountdown={resendTimer}
+          />
         )}
 
       </main>
