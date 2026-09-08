@@ -214,7 +214,7 @@ function CompaniesPageContent() {
       {/* -------------------- NAVBAR (ONLY IF NOT IN APPLICANT ROUTE) -------------------- */}
       {!isApplicantRoute && (
         <header className="sticky top-0 z-50 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 shadow-2xs transition-colors">
-          <div className="w-full max-w-[1400px] mx-auto px-4 sm:px-8 lg:px-12 h-20 flex items-center justify-between">
+          <div className="w-full max-w-[1440px] mx-auto px-6 sm:px-10 lg:px-14 h-20 flex items-center justify-between">
             <Link href="/" className="flex items-center gap-3 group">
               <Image
                 src="/Logo Ai Recruit Pro..png"
@@ -236,7 +236,7 @@ function CompaniesPageContent() {
               <Link href="/#categories-section" className="hover:text-[#1A4B9F] transition-colors">
                 Kategori Pekerjaan
               </Link>
-              <Link href="/companies" className="text-slate-900 dark:text-white font-extrabold relative after:content-[''] after:absolute after:bottom-[-29px] after:left-0 after:right-0 after:h-0.5 after:bg-slate-900 dark:after:bg-white">
+              <Link href="/companies" className="text-[#1A4B9F] font-bold relative after:content-[''] after:absolute after:bottom-[-29px] after:left-0 after:right-0 after:h-1 after:bg-[#1A4B9F]">
                 Perusahaan
               </Link>
               <Link href="/#success-stories" className="hover:text-[#1A4B9F] transition-colors">
@@ -244,21 +244,21 @@ function CompaniesPageContent() {
               </Link>
             </nav>
 
-            <div className="flex items-center gap-3 sm:gap-4">
+            <div className="flex items-center gap-2.5 sm:gap-3">
               <Link
-                href="/applicant/login"
-                className="hidden sm:inline-flex px-4 py-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 text-sm font-bold rounded-lg transition-colors items-center gap-1.5 border border-slate-200 dark:border-slate-700"
+                href="/perusahaan/login"
+                className="hidden sm:inline-flex px-3.5 py-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 text-xs font-bold rounded-xl transition-all items-center gap-1.5 border border-slate-200 dark:border-slate-700 shrink-0"
               >
-                <User size={15} />
-                <span>Masuk</span>
+                <Building2 size={14} />
+                <span>Untuk Perusahaan</span>
               </Link>
 
               <Link
-                href="/perusahaan/login"
-                className="hidden sm:inline-flex px-4 py-2 bg-[#1A4B9F] hover:bg-[#133878] text-white text-sm font-bold rounded-lg transition-colors items-center gap-1.5 shadow-2xs"
+                href="/applicant/login"
+                className="hidden sm:inline-flex px-4 py-2 bg-[#1A4B9F] hover:bg-[#133878] text-white text-xs font-bold rounded-xl transition-all items-center gap-1.5 shrink-0 shadow-2xs"
               >
-                <Building2 size={15} />
-                <span>Untuk Perusahaan</span>
+                <User size={14} />
+                <span>Masuk Pelamar</span>
               </Link>
 
               <button

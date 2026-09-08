@@ -77,21 +77,21 @@ export default function AboutPage() {
           </nav>
 
           {/* Right Action Controls */}
-          <div className="flex items-center gap-3 sm:gap-4">
+          <div className="flex items-center gap-2.5 sm:gap-3">
             <Link
-              href="/applicant/login"
-              className="hidden sm:inline-flex px-4 py-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 text-sm font-bold rounded-lg transition-colors items-center gap-1.5 border border-slate-200 dark:border-slate-700"
+              href="/perusahaan/login"
+              className="hidden sm:inline-flex px-3.5 py-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 text-xs font-bold rounded-xl transition-all items-center gap-1.5 border border-slate-200 dark:border-slate-700"
             >
-              <User size={15} />
-              <span>Masuk</span>
+              <Building2 size={14} />
+              <span>Untuk Perusahaan</span>
             </Link>
 
             <Link
-              href="/perusahaan/login"
-              className="hidden sm:inline-flex px-4 py-2 bg-[#1A4B9F] hover:bg-[#133878] text-white text-sm font-bold rounded-lg transition-colors items-center gap-1.5 shadow-2xs"
+              href="/applicant/login"
+              className="hidden sm:inline-flex px-4 py-2 bg-[#1A4B9F] hover:bg-[#133878] text-white text-xs font-bold rounded-xl transition-all items-center gap-1.5 shadow-2xs"
             >
-              <Building2 size={15} />
-              <span>Untuk Perusahaan</span>
+              <User size={14} />
+              <span>Masuk Pelamar</span>
             </Link>
 
             {/* Mobile Menu Toggle */}
