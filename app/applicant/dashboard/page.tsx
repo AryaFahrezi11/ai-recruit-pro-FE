@@ -1184,6 +1184,7 @@ function DashboardContent() {
                 </select>
               </div>
             </div>
+            </div>
 
             {/* Incomplete CV Banner / Fallback Info */}
             {!userHasCv && (

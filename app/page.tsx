@@ -612,10 +612,25 @@ function LandingPageContent() {
       </header>
       
       {/* Hero Section */}
-      <section id="hero-search" className="relative bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 overflow-hidden min-h-[260px] sm:min-h-[400px] lg:min-h-[480px] flex items-stretch border-b border-slate-200 dark:border-slate-800">
+      <section id="hero-search" className="relative bg-[#F4F9FF] dark:bg-slate-900 text-slate-900 dark:text-slate-100 overflow-hidden min-h-[260px] sm:min-h-[400px] lg:min-h-[480px] flex items-stretch border-b border-[#E2EFFF] dark:border-slate-800">
         
+        {/* Decorative Background Bubbles (Gelembung) */}
+        <div className="absolute inset-0 pointer-events-none overflow-hidden z-0">
+          {/* Top Right Light Blue Gelembung */}
+          <div className="absolute -top-[15%] -right-[5%] w-[60%] h-[80%] bg-[#E4F0FF] dark:bg-blue-900/20 rounded-[100px] rotate-[25deg] opacity-80"></div>
+          
+          {/* Center Light Blue Gelembung */}
+          <div className="absolute top-[30%] -right-[10%] w-[70%] h-[70%] bg-[#EAF3FF] dark:bg-blue-900/10 rounded-[150px] -rotate-12 opacity-90"></div>
+          
+          {/* Bottom Left Solid Blue Gelembung */}
+          <div className="absolute -bottom-[20%] -left-[10%] w-[35%] max-w-[450px] aspect-square bg-[#3886F6] dark:bg-[#1A4B9F]/60 rounded-full shadow-lg"></div>
+
+          {/* Additional subtle soft blue blob for depth */}
+          <div className="absolute top-1/4 -left-20 w-[400px] h-[400px] bg-[#EBF4FF] dark:bg-slate-800 rounded-full blur-3xl opacity-60"></div>
+        </div>
+
         {/* Desktop Right Photo Cutout */}
-        <div className="absolute inset-y-0 right-0 w-full lg:w-[62%] xl:w-[58%] z-0 pointer-events-none hidden lg:block">
+        <div className="absolute inset-y-0 right-0 w-full lg:w-[62%] xl:w-[58%] z-0 pointer-events-none hidden lg:block opacity-90 mix-blend-multiply dark:mix-blend-normal">
           <div 
             className="w-full h-full"
             style={{ clipPath: 'ellipse(95% 120% at 100% 50%)' }}
