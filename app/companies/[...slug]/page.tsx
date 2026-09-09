@@ -270,8 +270,8 @@ export default function GlintsCleanCompanyDetailPage({ params }: { params: Promi
               <Link href="/companies" className="text-[#1A4B9F] font-bold relative after:content-[''] after:absolute after:bottom-[-29px] after:left-0 after:right-0 after:h-1 after:bg-[#1A4B9F]">
                 Perusahaan
               </Link>
-              <Link href="/#success-stories" className="hover:text-[#1A4B9F] transition-colors">
-                Kisah Sukses
+              <Link href="/about" className="hover:text-[#1A4B9F] transition-colors">
+                Tentang Kami
               </Link>
             </nav>
 
@@ -313,8 +313,8 @@ export default function GlintsCleanCompanyDetailPage({ params }: { params: Promi
               <Link href="/companies" onClick={() => setIsMobileMenuOpen(false)} className="text-slate-700 dark:text-slate-200 font-bold py-2 border-t border-slate-100 dark:border-slate-800">
                 Perusahaan
               </Link>
-              <Link href="/#success-stories" onClick={() => setIsMobileMenuOpen(false)} className="text-slate-700 dark:text-slate-200 font-bold py-2 border-t border-slate-100 dark:border-slate-800">
-                Kisah Sukses
+              <Link href="/about" onClick={() => setIsMobileMenuOpen(false)} className="text-slate-700 dark:text-slate-200 font-bold py-2 border-t border-slate-100 dark:border-slate-800">
+                Tentang Kami
               </Link>
 
               <div className="pt-4 border-t border-slate-100 dark:border-slate-800 flex flex-col gap-2.5 sm:hidden">

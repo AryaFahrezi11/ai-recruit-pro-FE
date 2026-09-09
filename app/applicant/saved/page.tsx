@@ -367,7 +367,6 @@ function SavedJobsContent() {
             className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-[#1A4B9F] hover:bg-[#133878] text-white font-extrabold text-xs shadow-md transition-all cursor-pointer"
           >
             <span>{t.pelamar.tersimpan.startSearching}</span>
-            <ArrowRight className="w-4 h-4" />
           </Link>
         </div>
       ) : (

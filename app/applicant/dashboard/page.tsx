@@ -21,6 +21,7 @@ import {
   Send,
   Info,
   ChevronRight,
+  ArrowLeft,
   ChevronDown,
   Share2,
   ExternalLink,
@@ -30,6 +31,7 @@ import {
   Check,
   RefreshCw,
   Award,
+  Target,
   Zap,
   HelpCircle,
   Users,
@@ -141,6 +143,7 @@ function DashboardContent() {
   // Currently selected job ID for the right side detail pane
   const urlJobId = searchParams.get('jobId');
   const [selectedJobId, setSelectedJobId] = useState<number | string>(urlJobId || '');
+  
   const [shareJob, setShareJob] = useState<Job | null>(null);
 
   const [cvDetails, setCvDetails] = useState<any>(null);
@@ -547,7 +550,7 @@ function DashboardContent() {
   }, [jobsList, selectedJobId, filteredJobs]);
 
   return (
-    <div className="space-y-6 max-w-[1600px] mx-auto">
+    <div className="space-y-6 max-w-[1440px] mx-auto">
 
       {/* TOP SEARCH BANNER (Enterprise Solid Blue) */}
       <div className="bg-[#1A4B9F] rounded-2xl p-6 sm:p-8 text-white shadow-md space-y-5">
@@ -830,7 +833,7 @@ function DashboardContent() {
               onClick={() => switchTab('recommended')}
               className={`px-4 py-2 rounded-full font-bold border transition-all cursor-pointer flex items-center gap-1.5 ${
                 activeTab !== 'companies'
-                  ? 'bg-[#EFF6FF] text-slate-900 border-[#DBEAFE] font-semibold'
+                  ? 'bg-white text-[#1A4B9F] border-white font-bold shadow-2xs'
                   : 'bg-white/15 hover:bg-white/25 text-white border-white/30'
                 }`}
             >
@@ -843,7 +846,7 @@ function DashboardContent() {
               onClick={() => switchTab('companies')}
               className={`px-4 py-2 rounded-full font-bold border transition-all cursor-pointer flex items-center gap-1.5 ${
                 activeTab === 'companies'
-                  ? 'bg-[#EFF6FF] text-slate-900 border-[#DBEAFE] font-semibold'
+                  ? 'bg-white text-[#1A4B9F] border-white font-bold shadow-2xs'
                   : 'bg-white/15 hover:bg-white/25 text-white border-white/30'
                 }`}
             >
@@ -1045,56 +1048,50 @@ function DashboardContent() {
           {/* LEFT COLUMN: SELECTABLE JOB CARDS LIST (~38% Width / 5 Cols) */}
           <div className="lg:col-span-5 space-y-4">
 
-            {/* Header info */}
-            <div className="flex items-center justify-between px-1">
-              <div>
-                <h2 className="text-lg font-bold text-slate-800 dark:text-white flex items-center gap-1.5">
-                  <span>{t.pelamar.dashboard.title}</span>
-                  <Info className="w-4 h-4 text-slate-400" />
-                </h2>
-                <p className="text-xs text-slate-500 font-semibold">
-                  {filteredJobs.length} {t.pelamar.dashboard.jobMatchesFound}
-                </p>
-              </div>
+            {/* Dasbor Karir Anda Header Card (Matching Lowongan Terbaru on Landing Page) */}
+            <div className="bg-white dark:bg-slate-900 p-4 sm:p-5 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-2xs space-y-3">
+              <div className="flex items-center justify-between gap-4 border-b border-slate-100 dark:border-slate-800 pb-3">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-xl bg-[#1A4B9F]/10 dark:bg-slate-800 border border-[#1A4B9F]/20 dark:border-slate-700 flex items-center justify-center shrink-0">
+                    <Briefcase size={16} className="text-[#1A4B9F] dark:text-white" />
+                  </div>
+                  <div>
+                    <h2 className="text-base font-bold text-slate-900 dark:text-slate-100 flex items-center gap-1.5 leading-snug">
+                      <span>{t.pelamar.dashboard.title}</span>
+                      <Info className="w-4 h-4 text-slate-400" />
+                    </h2>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 font-semibold">
+                      {filteredJobs.length} {t.pelamar.dashboard.jobMatchesFound}
+                    </p>
+                  </div>
+                </div>
 
-              <div className="flex items-center gap-1.5 text-xs text-slate-500 font-bold">
-                <span>{language === 'id' ? 'Urutkan:' : 'Sort by:'}</span>
-                <select
-                  value={sortOrder}
-                  onChange={(e) => {
-                    const val = e.target.value;
-                    if (val === 'rekomendasi' && !userHasCv) {
-                      toast(
-                        language === 'id'
-                          ? 'Lengkapi profil / CV Anda terlebih dahulu untuk mengaktifkan rekomendasi PO-Fit.'
-                          : 'Please complete your profile / CV first to enable PO-Fit recommendation.',
-                        { icon: 'ℹ️' }
-                      );
-                      router.push('/applicant/profile');
-                      return;
-                    }
-                    setSortOrder(val);
-                    updateUrlParams({ sort: val });
-                  }}
-                  className="text-slate-900 dark:text-slate-100 font-bold cursor-pointer bg-slate-100 dark:bg-slate-800 px-2.5 py-1 rounded-lg border border-slate-200 dark:border-slate-700 outline-none hover:bg-slate-200/70 dark:hover:bg-slate-700 transition-colors"
-                >
-                  <option
-                    className="text-slate-800 dark:text-slate-200 font-medium"
-                    value="rekomendasi"
-                    disabled={!userHasCv}
+                <div className="flex items-center gap-1.5 text-xs text-slate-500 font-bold shrink-0">
+                  <span className="hidden sm:inline">{language === 'id' ? 'Urutkan:' : 'Sort by:'}</span>
+                  <select
+                    value={sortOrder}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      if (val === 'rekomendasi' && !userHasCv) {
+                        toast(
+                          language === 'id'
+                            ? 'Lengkapi profil / CV Anda terlebih dahulu untuk mengaktifkan rekomendasi PO-Fit.'
+                            : 'Please complete your profile / CV first to enable PO-Fit recommendation.'
+                        );
+                      }
+                      setSortOrder(val);
+                      updateUrlParams({ sort: val });
+                    }}
+                    className="px-3 py-1.5 rounded-xl bg-slate-50 hover:bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-700 font-bold outline-none cursor-pointer text-xs"
                   >
-                    {language === 'id'
-                      ? (!userHasCv ? 'Rekomendasi PO-FIT (Perlu CV)' : 'Rekomendasi PO-FIT')
-                      : (!userHasCv ? 'PO-FIT Recommendation (Needs CV)' : 'PO-FIT Recommendation')}
-                  </option>
-                  <option className="text-slate-800 dark:text-slate-200 font-medium" value="terbaru">
-                    {language === 'id' ? 'Terbaru' : 'Newest'}
-                  </option>
-                  <option className="text-slate-800 dark:text-slate-200 font-medium" value="terlama">
-                    {language === 'id' ? 'Terlama' : 'Oldest'}
-                  </option>
-                </select>
-              </div>
+                    <option value="rekomendasi">
+                      {!userHasCv ? (language === 'id' ? 'Rekomendasi PO-Fit (Perlu CV)' : 'PO-Fit Recommendation (Needs CV)') : (language === 'id' ? 'Rekomendasi PO-Fit' : 'PO-Fit Recommendation')}
+                    </option>
+                    <option value="terbaru">{language === 'id' ? 'Terbaru' : 'Newest'}</option>
+                    <option value="gaji_tertinggi">{language === 'id' ? 'Gaji Tertinggi' : 'Highest Salary'}</option>
+                  </select>
+                </div>
+            </div>
             </div>
 
             {/* Incomplete CV Banner / Fallback Info */}
@@ -1160,7 +1157,7 @@ function DashboardContent() {
                       onClick={() => setSelectedJobId(job.id)}
                       className={`p-5 rounded-2xl border transition-all cursor-pointer relative space-y-3 ${
                         isSelected
-                          ? 'bg-white dark:bg-slate-900 border-2 border-[#1A4B9F] shadow-md ring-2 ring-[#1A4B9F]/20'
+                          ? 'bg-white dark:bg-slate-900 border-2 border-[#1A4B9F] ring-1 ring-[#1A4B9F]/20 shadow-md shadow-md ring-2 ring-[#1A4B9F]/20'
                           : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 shadow-2xs'
                         }`}
                     >
@@ -1178,13 +1175,13 @@ function DashboardContent() {
                                 {job.company}
                               </span>
                               {job.matchScore > 0 && userHasCv && (
-                                <span className="px-2 py-0.5 rounded-md bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 font-bold text-[10px] border border-emerald-200 dark:border-emerald-800 flex items-center gap-1">
-                                  <Sparkles size={11} className="text-emerald-600 dark:text-emerald-400" />
-                                  {job.matchScore}% Match PO-Fit
+                                <span className="px-2.5 py-0.5 rounded-md bg-[#1A4B9F]/10 dark:bg-[#1A4B9F]/20 text-[#1A4B9F] dark:text-blue-300 font-semibold text-[11px] border border-[#1A4B9F]/20 dark:border-[#1A4B9F]/30 flex items-center gap-1">
+                                  <Target size={12} className="text-[#1A4B9F] dark:text-blue-300 shrink-0" />
+                                  <span>{job.matchScore}% Match PO-Fit</span>
                                 </span>
                               )}
                               {job.isNew && (
-                                <span className="px-2 py-0.5 rounded-md bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 font-semibold text-[10px] border border-amber-200 dark:border-amber-800">
+                                <span className="px-2.5 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-semibold text-[11px] border border-slate-200 dark:border-slate-700">
                                   {language === 'id' ? 'Loker Terbaru' : 'New Job'}
                                 </span>
                               )}
@@ -1218,7 +1215,7 @@ function DashboardContent() {
                           </span>
                         </div>
                         <div className="flex items-center gap-1.5">
-                          <DollarSign size={14} className="text-slate-900 shrink-0" />
+                          <DollarSign size={14} className="text-[#1A4B9F] shrink-0" />
                           <span className="font-bold text-slate-900 dark:text-white text-sm">{job.salary}</span>
                         </div>
                       </div>
@@ -1282,6 +1279,7 @@ function DashboardContent() {
           <div className="lg:col-span-7 sticky top-28 h-[calc(100vh-130px)]">
             {selectedJob && (
               <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-md overflow-y-auto h-full custom-scrollbar">
+
                 
                 {/* Detail Header */}
                 <div className="p-6 sm:p-8 pb-4 space-y-4 border-b border-slate-100 dark:border-slate-800">
@@ -1297,7 +1295,7 @@ function DashboardContent() {
                           {selectedJob.company}
                         </span>
                         {selectedJob.isNew && (
-                          <span className="px-2.5 py-0.5 rounded-md bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 font-semibold text-xs border border-amber-200 dark:border-amber-800">
+                          <span className="px-2.5 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-semibold text-xs border border-slate-200 dark:border-slate-700">
                             {language === 'id' ? 'Loker Terbaru' : 'New Job'}
                           </span>
                         )}
@@ -1323,20 +1321,20 @@ function DashboardContent() {
 
                   {/* PO-Fit Match Assessment Card */}
                   {userHasCv ? (
-                    <div className="p-4 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-slate-800 dark:to-slate-800/80 rounded-2xl border border-blue-100 dark:border-slate-700 flex items-center justify-between gap-4">
+                    <div className="p-4 bg-slate-50/80 dark:bg-slate-800/60 rounded-2xl border border-slate-200/80 dark:border-slate-700 flex items-center justify-between gap-4">
                       <div className="flex items-center gap-3.5">
-                        <div className="w-12 h-12 rounded-xl bg-[#1A4B9F] text-white flex flex-col items-center justify-center font-black text-sm shadow-sm shrink-0">
+                        <div className="w-12 h-12 rounded-xl bg-[#1A4B9F] text-white flex flex-col items-center justify-center font-bold text-sm shadow-2xs shrink-0">
                           <span>{selectedJob.matchScore}%</span>
-                          <span className="text-[9px] font-normal uppercase tracking-tight">Match</span>
+                          <span className="text-[9px] font-medium uppercase tracking-wider">Match</span>
                         </div>
                         <div>
                           <div className="flex items-center gap-1.5">
-                            <Sparkles className="w-4 h-4 text-[#1A4B9F]" />
+                            <Target className="w-4 h-4 text-[#1A4B9F]" />
                             <h4 className="font-bold text-sm text-slate-900 dark:text-white">
-                              {language === 'id' ? 'Skor Kecocokan PO-Fit' : 'PO-Fit Match Score'}
+                              {language === 'id' ? 'Kecocokan Kualifikasi PO-Fit' : 'PO-Fit Qualification Match'}
                             </h4>
                           </div>
-                          <p className="text-xs text-slate-600 dark:text-slate-300 mt-0.5 leading-relaxed">
+                          <p className="text-xs text-slate-600 dark:text-slate-300 mt-0.5 leading-relaxed font-medium">
                             {selectedJob.reason}
                           </p>
                         </div>
@@ -1363,16 +1361,18 @@ function DashboardContent() {
 
                   {/* Info Grid Cards */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 text-xs text-slate-700 dark:text-slate-300 font-semibold pt-1">
-                    <div className="flex items-center gap-2 p-2.5 bg-slate-50 dark:bg-slate-800/60 rounded-xl">
-                      <MapPin size={16} className="text-slate-900 shrink-0" />
-                      <div>
-                        <p className="text-[10px] text-slate-400 font-bold uppercase">{language === 'id' ? 'Lokasi Penempatan' : 'Location'}</p>
-                        <p className="font-semibold">{selectedJob.location}</p>
+                    <div className="flex items-center gap-3 p-3 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-100 dark:border-slate-800">
+                      <div className="w-8 h-8 rounded-lg bg-white dark:bg-slate-800 text-[#1A4B9F] dark:text-blue-400 border border-slate-200/80 dark:border-slate-700 flex items-center justify-center shrink-0">
+                        <MapPin size={16} />
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-[10px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider">{language === 'id' ? 'Lokasi Penempatan' : 'Location'}</p>
+                        <p className="font-bold text-xs sm:text-sm text-slate-900 dark:text-white truncate">{selectedJob.location}</p>
                       </div>
                     </div>
 
                     <div className="flex items-center gap-2 p-2.5 bg-slate-50 dark:bg-slate-800/60 rounded-xl">
-                      <GraduationCap size={16} className="text-slate-900 shrink-0" />
+                      <GraduationCap size={16} className="text-[#1A4B9F] shrink-0" />
                       <div>
                         <p className="text-[10px] text-slate-400 font-bold uppercase">{language === 'id' ? 'Min. Pendidikan' : 'Education'}</p>
                         <p className="font-semibold">{selectedJob.educationLevel}</p>
@@ -1380,7 +1380,7 @@ function DashboardContent() {
                     </div>
 
                     <div className="flex items-center gap-2 p-2.5 bg-slate-50 dark:bg-slate-800/60 rounded-xl">
-                      <Briefcase size={16} className="text-slate-900 shrink-0" />
+                      <Briefcase size={16} className="text-[#1A4B9F] shrink-0" />
                       <div>
                         <p className="text-[10px] text-slate-400 font-bold uppercase">{language === 'id' ? 'Kebijakan & Tipe Kerja' : 'Work Policy'}</p>
                         <p className="font-semibold">{selectedJob.workPolicy}</p>
@@ -1388,7 +1388,7 @@ function DashboardContent() {
                     </div>
 
                     <div className="flex items-center gap-2 p-2.5 bg-slate-50 dark:bg-slate-800/60 rounded-xl">
-                      <Award size={16} className="text-slate-900 shrink-0" />
+                      <Award size={16} className="text-[#1A4B9F] shrink-0" />
                       <div>
                         <p className="text-[10px] text-slate-400 font-bold uppercase">{language === 'id' ? 'Level Pengalaman' : 'Experience Level'}</p>
                         <p className="font-semibold">{selectedJob.experienceLevel}</p>
@@ -1396,7 +1396,7 @@ function DashboardContent() {
                     </div>
 
                     <div className="flex items-center gap-2 p-2.5 bg-slate-50 dark:bg-slate-800/60 rounded-xl">
-                      <DollarSign size={16} className="text-slate-900 shrink-0" />
+                      <DollarSign size={16} className="text-[#1A4B9F] shrink-0" />
                       <div>
                         <p className="text-[10px] text-slate-400 font-bold uppercase">{language === 'id' ? 'Rentang Gaji' : 'Salary Range'}</p>
                         <p className="font-bold text-slate-900 dark:text-white text-sm">{selectedJob.salary}</p>
@@ -1404,7 +1404,7 @@ function DashboardContent() {
                     </div>
 
                     <div className="flex items-center gap-2 p-2.5 bg-slate-50 dark:bg-slate-800/60 rounded-xl">
-                      <Clock size={16} className="text-slate-900 shrink-0" />
+                      <Clock size={16} className="text-[#1A4B9F] shrink-0" />
                       <div>
                         <p className="text-[10px] text-slate-400 font-bold uppercase">{language === 'id' ? 'Batas Akhir Lamaran' : 'Deadline'}</p>
                         <p className="font-semibold">{selectedJob.applicationDeadline || 'Tidak ditentukan'}</p>

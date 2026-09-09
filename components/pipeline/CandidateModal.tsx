@@ -1122,7 +1122,6 @@ export function CandidateModal({ candidate, onClose, onStatusUpdated }: Candidat
                       className="px-5 py-2.5 bg-primary hover:bg-primary/90 text-primary-foreground font-semibold text-xs sm:text-sm rounded-lg transition-all flex items-center gap-2 shadow-sm active:scale-95"
                     >
                       <span>Lihat Hasil Lengkap di Validasi HR</span>
-                      <ArrowRight size={16} />
                     </button>
                   </div>
                 </div>

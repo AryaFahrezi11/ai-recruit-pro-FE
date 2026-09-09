@@ -335,10 +335,7 @@ export default function CompanyLoginPage() {
                   {isLoading ? (
                     <span>{t.employerAuth.processing}</span>
                   ) : (
-                    <>
-                      <span>{t.employerAuth.signIn}</span>
-                      <ArrowRight size={16} />
-                    </>
+                    <span>{t.employerAuth.signIn}</span>
                   )}
                 </button>
               </form>
@@ -394,10 +391,7 @@ export default function CompanyLoginPage() {
                   {isLoading ? (
                     <span>Memverifikasi...</span>
                   ) : (
-                    <>
-                      <span>Verifikasi &amp; Masuk Dashboard</span>
-                      <ArrowRight size={16} />
-                    </>
+                    <span>Verifikasi &amp; Masuk Dashboard</span>
                   )}
                 </button>
 

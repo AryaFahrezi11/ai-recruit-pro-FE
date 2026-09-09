@@ -190,13 +190,14 @@ function LandingPageContent() {
   const fetchRealData = async () => {
     try {
       // Fetch all active jobs for full categories breakdown and seamless client-side filtering
-      const fetchUrl = getApiUrl('/jobs/');
+      const fetchUrl = getApiUrl('/jobs');
 
       const resJobs = await fetch(fetchUrl);
       if (resJobs.ok) {
         const jobsData = await resJobs.json();
+        const rawJobs = Array.isArray(jobsData) ? jobsData : (jobsData?.data || []);
         // Map to Job interface
-        const mappedJobs = jobsData.data.map((j: any) => ({
+        const mappedJobs = rawJobs.map((j: any) => ({
           id: j.id, // using numeric ID isn't quite right since it's UUID, but frontend uses number in Job interface. We'll change Job interface ID to number | string
           title: j.judul_posisi,
           company: j.perusahaan?.nama_perusahaan || 'Perusahaan',
@@ -258,12 +259,17 @@ function LandingPageContent() {
         }));
         setRealJobs(mappedJobs);
       }
+    } catch (err) {
+      console.error("Gagal memuat data pekerjaan dari server:", err);
+    }
 
+    try {
       // Fetch Companies
       const resComp = await fetch(getApiUrl('/perusahaan/verified'));
       if (resComp.ok) {
         const compData = await resComp.json();
-        const mappedComp = compData.map((c: any) => ({
+        const rawComp = Array.isArray(compData) ? compData : (compData?.data || []);
+        const mappedComp = rawComp.map((c: any) => ({
           id: c.id,
           name: c.nama_perusahaan,
           logo: (c.logo_url && c.logo_url !== '')
@@ -275,7 +281,7 @@ function LandingPageContent() {
         setRealCompanies(mappedComp);
       }
     } catch (err) {
-      console.error("Gagal memuat data dari server:", err);
+      console.error("Gagal memuat data perusahaan dari server:", err);
     }
   };
 
@@ -300,42 +306,80 @@ function LandingPageContent() {
       prev.includes(id) ? prev.filter(item => item !== id) : [...prev, id]
     );
   };
-
-  // Candidate Success Stories
-  const successStories = [
+  // Default Candidate Success Stories
+  const defaultStories = useMemo(() => [
     {
+      id: 'def-1',
       name: 'Rian Pratama',
       role: 'Staf Administrasi',
-      company: 'PT Maju Bersama',
-      avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
-      comment: 'Proses pencocokan kerjanya sangat transparan. Saya tidak perlu menunggu berminggu-minggu hanya untuk kabar panggilan kerja!',
-      timeDays: '3 Hari'
+      rating: 5,
+      category: 'Kejelasan Status',
+      comment: 'Senang banget bisa langsung tau kepastian lamaran tanpa perlu H2H digantung minggu-mingguan. Prosesnya transparan & responsif!'
     },
     {
+      id: 'def-2',
       name: 'Siti Rahmawati',
       role: 'Marketing Executive',
-      company: 'Nusantara Global',
-      avatar: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=150&auto=format&fit=crop&q=80',
-      comment: 'Fitur wawancara video virtual memberikan rasa percaya diri lebih untuk menunjukkan kemampuan komunikasi saya dibanding sekadar CV.',
-      timeDays: '5 Hari'
+      rating: 5,
+      category: 'Wawancara Video',
+      comment: 'Fitur rekam wawancara video sangat praktis! Bisa rekam kapan aja dari rumah tanpa repot desak-desakan ke lokasi kantor.'
     },
     {
+      id: 'def-3',
       name: 'Kevin Jonathan',
       role: 'Software Engineer',
-      company: 'Techindo Solutions',
-      avatar: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=150&auto=format&fit=crop&q=80',
-      comment: 'Analisis AI dari tes teknikal saya sangat akurat dan luar biasa cepat. Rasanya mereka benar-benar memahami kapasitas saya.',
-      timeDays: '2 Hari'
+      rating: 5,
+      category: 'Rekomendasi Lowongan',
+      comment: 'Loker yang direkomendasikan beneran pas sama keahlian & gaji yang diharapkan. Gak sampai seminggu udah dipanggil interview.'
     },
     {
+      id: 'def-4',
       name: 'Nadia Putri',
       role: 'Data Analyst',
-      company: 'Fintech Asia',
-      avatar: 'https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=150&auto=format&fit=crop&q=80',
-      comment: 'Bukan lagi seperti mengirim CV ke lubang hitam. Saya bisa melacak setiap tahap dan mendapat tawaran dalam minggu yang sama.',
-      timeDays: '4 Hari'
+      rating: 5,
+      category: 'Pengalaman Melamar',
+      comment: 'Gak ada lagi cerita ngirim CV berasa masuk ke lubang hitam. Alur pelacakan lamarannya jelas banget dari awal sampai dapet penawaran!'
     }
-  ];
+  ], []);
+
+  const [userSubmittedReviews, setUserSubmittedReviews] = useState<any[]>([]);
+
+  useEffect(() => {
+    const loadReviews = () => {
+      if (typeof window !== 'undefined') {
+        try {
+          const stored = localStorage.getItem('airecruit_user_reviews');
+          if (stored) {
+            setUserSubmittedReviews(JSON.parse(stored));
+          }
+        } catch (e) {
+          // ignore
+        }
+      }
+    };
+
+    loadReviews();
+
+    if (typeof window !== 'undefined') {
+      window.addEventListener('storage', loadReviews);
+      window.addEventListener('airecruit_reviews_updated', loadReviews);
+      window.addEventListener('focus', loadReviews);
+    }
+
+    return () => {
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('storage', loadReviews);
+        window.removeEventListener('airecruit_reviews_updated', loadReviews);
+        window.removeEventListener('focus', loadReviews);
+      }
+    };
+  }, []);
+
+  const displayedStories = useMemo(() => {
+    const combined = [...userSubmittedReviews, ...defaultStories];
+    const fiveStarOnly = combined.filter((item) => (item.rating || 5) === 5);
+    return fiveStarOnly.slice(0, 3);
+  }, [userSubmittedReviews, defaultStories]);
 
   // FAQ Items
   const faqItems = [
@@ -496,9 +540,9 @@ function LandingPageContent() {
             <Link href="/companies" className="transition-colors relative hover:text-[#1A4B9F]">
               Perusahaan
             </Link>
-            <a href="#success-stories" onClick={() => setActiveSection('success-stories')} className={`transition-colors relative ${activeSection === 'success-stories' ? 'text-[#1A4B9F] font-bold after:content-[""] after:absolute after:bottom-[-29px] after:left-0 after:right-0 after:h-1 after:bg-[#1A4B9F]' : 'hover:text-[#1A4B9F]'}`}>
-              {lang.successStories || 'Kisah Sukses'}
-            </a>
+            <Link href="/about" className="transition-colors relative hover:text-[#1A4B9F]">
+              Tentang Kami
+            </Link>
           </nav>
 
           {/* Right Action Controls */}
@@ -543,9 +587,9 @@ function LandingPageContent() {
             <Link href="/companies" onClick={() => setIsMobileMenuOpen(false)} className="text-slate-700 dark:text-slate-200 font-bold py-2 border-t border-slate-100 dark:border-slate-800">
               Perusahaan
             </Link>
-            <a href="#success-stories" onClick={() => setIsMobileMenuOpen(false)} className="text-slate-700 dark:text-slate-200 font-bold py-2 border-t border-slate-100 dark:border-slate-800">
-              Kisah Sukses
-            </a>
+            <Link href="/about" onClick={() => setIsMobileMenuOpen(false)} className="text-slate-700 dark:text-slate-200 font-bold py-2 border-t border-slate-100 dark:border-slate-800">
+              Tentang Kami
+            </Link>
 
             <div className="pt-4 border-t border-slate-100 dark:border-slate-800 flex flex-col gap-2.5 sm:hidden">
               <Link
@@ -1157,55 +1201,58 @@ function LandingPageContent() {
             </p>
           </div>
 
-          {/* 3 Focus Cards */}
-          <div className="flex flex-col md:flex-row items-center justify-center gap-3.5 sm:gap-4 lg:gap-5 pt-2">
+          {/* Dynamic Review Cards Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 pt-2 max-w-6xl mx-auto">
+            {displayedStories.map((item, idx) => (
+              <div
+                key={item.id || idx}
+                className="bg-slate-50 dark:bg-slate-900/80 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-5 flex flex-col justify-between space-y-4 hover:border-slate-300 dark:hover:border-slate-700 hover:shadow-md transition-all duration-300"
+              >
+                <div className="space-y-3">
+                  {/* Top Bar: Stars + Category */}
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-1">
+                      {[1, 2, 3, 4, 5].map((starNum) => (
+                        <Star
+                          key={starNum}
+                          size={15}
+                          className={
+                            starNum <= (item.rating || 5)
+                              ? 'text-amber-400 fill-amber-400'
+                              : 'text-slate-300 dark:text-slate-700'
+                          }
+                        />
+                      ))}
+                      <span className="text-xs font-extrabold text-slate-700 dark:text-slate-300 ml-1">
+                        {(item.rating || 5).toFixed(1)}
+                      </span>
+                    </div>
 
-            {/* Left Card */}
-            <div className="w-full md:w-[250px] lg:w-[265px] shrink-0 bg-slate-50 dark:bg-slate-800/60 border border-slate-200/70 dark:border-slate-800 rounded-xl p-4 sm:p-5 flex flex-col justify-between min-h-[140px] space-y-3">
-              <p className="text-slate-700 dark:text-slate-300 text-xs sm:text-sm leading-relaxed font-normal">
-                {language === 'en' 
-                  ? '"The job matching process is super transparent. I didn\'t have to wait weeks just to hear back!"'
-                  : '"Proses pencocokan kerjanya sangat transparan. Saya tidak perlu menunggu berminggu-minggu hanya untuk kabar panggilan kerja!"'}
-              </p>
-              <div className="space-y-0.5">
-                <h4 className="font-bold text-slate-900 dark:text-white text-xs sm:text-sm">Rian Pratama</h4>
-                <p className="text-[11px] text-slate-400 font-medium">Staf Administrasi</p>
+                    {item.category && (
+                      <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-blue-50 dark:bg-blue-950/60 text-[#1A4B9F] dark:text-blue-400 border border-blue-100 dark:border-blue-900/60 shrink-0">
+                        {item.category}
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Comment */}
+                  <p className="text-slate-700 dark:text-slate-300 text-xs sm:text-sm leading-relaxed font-medium italic">
+                    &ldquo;{item.comment}&rdquo;
+                  </p>
+                </div>
+
+                {/* Author Footer */}
+                <div className="pt-3 border-t border-slate-200/60 dark:border-slate-800/80 flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-full bg-[#1A4B9F]/10 dark:bg-blue-950 text-[#1A4B9F] dark:text-blue-400 font-black flex items-center justify-center text-xs shrink-0 border border-[#1A4B9F]/20">
+                    {item.name ? item.name.charAt(0) : 'P'}
+                  </div>
+                  <div>
+                    <h4 className="font-bold text-slate-900 dark:text-white text-xs sm:text-sm">{item.name}</h4>
+                    <p className="text-[11px] text-slate-500 dark:text-slate-400 font-normal">{item.role || 'Pelamar Kerja'}</p>
+                  </div>
+                </div>
               </div>
-            </div>
-
-            {/* Middle Card */}
-            <div className="w-full md:w-[320px] lg:w-[340px] shrink-0 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 sm:p-6 flex flex-col justify-between min-h-[170px] space-y-3 shadow-md dark:shadow-none text-center relative z-10">
-              <div className="w-8 h-8 rounded-full bg-[#3b82f6] text-white flex items-center justify-center mx-auto -mt-8 sm:-mt-9 shadow-sm shrink-0">
-                <Quote size={14} className="fill-current text-white" />
-              </div>
-
-              <p className="text-slate-900 dark:text-slate-100 text-xs sm:text-sm leading-relaxed font-medium px-1">
-                {language === 'en'
-                  ? '"The virtual video interview feature gave me more confidence to showcase my communication skills than just a flat CV."'
-                  : '"Fitur wawancara video virtual memberikan rasa percaya diri lebih untuk menunjukkan kemampuan komunikasi saya dibanding sekadar CV."'}
-              </p>
-
-              <div className="space-y-0.5">
-                <h4 className="font-bold text-slate-900 dark:text-white text-xs sm:text-sm">Siti Rahmawati</h4>
-                <p className="text-[11px] text-slate-400 font-medium">
-                  Marketing Executive
-                </p>
-              </div>
-            </div>
-
-            {/* Right Card */}
-            <div className="w-full md:w-[250px] lg:w-[265px] shrink-0 bg-slate-50 dark:bg-slate-800/60 border border-slate-200/70 dark:border-slate-800 rounded-xl p-4 sm:p-5 flex flex-col justify-between min-h-[140px] space-y-3">
-              <p className="text-slate-700 dark:text-slate-300 text-xs sm:text-sm leading-relaxed font-normal">
-                {language === 'en'
-                  ? '"The AI analysis of my technical test was spot on and incredibly fast. It felt like they truly understood my capabilities."'
-                  : '"Analisis AI dari tes teknikal saya sangat akurat dan luar biasa cepat. Rasanya mereka benar-benar memahami kapasitas saya."'}
-              </p>
-              <div className="space-y-0.5">
-                <h4 className="font-bold text-slate-900 dark:text-white text-xs sm:text-sm">Kevin Jonathan</h4>
-                <p className="text-[11px] text-slate-400 font-medium">Software Engineer</p>
-              </div>
-            </div>
-
+            ))}
           </div>
 
         </div>
@@ -1239,7 +1286,6 @@ function LandingPageContent() {
                   className="inline-flex items-center gap-1.5 text-blue-500 dark:text-blue-400 font-medium text-xs sm:text-sm hover:text-blue-600 dark:hover:text-blue-300 transition-colors group"
                 >
                   <span>{language === 'en' ? 'Contact support' : 'Hubungi tim support'}</span>
-                  <ArrowRight size={14} className="transition-transform group-hover:translate-x-1" />
                 </a>
               </div>
             </div>

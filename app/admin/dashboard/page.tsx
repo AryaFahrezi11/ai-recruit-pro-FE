@@ -412,8 +412,8 @@ export default function AdminDashboard() {
               <h2 className="text-base font-extrabold text-slate-900 dark:text-white">Pendaftar Terbaru</h2>
               <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">Pengguna yang baru bergabung</p>
             </div>
-            <Link href="/admin/users" className="p-2 bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-black dark:text-white rounded-xl transition-colors border border-slate-200 dark:border-slate-700">
-              <ArrowRight size={16} className="text-black dark:text-white" />
+            <Link href="/admin/users" className="px-3 py-1.5 bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-bold rounded-xl transition-colors border border-slate-200 dark:border-slate-700">
+              Lihat Semua
             </Link>
           </div>
 

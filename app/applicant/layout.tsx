@@ -11,6 +11,7 @@ import { useTranslation } from '@/hooks/useTranslation';
 import {
   Search,
   Building2,
+  Info,
   Globe,
   User,
   Bookmark,
@@ -187,8 +188,8 @@ export default function PelamarPerfectLayout({
 
   const navItems = [
     { name: t.pelamar.nav.findJobs, href: '/applicant/dashboard', icon: Search },
-    { name: t.pelamar.nav.companies, href: '/applicant/dashboard?view=companies', icon: Building2 },
-    { name: t.pelamar.nav.careerResources, href: '/applicant/upload-cv', icon: BookOpen },
+    { name: t.pelamar.nav.companies, href: '/applicant/companies', icon: Building2 },
+    { name: 'Tips Karir', href: '/applicant/upload-cv', icon: BookOpen },
   ];
 
   // If on login/register pages, render children without candidate layout navbar
@@ -205,7 +206,7 @@ export default function PelamarPerfectLayout({
     <div className="min-h-screen bg-[#F8FAFC] dark:bg-slate-950 text-slate-800 dark:text-slate-100 flex flex-col font-sans antialiased">
       {/* Top Navbar - JobStreet Inspired Header */}
       <header className="no-print sticky top-0 z-50 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 shadow-2xs">
-        <div className="max-w-[1600px] mx-auto px-4 sm:px-8 lg:px-12 h-20 flex items-center justify-between">
+        <div className="max-w-[1440px] mx-auto px-6 sm:px-10 lg:px-14 h-20 flex items-center justify-between">
 
           {/* Left Side: Brand & Main Navigation Links */}
           <div className="flex items-center gap-8">
@@ -307,7 +308,7 @@ export default function PelamarPerfectLayout({
       </header>
 
       {/* Main Content Area */}
-      <main className="flex-1 max-w-[1600px] w-full mx-auto px-4 sm:px-8 lg:px-12 py-6 sm:py-8">
+      <main className="flex-1 max-w-[1440px] w-full mx-auto px-4 sm:px-8 lg:px-12 py-6 sm:py-8">
         {children}
       </main>
 

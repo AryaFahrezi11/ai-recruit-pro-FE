@@ -436,7 +436,7 @@ export default function PelamarRegisterPage() {
                     {error.toLowerCase().includes('terdaftar') && (
                       <div>
                         <Link href="/applicant/login" className="font-bold underline text-[#1A4B9F] dark:text-blue-400">
-                          Masuk ke Akun Anda di sini &rarr;
+                          Masuk ke Akun Anda di sini
                         </Link>
                       </div>
                     )}

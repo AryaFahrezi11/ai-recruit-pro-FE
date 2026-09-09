@@ -239,8 +239,8 @@ function CompaniesPageContent() {
               <Link href="/companies" className="text-[#1A4B9F] font-bold relative after:content-[''] after:absolute after:bottom-[-29px] after:left-0 after:right-0 after:h-1 after:bg-[#1A4B9F]">
                 Perusahaan
               </Link>
-              <Link href="/#success-stories" className="hover:text-[#1A4B9F] transition-colors">
-                Kisah Sukses
+              <Link href="/about" className="hover:text-[#1A4B9F] transition-colors">
+                Tentang Kami
               </Link>
             </nav>
 
@@ -282,8 +282,8 @@ function CompaniesPageContent() {
               <Link href="/companies" onClick={() => setIsMobileMenuOpen(false)} className="text-slate-700 dark:text-slate-200 font-bold py-2 border-t border-slate-100 dark:border-slate-800">
                 Perusahaan
               </Link>
-              <Link href="/#success-stories" onClick={() => setIsMobileMenuOpen(false)} className="text-slate-700 dark:text-slate-200 font-bold py-2 border-t border-slate-100 dark:border-slate-800">
-                Kisah Sukses
+              <Link href="/about" onClick={() => setIsMobileMenuOpen(false)} className="text-slate-700 dark:text-slate-200 font-bold py-2 border-t border-slate-100 dark:border-slate-800">
+                Tentang Kami
               </Link>
 
               <div className="pt-4 border-t border-slate-100 dark:border-slate-800 flex flex-col gap-2.5 sm:hidden">
@@ -309,7 +309,7 @@ function CompaniesPageContent() {
 
       {/* -------------------- CLEAN NEUTRAL SEARCH BAR & FILTER CHIPS -------------------- */}
       <section className="pt-8 pb-3 px-4 sm:px-6">
-        <div className="max-w-5xl mx-auto space-y-4">
+        <div className="max-w-[1440px] mx-auto space-y-4">
           
           {/* Header Context (Clean Minimalist Title - No AI Badges) */}
           <div>
@@ -404,7 +404,7 @@ function CompaniesPageContent() {
       </section>
 
       {/* -------------------- MAIN DIRECTORY GRID (3 COLUMNS MAX 15 BOXES) -------------------- */}
-      <main id="company-grid-section" className="w-full max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6 flex-1 space-y-6">
+      <main id="company-grid-section" className="w-full max-w-[1440px] mx-auto px-6 sm:px-10 lg:px-14 py-6 flex-1 space-y-6">
         
         {/* Results Counter Sub-header */}
         <div className="flex items-center justify-between border-b border-slate-200/80 dark:border-slate-800 pb-3">
@@ -486,7 +486,6 @@ function CompaniesPageContent() {
                     <Clock size={13} className="shrink-0 text-slate-400" />
                     <span>Terakhir aktif {comp.last_active || 'sejam yang lalu'}</span>
                   </div>
-                  <ArrowRight size={14} className="text-slate-300 dark:text-slate-600 group-hover:text-slate-700 dark:group-hover:text-slate-300 group-hover:translate-x-1 transition-all shrink-0" />
                 </div>
 
               </div>

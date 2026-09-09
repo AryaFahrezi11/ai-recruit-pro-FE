@@ -12,9 +12,12 @@ import {
   ChevronDown,
   ChevronUp,
   Sparkles,
+  Star,
+  User
 } from 'lucide-react';
 import { api, parseErrorMessage } from '@/lib/api';
 import { ParseSkills, renderSkillsText } from '@/components/ui/ParseSkills';
+import { CandidateReviewModal } from '@/components/CandidateReviewModal';
 
 interface ApplyJobModalProps {
   job: {
@@ -33,6 +36,7 @@ export function ApplyJobModal({ job, cvData, onClose, onSuccess }: ApplyJobModal
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [showCvDetail, setShowCvDetail] = useState(false);
+  const [showReviewModal, setShowReviewModal] = useState(false);
   const [aiResult, setAiResult] = useState<{
     application_id: string;
     status: string;
@@ -42,6 +46,7 @@ export function ApplyJobModal({ job, cvData, onClose, onSuccess }: ApplyJobModal
       hasil: string;
     };
   } | null>(null);
+  const [pendingAiResult, setPendingAiResult] = useState<any>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -64,7 +69,8 @@ export function ApplyJobModal({ job, cvData, onClose, onSuccess }: ApplyJobModal
 
       const res = await api.post('/applications/', payload);
       const applicationData = res.data || res;
-      setAiResult(applicationData);
+      setPendingAiResult(applicationData);
+      setShowReviewModal(true);
     } catch (err: any) {
       setError(parseErrorMessage(err));
     } finally {
@@ -72,21 +78,23 @@ export function ApplyJobModal({ job, cvData, onClose, onSuccess }: ApplyJobModal
     }
   };
 
+  const initialLetter = cvData?.fullName ? cvData.fullName.charAt(0).toUpperCase() : 'P';
+
   return (
     <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 sm:p-6 animate-in fade-in duration-300">
-      <div className="bg-white dark:bg-slate-900 w-full max-w-[600px] rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden relative flex flex-col max-h-[95vh] animate-in zoom-in-95 duration-300">
+      <div className="bg-white dark:bg-slate-900 w-full max-w-[560px] rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden relative flex flex-col max-h-[95vh] animate-in zoom-in-95 duration-300">
 
         {/* Modal Header */}
-        <div className="p-6 sm:px-8 sm:pt-8 border-b border-slate-100 dark:border-slate-800 flex items-start justify-between bg-white dark:bg-slate-900 shrink-0">
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-2xl bg-[#EFF6FF] dark:bg-blue-900/30 text-[#1A4B9F] dark:text-blue-400 flex items-center justify-center font-bold shrink-0">
-              <Briefcase size={24} strokeWidth={2.5} />
+        <div className="p-5 sm:px-7 sm:pt-7 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-white dark:bg-slate-900 shrink-0">
+          <div className="flex items-center gap-3.5">
+            <div className="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-950/60 border border-blue-100 dark:border-blue-900/60 text-[#1A4B9F] dark:text-blue-400 flex items-center justify-center shrink-0">
+              <Briefcase size={20} />
             </div>
-            <div>
-              <h3 className="font-black text-xl text-slate-900 dark:text-white tracking-tight">
+            <div className="min-w-0">
+              <h3 className="font-bold text-lg sm:text-xl text-slate-900 dark:text-white tracking-tight leading-tight">
                 Kirim Lamaran
               </h3>
-              <p className="text-sm text-slate-500 dark:text-slate-400 font-medium mt-0.5 max-w-[320px] truncate">
+              <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 font-normal mt-0.5 truncate max-w-[280px] sm:max-w-[340px]">
                 <span className="text-[#1A4B9F] dark:text-blue-400 font-bold">{job.title}</span> di {job.company}
               </p>
             </div>
@@ -94,40 +102,40 @@ export function ApplyJobModal({ job, cvData, onClose, onSuccess }: ApplyJobModal
 
           <button
             onClick={onClose}
-            className="w-10 h-10 rounded-full flex items-center justify-center text-slate-400 hover:text-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800 dark:hover:text-white transition-all"
+            className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-400 hover:text-slate-900 dark:hover:text-white flex items-center justify-center transition-colors cursor-pointer"
           >
-            <X size={20} strokeWidth={2.5} />
+            <X size={16} />
           </button>
         </div>
 
         {/* Modal Content */}
         {aiResult ? (
-          <div className="p-8 space-y-8 overflow-y-auto custom-scrollbar flex-1 flex flex-col items-center justify-center text-center">
-            <div className="w-20 h-20 bg-emerald-50 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400 rounded-full flex items-center justify-center mx-auto ring-8 ring-emerald-50/50 dark:ring-emerald-900/10 mb-2">
-              <CheckCircle2 size={40} strokeWidth={2.5} />
+          <div className="p-6 sm:p-8 space-y-6 overflow-y-auto custom-scrollbar flex-1 flex flex-col items-center justify-center text-center">
+            <div className="w-16 h-16 bg-emerald-50 text-emerald-600 dark:bg-emerald-950/60 border border-emerald-100 dark:border-emerald-900/60 rounded-full flex items-center justify-center mx-auto mb-1">
+              <CheckCircle2 size={32} />
             </div>
             
-            <div className="space-y-3 max-w-sm mx-auto">
-              <h4 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">
+            <div className="space-y-2 max-w-sm mx-auto">
+              <h4 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white tracking-tight">
                 Lamaran Terkirim!
               </h4>
-              <p className="text-slate-500 dark:text-slate-400 text-sm leading-relaxed">
+              <p className="text-slate-500 dark:text-slate-400 text-xs sm:text-sm leading-relaxed font-normal">
                 Profil Anda telah berhasil dikirim ke <span className="font-bold text-slate-700 dark:text-slate-300">{job.company}</span>. Tim rekrutmen akan segera meninjau profil Anda.
               </p>
             </div>
             
-            <div className="flex flex-col sm:flex-row gap-3 w-full mt-4">
+            <div className="flex flex-col sm:flex-row gap-2.5 w-full pt-2">
               <button
                 onClick={onClose}
-                className="flex-1 py-4 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-bold text-sm transition-all"
+                className="flex-1 py-3 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-bold text-xs sm:text-sm transition-all cursor-pointer"
               >
                 Kembali ke Beranda
               </button>
               <button
                 onClick={() => onSuccess && onSuccess(aiResult)}
-                className="flex-1 py-4 rounded-xl bg-[#1A4B9F] hover:bg-[#133878] text-white font-bold text-sm transition-all shadow-lg shadow-blue-900/20 flex items-center justify-center gap-2"
+                className="flex-1 py-3 rounded-xl bg-[#1A4B9F] hover:bg-[#133878] text-white font-bold text-xs sm:text-sm transition-all shadow-2xs flex items-center justify-center gap-1.5 cursor-pointer"
               >
-                Lihat Progres Lamaran
+                <span>Lihat Progres Lamaran</span>
                 <ChevronDown size={16} className="-rotate-90" />
               </button>
             </div>
@@ -135,42 +143,45 @@ export function ApplyJobModal({ job, cvData, onClose, onSuccess }: ApplyJobModal
         ) : (
           <form onSubmit={handleSubmit} className="flex flex-col flex-1 overflow-hidden">
 
-            <div className="p-6 sm:px-8 space-y-6 overflow-y-auto custom-scrollbar flex-1 bg-slate-50/50 dark:bg-slate-900/50">
+            <div className="p-5 sm:px-7 space-y-5 overflow-y-auto custom-scrollbar flex-1 bg-slate-50/50 dark:bg-slate-900/50">
               
               {/* Review CV Profile */}
-              <div className="space-y-3">
+              <div className="space-y-2.5">
                 <div className="flex justify-between items-end">
-                  <label className="block text-sm font-black text-slate-800 dark:text-slate-200">
+                  <label className="block text-xs sm:text-sm font-bold text-slate-900 dark:text-white">
                     Review Profil Anda <span className="text-red-500">*</span>
                   </label>
-                  <span className="text-xs font-semibold text-slate-400">Data ini yang akan dikirim</span>
+                  <span className="text-[11px] font-normal text-slate-400">Data ini yang akan dikirim</span>
                 </div>
                 
-                <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-sm border border-slate-200/60 dark:border-slate-700 space-y-5">
-                  <div className="flex items-start gap-4">
-                    <div className="w-14 h-14 rounded-full bg-gradient-to-br from-[#1A4B9F] to-blue-600 text-white flex items-center justify-center shrink-0 shadow-inner">
-                      <FileText size={24} />
+                <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-2xs space-y-4">
+                  
+                  {/* Author Header */}
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full bg-[#1A4B9F]/10 dark:bg-blue-950/80 text-[#1A4B9F] dark:text-blue-400 font-black flex items-center justify-center text-sm shrink-0 border border-[#1A4B9F]/20">
+                      {initialLetter}
                     </div>
-                    <div className="flex-1 min-w-0 pt-1">
-                      <h4 className="font-bold text-lg text-slate-900 dark:text-white truncate">{cvData?.fullName || 'Nama Pelamar'}</h4>
-                      <p className="text-sm font-medium text-slate-500 dark:text-slate-400 truncate">{cvData?.jobTitle || 'Kandidat Profesional'}</p>
+                    <div className="flex-1 min-w-0">
+                      <h4 className="font-bold text-sm sm:text-base text-slate-900 dark:text-white truncate">{cvData?.fullName || 'Nama Pelamar'}</h4>
+                      <p className="text-xs text-slate-500 dark:text-slate-400 font-normal truncate">{cvData?.jobTitle || 'Kandidat Profesional'}</p>
                     </div>
                   </div>
 
-                  <div className="pt-4 border-t border-slate-100 dark:border-slate-700/50 text-sm text-slate-600 dark:text-slate-300 flex flex-col gap-3">
+                  {/* Skills Preview */}
+                  <div className="pt-3 border-t border-slate-100 dark:border-slate-800 space-y-2">
                     <div>
-                      <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block mb-1">Keahlian Teratas</span>
-                      <p className="font-medium">
+                      <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block mb-1">Keahlian Teratas</span>
+                      <p className="text-xs sm:text-sm text-slate-700 dark:text-slate-300 font-normal leading-relaxed">
                         {cvData?.skills 
-                          ? renderSkillsText(cvData.skills).substring(0, 60) + (renderSkillsText(cvData.skills).length > 60 ? '...' : '') 
+                          ? renderSkillsText(cvData.skills).substring(0, 75) + (renderSkillsText(cvData.skills).length > 75 ? '...' : '') 
                           : 'Tidak ada skill tercantum'}
                       </p>
                     </div>
-                    
+
                     <button
                       type="button"
                       onClick={() => setShowCvDetail(!showCvDetail)}
-                      className="inline-flex items-center gap-1.5 text-[#1A4B9F] dark:text-blue-400 font-bold text-xs hover:underline self-start transition-colors"
+                      className="inline-flex items-center gap-1 text-[#1A4B9F] dark:text-blue-400 font-bold text-xs hover:underline cursor-pointer transition-colors pt-1"
                     >
                       {showCvDetail ? (
                         <><ChevronUp size={14} /> Sembunyikan Detail CV</>
@@ -183,74 +194,74 @@ export function ApplyJobModal({ job, cvData, onClose, onSuccess }: ApplyJobModal
                   {/* CV Detail Expand */}
                   {showCvDetail && (
                     <div className="pt-2 animate-in slide-in-from-top-2">
-                      <div className="bg-white p-6 rounded-xl border border-slate-300 space-y-6 font-serif max-h-[50vh] overflow-y-auto custom-scrollbar shadow-md">
+                      <div className="bg-white p-5 rounded-xl border border-slate-200 space-y-5 font-sans max-h-[45vh] overflow-y-auto custom-scrollbar shadow-inner text-slate-900">
 
                         {/* ATS Header */}
-                        <div className="border-b-2 border-black pb-5 space-y-1 text-center font-sans">
-                          <h2 className="text-2xl font-black uppercase tracking-tight text-black">
-                            {cvData?.fullName || <span className="text-black">NAMA PELAMAR</span>}
+                        <div className="border-b border-slate-300 pb-4 space-y-1 text-center font-sans">
+                          <h2 className="text-xl font-bold uppercase tracking-tight text-slate-900">
+                            {cvData?.fullName || <span>NAMA PELAMAR</span>}
                           </h2>
                           {cvData?.jobTitle && (
-                            <span className="text-sm font-bold text-black block">{cvData.jobTitle}</span>
+                            <span className="text-xs font-semibold text-slate-600 block">{cvData.jobTitle}</span>
                           )}
-                          <div className="text-[11px] text-black flex items-center justify-center flex-wrap gap-2 pt-2 font-medium">
+                          <div className="text-[11px] text-slate-500 flex items-center justify-center flex-wrap gap-2 pt-1 font-normal">
                             <span>{cvData?.email || 'email@contoh.com'}</span> •{' '}
                             <span>{cvData?.phone || '0812xxxxxxxx'}</span> •{' '}
                             <span>{cvData?.location || 'Kota Domisili'}</span>
-                            {cvData?.linkedinUrl && <> • <span className="font-bold text-black">LinkedIn: {cvData.linkedinUrl}</span></>}
+                            {cvData?.linkedinUrl && <> • <span className="font-bold text-slate-700">LinkedIn: {cvData.linkedinUrl}</span></>}
                           </div>
                         </div>
 
                         {/* ATS Summary */}
-                        <div className="space-y-2">
-                          <h3 className="text-xs font-bold uppercase tracking-widest text-black border-b border-black pb-1 font-sans">
+                        <div className="space-y-1.5">
+                          <h3 className="text-[11px] font-bold uppercase tracking-wider text-slate-500 border-b border-slate-200 pb-1">
                             RINGKASAN PROFESIONAL
                           </h3>
-                          <p className="text-xs text-black leading-relaxed font-sans text-justify">
-                            {cvData?.summary || <span className="text-black italic">Ringkasan profesional Anda akan muncul di sini.</span>}
+                          <p className="text-xs text-slate-700 leading-relaxed font-normal text-justify">
+                            {cvData?.summary || <span className="italic text-slate-400">Ringkasan profesional Anda akan muncul di sini.</span>}
                           </p>
                         </div>
 
                         {/* ATS Experience */}
-                        <div className="space-y-3 font-sans">
-                          <h3 className="text-xs font-bold uppercase tracking-widest text-black border-b border-black pb-1">
+                        <div className="space-y-2.5 font-sans">
+                          <h3 className="text-[11px] font-bold uppercase tracking-wider text-slate-500 border-b border-slate-200 pb-1">
                             PENGALAMAN KERJA
                           </h3>
                           {cvData?.experiences && cvData.experiences.length > 0 ? (
                             cvData.experiences.map((exp: any, idx: number) => (
-                              <div key={idx} className="space-y-1.5">
-                                <div className="flex justify-between items-baseline text-xs font-bold text-black">
-                                  <span>{exp.role || '[Posisi]'} — {exp.company || '[Perusahaan]'}</span>
-                                  <span className="text-[11px] text-black font-semibold">{exp.period}</span>
+                              <div key={idx} className="space-y-1">
+                                <div className="flex justify-between items-baseline text-xs font-bold text-slate-800">
+                                  <span>{exp.role || '[Posisi]'} - {exp.company || '[Perusahaan]'}</span>
+                                  <span className="text-[10px] text-slate-500 font-normal">{exp.period}</span>
                                 </div>
                                 {exp.description && (
-                                  <p className="text-xs text-black leading-normal pl-3 border-l-2 border-black text-justify">
+                                  <p className="text-xs text-slate-600 leading-normal pl-3 border-l-2 border-slate-300 text-justify font-normal">
                                     • {exp.description}
                                   </p>
                                 )}
                                </div>
                             ))
                           ) : (
-                            <p className="text-xs text-black italic">Pengalaman kerja belum diisi.</p>
+                            <p className="text-xs text-slate-400 italic font-normal">Pengalaman kerja belum diisi.</p>
                           )}
                         </div>
 
                         {/* ATS Education */}
                         <div className="space-y-2 font-sans">
-                          <h3 className="text-xs font-bold uppercase tracking-widest text-black border-b border-black pb-1">
+                          <h3 className="text-[11px] font-bold uppercase tracking-wider text-slate-500 border-b border-slate-200 pb-1">
                             PENDIDIKAN
                           </h3>
                           {cvData?.education && cvData.education.length > 0 ? (
                             cvData.education.map((edu: any, idx: number) => (
                               <div key={idx} className="flex justify-between items-baseline text-xs">
-                                <span className="font-bold text-black">
-                                  {edu.degree || '[Gelar]'} — {edu.school || '[Universitas]'} {edu.gpa ? `(${edu.gpa})` : ''}
+                                <span className="font-bold text-slate-800">
+                                  {edu.degree || '[Gelar]'} - {edu.school || '[Universitas]'} {edu.gpa ? '(' + edu.gpa + ')' : ''}
                                 </span>
-                                <span className="text-[11px] text-black font-semibold">{edu.period}</span>
+                                <span className="text-[10px] text-slate-500 font-normal">{edu.period}</span>
                               </div>
                             ))
                           ) : (
-                            <p className="text-xs text-black italic">Riwayat pendidikan belum diisi.</p>
+                            <p className="text-xs text-slate-400 italic font-normal">Riwayat pendidikan belum diisi.</p>
                           )}
                         </div>
 
@@ -258,14 +269,16 @@ export function ApplyJobModal({ job, cvData, onClose, onSuccess }: ApplyJobModal
                     </div>
                   )}
 
-                  {/* Privacy Banner */}
-                  <div className="p-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-full bg-white dark:bg-slate-700 text-slate-500 dark:text-slate-400 flex items-center justify-center shrink-0 border border-slate-200 dark:border-slate-600">
+                  {/* Confirmation / Privacy Banner */}
+                  <div className="p-3 bg-slate-50 dark:bg-slate-800/40 border border-slate-200/80 dark:border-slate-800 rounded-xl flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-lg bg-white dark:bg-slate-800 text-slate-400 dark:text-slate-500 border border-slate-200/80 dark:border-slate-700 flex items-center justify-center shrink-0">
                       <FileText size={14} />
                     </div>
                     <div>
-                      <p className="text-xs font-bold text-slate-700 dark:text-slate-300">Konfirmasi Profil</p>
-                      <p className="text-[10px] text-slate-500 dark:text-slate-400">Pastikan profil Anda sudah sesuai. Data ini akan dievaluasi oleh sistem rekrutmen kami.</p>
+                      <p className="text-xs font-bold text-slate-900 dark:text-white">Konfirmasi Profil</p>
+                      <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-normal font-normal">
+                        Pastikan profil Anda sudah sesuai. Data ini akan dievaluasi oleh sistem rekrutmen kami.
+                      </p>
                     </div>
                   </div>
 
@@ -274,35 +287,35 @@ export function ApplyJobModal({ job, cvData, onClose, onSuccess }: ApplyJobModal
 
               {/* Error Message Display */}
               {error && (
-                <div className="p-4 rounded-xl bg-red-50 dark:bg-red-900/10 border border-red-200 dark:border-red-800/50 text-red-700 dark:text-red-400 text-sm font-bold flex items-start gap-3">
-                  <AlertCircle size={18} className="shrink-0 mt-0.5" />
+                <div className="p-3.5 rounded-xl bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900/60 text-red-700 dark:text-red-300 text-xs font-bold flex items-center gap-2.5">
+                  <AlertCircle size={16} className="shrink-0" />
                   <span>{error}</span>
                 </div>
               )}
             </div>
 
-            {/* Modal Footer (Sticky Submit Button) */}
-            <div className="p-6 sm:px-8 border-t border-slate-100 dark:border-slate-800 shrink-0 bg-white dark:bg-slate-900 flex justify-end gap-3">
+            {/* Modal Footer */}
+            <div className="p-4 sm:px-7 border-t border-slate-100 dark:border-slate-800 shrink-0 bg-white dark:bg-slate-900 flex items-center justify-end gap-2.5">
               <button
                 type="button"
                 onClick={onClose}
-                className="px-6 py-3.5 rounded-xl text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 font-bold text-sm transition-colors"
+                className="px-5 py-2.5 rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 font-bold text-xs sm:text-sm transition-colors cursor-pointer"
               >
                 Batal
               </button>
               <button
                 type="submit"
                 disabled={isLoading}
-                className="flex-1 sm:flex-none px-8 py-3.5 rounded-xl bg-[#1A4B9F] hover:bg-[#133878] text-white font-black text-sm shadow-lg shadow-blue-900/20 transition-all flex items-center justify-center gap-2.5 disabled:opacity-75 disabled:cursor-not-allowed"
+                className="px-6 py-2.5 rounded-xl bg-[#1A4B9F] hover:bg-[#133878] text-white font-bold text-xs sm:text-sm transition-all shadow-2xs flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60"
               >
                 {isLoading ? (
                   <>
-                    <Loader2 size={18} className="animate-spin" />
+                    <Loader2 size={16} className="animate-spin" />
                     <span>Mengirim...</span>
                   </>
                 ) : (
                   <>
-                    <Send size={18} />
+                    <Send size={15} />
                     <span>Kirim Lamaran</span>
                   </>
                 )}
@@ -310,8 +323,8 @@ export function ApplyJobModal({ job, cvData, onClose, onSuccess }: ApplyJobModal
             </div>
           </form>
         )}
-
       </div>
+
     </div>
   );
 }
