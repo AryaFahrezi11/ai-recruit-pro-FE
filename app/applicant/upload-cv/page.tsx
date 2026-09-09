@@ -28,6 +28,7 @@ import {
   AlertCircle
 } from 'lucide-react';
 import { api, parseErrorMessage } from '@/lib/api';
+import { CandidateReviewModal } from '@/components/CandidateReviewModal';
 
 export default function AtsCvBuilderPage() {
   const router = useRouter();
@@ -85,6 +86,7 @@ export default function AtsCvBuilderPage() {
   const [rawPdfFile, setRawPdfFile] = useState<File | null>(null);
   const [rawCvText, setRawCvText] = useState('');
   const [isParsing, setIsParsing] = useState(false);
+  const [showReviewModal, setShowReviewModal] = useState(false);
 
   useEffect(() => {
     const savedEmail = localStorage.getItem('user_email') || '';
@@ -332,9 +334,11 @@ export default function AtsCvBuilderPage() {
 
       setIsSavedToDb(true);
       setDbSuccessMessage(res.message || 'CV Berhasil Disimpan ke Database');
+      setShowReviewModal(true);
     } catch (err: any) {
       setIsSavedToDb(true);
       setDbSuccessMessage('CV Berhasil Disimpan ke Database');
+      setShowReviewModal(true);
     } finally {
       setIsSavingDb(false);
     }
@@ -480,7 +484,7 @@ export default function AtsCvBuilderPage() {
   };
 
   return (
-    <div className="max-w-[1600px] w-full mx-auto space-y-8">
+    <div className="max-w-[1440px] w-full mx-auto space-y-8">
 
       {/* Main Page Title Banner (Matching Enterprise Blue Theme) */}
       <div className="no-print bg-[#1A4B9F] p-6 sm:p-8 rounded-2xl text-white shadow-md flex flex-col sm:flex-row sm:items-center justify-between gap-6 relative overflow-hidden">
@@ -1267,6 +1271,13 @@ export default function AtsCvBuilderPage() {
           )}
         </div>
       )}
+
+      <CandidateReviewModal
+        isOpen={showReviewModal}
+        onClose={() => setShowReviewModal(false)}
+        defaultName={fullName}
+        defaultRole={jobTitle}
+      />
 
     </div>
   );

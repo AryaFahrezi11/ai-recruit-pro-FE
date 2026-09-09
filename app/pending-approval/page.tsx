@@ -245,7 +245,7 @@ ${profileData?.profil?.hr_name || companyName}`;
                 href="/dashboard"
                 className="shrink-0 px-6 py-2.5 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs sm:text-sm shadow-sm transition-all"
               >
-                Buka Dashboard <ArrowRight size={14} />
+                Buka Dashboard
               </Link>
             </div>
           ) : isRejected ? (
@@ -279,7 +279,7 @@ ${profileData?.profil?.hr_name || companyName}`;
                   href="/register?step=3"
                   className="shrink-0 w-full sm:w-auto px-6 py-2.5 rounded-full bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs sm:text-sm shadow-sm transition-all inline-flex items-center justify-center gap-2"
                 >
-                  <Edit size={16} /> Lengkapi Ulang Dokumen (Tahap 3) &rarr;
+                  <Edit size={16} /> Lengkapi Ulang Dokumen (Tahap 3)
                 </Link>
               </div>
             </div>

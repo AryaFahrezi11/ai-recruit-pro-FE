@@ -410,7 +410,6 @@ export default function PelamarLoginPage() {
                 className="w-full py-3.5 rounded-full bg-[#1A4B9F] hover:bg-[#133878] active:bg-[#0f2a5a] text-white font-semibold text-sm shadow-sm hover:shadow-md transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60"
               >
                 <span>{isLoading ? t.pelamar.auth.processing : t.pelamar.auth.signIn}</span>
-                {!isLoading && <ArrowRight size={18} />}
               </button>
             </form>
 
@@ -487,7 +486,6 @@ export default function PelamarLoginPage() {
                 className="w-full py-3.5 rounded-full bg-[#1A4B9F] hover:bg-[#133878] active:bg-[#0f2a5a] text-white font-semibold text-sm shadow-sm hover:shadow-md transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <span>{isLoading ? 'Mengirim OTP...' : 'Kirim Kode OTP Reset'}</span>
-                {!isLoading && <ArrowRight size={18} />}
               </button>
 
               <div className="pt-2 text-center">
@@ -629,7 +627,6 @@ export default function PelamarLoginPage() {
                 className="w-full py-3.5 rounded-full bg-[#1A4B9F] hover:bg-[#133878] active:bg-[#0f2a5a] text-white font-semibold text-sm shadow-sm hover:shadow-md transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <span>{isLoading ? 'Menyimpan...' : 'Simpan Password Baru'}</span>
-                {!isLoading && <ArrowRight size={18} />}
               </button>
 
               <div className="pt-1 text-center">

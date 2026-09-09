@@ -335,7 +335,6 @@ export default function DashboardPage() {
             className="text-xs font-bold text-primary hover:underline flex items-center gap-1 shrink-0"
           >
             Lihat Semua di Pipeline
-            <ArrowRight size={14} />
           </Link>
         </div>
 
@@ -414,7 +413,6 @@ export default function DashboardPage() {
                 className="text-xs font-bold text-primary hover:underline flex items-center gap-1 self-end sm:self-auto"
               >
                 {t.dashboard.viewAllJobs}
-                <ChevronRight size={14} />
               </Link>
             </div>
 
@@ -446,7 +444,6 @@ export default function DashboardPage() {
                       className="px-3.5 py-1.5 bg-card border border-border hover:bg-muted text-foreground text-xs font-bold rounded-lg transition-colors flex items-center gap-1 shrink-0 shadow-2xs"
                     >
                       Pipeline
-                      <ArrowRight size={12} />
                     </Link>
                   </div>
                 </div>

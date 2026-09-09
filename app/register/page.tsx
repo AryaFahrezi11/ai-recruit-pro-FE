@@ -560,7 +560,7 @@ function CompanyRegistrationInner() {
                         href="/login"
                         className="inline-block mt-1.5 text-blue-600 dark:text-blue-400 hover:underline font-bold"
                       >
-                        Sudah punya akun? Masuk ke portal perusahaan &rarr;
+                        Sudah punya akun? Masuk ke portal perusahaan
                       </Link>
                     )}
                   </div>

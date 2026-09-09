@@ -31,9 +31,11 @@ import {
   AlertCircle,
   BarChart3,
   Bot,
-  ArrowRight
+  ArrowRight,
+  Star
 } from 'lucide-react';
 import { api, parseErrorMessage } from '@/lib/api';
+import { CandidateReviewModal } from '@/components/CandidateReviewModal';
 
 interface ApplicationItem {
   id: number | string;
@@ -371,7 +373,14 @@ function StatusValidasiContent() {
   // Modal States
   const [activeCvModalJob, setActiveCvModalJob] = useState<ApplicationItem | null>(null);
   const [activeHumanModalJob, setActiveHumanModalJob] = useState<ApplicationItem | null>(null);
+  const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    if (searchParams.get('showReview') === 'true') {
+      setIsReviewModalOpen(true);
+    }
+  }, [searchParams]);
 
   // Applications State
   const [applications, setApplications] = useState<ApplicationItem[]>([]);
@@ -570,7 +579,7 @@ function StatusValidasiContent() {
     <div className="max-w-[1600px] w-full mx-auto space-y-6">
 
       {/* Main Page Title Banner (Matching Enterprise Blue Theme) */}
-      <div className="bg-[#1A4B9F] p-6 sm:p-8 rounded-2xl text-white shadow-md space-y-2 relative overflow-hidden">
+      <div className="bg-[#1A4B9F] p-6 sm:p-8 rounded-2xl text-white shadow-md flex flex-col sm:flex-row sm:items-center justify-between gap-4 relative overflow-hidden">
         <div className="space-y-1.5 relative z-10">
           <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-white">{t.pelamar.status.title}</h1>
           <p className="text-white/80 text-xs sm:text-sm leading-relaxed max-w-3xl font-medium">
@@ -1067,7 +1076,6 @@ function StatusValidasiContent() {
                             className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-[#1A4B9F] hover:bg-[#133878] text-white text-xs font-bold shadow-sm hover:shadow transition-all cursor-pointer shrink-0"
                           >
                             <span>Lihat Detail Lengkap AI</span>
-                            <ArrowRight size={14} />
                           </button>
                         </div>
 
@@ -1557,6 +1565,12 @@ function StatusValidasiContent() {
           </div>
         </div>
       )}
+
+      {/* Candidate Review Modal */}
+      <CandidateReviewModal
+        isOpen={isReviewModalOpen}
+        onClose={() => setIsReviewModalOpen(false)}
+      />
 
     </div>
   );

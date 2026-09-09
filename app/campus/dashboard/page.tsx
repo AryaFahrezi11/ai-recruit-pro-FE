@@ -182,7 +182,6 @@ export default function KampusDashboardPage() {
                 className="text-xs font-bold text-violet-600 hover:underline flex items-center justify-center gap-1"
               >
                 Lihat Seluruh Mahasiswa Terdaftar
-                <ArrowRight size={14} />
               </Link>
             </div>
           </div>

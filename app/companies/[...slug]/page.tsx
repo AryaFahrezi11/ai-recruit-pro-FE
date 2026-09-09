@@ -270,26 +270,26 @@ export default function GlintsCleanCompanyDetailPage({ params }: { params: Promi
               <Link href="/companies" className="text-[#1A4B9F] font-bold relative after:content-[''] after:absolute after:bottom-[-29px] after:left-0 after:right-0 after:h-1 after:bg-[#1A4B9F]">
                 Perusahaan
               </Link>
-              <Link href="/#success-stories" className="hover:text-[#1A4B9F] transition-colors">
-                Kisah Sukses
+              <Link href="/about" className="hover:text-[#1A4B9F] transition-colors">
+                Tentang Kami
               </Link>
             </nav>
 
-            <div className="flex items-center gap-3 sm:gap-4">
+            <div className="flex items-center gap-2.5 sm:gap-3">
               <Link
-                href="/applicant/login"
-                className="hidden sm:inline-flex px-4 py-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 text-sm font-bold rounded-lg transition-colors items-center gap-1.5 border border-slate-200 dark:border-slate-700"
+                href="/perusahaan/login"
+                className="hidden sm:inline-flex px-3.5 py-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 text-xs font-bold rounded-xl transition-all items-center gap-1.5 border border-slate-200 dark:border-slate-700"
               >
-                <User size={15} />
-                <span>Masuk</span>
+                <Building2 size={14} />
+                <span>Untuk Perusahaan</span>
               </Link>
 
               <Link
-                href="/perusahaan/login"
-                className="hidden sm:inline-flex px-4 py-2 bg-[#1A4B9F] hover:bg-[#133878] text-white text-sm font-bold rounded-lg transition-colors items-center gap-1.5 shadow-2xs"
+                href="/applicant/login"
+                className="hidden sm:inline-flex px-4 py-2 bg-[#1A4B9F] hover:bg-[#133878] text-white text-xs font-bold rounded-xl transition-all items-center gap-1.5 shadow-2xs"
               >
-                <Building2 size={15} />
-                <span>Untuk Perusahaan</span>
+                <User size={14} />
+                <span>Masuk Pelamar</span>
               </Link>
 
               <button
@@ -313,8 +313,8 @@ export default function GlintsCleanCompanyDetailPage({ params }: { params: Promi
               <Link href="/companies" onClick={() => setIsMobileMenuOpen(false)} className="text-slate-700 dark:text-slate-200 font-bold py-2 border-t border-slate-100 dark:border-slate-800">
                 Perusahaan
               </Link>
-              <Link href="/#success-stories" onClick={() => setIsMobileMenuOpen(false)} className="text-slate-700 dark:text-slate-200 font-bold py-2 border-t border-slate-100 dark:border-slate-800">
-                Kisah Sukses
+              <Link href="/about" onClick={() => setIsMobileMenuOpen(false)} className="text-slate-700 dark:text-slate-200 font-bold py-2 border-t border-slate-100 dark:border-slate-800">
+                Tentang Kami
               </Link>
 
               <div className="pt-4 border-t border-slate-100 dark:border-slate-800 flex flex-col gap-2.5 sm:hidden">
