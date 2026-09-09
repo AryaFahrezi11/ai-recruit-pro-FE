@@ -416,7 +416,7 @@ function JobOpeningsContent() {
                       <span className="text-[10px] text-muted-foreground font-semibold block mb-0.5">{t.jobs.thresholdAI}</span>
                       <span className="font-bold text-primary flex items-center gap-1">
                         <Sparkles size={13} className="text-primary" />
-                        PO-FIT {job.cv_threshold}%
+                        Threshold {job.cv_threshold}%
                       </span>
                     </div>
 

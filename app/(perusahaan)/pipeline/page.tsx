@@ -6,22 +6,22 @@ import { KanbanColumn } from '@/components/pipeline/KanbanColumn';
 import { CandidateCard, CandidateStage, CandidateStatus } from '@/components/pipeline/CandidateCard';
 import { CandidateModal } from '@/components/pipeline/CandidateModal';
 import { DataTable, ColumnDef } from '@/components/ui/DataTable';
-import { 
-  Filter, 
-  ArrowUpDown, 
-  Download, 
-  Loader2, 
-  LayoutGrid, 
-  Table as TableIcon, 
-  Search, 
-  Eye, 
-  Video, 
-  Calendar, 
-  CheckCircle2, 
-  XCircle, 
-  Sparkles, 
-  MapPin, 
-  Briefcase, 
+import {
+  Filter,
+  ArrowUpDown,
+  Download,
+  Loader2,
+  LayoutGrid,
+  Table as TableIcon,
+  Search,
+  Eye,
+  Video,
+  Calendar,
+  CheckCircle2,
+  XCircle,
+  Sparkles,
+  MapPin,
+  Briefcase,
   GraduationCap,
   Clock,
   ChevronRight,
@@ -484,11 +484,10 @@ export default function PipelinePage() {
 
         return (
           <div className="flex flex-col items-center">
-            <span className={`px-2 py-0.5 rounded-md font-mono text-xs font-bold border ${
-              isPassed 
-                ? 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800' 
+            <span className={`px-2 py-0.5 rounded-md font-mono text-xs font-bold border ${isPassed
+                ? 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800'
                 : 'bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-950/40 dark:text-rose-300 dark:border-rose-800'
-            }`}>
+              }`}>
               {score}% Match
             </span>
             <span className="text-[10px] text-muted-foreground mt-0.5">
@@ -506,14 +505,14 @@ export default function PipelinePage() {
       render: (app) => {
         const appAi = (app as any).ai_result;
         const parsePct = (val: any) => typeof val === 'string' ? parseFloat(val.replace('%', '')) : (typeof val === 'number' ? val : 0);
-        
+
         if (appAi?.dimensi_psikologis) {
           const avgScore = Math.round(
             (parsePct(appAi.dimensi_psikologis.Ability) +
-             parsePct(appAi.dimensi_psikologis.Intelligent) +
-             parsePct(appAi.dimensi_psikologis.Personality) +
-             parsePct(appAi.dimensi_psikologis.Attitude) +
-             parsePct(appAi.dimensi_psikologis['Emotional Intelligent'])) / 5
+              parsePct(appAi.dimensi_psikologis.Intelligent) +
+              parsePct(appAi.dimensi_psikologis.Personality) +
+              parsePct(appAi.dimensi_psikologis.Attitude) +
+              parsePct(appAi.dimensi_psikologis['Emotional Intelligent'])) / 5
           );
 
           return (
@@ -593,24 +592,22 @@ export default function PipelinePage() {
           <button
             type="button"
             onClick={() => setViewMode('table')}
-            className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-              viewMode === 'table'
+            className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${viewMode === 'table'
                 ? 'bg-foreground text-background shadow-xs'
                 : 'text-muted-foreground hover:text-foreground'
-            }`}
+              }`}
           >
             <TableIcon size={14} />
             <span>Tampilan Tabel</span>
           </button>
-          
+
           <button
             type="button"
             onClick={() => setViewMode('kanban')}
-            className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-              viewMode === 'kanban'
+            className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${viewMode === 'kanban'
                 ? 'bg-foreground text-background shadow-xs'
                 : 'text-muted-foreground hover:text-foreground'
-            }`}
+              }`}
           >
             <LayoutGrid size={14} />
             <span>Kanban Board</span>
@@ -859,7 +856,7 @@ export default function PipelinePage() {
               {videoAnalysisApps.map((app) => {
                 const isCurrentPolling = pollingId === app.id;
                 const isCurrentAnalyzing = analyzingId === app.id || isCurrentPolling;
-                
+
                 return (
                   <CandidateCard
                     key={app.id}

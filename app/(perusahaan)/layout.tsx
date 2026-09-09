@@ -40,7 +40,7 @@ export default function PerusahaanLayout({
     },
     {
       id: 2,
-      title: 'Alex Mercer lolos seleksi CV PO-FIT (92%)',
+      title: 'Alex Mercer lolos seleksi CV (92%)',
       time: '1 jam yang lalu',
       type: 'cv',
       icon: <FileText size={14} className="text-emerald-500" />,

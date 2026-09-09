@@ -401,12 +401,11 @@ function SavedJobsContent() {
                   </div>
 
                   <div>
-                    <h3
-                      onClick={() => setActiveJobModal(job)}
-                      className="text-lg font-extrabold text-slate-900 dark:text-white group-hover:text-[#1A4B9F] dark:group-hover:text-blue-400 transition-colors cursor-pointer line-clamp-1"
-                    >
-                      {job.title}
-                    </h3>
+                    <Link href={`/applicant/dashboard?jobId=${job.id}`}>
+                      <h3 className="text-lg font-extrabold text-slate-900 dark:text-white group-hover:text-[#1A4B9F] dark:group-hover:text-blue-400 transition-colors cursor-pointer line-clamp-1">
+                        {job.title}
+                      </h3>
+                    </Link>
                     <p className="text-xs font-bold text-[#1A4B9F] dark:text-blue-400">
                       {job.company}
                     </p>
@@ -437,13 +436,13 @@ function SavedJobsContent() {
                 <div className="space-y-3 pt-3 border-t border-slate-100 dark:border-slate-800">
                   <div className="flex items-center justify-between text-[11px] text-slate-400">
                     <span>{language === 'id' ? 'Disimpan pada:' : 'Saved on:'} {job.savedAt}</span>
-                    <button
-                      onClick={() => setActiveJobModal(job)}
+                    <Link
+                      href={`/applicant/dashboard?jobId=${job.id}`}
                       className="font-bold text-[#1A4B9F] dark:text-blue-400 hover:underline cursor-pointer flex items-center gap-1"
                     >
                       <span>{language === 'id' ? 'Detail' : 'Details'}</span>
                       <ChevronRight size={14} />
-                    </button>
+                    </Link>
                   </div>
 
                   {isApplied ? (

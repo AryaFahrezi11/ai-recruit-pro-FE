@@ -37,7 +37,8 @@ import {
   MessageCircle,
   Mail,
   Globe,
-  Loader2
+  Loader2,
+  AlertCircle
 } from 'lucide-react';
 import { ApplyJobModal } from '@/components/ApplyJobModal';
 import { api, parseErrorMessage, getMediaUrl } from '@/lib/api';
@@ -128,7 +129,20 @@ function DashboardContent() {
 
   const updateUrlParams = (updates: Record<string, string>) => {
     const params = new URLSearchParams(searchParams.toString());
-    Object.entries(updates).forEach(([key, value]) => {
+    
+    // Merge the current unsubmitted form state so we don't lose search text when selecting a dropdown
+    const currentState = {
+      keyword: searchQuery,
+      location: locationQuery,
+      kategori_id: categoryFilter,
+      tipe_pekerjaan: employmentTypeFilter,
+      lokasi_kerja: workModeFilter,
+      experience_level: experienceFilter,
+      pendidikan_min: educationFilter,
+      ...updates
+    };
+
+    Object.entries(currentState).forEach(([key, value]) => {
       if (value && value !== 'Semua' && value !== 'All') {
         params.set(key, value);
       } else {
@@ -147,10 +161,24 @@ function DashboardContent() {
   const [appliedJobs, setAppliedJobs] = useState<(number | string)[]>([]);
   const [savedJobIds, setSavedJobIds] = useState<(number | string)[]>([]);
   const [applyingJobModalData, setApplyingJobModalData] = useState<{ id: number | string; title: string; company: string } | null>(null);
+  const [showCvWarningModal, setShowCvWarningModal] = useState<boolean>(false);
+  const hasShownCvWarningRef = useRef<boolean>(false);
 
   const [jobsList, setJobsList] = useState<Job[]>([]);
   const [companiesList, setCompaniesList] = useState<Company[]>([]);
+  const [industriesList, setIndustriesList] = useState<string[]>([]);
   const [isLoadingJobs, setIsLoadingJobs] = useState<boolean>(true);
+
+  // Check if CV is incomplete to show initial warning popup
+  useEffect(() => {
+    if (userHasCv === false && !hasShownCvWarningRef.current) {
+      const timer = setTimeout(() => {
+         setShowCvWarningModal(true);
+         hasShownCvWarningRef.current = true;
+      }, 800);
+      return () => clearTimeout(timer);
+    }
+  }, [userHasCv]);
 
   // Close location dropdown when clicking outside
   useEffect(() => {
@@ -218,12 +246,13 @@ function DashboardContent() {
 
     const loadInitialData = async () => {
       try {
-        const [locRes, catRes, resComp, resProfile, resApps] = await Promise.all([
+        const [locRes, catRes, resComp, resProfile, resApps, indRes] = await Promise.all([
           api.get('/jobs/locations').catch(() => null),
           api.get('/jobs/categories').catch(() => null),
-          api.get('/perusahaan/verified').catch(() => null),
+          api.get(`/perusahaan/verified?keyword=${encodeURIComponent(searchParams.get('keyword') || searchParams.get('search') || '')}&industry=${encodeURIComponent(searchParams.get('industry') || '')}`).catch(() => null),
           api.get('/users/profile').catch(() => null),
-          api.get('/applications/').catch(() => null)
+          api.get('/applications/').catch(() => null),
+          api.get('/perusahaan/industries').catch(() => null)
         ]);
 
         if (locRes?.locations && Array.isArray(locRes.locations)) {
@@ -233,6 +262,9 @@ function DashboardContent() {
           setCategories(catRes);
         } else if (catRes?.data && Array.isArray(catRes.data)) {
           setCategories(catRes.data);
+        }
+        if (Array.isArray(indRes)) {
+          setIndustriesList(indRes);
         }
 
         const rawCompList = Array.isArray(resComp) ? resComp : (resComp?.data && Array.isArray(resComp.data) ? resComp.data : []);
@@ -347,7 +379,7 @@ function DashboardContent() {
       if (sort) apiParams.append('sort_by', sort);
 
       const qs = apiParams.toString();
-      const resJobs = await api.get(`/jobs/?${qs}`);
+      const resJobs = await api.get(`/jobs?${qs}`);
 
       if (fetchId !== activeFetchId.current) return;
 
@@ -463,6 +495,41 @@ function DashboardContent() {
     }
   };
 
+  const fetchCompaniesData = async (queryOverride?: Record<string, string>) => {
+    try {
+      const kw = queryOverride?.keyword !== undefined ? queryOverride.keyword : (searchParams.get('keyword') || searchParams.get('search'));
+      const ind = queryOverride?.industry !== undefined ? queryOverride.industry : searchParams.get('industry');
+
+      const apiParams = new URLSearchParams();
+      if (kw && kw.trim()) apiParams.append('keyword', kw.trim());
+      if (ind && ind !== 'Semua') apiParams.append('industry', ind);
+
+      const qs = apiParams.toString();
+      const resComp = await api.get(`/perusahaan/verified?${qs}`);
+      
+      const rawCompList = Array.isArray(resComp) ? resComp : (resComp?.data && Array.isArray(resComp.data) ? resComp.data : []);
+      if (rawCompList.length > 0) {
+        const mappedComp: Company[] = rawCompList.map((c: any) => ({
+          id: c.id,
+          name: c.nama_perusahaan,
+          logo: (c.logo_url && c.logo_url !== '')
+            ? getMediaUrl(c.logo_url)
+            : 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=120&auto=format&fit=crop&q=80',
+          industry: c.industri || 'Umum & Teknologi',
+          location: c.kota || c.alamat || 'Indonesia',
+          openJobsCount: c.jobs_count || c.open_jobs_count || 0,
+          description: c.deskripsi || 'Perusahaan terverifikasi di platform AI Recruit Pro.'
+        }));
+        setCompaniesList(mappedComp);
+      } else {
+        setCompaniesList([]);
+      }
+    } catch (err) {
+      console.error('Gagal mengambil data perusahaan:', err);
+      setCompaniesList([]);
+    }
+  };
+
   // 3. Synchronize active tab and fetch jobs whenever URL search params change
   useEffect(() => {
     const view = searchParams.get('view');
@@ -475,7 +542,11 @@ function DashboardContent() {
     }
 
     if (!isFormSubmittingRef.current) {
-      fetchJobsData();
+      if (view === 'companies') {
+        fetchCompaniesData();
+      } else {
+        fetchJobsData();
+      }
     }
   }, [searchParams]);
 
@@ -505,6 +576,10 @@ function DashboardContent() {
 
   // Direct Apply Handler
   const handleApplyWithCv = (jobId: number | string, companyName: string, title: string) => {
+    if (!userHasCv) {
+      setShowCvWarningModal(true);
+      return;
+    }
     setApplyingJobModalData({
       id: jobId,
       title: title,
@@ -530,16 +605,10 @@ function DashboardContent() {
 
   const filteredCompanies = useMemo(() => {
     return companiesList.filter((comp) => {
-      const matchesSearch = !searchQuery ||
-        comp.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        comp.industry.toLowerCase().includes(searchQuery.toLowerCase());
-
       const matchesLocation = !locationQuery || comp.location.toLowerCase().includes(locationQuery.toLowerCase());
-      const matchesIndustry = industryFilter === 'Semua' || comp.industry.toLowerCase().includes(industryFilter.toLowerCase());
-
-      return matchesSearch && matchesLocation && matchesIndustry;
+      return matchesLocation;
     });
-  }, [companiesList, searchQuery, locationQuery, industryFilter]);
+  }, [companiesList, locationQuery]);
 
   // Selected Job Details Object for Right Pane
   const selectedJob = useMemo(() => {
@@ -549,8 +618,12 @@ function DashboardContent() {
   return (
     <div className="space-y-6 max-w-[1600px] mx-auto">
 
-      {/* TOP SEARCH BANNER (Enterprise Solid Blue) */}
-      <div className="bg-[#1A4B9F] rounded-2xl p-6 sm:p-8 text-white shadow-md space-y-5">
+      {/* TOP SEARCH BANNER (Premium Glassmorphism) */}
+      <div className="relative bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-8 shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.1)] border border-slate-100 dark:border-slate-800 space-y-6 overflow-hidden">
+        {/* Subtle Background Elements */}
+        <div className="absolute top-0 right-0 -mr-20 -mt-20 w-64 h-64 rounded-full bg-blue-50/80 dark:bg-blue-900/10 blur-3xl opacity-60 pointer-events-none"></div>
+        <div className="absolute bottom-0 left-0 -ml-20 -mb-20 w-64 h-64 rounded-full bg-indigo-50/80 dark:bg-indigo-900/10 blur-3xl opacity-60 pointer-events-none"></div>
+        
         <form
           method="GET"
           onSubmit={async (e) => {
@@ -572,37 +645,45 @@ function DashboardContent() {
 
             updateUrlParams(updates);
 
-            if (activeTab !== 'companies') {
+            if (activeTab === 'companies') {
+              try {
+                await fetchCompaniesData(updates);
+              } finally {
+                setIsSearching(false);
+                setTimeout(() => {
+                  isFormSubmittingRef.current = false;
+                }, 600);
+              }
+            } else {
               setActiveTab('recommended');
-            }
-
-            try {
-              await fetchJobsData(updates);
-            } finally {
-              setIsSearching(false);
-              setTimeout(() => {
-                isFormSubmittingRef.current = false;
-              }, 600);
+              try {
+                await fetchJobsData(updates);
+              } finally {
+                setIsSearching(false);
+                setTimeout(() => {
+                  isFormSubmittingRef.current = false;
+                }, 600);
+              }
             }
           }}
-          className="grid grid-cols-1 md:grid-cols-12 gap-3"
+          className="relative grid grid-cols-1 md:grid-cols-12 gap-4"
         >
           {/* Left Input: Keyword */}
-          <div className="md:col-span-5 relative flex items-center">
-            <Search className="absolute left-4 text-slate-400 w-5 h-5 pointer-events-none" />
+          <div className="md:col-span-5 relative flex items-center group">
+            <Search className="absolute left-4.5 text-slate-400 group-focus-within:text-[#1A4B9F] w-5 h-5 pointer-events-none transition-colors" />
             <input
               type="text"
               name="keyword"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder={activeTab === 'companies' ? (language === 'id' ? 'Cari nama perusahaan atau industri...' : 'Search company or industry...') : t.pelamar.dashboard.searchPlaceholder}
-              className="w-full pl-12 pr-4 py-3.5 bg-white text-slate-800 rounded-2xl text-sm font-semibold placeholder:text-slate-400 outline-none focus:ring-2 focus:ring-[#1A4B9F] shadow-inner"
+              className="w-full pl-12 pr-4 py-4 bg-slate-50 dark:bg-slate-800/50 border border-slate-200/60 dark:border-slate-700 text-slate-800 dark:text-white rounded-2xl text-sm font-semibold placeholder:text-slate-400 outline-none focus:bg-white focus:ring-2 focus:ring-[#1A4B9F]/20 focus:border-[#1A4B9F] transition-all shadow-sm inset-ring-slate-100"
             />
           </div>
 
           {/* Right Input: Location with Suggestions */}
-          <div className="md:col-span-5 relative flex items-center" ref={locationContainerRef}>
-            <MapPin className="absolute left-4 text-slate-400 w-5 h-5 pointer-events-none" />
+          <div className="md:col-span-5 relative flex items-center group" ref={locationContainerRef}>
+            <MapPin className="absolute left-4.5 text-slate-400 group-focus-within:text-[#1A4B9F] w-5 h-5 pointer-events-none transition-colors" />
             <input
               type="text"
               name="location"
@@ -613,14 +694,14 @@ function DashboardContent() {
                 setShowLocationSuggestions(true);
               }}
               placeholder={t.pelamar.dashboard.locationPlaceholder}
-              className="w-full pl-12 pr-4 py-3.5 bg-white text-slate-800 rounded-2xl text-sm font-semibold placeholder:text-slate-400 outline-none focus:ring-2 focus:ring-[#1A4B9F] shadow-inner"
+              className="w-full pl-12 pr-4 py-4 bg-slate-50 dark:bg-slate-800/50 border border-slate-200/60 dark:border-slate-700 text-slate-800 dark:text-white rounded-2xl text-sm font-semibold placeholder:text-slate-400 outline-none focus:bg-white focus:ring-2 focus:ring-[#1A4B9F]/20 focus:border-[#1A4B9F] transition-all shadow-sm inset-ring-slate-100"
             />
             {/* Location Suggestions Dropdown */}
             {showLocationSuggestions && suggestedLocations.length > 0 && (
-              <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-xl shadow-xl border border-slate-200 py-2 z-50 text-slate-800 max-h-60 overflow-y-auto">
-                <div className="px-3 py-1.5 text-[11px] font-bold text-slate-400 uppercase tracking-wider flex items-center justify-between border-b border-slate-100">
+              <div className="absolute top-[calc(100%+8px)] left-0 right-0 bg-white dark:bg-slate-900 rounded-2xl shadow-xl border border-slate-100 dark:border-slate-800 py-2 z-50 text-slate-800 dark:text-slate-200 max-h-60 overflow-y-auto animate-in fade-in slide-in-from-top-2">
+                <div className="px-4 py-2 text-[11px] font-bold text-slate-400 uppercase tracking-wider flex items-center justify-between border-b border-slate-50 dark:border-slate-800/50">
                   <span>{language === 'id' ? 'Lokasi Sering Dicari' : 'Suggested Locations'}</span>
-                  <X className="w-3.5 h-3.5 cursor-pointer hover:text-slate-700" onClick={() => setShowLocationSuggestions(false)} />
+                  <X className="w-4 h-4 cursor-pointer hover:text-slate-700 dark:hover:text-slate-300 transition-colors" onClick={() => setShowLocationSuggestions(false)} />
                 </div>
                 {suggestedLocations
                   .filter(loc => !locationQuery || loc.toLowerCase().includes(locationQuery.toLowerCase()))
@@ -633,9 +714,9 @@ function DashboardContent() {
                         setShowLocationSuggestions(false);
                         updateUrlParams({ location: loc });
                       }}
-                      className="px-4 py-2.5 hover:bg-blue-50 text-xs font-semibold cursor-pointer flex items-center gap-2.5 transition-colors border-b border-slate-50 last:border-0"
+                      className="px-5 py-3 hover:bg-[#EFF6FF] dark:hover:bg-slate-800 text-xs font-semibold cursor-pointer flex items-center gap-3 transition-colors border-b border-slate-50 dark:border-slate-800/50 last:border-0"
                     >
-                      <MapPin className="w-3.5 h-3.5 text-[#1A4B9F]" />
+                      <MapPin className="w-4 h-4 text-[#1A4B9F] dark:text-blue-400" />
                       <span>{loc}</span>
                     </div>
                   ))}
@@ -644,16 +725,16 @@ function DashboardContent() {
           </div>
 
           {/* Search Button */}
-          <div className="md:col-span-2 flex justify-center md:block">
+          <div className="md:col-span-2 flex justify-center md:block relative">
             <button
               type="submit"
               disabled={isSearching}
-              className="w-auto md:w-full px-6 py-2.5 md:py-3.5 bg-white/20 hover:bg-white/30 active:scale-[0.98] disabled:opacity-75 disabled:cursor-not-allowed text-white rounded-xl md:rounded-2xl font-bold flex items-center justify-center gap-2 border border-white/30 transition-all shadow-sm cursor-pointer text-xs md:text-sm"
+              className="w-full h-full min-h-[56px] px-6 bg-[#1A4B9F] hover:bg-[#133878] active:scale-[0.98] disabled:opacity-75 disabled:cursor-not-allowed text-white rounded-2xl font-bold flex items-center justify-center gap-2.5 transition-all shadow-md shadow-blue-900/10 cursor-pointer text-sm"
             >
               {isSearching ? (
-                <Loader2 className="w-3.5 h-3.5 md:w-4 md:h-4 animate-spin shrink-0 text-white" />
+                <Loader2 className="w-5 h-5 animate-spin shrink-0 text-white" />
               ) : (
-                <Search className="w-3.5 h-3.5 md:w-4 md:h-4 shrink-0" />
+                <Search className="w-5 h-5 shrink-0" />
               )}
               <span>{isSearching ? (language === 'id' ? 'Mencari...' : 'Searching...') : (language === 'id' ? 'Cari' : 'Search')}</span>
             </button>
@@ -661,36 +742,36 @@ function DashboardContent() {
         </form>
 
         {/* Mobile View Switcher (Cari Pekerjaan vs Perusahaan) */}
-        <div className="grid grid-cols-2 gap-1.5 p-1 bg-black/20 rounded-xl sm:hidden w-full text-xs font-bold">
+        <div className="relative grid grid-cols-2 gap-1.5 p-1 bg-slate-100 dark:bg-slate-800/80 rounded-xl sm:hidden w-full text-xs font-bold border border-slate-200/50 dark:border-slate-700">
           <button
             type="button"
             onClick={() => switchTab('recommended')}
-            className={`py-2 px-3 rounded-lg flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
+            className={`py-2.5 px-3 rounded-lg flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
               activeTab !== 'companies'
-                ? 'bg-white text-slate-900 shadow-sm'
-                : 'text-white/80 hover:text-white'
+                ? 'bg-white dark:bg-slate-700 text-[#1A4B9F] dark:text-blue-400 shadow-sm'
+                : 'text-slate-500 dark:text-slate-400 hover:text-slate-700'
             }`}
           >
-            <Briefcase className="w-3.5 h-3.5" />
+            <Briefcase className="w-4 h-4" />
             <span>{t.pelamar.nav.findJobs}</span>
           </button>
 
           <button
             type="button"
             onClick={() => switchTab('companies')}
-            className={`py-2 px-3 rounded-lg flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
+            className={`py-2.5 px-3 rounded-lg flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
               activeTab === 'companies'
-                ? 'bg-white text-slate-900 shadow-sm'
-                : 'text-white/80 hover:text-white'
+                ? 'bg-white dark:bg-slate-700 text-[#1A4B9F] dark:text-blue-400 shadow-sm'
+                : 'text-slate-500 dark:text-slate-400 hover:text-slate-700'
             }`}
           >
-            <Building2 className="w-3.5 h-3.5" />
+            <Building2 className="w-4 h-4" />
             <span>{t.pelamar.nav.companies} ({companiesList.length})</span>
           </button>
         </div>
 
         {/* 5 Filters Matching Employer Job Posting + Reset Button */}
-        <div className="grid grid-cols-2 sm:flex sm:flex-wrap items-center gap-2 pt-1 text-xs w-full">
+        <div className="relative grid grid-cols-2 sm:flex sm:flex-wrap items-center gap-2.5 pt-2 text-xs w-full">
           {/* Reset Filters */}
           <button
             type="button"
@@ -714,10 +795,10 @@ function DashboardContent() {
                 industry: 'Semua'
               });
             }}
-            className="w-full sm:w-auto px-3.5 py-2 rounded-xl sm:rounded-full bg-white/20 hover:bg-white/30 text-white font-bold border border-white/30 transition-all cursor-pointer flex items-center justify-center gap-1.5"
+            className="w-full sm:w-auto px-4 py-2.5 rounded-full bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold border border-slate-200 dark:border-slate-700 transition-colors cursor-pointer flex items-center justify-center gap-1.5"
             title="Reset semua filter ke default"
           >
-            <RefreshCw className="w-3.5 h-3.5 shrink-0" />
+            <RefreshCw className="w-4 h-4 shrink-0" />
             <span className="truncate">{language === 'id' ? 'Semua Filter' : 'All Filters'}</span>
           </button>
 
@@ -728,14 +809,12 @@ function DashboardContent() {
                 setIndustryFilter(e.target.value);
                 updateUrlParams({ industry: e.target.value });
               }}
-              className="w-full sm:w-auto px-3.5 py-2 rounded-xl sm:rounded-full bg-white/15 hover:bg-white/25 text-white font-bold border border-white/30 outline-none cursor-pointer text-xs truncate"
+              className="w-full sm:w-auto px-4 py-2.5 rounded-full bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold border border-slate-200 dark:border-slate-700 outline-none cursor-pointer text-xs transition-colors truncate focus:border-[#1A4B9F]"
             >
-              <option className="text-slate-800" value="Semua">{language === 'id' ? 'Semua Industri' : 'All Industries'}</option>
-              <option className="text-slate-800" value="Teknologi">{language === 'id' ? 'Teknologi & IT' : 'Tech & IT'}</option>
-              <option className="text-slate-800" value="Keuangan">{language === 'id' ? 'Keuangan & Perbankan' : 'Finance & Banking'}</option>
-              <option className="text-slate-800" value="Kesehatan">{language === 'id' ? 'Kesehatan' : 'Healthcare'}</option>
-              <option className="text-slate-800" value="Pendidikan">{language === 'id' ? 'Pendidikan' : 'Education'}</option>
-              <option className="text-slate-800" value="Manufaktur">{language === 'id' ? 'Manufaktur' : 'Manufacturing'}</option>
+              <option value="Semua">{language === 'id' ? 'Semua Industri' : 'All Industries'}</option>
+              {industriesList.map((ind, idx) => (
+                <option key={idx} value={ind}>{ind}</option>
+              ))}
             </select>
           ) : (
             <>
@@ -746,11 +825,11 @@ function DashboardContent() {
                   setCategoryFilter(e.target.value);
                   updateUrlParams({ kategori_id: e.target.value });
                 }}
-                className="w-full sm:w-auto sm:max-w-[190px] px-3.5 py-2 rounded-xl sm:rounded-full bg-white/15 hover:bg-white/25 text-white font-bold border border-white/30 outline-none cursor-pointer text-xs truncate"
+                className="w-full sm:w-auto sm:max-w-[200px] px-4 py-2.5 rounded-full bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold border border-slate-200 dark:border-slate-700 outline-none cursor-pointer text-xs transition-colors truncate focus:border-[#1A4B9F]"
               >
-                <option className="text-slate-800" value="Semua">{language === 'id' ? 'Semua Kategori' : 'All Categories'}</option>
+                <option value="Semua">{language === 'id' ? 'Semua Kategori' : 'All Categories'}</option>
                 {categories.map((cat) => (
-                  <option key={cat.id} className="text-slate-800" value={cat.id}>
+                  <option key={cat.id} value={cat.id}>
                     {cat.nama_kategori}
                   </option>
                 ))}
@@ -763,14 +842,14 @@ function DashboardContent() {
                   setEmploymentTypeFilter(e.target.value);
                   updateUrlParams({ tipe_pekerjaan: e.target.value });
                 }}
-                className="w-full sm:w-auto px-3.5 py-2 rounded-xl sm:rounded-full bg-white/15 hover:bg-white/25 text-white font-bold border border-white/30 outline-none cursor-pointer text-xs truncate"
+                className="w-full sm:w-auto px-4 py-2.5 rounded-full bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold border border-slate-200 dark:border-slate-700 outline-none cursor-pointer text-xs transition-colors truncate focus:border-[#1A4B9F]"
               >
-                <option className="text-slate-800" value="Semua">{language === 'id' ? 'Jenis Pekerjaan' : 'Job Type'}</option>
-                <option className="text-slate-800" value="Full-time">Full-time</option>
-                <option className="text-slate-800" value="Contract">Contract</option>
-                <option className="text-slate-800" value="Part-time">Part-time</option>
-                <option className="text-slate-800" value="Internship">Internship</option>
-                <option className="text-slate-800" value="Freelance">Freelance</option>
+                <option value="Semua">{language === 'id' ? 'Jenis Pekerjaan' : 'Job Type'}</option>
+                <option value="Full-time">Full-time</option>
+                <option value="Contract">Contract</option>
+                <option value="Part-time">Part-time</option>
+                <option value="Internship">Internship</option>
+                <option value="Freelance">Freelance</option>
               </select>
 
               {/* 3. Filter Mode Kerja */}
@@ -780,28 +859,28 @@ function DashboardContent() {
                   setWorkModeFilter(e.target.value);
                   updateUrlParams({ lokasi_kerja: e.target.value });
                 }}
-                className="w-full sm:w-auto px-3.5 py-2 rounded-xl sm:rounded-full bg-white/15 hover:bg-white/25 text-white font-bold border border-white/30 outline-none cursor-pointer text-xs truncate"
+                className="w-full sm:w-auto px-4 py-2.5 rounded-full bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold border border-slate-200 dark:border-slate-700 outline-none cursor-pointer text-xs transition-colors truncate focus:border-[#1A4B9F]"
               >
-                <option className="text-slate-800" value="Semua">{language === 'id' ? 'Mode Kerja' : 'Work Mode'}</option>
-                <option className="text-slate-800" value="Hybrid">Hybrid</option>
-                <option className="text-slate-800" value="Remote">Remote</option>
-                <option className="text-slate-800" value="On-site">On-site</option>
+                <option value="Semua">{language === 'id' ? 'Mode Kerja' : 'Work Mode'}</option>
+                <option value="Hybrid">Hybrid</option>
+                <option value="Remote">Remote</option>
+                <option value="On-site">On-site</option>
               </select>
 
-              {/* 4. Filter Tingkat Pengalaman (Tahunnya saja sesuai instruksi user) */}
+              {/* 4. Filter Tingkat Pengalaman */}
               <select
                 value={experienceFilter}
                 onChange={(e) => {
                   setExperienceFilter(e.target.value);
                   updateUrlParams({ experience_level: e.target.value });
                 }}
-                className="w-full sm:w-auto px-3.5 py-2 rounded-xl sm:rounded-full bg-white/15 hover:bg-white/25 text-white font-bold border border-white/30 outline-none cursor-pointer text-xs truncate"
+                className="w-full sm:w-auto px-4 py-2.5 rounded-full bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold border border-slate-200 dark:border-slate-700 outline-none cursor-pointer text-xs transition-colors truncate focus:border-[#1A4B9F]"
               >
-                <option className="text-slate-800" value="Semua">{language === 'id' ? 'Tingkat Pengalaman' : 'Experience'}</option>
-                <option className="text-slate-800" value="0 - 1 Tahun">0 - 1 Tahun</option>
-                <option className="text-slate-800" value="2 - 4 Tahun">2 - 4 Tahun</option>
-                <option className="text-slate-800" value="5+ Tahun">5+ Tahun</option>
-                <option className="text-slate-800" value="8+ Tahun">8+ Tahun</option>
+                <option value="Semua">{language === 'id' ? 'Tingkat Pengalaman' : 'Experience'}</option>
+                <option value="0 - 1 Tahun">0 - 1 Tahun</option>
+                <option value="2 - 4 Tahun">2 - 4 Tahun</option>
+                <option value="5+ Tahun">5+ Tahun</option>
+                <option value="8+ Tahun">8+ Tahun</option>
               </select>
 
               {/* 5. Filter Min. Pendidikan */}
@@ -811,27 +890,27 @@ function DashboardContent() {
                   setEducationFilter(e.target.value);
                   updateUrlParams({ pendidikan_min: e.target.value });
                 }}
-                className="w-full sm:w-auto px-3.5 py-2 rounded-xl sm:rounded-full bg-white/15 hover:bg-white/25 text-white font-bold border border-white/30 outline-none cursor-pointer text-xs truncate"
+                className="w-full sm:w-auto px-4 py-2.5 rounded-full bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold border border-slate-200 dark:border-slate-700 outline-none cursor-pointer text-xs transition-colors truncate focus:border-[#1A4B9F]"
               >
-                <option className="text-slate-800" value="Semua">{language === 'id' ? 'Min. Pendidikan' : 'Min. Education'}</option>
-                <option className="text-slate-800" value="SMA/SMK">SMA / SMK Sederajat</option>
-                <option className="text-slate-800" value="D3">D3</option>
-                <option className="text-slate-800" value="S1">S1</option>
-                <option className="text-slate-800" value="S2">S2</option>
-                <option className="text-slate-800" value="S3">S3</option>
+                <option value="Semua">{language === 'id' ? 'Min. Pendidikan' : 'Min. Education'}</option>
+                <option value="SMA/SMK">SMA / SMK Sederajat</option>
+                <option value="D3">D3</option>
+                <option value="S1">S1</option>
+                <option value="S2">S2</option>
+                <option value="S3">S3</option>
               </select>
             </>
           )}
 
           {/* Desktop View Switcher */}
-          <div className="ml-auto hidden sm:flex items-center gap-2">
+          <div className="ml-auto hidden sm:flex items-center gap-1.5 border border-slate-200 dark:border-slate-700 rounded-full p-1 bg-slate-50 dark:bg-slate-800/50">
             <button
               type="button"
               onClick={() => switchTab('recommended')}
-              className={`px-4 py-2 rounded-full font-bold border transition-all cursor-pointer flex items-center gap-1.5 ${
+              className={`px-4 py-2 rounded-full font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
                 activeTab !== 'companies'
-                  ? 'bg-[#EFF6FF] text-slate-900 border-[#DBEAFE] font-semibold'
-                  : 'bg-white/15 hover:bg-white/25 text-white border-white/30'
+                  ? 'bg-white dark:bg-slate-700 text-[#1A4B9F] dark:text-blue-400 shadow-sm'
+                  : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'
                 }`}
             >
               <Briefcase className="w-4 h-4" />
@@ -841,10 +920,10 @@ function DashboardContent() {
             <button
               type="button"
               onClick={() => switchTab('companies')}
-              className={`px-4 py-2 rounded-full font-bold border transition-all cursor-pointer flex items-center gap-1.5 ${
+              className={`px-4 py-2 rounded-full font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
                 activeTab === 'companies'
-                  ? 'bg-[#EFF6FF] text-slate-900 border-[#DBEAFE] font-semibold'
-                  : 'bg-white/15 hover:bg-white/25 text-white border-white/30'
+                  ? 'bg-white dark:bg-slate-700 text-[#1A4B9F] dark:text-blue-400 shadow-sm'
+                  : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'
                 }`}
             >
               <Building2 className="w-4 h-4" />
@@ -1070,7 +1149,7 @@ function DashboardContent() {
                           : 'Please complete your profile / CV first to enable PO-Fit recommendation.',
                         { icon: 'ℹ️' }
                       );
-                      router.push('/applicant/profile');
+                      router.push('/applicant/upload-cv');
                       return;
                     }
                     setSortOrder(val);
@@ -1084,8 +1163,8 @@ function DashboardContent() {
                     disabled={!userHasCv}
                   >
                     {language === 'id'
-                      ? (!userHasCv ? 'Rekomendasi PO-FIT (Perlu CV)' : 'Rekomendasi PO-FIT')
-                      : (!userHasCv ? 'PO-FIT Recommendation (Needs CV)' : 'PO-FIT Recommendation')}
+                      ? (!userHasCv ? 'Rekomendasi PO-FIT (Perlu CV)' : 'Kesesuaian CV')
+                      : (!userHasCv ? 'PO-FIT Recommendation (Needs CV)' : 'CV Match')}
                   </option>
                   <option className="text-slate-800 dark:text-slate-200 font-medium" value="terbaru">
                     {language === 'id' ? 'Terbaru' : 'Newest'}
@@ -1109,7 +1188,7 @@ function DashboardContent() {
                   </p>
                 </div>
                 <Link
-                  href="/applicant/profile"
+                  href="/applicant/upload-cv"
                   className="px-3 py-1.5 bg-amber-600 hover:bg-amber-700 text-white font-bold text-[11px] rounded-xl shrink-0 transition-colors shadow-2xs whitespace-nowrap"
                 >
                   {language === 'id' ? 'Lengkapi CV' : 'Complete CV'}
@@ -1180,7 +1259,7 @@ function DashboardContent() {
                               {job.matchScore > 0 && userHasCv && (
                                 <span className="px-2 py-0.5 rounded-md bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 font-bold text-[10px] border border-emerald-200 dark:border-emerald-800 flex items-center gap-1">
                                   <Sparkles size={11} className="text-emerald-600 dark:text-emerald-400" />
-                                  {job.matchScore}% Match PO-Fit
+                                  {job.matchScore}% Cocok
                                 </span>
                               )}
                               {job.isNew && (
@@ -1327,15 +1406,9 @@ function DashboardContent() {
                       <div className="flex items-center gap-3.5">
                         <div className="w-12 h-12 rounded-xl bg-[#1A4B9F] text-white flex flex-col items-center justify-center font-black text-sm shadow-sm shrink-0">
                           <span>{selectedJob.matchScore}%</span>
-                          <span className="text-[9px] font-normal uppercase tracking-tight">Match</span>
+                          <span className="text-[9px] font-normal uppercase tracking-tight">Cocok</span>
                         </div>
                         <div>
-                          <div className="flex items-center gap-1.5">
-                            <Sparkles className="w-4 h-4 text-[#1A4B9F]" />
-                            <h4 className="font-bold text-sm text-slate-900 dark:text-white">
-                              {language === 'id' ? 'Skor Kecocokan PO-Fit' : 'PO-Fit Match Score'}
-                            </h4>
-                          </div>
                           <p className="text-xs text-slate-600 dark:text-slate-300 mt-0.5 leading-relaxed">
                             {selectedJob.reason}
                           </p>
@@ -1348,12 +1421,12 @@ function DashboardContent() {
                         <Info className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0" />
                         <p className="text-xs text-amber-800 dark:text-amber-200 font-medium">
                           {language === 'id'
-                            ? 'Lengkapi profil CV Anda untuk melihat analisis kecocokan PO-Fit personal dengan lowongan ini.'
-                            : 'Complete your profile/CV to see personalized PO-Fit score for this job.'}
+                            ? 'Lengkapi profil CV Anda untuk melihat analisis kecocokan personal dengan lowongan ini.'
+                            : 'Complete your profile/CV to see personalized score for this job.'}
                         </p>
                       </div>
                       <Link
-                        href="/applicant/profile"
+                        href="/applicant/upload-cv"
                         className="px-3 py-1.5 bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs rounded-xl shrink-0 transition-colors"
                       >
                         {language === 'id' ? 'Lengkapi' : 'Complete'}
@@ -1528,6 +1601,47 @@ function DashboardContent() {
             )}
           </div>
 
+        </div>
+      )}
+
+      {/* CV Warning Modal */}
+      {showCvWarningModal && (
+        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-8 max-w-md w-full shadow-2xl relative animate-in zoom-in-95 duration-200 border border-slate-100 dark:border-slate-800">
+            <button
+              onClick={() => setShowCvWarningModal(false)}
+              className="absolute top-4 right-4 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors cursor-pointer"
+            >
+              <X size={24} />
+            </button>
+            <div className="text-center space-y-4">
+              <div className="w-16 h-16 bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                <AlertCircle size={32} />
+              </div>
+              <h3 className="text-xl font-bold text-slate-900 dark:text-white">
+                {language === 'id' ? 'Lengkapi Profil Anda' : 'Complete Your Profile'}
+              </h3>
+              <p className="text-slate-600 dark:text-slate-400 text-sm">
+                {language === 'id'
+                  ? 'Anda belum melengkapi Profil/CV. Harap lengkapi profil Anda terlebih dahulu agar dapat melamar pekerjaan dan mendapatkan skor rekomendasi yang akurat.'
+                  : 'You have not completed your Profile/CV. Please complete your profile first to apply for jobs and get accurate recommendation scores.'}
+              </p>
+              <div className="pt-4 flex flex-col sm:flex-row gap-3">
+                <button
+                  onClick={() => setShowCvWarningModal(false)}
+                  className="flex-1 px-4 py-3 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold rounded-xl transition-colors cursor-pointer"
+                >
+                  {language === 'id' ? 'Nanti Saja' : 'Later'}
+                </button>
+                <Link
+                  href="/applicant/upload-cv"
+                  className="flex-1 px-4 py-3 bg-[#1A4B9F] hover:bg-[#133878] text-white font-bold rounded-xl transition-colors text-center cursor-pointer"
+                >
+                  {language === 'id' ? 'Isi Profil Sekarang' : 'Fill Profile Now'}
+                </Link>
+              </div>
+            </div>
+          </div>
         </div>
       )}
 

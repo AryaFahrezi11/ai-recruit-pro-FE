@@ -849,7 +849,7 @@ function CreateJobForm() {
             </div>
             <h3 className="text-xl font-bold text-foreground">{t.jobs.jobPublishedSuccess}</h3>
             <p className="text-xs text-muted-foreground leading-relaxed">
-              Lowongan <strong>{jobTitle}</strong> ({categories.find(c => c.id === categoryId)?.nama_kategori}) kini aktif dan siap menerima berkas pelamar dengan aturan seleksi AI (Threshold PO-FIT {threshold}%).
+              Lowongan <strong>{jobTitle}</strong> ({categories.find(c => c.id === categoryId)?.nama_kategori}) kini aktif dan siap menerima berkas pelamar dengan aturan seleksi AI (Threshold {threshold}%).
             </p>
             <button
               onClick={handleSuccessClose}
