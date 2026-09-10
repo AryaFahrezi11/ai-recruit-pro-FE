@@ -232,8 +232,8 @@ function SavedJobsContent() {
     setAppliedJobs(newApplied);
     localStorage.setItem('appliedJobsList', JSON.stringify(newApplied));
 
-    alert(language === 'id' 
-      ? `🎉 Sukses! CV ATS-Friendly Anda ("${cvDetails?.fullName || 'Pelamar'}") telah terkirim ke HR ${companyName} untuk posisi "${title}".`
+    alert(language === 'id'
+      ? `🎉 Sukses! CV Anda ("${cvDetails?.fullName || 'Pelamar'}") telah terkirim ke HR ${companyName} untuk posisi "${title}".`
       : `🎉 Success! Your ATS-Friendly CV ("${cvDetails?.fullName || 'Applicant'}") has been sent to ${companyName} HR for the "${title}" position.`);
     router.push('/applicant/status');
   };
@@ -251,22 +251,24 @@ function SavedJobsContent() {
     });
 
     return resultList.filter((job) => {
+      const activeKeyword = searchParams.get('keyword') || '';
       const matchesQuery =
-        !searchQuery ||
-        job.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        job.company.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        job.location.toLowerCase().includes(searchQuery.toLowerCase());
+        !activeKeyword ||
+        job.title.toLowerCase().includes(activeKeyword.toLowerCase()) ||
+        job.company.toLowerCase().includes(activeKeyword.toLowerCase()) ||
+        job.location.toLowerCase().includes(activeKeyword.toLowerCase());
 
       const policyLower = job.workPolicy ? job.workPolicy.toLowerCase() : '';
-      const filterLower = policyFilter.toLowerCase();
+      const activePolicy = searchParams.get('policy') || 'Semua';
+      const filterLower = activePolicy.toLowerCase();
       const matchesPolicy =
-        policyFilter === 'Semua' ||
+        activePolicy === 'Semua' ||
         policyLower.includes(filterLower) ||
-        (policyFilter === 'Remote' && (policyLower.includes('wfh') || policyLower.includes('remote')));
+        (activePolicy === 'Remote' && (policyLower.includes('wfh') || policyLower.includes('remote')));
 
       return matchesQuery && matchesPolicy;
     });
-  }, [masterJobs, savedJobIds, searchQuery, policyFilter]);
+  }, [masterJobs, savedJobIds, searchParams]);
 
   return (
     <div className="space-y-6 max-w-[1600px] mx-auto">
@@ -311,16 +313,6 @@ function SavedJobsContent() {
               />
             </div>
 
-            <select
-              value={policyFilter}
-              onChange={(e) => setPolicyFilter(e.target.value)}
-              className="w-full sm:w-auto px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 rounded-xl text-xs font-bold outline-none cursor-pointer focus:ring-2 focus:ring-[#1A4B9F]"
-            >
-              <option value="Semua">{language === 'id' ? 'Semua Kebijakan Kerja' : 'All Work Policies'}</option>
-              <option value="WFO">{language === 'id' ? 'Kerja dari Kantor (WFO)' : 'Work From Office (WFO)'}</option>
-              <option value="Remote">Remote / WFH</option>
-              <option value="Hybrid">Hybrid</option>
-            </select>
 
             <button
               type="submit"

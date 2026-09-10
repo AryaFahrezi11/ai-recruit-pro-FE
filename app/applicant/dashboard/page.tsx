@@ -131,7 +131,7 @@ function DashboardContent() {
 
   const updateUrlParams = (updates: Record<string, string>) => {
     const params = new URLSearchParams(searchParams.toString());
-    
+
     // Merge the current unsubmitted form state so we don't lose search text when selecting a dropdown
     const currentState = {
       keyword: searchQuery,
@@ -157,7 +157,7 @@ function DashboardContent() {
   // Currently selected job ID for the right side detail pane
   const urlJobId = searchParams.get('jobId');
   const [selectedJobId, setSelectedJobId] = useState<number | string>(urlJobId || '');
-  
+
   const [shareJob, setShareJob] = useState<Job | null>(null);
 
   const [cvDetails, setCvDetails] = useState<any>(null);
@@ -176,8 +176,8 @@ function DashboardContent() {
   useEffect(() => {
     if (userHasCv === false && !hasShownCvWarningRef.current) {
       const timer = setTimeout(() => {
-         setShowCvWarningModal(true);
-         hasShownCvWarningRef.current = true;
+        setShowCvWarningModal(true);
+        hasShownCvWarningRef.current = true;
       }, 800);
       return () => clearTimeout(timer);
     }
@@ -509,7 +509,7 @@ function DashboardContent() {
 
       const qs = apiParams.toString();
       const resComp = await api.get(`/perusahaan/verified?${qs}`);
-      
+
       const rawCompList = Array.isArray(resComp) ? resComp : (resComp?.data && Array.isArray(resComp.data) ? resComp.data : []);
       if (rawCompList.length > 0) {
         const mappedComp: Company[] = rawCompList.map((c: any) => ({
@@ -618,6 +618,17 @@ function DashboardContent() {
     return jobsList.find((j) => String(j.id) === String(selectedJobId)) || filteredJobs[0] || jobsList[0];
   }, [jobsList, selectedJobId, filteredJobs]);
 
+  useEffect(() => {
+    if (selectedJobId) {
+      setTimeout(() => {
+        const element = document.getElementById(`job-card-${selectedJobId}`);
+        if (element) {
+          element.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+      }, 100);
+    }
+  }, [selectedJobId, filteredJobs]);
+
   return (
     <div className="space-y-6 max-w-[1440px] mx-auto">
 
@@ -626,7 +637,7 @@ function DashboardContent() {
         {/* Subtle Background Elements */}
         <div className="absolute top-0 right-0 -mr-20 -mt-20 w-64 h-64 rounded-full bg-blue-50/80 dark:bg-blue-900/10 blur-3xl opacity-60 pointer-events-none"></div>
         <div className="absolute bottom-0 left-0 -ml-20 -mb-20 w-64 h-64 rounded-full bg-indigo-50/80 dark:bg-indigo-900/10 blur-3xl opacity-60 pointer-events-none"></div>
-        
+
         <form
           method="GET"
           onSubmit={async (e) => {
@@ -749,11 +760,10 @@ function DashboardContent() {
           <button
             type="button"
             onClick={() => switchTab('recommended')}
-            className={`py-2.5 px-3 rounded-lg flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
-              activeTab !== 'companies'
+            className={`py-2.5 px-3 rounded-lg flex items-center justify-center gap-1.5 transition-all cursor-pointer ${activeTab !== 'companies'
                 ? 'bg-white dark:bg-slate-700 text-[#1A4B9F] dark:text-blue-400 shadow-sm'
                 : 'text-slate-500 dark:text-slate-400 hover:text-slate-700'
-            }`}
+              }`}
           >
             <Briefcase className="w-4 h-4" />
             <span>{t.pelamar.nav.findJobs}</span>
@@ -762,11 +772,10 @@ function DashboardContent() {
           <button
             type="button"
             onClick={() => switchTab('companies')}
-            className={`py-2.5 px-3 rounded-lg flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
-              activeTab === 'companies'
+            className={`py-2.5 px-3 rounded-lg flex items-center justify-center gap-1.5 transition-all cursor-pointer ${activeTab === 'companies'
                 ? 'bg-white dark:bg-slate-700 text-[#1A4B9F] dark:text-blue-400 shadow-sm'
                 : 'text-slate-500 dark:text-slate-400 hover:text-slate-700'
-            }`}
+              }`}
           >
             <Building2 className="w-4 h-4" />
             <span>{t.pelamar.nav.companies} ({companiesList.length})</span>
@@ -905,34 +914,6 @@ function DashboardContent() {
             </>
           )}
 
-          {/* Desktop View Switcher */}
-          <div className="ml-auto hidden sm:flex items-center gap-1.5 border border-slate-200 dark:border-slate-700 rounded-full p-1 bg-slate-50 dark:bg-slate-800/50">
-            <button
-              type="button"
-              onClick={() => switchTab('recommended')}
-              className={`px-4 py-2 rounded-full font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
-                activeTab !== 'companies'
-                  ? 'bg-white text-[#1A4B9F] border-white font-bold shadow-2xs'
-                  : 'bg-white/15 hover:bg-white/25 text-white border-white/30'
-                }`}
-            >
-              <Briefcase className="w-4 h-4" />
-              <span>{t.pelamar.nav.findJobs}</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => switchTab('companies')}
-              className={`px-4 py-2 rounded-full font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
-                activeTab === 'companies'
-                  ? 'bg-white text-[#1A4B9F] border-white font-bold shadow-2xs'
-                  : 'bg-white/15 hover:bg-white/25 text-white border-white/30'
-                }`}
-            >
-              <Building2 className="w-4 h-4" />
-              <span>{t.pelamar.nav.companies} ({companiesList.length})</span>
-            </button>
-          </div>
         </div>
       </div>
 
@@ -963,37 +944,37 @@ function DashboardContent() {
                     onClick={() => router.push(compPath)}
                     className="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-2xs hover:shadow-md hover:border-[#1A4B9F]/40 transition-all space-y-4 flex flex-col justify-between cursor-pointer group"
                   >
-                <div className="space-y-3">
-                  <div className="flex items-start justify-between gap-3">
-                    <img
-                      src={comp.logo}
-                      alt={comp.name}
-                      className="w-14 h-14 rounded-2xl object-cover border border-slate-200 dark:border-slate-700"
-                    />
-                    <span className="px-3 py-1 rounded-full bg-[#EFF6FF] dark:bg-slate-800 text-slate-900 dark:text-white font-bold text-xs border border-[#DBEAFE] dark:border-slate-700">
-                      {comp.openJobsCount} {language === 'id' ? 'Lowongan Buka' : 'Open Jobs'}
-                    </span>
-                  </div>
+                    <div className="space-y-3">
+                      <div className="flex items-start justify-between gap-3">
+                        <img
+                          src={comp.logo}
+                          alt={comp.name}
+                          className="w-14 h-14 rounded-2xl object-cover border border-slate-200 dark:border-slate-700"
+                        />
+                        <span className="px-3 py-1 rounded-full bg-[#EFF6FF] dark:bg-slate-800 text-slate-900 dark:text-white font-bold text-xs border border-[#DBEAFE] dark:border-slate-700">
+                          {comp.openJobsCount} {language === 'id' ? 'Lowongan Buka' : 'Open Jobs'}
+                        </span>
+                      </div>
 
-                  <div>
-                    <h4 className="font-bold text-lg text-slate-800 dark:text-white group-hover:text-slate-900 transition-colors">
-                      {comp.name}
-                    </h4>
-                    <p className="text-xs text-slate-500 font-bold">
-                      {comp.industry} • {comp.location}
-                    </p>
-                  </div>
+                      <div>
+                        <h4 className="font-bold text-lg text-slate-800 dark:text-white group-hover:text-slate-900 transition-colors">
+                          {comp.name}
+                        </h4>
+                        <p className="text-xs text-slate-500 font-bold">
+                          {comp.industry} • {comp.location}
+                        </p>
+                      </div>
 
-                  <div
-                    className="w-full py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 group-hover:border-[#1A4B9F] group-hover:text-[#1A4B9F] group-hover:bg-[#EFF6FF] dark:group-hover:bg-slate-800 text-slate-600 dark:text-slate-400 text-xs font-bold transition-all flex items-center justify-center gap-2"
-                  >
-                    <span>{language === 'id' ? 'Lihat' : 'View'} {comp.openJobsCount} {language === 'id' ? 'Lowongan Buka' : 'Open Jobs'}</span>
+                      <div
+                        className="w-full py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 group-hover:border-[#1A4B9F] group-hover:text-[#1A4B9F] group-hover:bg-[#EFF6FF] dark:group-hover:bg-slate-800 text-slate-600 dark:text-slate-400 text-xs font-bold transition-all flex items-center justify-center gap-2"
+                      >
+                        <span>{language === 'id' ? 'Lihat' : 'View'} {comp.openJobsCount} {language === 'id' ? 'Lowongan Buka' : 'Open Jobs'}</span>
+                      </div>
+                    </div>
                   </div>
-                </div>
-              </div>
-              );
-            })
-          )}
+                );
+              })
+            )}
           </div>
         </div>
       ) : (
@@ -1004,7 +985,7 @@ function DashboardContent() {
           {shareJob && (
             <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fadeIn">
               <div className="bg-white dark:bg-slate-900 rounded-2xl w-full max-w-lg p-6 sm:p-8 shadow-2xl relative border border-slate-200 dark:border-slate-800 space-y-6">
-                
+
                 {/* Modal Header */}
                 <div className="flex items-start justify-between">
                   <div className="flex items-center gap-3">
@@ -1083,7 +1064,7 @@ function DashboardContent() {
                       onClick={() => {
                         const url = typeof window !== 'undefined' ? window.location.origin + '/jobs/' + shareJob.id : '';
                         const subject = language === 'id' ? `Lowongan Pekerjaan: ${shareJob.title} di ${shareJob.company}` : `Job Opening: ${shareJob.title} at ${shareJob.company}`;
-                        const body = language === 'id' 
+                        const body = language === 'id'
                           ? `Halo,\n\nSaya ingin membagikan info lowongan pekerjaan berikut:\n\nPosisi: ${shareJob.title}\nPerusahaan: ${shareJob.company}\nLokasi: ${shareJob.location}\n\nLink detail & pendaftaran: ${url}`
                           : `Hello,\n\nI would like to share the following job opening:\n\nPosition: ${shareJob.title}\nCompany: ${shareJob.company}\nLocation: ${shareJob.location}\n\nApply & view job details: ${url}`;
                         window.open(`mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`, '_blank');
@@ -1145,45 +1126,45 @@ function DashboardContent() {
                   </div>
                 </div>
 
-              <div className="flex items-center gap-1.5 text-xs text-slate-500 font-bold">
-                <span>{language === 'id' ? 'Urutkan:' : 'Sort by:'}</span>
-                <select
-                  value={sortOrder}
-                  onChange={(e) => {
-                    const val = e.target.value;
-                    if (val === 'rekomendasi' && !userHasCv) {
-                      toast(
-                        language === 'id'
-                          ? 'Lengkapi profil / CV Anda terlebih dahulu untuk mengaktifkan rekomendasi PO-Fit.'
-                          : 'Please complete your profile / CV first to enable PO-Fit recommendation.',
-                        { icon: 'ℹ️' }
-                      );
-                      router.push('/applicant/upload-cv');
-                      return;
-                    }
-                    setSortOrder(val);
-                    updateUrlParams({ sort: val });
-                  }}
-                  className="text-slate-900 dark:text-slate-100 font-bold cursor-pointer bg-slate-100 dark:bg-slate-800 px-2.5 py-1 rounded-lg border border-slate-200 dark:border-slate-700 outline-none hover:bg-slate-200/70 dark:hover:bg-slate-700 transition-colors"
-                >
-                  <option
-                    className="text-slate-800 dark:text-slate-200 font-medium"
-                    value="rekomendasi"
-                    disabled={!userHasCv}
+                <div className="flex items-center gap-1.5 text-xs text-slate-500 font-bold">
+                  <span>{language === 'id' ? 'Urutkan:' : 'Sort by:'}</span>
+                  <select
+                    value={sortOrder}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      if (val === 'rekomendasi' && !userHasCv) {
+                        toast(
+                          language === 'id'
+                            ? 'Lengkapi profil / CV Anda terlebih dahulu untuk mengaktifkan rekomendasi PO-Fit.'
+                            : 'Please complete your profile / CV first to enable PO-Fit recommendation.',
+                          { icon: 'ℹ️' }
+                        );
+                        router.push('/applicant/upload-cv');
+                        return;
+                      }
+                      setSortOrder(val);
+                      updateUrlParams({ sort: val });
+                    }}
+                    className="text-slate-900 dark:text-slate-100 font-bold cursor-pointer bg-slate-100 dark:bg-slate-800 px-2.5 py-1 rounded-lg border border-slate-200 dark:border-slate-700 outline-none hover:bg-slate-200/70 dark:hover:bg-slate-700 transition-colors"
                   >
-                    {language === 'id'
-                      ? (!userHasCv ? 'Rekomendasi PO-FIT (Perlu CV)' : 'Kesesuaian CV')
-                      : (!userHasCv ? 'PO-FIT Recommendation (Needs CV)' : 'CV Match')}
-                  </option>
-                  <option className="text-slate-800 dark:text-slate-200 font-medium" value="terbaru">
-                    {language === 'id' ? 'Terbaru' : 'Newest'}
-                  </option>
-                  <option className="text-slate-800 dark:text-slate-200 font-medium" value="terlama">
-                    {language === 'id' ? 'Terlama' : 'Oldest'}
-                  </option>
-                </select>
+                    <option
+                      className="text-slate-800 dark:text-slate-200 font-medium"
+                      value="rekomendasi"
+                      disabled={!userHasCv}
+                    >
+                      {language === 'id'
+                        ? (!userHasCv ? 'Rekomendasi PO-FIT (Perlu CV)' : 'Kesesuaian CV')
+                        : (!userHasCv ? 'PO-FIT Recommendation (Needs CV)' : 'CV Match')}
+                    </option>
+                    <option className="text-slate-800 dark:text-slate-200 font-medium" value="terbaru">
+                      {language === 'id' ? 'Terbaru' : 'Newest'}
+                    </option>
+                    <option className="text-slate-800 dark:text-slate-200 font-medium" value="terlama">
+                      {language === 'id' ? 'Terlama' : 'Oldest'}
+                    </option>
+                  </select>
+                </div>
               </div>
-            </div>
             </div>
 
             {/* Incomplete CV Banner / Fallback Info */}
@@ -1246,9 +1227,9 @@ function DashboardContent() {
                   return (
                     <div
                       key={job.id}
+                      id={`job-card-${job.id}`}
                       onClick={() => setSelectedJobId(job.id)}
-                      className={`p-5 rounded-2xl border transition-all cursor-pointer relative space-y-3 ${
-                        isSelected
+                      className={`p-5 rounded-2xl border transition-all cursor-pointer relative space-y-3 ${isSelected
                           ? 'bg-white dark:bg-slate-900 border-2 border-[#1A4B9F] ring-1 ring-[#1A4B9F]/20 shadow-md shadow-md ring-2 ring-[#1A4B9F]/20'
                           : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 shadow-2xs'
                         }`}
@@ -1372,7 +1353,7 @@ function DashboardContent() {
             {selectedJob && (
               <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-md overflow-y-auto h-full custom-scrollbar">
 
-                
+
                 {/* Detail Header */}
                 <div className="p-6 sm:p-8 pb-4 space-y-4 border-b border-slate-100 dark:border-slate-800">
                   <div className="flex items-start gap-4">
@@ -1535,8 +1516,7 @@ function DashboardContent() {
                     {/* Bookmark */}
                     <button
                       onClick={() => toggleSaveJob(selectedJob.id)}
-                      className={`p-3 rounded-2xl border transition-colors cursor-pointer ${
-                        savedJobIds.some(id => String(id) === String(selectedJob.id))
+                      className={`p-3 rounded-2xl border transition-colors cursor-pointer ${savedJobIds.some(id => String(id) === String(selectedJob.id))
                           ? 'bg-cyan-50 border-[#1A4B9F] text-slate-900 dark:bg-slate-800'
                           : 'border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50'
                         }`}
