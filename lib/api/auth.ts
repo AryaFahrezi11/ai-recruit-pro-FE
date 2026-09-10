@@ -41,7 +41,7 @@ export const loginUser = async (email: string, password: string, role?: string) 
 import { useAppStore } from '@/lib/store/useAppStore';
 
 export const fetchAuth = async (url: string, options: RequestInit = {}) => {
-  const token = useAppStore.getState().token;
+  const token = useAppStore.getState().token || (typeof window !== 'undefined' ? localStorage.getItem('access_token') : null);
   
   const headers = new Headers(options.headers || {});
   if (token) {

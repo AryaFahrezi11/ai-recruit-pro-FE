@@ -271,14 +271,27 @@ export default function PipelinePage() {
     });
   };
 
-  // Extract distinct job titles for filter dropdown
-  const distinctJobs = useMemo(() => {
-    const set = new Set<string>();
+  // Extract distinct job categories for filter dropdown
+  const distinctCategories = useMemo(() => {
+    const categorySet = new Set<string>();
     applications.forEach(a => {
-      const title = a.job?.judul_posisi;
-      if (title) set.add(title);
+      const catName = a.job?.kategori?.nama_kategori || a.job?.kategori_nama || a.job?.kategori;
+      if (catName && typeof catName === 'string' && catName.trim()) {
+        categorySet.add(catName.trim());
+      } else if (a.job?.judul_posisi) {
+        categorySet.add(a.job.judul_posisi.trim());
+      }
     });
-    return Array.from(set);
+
+    const normalizedMap = new Map<string, string>();
+    Array.from(categorySet).forEach(cat => {
+      const lower = cat.toLowerCase();
+      if (!normalizedMap.has(lower)) {
+        normalizedMap.set(lower, cat);
+      }
+    });
+
+    return Array.from(normalizedMap.values()).sort((a, b) => a.localeCompare(b));
   }, [applications]);
 
   // Filtered applications for Table View
@@ -291,8 +304,15 @@ export default function PipelinePage() {
       const q = activeSearch.toLowerCase().trim();
       const matchSearch = !q || name.includes(q) || job.includes(q) || uni.includes(q);
 
-      // Job Filter
-      const matchJob = jobFilter === 'all' || app.job?.judul_posisi === jobFilter;
+      // Category / Job Filter
+      let matchJob = true;
+      if (jobFilter !== 'all') {
+        const appCategory = (app.job?.kategori?.nama_kategori || app.job?.kategori_nama || '').toLowerCase();
+        const appJobTitle = (app.job?.judul_posisi || '').toLowerCase();
+        const filterLower = jobFilter.toLowerCase();
+
+        matchJob = appCategory.includes(filterLower) || appJobTitle.includes(filterLower);
+      }
 
       // Stage Filter (Default: human_validation matches both before & during interview lanjutan)
       let matchStage = true;
@@ -664,9 +684,9 @@ export default function PipelinePage() {
                 onChange={(e) => setJobFilter(e.target.value)}
                 className="w-full px-3 py-2 bg-muted/40 border border-border rounded-xl text-xs text-foreground focus:ring-2 focus:ring-primary/20 outline-none font-medium cursor-pointer"
               >
-                <option value="all">Semua Lowongan Posisi</option>
-                {distinctJobs.map(j => (
-                  <option key={j} value={j}>{j}</option>
+                <option value="all">Semua Kategori Pekerjaan</option>
+                {distinctCategories.map(c => (
+                  <option key={c} value={c}>{c}</option>
                 ))}
               </select>
             </div>
@@ -709,7 +729,7 @@ export default function PipelinePage() {
                 )}
                 {jobFilter !== 'all' && (
                   <span className="px-2.5 py-0.5 rounded-md bg-purple-50 text-purple-700 dark:bg-purple-950/60 dark:text-purple-300 font-bold text-[11px] border border-purple-200 dark:border-purple-800 flex items-center gap-1">
-                    Posisi: {jobFilter}
+                    Kategori: {jobFilter}
                     <button type="button" onClick={() => setJobFilter('all')} className="hover:text-purple-900 cursor-pointer">
                       <X size={11} />
                     </button>

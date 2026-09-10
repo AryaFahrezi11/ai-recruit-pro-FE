@@ -231,14 +231,36 @@ function CompanyRegistrationInner() {
   };
 
   const handleOtpKeyDown = (index: number, e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Backspace' && !otpCode[index] && index > 0) {
-      const prevInput = document.getElementById(`otp-input-${index - 1}`);
-      if (prevInput) {
-        prevInput.focus();
-        const newOtp = [...otpCode];
+    if (e.key === 'Backspace') {
+      e.preventDefault();
+      const newOtp = [...otpCode];
+
+      if (otpCode[index]) {
+        newOtp[index] = '';
+        setOtpCode(newOtp);
+        if (index > 0) {
+          const prevInput = document.getElementById(`otp-input-${index - 1}`);
+          if (prevInput) prevInput.focus();
+        }
+      } else if (index > 0) {
         newOtp[index - 1] = '';
         setOtpCode(newOtp);
+        const prevInput = document.getElementById(`otp-input-${index - 1}`);
+        if (prevInput) prevInput.focus();
       }
+      return;
+    }
+
+    if (e.key === 'ArrowLeft' && index > 0) {
+      e.preventDefault();
+      const prevInput = document.getElementById(`otp-input-${index - 1}`);
+      if (prevInput) prevInput.focus();
+    }
+
+    if (e.key === 'ArrowRight' && index < 5) {
+      e.preventDefault();
+      const nextInput = document.getElementById(`otp-input-${index + 1}`);
+      if (nextInput) nextInput.focus();
     }
   };
 
@@ -797,7 +819,7 @@ function CompanyRegistrationInner() {
                 <div>
                   <label className={labelBase}>Nomor NIB / NPWP <span className="text-red-500">*</span></label>
                   <input type="text" value={nibNpwpNumber}
-                    onChange={(e) => setNibNpwpNumber(e.target.value.replace(/\D/g, ''))}
+                    onChange={(e) => setNibNpwpNumber(e.target.value.replace(/\D/g, '').slice(0, 16))}
                     placeholder="Angka saja, contoh: 9120101928123"
                     className={`${inputBase} font-mono`} />
                 </div>
@@ -864,7 +886,7 @@ function CompanyRegistrationInner() {
                   <div>
                     <label className={labelBase}>Nomor WhatsApp <span className="text-red-500">*</span></label>
                     <input type="text" value={whatsappNumber}
-                      onChange={(e) => setWhatsappNumber(e.target.value.replace(/\D/g, ''))}
+                      onChange={(e) => setWhatsappNumber(e.target.value.replace(/\D/g, '').slice(0, 15))}
                       placeholder="081234567890" className={`${inputBase} font-mono`} />
                   </div>
                 </div>

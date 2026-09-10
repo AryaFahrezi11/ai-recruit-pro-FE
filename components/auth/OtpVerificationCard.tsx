@@ -66,7 +66,6 @@ export default function OtpVerificationCard({
       const newOtp = [...otpCode];
 
       if (otpCode[index]) {
-        // Jika kotak saat ini ada isinya, hapus isinya dan langsung pindahkan fokus ke kotak sebelumnya
         newOtp[index] = '';
         setOtpCode(newOtp);
         if (index > 0) {
@@ -74,13 +73,24 @@ export default function OtpVerificationCard({
           if (prevInput) prevInput.focus();
         }
       } else if (index > 0) {
-        // Jika kotak saat ini sudah kosong, hapus kotak sebelumnya dan mundurkan fokus
         newOtp[index - 1] = '';
         setOtpCode(newOtp);
         const prevInput = document.getElementById(`${inputPrefix}-${index - 1}`);
         if (prevInput) prevInput.focus();
       }
       return;
+    }
+
+    if (e.key === 'ArrowLeft' && index > 0) {
+      e.preventDefault();
+      const prevInput = document.getElementById(`${inputPrefix}-${index - 1}`);
+      if (prevInput) prevInput.focus();
+    }
+
+    if (e.key === 'ArrowRight' && index < 5) {
+      e.preventDefault();
+      const nextInput = document.getElementById(`${inputPrefix}-${index + 1}`);
+      if (nextInput) nextInput.focus();
     }
 
     if (e.key === 'Delete') {

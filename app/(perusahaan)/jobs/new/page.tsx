@@ -23,6 +23,7 @@ function CreateJobForm() {
   // Form State
   const [jobTitle, setJobTitle] = useState('');
   const [categoryId, setCategoryId] = useState('');
+  const [customCategoryName, setCustomCategoryName] = useState('');
   const [categories, setCategories] = useState<{ id: string, nama_kategori: string }[]>([]);
   const [employmentType, setEmploymentType] = useState('Full-time');
   const [workMode, setWorkMode] = useState('hybrid');
@@ -194,10 +195,41 @@ function CreateJobForm() {
     e.preventDefault();
     setIsSubmitting(true);
 
+    let finalCategoryId = categoryId;
+
+    if (categoryId === 'other') {
+      if (!customCategoryName.trim()) {
+        setErrorMsg('Silakan masukkan nama kategori pekerjaan baru.');
+        setIsSubmitting(false);
+        return;
+      }
+      try {
+        const catRes = await fetchAuth('/api/jobs/categories', {
+          method: 'POST',
+          body: JSON.stringify({ nama_kategori: customCategoryName.trim() })
+        });
+        if (catRes.ok) {
+          const newCat = await catRes.json();
+          finalCategoryId = newCat.id;
+          setCategories(prev => [...prev, newCat]);
+          setCategoryId(newCat.id);
+        } else {
+          const catErr = await catRes.json();
+          setErrorMsg(catErr.detail || 'Gagal menambahkan kategori baru.');
+          setIsSubmitting(false);
+          return;
+        }
+      } catch (err) {
+        setErrorMsg('Terjadi kesalahan saat menambahkan kategori baru.');
+        setIsSubmitting(false);
+        return;
+      }
+    }
+
     const payload = {
       judul_posisi: jobTitle,
       deskripsi_pekerjaan: summary,
-      kategori_id: categoryId,
+      kategori_id: finalCategoryId,
       kualifikasi: JSON.stringify(requirements),
       tanggung_jawab: JSON.stringify(responsibilities),
       tipe_pekerjaan: employmentType,
@@ -312,14 +344,36 @@ function CreateJobForm() {
               </label>
               <select
                 value={categoryId}
-                onChange={(e) => setCategoryId(e.target.value)}
-                className="w-full px-4 py-2.5 bg-muted/30 border border-border rounded-lg text-sm text-foreground focus:outline-none focus:border-primary transition-all"
+                onChange={(e) => {
+                  setCategoryId(e.target.value);
+                  if (e.target.value !== 'other') {
+                    setCustomCategoryName('');
+                  }
+                }}
+                className="w-full px-4 py-2.5 bg-muted/30 border border-border rounded-lg text-sm text-foreground focus:outline-none focus:border-primary transition-all font-medium cursor-pointer"
               >
                 <option value="" disabled>-- Pilih Kategori --</option>
                 {categories.map(cat => (
                   <option key={cat.id} value={cat.id}>{cat.nama_kategori}</option>
                 ))}
+                <option value="other" className="font-bold text-primary">+ Lainnya (Tambah Kategori Baru...)</option>
               </select>
+
+              {categoryId === 'other' && (
+                <div className="mt-3 p-3.5 bg-muted/30 border border-border rounded-xl space-y-2 animate-in fade-in duration-200">
+                  <label className="block text-xs font-bold text-foreground">
+                    Ketik Nama Kategori Pekerjaan Baru <span className="text-rose-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    required={categoryId === 'other'}
+                    value={customCategoryName}
+                    onChange={(e) => setCustomCategoryName(e.target.value)}
+                    placeholder="Contoh: Blockchain, AI Engineering, Legal & Compliance..."
+                    className="w-full px-4 py-2.5 bg-background border border-border rounded-lg text-sm font-medium text-foreground outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all"
+                  />
+                </div>
+              )}
             </div>
 
             {/* Employment Type */}

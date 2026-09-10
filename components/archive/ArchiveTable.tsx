@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from '@/hooks/useTranslation';
-import { ChevronLeft, ChevronRight, FileText } from 'lucide-react';
+import { FileText, Trash2, AlertTriangle, X } from 'lucide-react';
 import { fetchAuth } from '@/lib/api/auth';
 import toast from 'react-hot-toast';
 
@@ -11,6 +11,8 @@ export function ArchiveTable({ search, jobFilter, date }: any) {
   
   const [applications, setApplications] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [selectedForDelete, setSelectedForDelete] = useState<any | null>(null);
 
   const loadApplications = async () => {
     try {
@@ -18,7 +20,6 @@ export function ArchiveTable({ search, jobFilter, date }: any) {
       const res = await fetchAuth('/api/applications/');
       if (res.ok) {
         const data = await res.json();
-        // Filter for archived candidates (accepted or rejected)
         const archivedApps = (data.data || []).filter((a: any) => 
           a.status === 'Lolos' || a.status === 'ditolak' || a.status === 'Tidak Lolos'
         );
@@ -34,6 +35,27 @@ export function ArchiveTable({ search, jobFilter, date }: any) {
   useEffect(() => {
     loadApplications();
   }, []);
+
+  const handleDeleteApplication = async (appId: string) => {
+    try {
+      setDeletingId(appId);
+      const res = await fetchAuth(`/api/applications/${appId}`, {
+        method: 'DELETE',
+      });
+
+      if (res.ok) {
+        toast.success('Kandidat berhasil dihapus dari arsip');
+        setApplications(prev => prev.filter(item => item.id !== appId));
+      } else {
+        toast.error('Gagal menghapus kandidat dari arsip');
+      }
+    } catch (err) {
+      toast.error('Terjadi kesalahan saat menghapus data');
+    } finally {
+      setDeletingId(null);
+      setSelectedForDelete(null);
+    }
+  };
 
   const getInitials = (name: string) => {
     if (!name) return '??';
@@ -53,47 +75,64 @@ export function ArchiveTable({ search, jobFilter, date }: any) {
     }).format(new Date(dateStr));
   };
 
+  const currentYearMonth = new Date().toISOString().substring(0, 7);
+
   const filteredApplications = applications.filter((app) => {
-    // Search filter
+    const appDateRaw = app.updated_at || app.applied_at || '';
+    const appDateOnly = appDateRaw.substring(0, 10);
+    const appYearMonth = appDateRaw.substring(0, 7);
+
+    if (date) {
+      if (appDateOnly !== date) return false;
+    } else {
+      if (appYearMonth !== currentYearMonth) return false;
+    }
+
+    if (jobFilter) {
+      const appCategory = (app.job?.kategori?.nama_kategori || '').toLowerCase();
+      const appJobTitle = (app.job?.judul_posisi || '').toLowerCase();
+      const filterLower = jobFilter.toLowerCase();
+
+      const matchCategory = appCategory.includes(filterLower);
+      const matchTitle = appJobTitle.includes(filterLower);
+      const matchId = app.job?.id === jobFilter;
+
+      if (!matchCategory && !matchTitle && !matchId) return false;
+    }
+
     if (search) {
       const searchLower = search.toLowerCase();
       const matchName = (app.pelamar?.nama_lengkap || '').toLowerCase().includes(searchLower);
+      const matchEmail = (app.pelamar?.email || '').toLowerCase().includes(searchLower);
       const matchJob = (app.job?.judul_posisi || '').toLowerCase().includes(searchLower);
+      const matchCategory = (app.job?.kategori?.nama_kategori || '').toLowerCase().includes(searchLower);
       const matchUniv = (app.pelamar?.institusi_pendidikan || app.cvData?.education?.[0]?.school || '').toLowerCase().includes(searchLower);
-      if (!matchName && !matchJob && !matchUniv) return false;
-    }
 
-    // Job filter
-    if (jobFilter && app.job?.id !== jobFilter) {
-      return false;
-    }
-
-    // Date filter
-    if (date) {
-      const appDate = (app.updated_at || app.applied_at || '').substring(0, 10);
-      if (appDate !== date) return false;
+      if (!matchName && !matchEmail && !matchJob && !matchCategory && !matchUniv) return false;
     }
 
     return true;
   });
 
   return (
-    <div className="bg-card text-card-foreground border border-border border-t-0 rounded-b-xl overflow-hidden shadow-sm">
+    <div className="bg-card text-card-foreground border border-border border-t-0 rounded-b-xl overflow-hidden shadow-sm relative">
       <div className="overflow-x-auto">
         <table className="w-full text-left text-sm">
           <thead className="bg-muted/50 text-muted-foreground font-semibold text-xs uppercase tracking-wider border-b border-border">
             <tr>
+              <th className="px-4 py-4 w-12 text-center">NO.</th>
               <th className="px-6 py-4">{t.archive?.candidate || 'CANDIDATE'}</th>
-              <th className="px-6 py-4">{t.archive?.role || 'ROLE'}</th>
-              <th className="px-6 py-4">Pendidikan</th>
+              <th className="px-6 py-4">{t.archive?.role || 'KATEGORI / PEKERJAAN'}</th>
+              <th className="px-6 py-4">PENDIDIKAN</th>
               <th className="px-6 py-4">{t.archive?.dateClosed || 'DATE CLOSED'}</th>
               <th className="px-6 py-4">{t.archive?.outcome || 'OUTCOME'}</th>
+              <th className="px-6 py-4 text-center">AKSI</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-border">
             {loading ? (
               <tr>
-                <td colSpan={5} className="px-6 py-12 text-center text-muted-foreground">
+                <td colSpan={7} className="px-6 py-12 text-center text-muted-foreground">
                   <div className="flex justify-center mb-4">
                     <div className="w-8 h-8 border-2 border-primary/30 border-t-primary rounded-full animate-spin"></div>
                   </div>
@@ -102,16 +141,24 @@ export function ArchiveTable({ search, jobFilter, date }: any) {
               </tr>
             ) : filteredApplications.length === 0 ? (
               <tr>
-                <td colSpan={5} className="px-6 py-12 text-center text-muted-foreground">
+                <td colSpan={7} className="px-6 py-12 text-center text-muted-foreground">
                   <div className="flex justify-center mb-2">
                     <FileText size={32} className="text-muted/50" />
                   </div>
-                  {t.archive?.emptyArchive || 'Belum ada kandidat di arsip.'}
+                  <p className="font-semibold text-foreground mb-1">
+                    {date ? 'Tidak ada data arsip pada tanggal ini.' : 'Belum ada data arsip untuk bulan ini.'}
+                  </p>
+                  <p className="text-xs">
+                    {date ? 'Coba ganti atau reset filter tanggal untuk melihat data lain.' : 'Gunakan filter tanggal di atas untuk mencari arsip di bulan/tahun terdahulu.'}
+                  </p>
                 </td>
               </tr>
             ) : (
-              filteredApplications.map((row) => (
+              filteredApplications.map((row, index) => (
                 <tr key={row.id} className="hover:bg-muted/30 transition-colors">
+                  <td className="px-4 py-4 text-center font-bold text-xs text-muted-foreground">
+                    {index + 1}
+                  </td>
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-3">
                       <div className={`w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold shrink-0 ${getAvatarBg(row.pelamar?.nama_lengkap || '')}`}>
@@ -125,7 +172,7 @@ export function ArchiveTable({ search, jobFilter, date }: any) {
                   </td>
                   <td className="px-6 py-4 text-muted-foreground">
                     <p className="font-medium text-foreground">{row.job?.judul_posisi || '-'}</p>
-                    <p className="text-xs">{row.job?.kategori?.nama_kategori || '-'}</p>
+                    <p className="text-xs text-muted-foreground/80">{row.job?.kategori?.nama_kategori || 'Umum'}</p>
                   </td>
                   <td className="px-6 py-4 text-muted-foreground">
                     {row.pelamar?.institusi_pendidikan || row.cvData?.education?.[0]?.school || '-'}
@@ -133,14 +180,24 @@ export function ArchiveTable({ search, jobFilter, date }: any) {
                   <td className="px-6 py-4 text-muted-foreground">{formatDate(row.updated_at || row.applied_at)}</td>
                   <td className="px-6 py-4">
                     {row.status === 'Lolos' ? (
-                      <span className="px-3 py-1 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 text-xs font-medium rounded-full border border-transparent">
+                      <span className="px-3 py-1 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 text-xs font-semibold rounded-full border border-emerald-200 dark:border-emerald-800/50">
                         {t.archive?.hired || 'Hired / Diterima'}
                       </span>
                     ) : (
-                      <span className="px-3 py-1 bg-rose-100 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400 text-xs font-medium rounded-full border border-transparent">
+                      <span className="px-3 py-1 bg-rose-100 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400 text-xs font-semibold rounded-full border border-rose-200 dark:border-rose-800/50">
                         {t.archive?.rejected || 'Rejected / Ditolak'}
                       </span>
                     )}
+                  </td>
+                  <td className="px-6 py-4 text-center">
+                    <button
+                      onClick={() => setSelectedForDelete(row)}
+                      disabled={deletingId === row.id}
+                      className="p-2 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors cursor-pointer disabled:opacity-40"
+                      title="Hapus dari Arsip"
+                    >
+                      <Trash2 size={16} />
+                    </button>
                   </td>
                 </tr>
               ))
@@ -149,12 +206,58 @@ export function ArchiveTable({ search, jobFilter, date }: any) {
         </table>
       </div>
 
-      {/* Pagination Footer */}
       {!loading && filteredApplications.length > 0 && (
         <div className="px-6 py-4 border-t border-border flex items-center justify-between">
-          <p className="text-sm text-muted-foreground">
-            {t.archive?.showing} <strong>1</strong> {t.archive?.to} <strong>{filteredApplications.length}</strong> {t.archive?.of} <strong>{filteredApplications.length}</strong> {t.archive?.results}
+          <p className="text-xs text-muted-foreground">
+            {t.archive?.showing || 'Menampilkan'} <strong>1</strong> - <strong>{filteredApplications.length}</strong> dari <strong>{filteredApplications.length}</strong> data arsip
           </p>
+        </div>
+      )}
+
+      {selectedForDelete && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in duration-200">
+          <div className="bg-card border border-border rounded-2xl p-6 max-w-md w-full shadow-2xl space-y-4 animate-in zoom-in-95 duration-200">
+            <div className="flex items-center justify-between border-b border-border pb-3">
+              <div className="flex items-center gap-2.5 text-rose-600 dark:text-rose-400 font-bold text-base">
+                <div className="p-2 rounded-full bg-rose-100 dark:bg-rose-950/60">
+                  <AlertTriangle size={20} />
+                </div>
+                <span>Hapus Data Arsip</span>
+              </div>
+              <button
+                onClick={() => setSelectedForDelete(null)}
+                className="text-muted-foreground hover:text-foreground p-1 rounded-lg hover:bg-muted transition-colors cursor-pointer"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <p className="text-xs sm:text-sm text-foreground/80 leading-relaxed">
+              Apakah Anda yakin ingin menghapus data arsip kandidat <strong className="text-foreground">{selectedForDelete.pelamar?.nama_lengkap || 'Kandidat'}</strong> untuk posisi <strong className="text-foreground">{selectedForDelete.job?.judul_posisi || 'Lowongan'}</strong>?
+            </p>
+
+            <div className="p-3 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/50 rounded-xl text-amber-800 dark:text-amber-300 text-xs leading-normal">
+              ⚠️ Tindakan ini bersifat permanen dan tidak dapat dibatalkan.
+            </div>
+
+            <div className="flex items-center justify-end gap-3 pt-2">
+              <button
+                onClick={() => setSelectedForDelete(null)}
+                disabled={deletingId === selectedForDelete.id}
+                className="px-4 py-2 rounded-xl border border-border bg-card text-foreground hover:bg-muted text-xs font-semibold transition-colors cursor-pointer"
+              >
+                Batal
+              </button>
+              <button
+                onClick={() => handleDeleteApplication(selectedForDelete.id)}
+                disabled={deletingId === selectedForDelete.id}
+                className="px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold transition-all shadow-sm flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+              >
+                <Trash2 size={14} />
+                <span>{deletingId === selectedForDelete.id ? 'Menghapus...' : 'Ya, Hapus Arsip'}</span>
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>

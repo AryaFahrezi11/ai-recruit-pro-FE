@@ -623,7 +623,7 @@ export const dictionaries = {
         emailHelp: 'Gunakan alamat email resmi perusahaan Anda (bukan email pribadi).',
         passwordLabel: 'Password',
         forgotPassword: 'Lupa password?',
-        signIn: 'Masuk ke Akun',
+        signIn: 'Masuk',
         noAccount: 'Belum memiliki akun perusahaan?',
         registerNow: 'Daftarkan Perusahaan Anda',
         applicantPortal: 'Masuk sebagai Pelamar',
