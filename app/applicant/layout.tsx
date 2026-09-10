@@ -189,7 +189,7 @@ export default function PelamarPerfectLayout({
   const navItems = [
     { name: t.pelamar.nav.findJobs, href: '/applicant/dashboard', icon: Search },
     { name: t.pelamar.nav.companies, href: '/applicant/companies', icon: Building2 },
-    { name: 'Tips Karir', href: '/applicant/upload-cv', icon: BookOpen },
+    { name: 'CV Saya', href: '/applicant/upload-cv', icon: BookOpen },
   ];
 
   // If on login/register pages, render children without candidate layout navbar

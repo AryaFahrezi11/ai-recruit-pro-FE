@@ -99,6 +99,19 @@ function DashboardContent() {
   const [showLocationSuggestions, setShowLocationSuggestions] = useState(false);
   const locationContainerRef = useRef<HTMLDivElement>(null);
 
+  // Close location suggestions on click outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (locationContainerRef.current && !locationContainerRef.current.contains(event.target as Node)) {
+        setShowLocationSuggestions(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
+
   // 5 Job Filters (matching Employer Job Posting)
   const [categories, setCategories] = useState<Array<{ id: string; nama_kategori: string }>>([]);
   const [categoryFilter, setCategoryFilter] = useState(searchParams.get('kategori_id') || 'Semua');
@@ -279,7 +292,7 @@ function DashboardContent() {
               ? getMediaUrl(c.logo_url)
               : 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=120&auto=format&fit=crop&q=80',
             industry: c.industri || 'Umum & Teknologi',
-            location: c.kota || c.alamat || 'Indonesia',
+            location: c.alamat || c.kota || 'Indonesia',
             openJobsCount: c.jobs_count || c.open_jobs_count || 0,
             description: c.deskripsi || 'Perusahaan terverifikasi di platform AI Recruit Pro.'
           }));
@@ -502,10 +515,12 @@ function DashboardContent() {
     try {
       const kw = queryOverride?.keyword !== undefined ? queryOverride.keyword : (searchParams.get('keyword') || searchParams.get('search'));
       const ind = queryOverride?.industry !== undefined ? queryOverride.industry : searchParams.get('industry');
+      const loc = queryOverride?.location !== undefined ? queryOverride.location : searchParams.get('location');
 
       const apiParams = new URLSearchParams();
       if (kw && kw.trim()) apiParams.append('keyword', kw.trim());
       if (ind && ind !== 'Semua') apiParams.append('industry', ind);
+      if (loc && loc !== 'Semua' && loc.trim()) apiParams.append('location', loc.trim());
 
       const qs = apiParams.toString();
       const resComp = await api.get(`/perusahaan/verified?${qs}`);
@@ -519,7 +534,7 @@ function DashboardContent() {
             ? getMediaUrl(c.logo_url)
             : 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=120&auto=format&fit=crop&q=80',
           industry: c.industri || 'Umum & Teknologi',
-          location: c.kota || c.alamat || 'Indonesia',
+          location: c.alamat || c.kota || 'Indonesia',
           openJobsCount: c.jobs_count || c.open_jobs_count || 0,
           description: c.deskripsi || 'Perusahaan terverifikasi di platform AI Recruit Pro.'
         }));
@@ -532,6 +547,22 @@ function DashboardContent() {
       setCompaniesList([]);
     }
   };
+
+  // Switch suggested locations based on activeTab (jobs vs companies)
+  useEffect(() => {
+    const fetchTabLocations = async () => {
+      try {
+        const endpoint = activeTab === 'companies' ? '/perusahaan/locations' : '/jobs/locations';
+        const locRes = await api.get(endpoint);
+        if (locRes?.locations && Array.isArray(locRes.locations)) {
+          setSuggestedLocations(locRes.locations);
+        }
+      } catch (e) {
+        console.error('Failed to load tab suggested locations:', e);
+      }
+    };
+    fetchTabLocations();
+  }, [activeTab]);
 
   // 3. Synchronize active tab and fetch jobs whenever URL search params change
   useEffect(() => {
@@ -633,10 +664,12 @@ function DashboardContent() {
     <div className="space-y-6 max-w-[1440px] mx-auto">
 
       {/* TOP SEARCH BANNER (Premium Glassmorphism) */}
-      <div className="relative bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-8 shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.1)] border border-slate-100 dark:border-slate-800 space-y-6 overflow-hidden">
+      <div className="relative z-30 bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-8 shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.1)] border border-slate-100 dark:border-slate-800 space-y-6">
         {/* Subtle Background Elements */}
-        <div className="absolute top-0 right-0 -mr-20 -mt-20 w-64 h-64 rounded-full bg-blue-50/80 dark:bg-blue-900/10 blur-3xl opacity-60 pointer-events-none"></div>
-        <div className="absolute bottom-0 left-0 -ml-20 -mb-20 w-64 h-64 rounded-full bg-indigo-50/80 dark:bg-indigo-900/10 blur-3xl opacity-60 pointer-events-none"></div>
+        <div className="absolute inset-0 overflow-hidden rounded-3xl pointer-events-none">
+          <div className="absolute top-0 right-0 -mr-20 -mt-20 w-64 h-64 rounded-full bg-blue-50/80 dark:bg-blue-900/10 blur-3xl opacity-60"></div>
+          <div className="absolute bottom-0 left-0 -ml-20 -mb-20 w-64 h-64 rounded-full bg-indigo-50/80 dark:bg-indigo-900/10 blur-3xl opacity-60"></div>
+        </div>
 
         <form
           method="GET"
@@ -680,7 +713,7 @@ function DashboardContent() {
               }
             }
           }}
-          className="relative grid grid-cols-1 md:grid-cols-12 gap-4"
+          className="relative z-20 grid grid-cols-1 md:grid-cols-12 gap-4"
         >
           {/* Left Input: Keyword */}
           <div className="md:col-span-5 relative flex items-center group">
@@ -696,7 +729,7 @@ function DashboardContent() {
           </div>
 
           {/* Right Input: Location with Suggestions */}
-          <div className="md:col-span-5 relative flex items-center group" ref={locationContainerRef}>
+          <div className="md:col-span-5 relative z-30 flex items-center group" ref={locationContainerRef}>
             <MapPin className="absolute left-4.5 text-slate-400 group-focus-within:text-[#1A4B9F] w-5 h-5 pointer-events-none transition-colors" />
             <input
               type="text"
@@ -708,11 +741,23 @@ function DashboardContent() {
                 setShowLocationSuggestions(true);
               }}
               placeholder={t.pelamar.dashboard.locationPlaceholder}
-              className="w-full pl-12 pr-4 py-4 bg-slate-50 dark:bg-slate-800/50 border border-slate-200/60 dark:border-slate-700 text-slate-800 dark:text-white rounded-2xl text-sm font-semibold placeholder:text-slate-400 outline-none focus:bg-white focus:ring-2 focus:ring-[#1A4B9F]/20 focus:border-[#1A4B9F] transition-all shadow-sm inset-ring-slate-100"
+              className="w-full pl-12 pr-10 py-4 bg-slate-50 dark:bg-slate-800/50 border border-slate-200/60 dark:border-slate-700 text-slate-800 dark:text-white rounded-2xl text-sm font-semibold placeholder:text-slate-400 outline-none focus:bg-white focus:ring-2 focus:ring-[#1A4B9F]/20 focus:border-[#1A4B9F] transition-all shadow-sm inset-ring-slate-100"
             />
+            {locationQuery && (
+              <button
+                type="button"
+                onClick={() => {
+                  setLocationQuery('');
+                  setShowLocationSuggestions(false);
+                }}
+                className="absolute right-4 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1 cursor-pointer transition-colors z-10"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            )}
             {/* Location Suggestions Dropdown */}
             {showLocationSuggestions && suggestedLocations.length > 0 && (
-              <div className="absolute top-[calc(100%+8px)] left-0 right-0 bg-white dark:bg-slate-900 rounded-2xl shadow-xl border border-slate-100 dark:border-slate-800 py-2 z-50 text-slate-800 dark:text-slate-200 max-h-60 overflow-y-auto animate-in fade-in slide-in-from-top-2">
+              <div className="absolute top-[calc(100%+8px)] left-0 right-0 bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200/80 dark:border-slate-800 py-2 z-50 text-slate-800 dark:text-slate-200 max-h-60 overflow-y-auto animate-in fade-in slide-in-from-top-2">
                 <div className="px-4 py-2 text-[11px] font-bold text-slate-400 uppercase tracking-wider flex items-center justify-between border-b border-slate-50 dark:border-slate-800/50">
                   <span>{language === 'id' ? 'Lokasi Sering Dicari' : 'Suggested Locations'}</span>
                   <X className="w-4 h-4 cursor-pointer hover:text-slate-700 dark:hover:text-slate-300 transition-colors" onClick={() => setShowLocationSuggestions(false)} />
@@ -756,7 +801,7 @@ function DashboardContent() {
         </form>
 
         {/* Mobile View Switcher (Cari Pekerjaan vs Perusahaan) */}
-        <div className="relative grid grid-cols-2 gap-1.5 p-1 bg-slate-100 dark:bg-slate-800/80 rounded-xl sm:hidden w-full text-xs font-bold border border-slate-200/50 dark:border-slate-700">
+        <div className="relative z-10 grid grid-cols-2 gap-1.5 p-1 bg-slate-100 dark:bg-slate-800/80 rounded-xl sm:hidden w-full text-xs font-bold border border-slate-200/50 dark:border-slate-700">
           <button
             type="button"
             onClick={() => switchTab('recommended')}
@@ -783,7 +828,7 @@ function DashboardContent() {
         </div>
 
         {/* 5 Filters Matching Employer Job Posting + Reset Button */}
-        <div className="relative grid grid-cols-2 sm:flex sm:flex-wrap items-center gap-2.5 pt-2 text-xs w-full">
+        <div className="relative z-10 grid grid-cols-2 sm:flex sm:flex-wrap items-center gap-2.5 pt-2 text-xs w-full">
           {/* Reset Filters */}
           <button
             type="button"
@@ -1112,9 +1157,6 @@ function DashboardContent() {
             <div className="bg-white dark:bg-slate-900 p-4 sm:p-5 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-2xs space-y-3">
               <div className="flex items-center justify-between gap-4 border-b border-slate-100 dark:border-slate-800 pb-3">
                 <div className="flex items-center gap-2.5">
-                  <div className="w-8 h-8 rounded-xl bg-[#1A4B9F]/10 dark:bg-slate-800 border border-[#1A4B9F]/20 dark:border-slate-700 flex items-center justify-center shrink-0">
-                    <Briefcase size={16} className="text-[#1A4B9F] dark:text-white" />
-                  </div>
                   <div>
                     <h2 className="text-base font-bold text-slate-900 dark:text-slate-100 flex items-center gap-1.5 leading-snug">
                       <span>{t.pelamar.dashboard.title}</span>
@@ -1249,7 +1291,6 @@ function DashboardContent() {
                               </span>
                               {job.matchScore > 0 && userHasCv && (
                                 <span className="px-2.5 py-0.5 rounded-md bg-[#1A4B9F]/10 dark:bg-[#1A4B9F]/20 text-[#1A4B9F] dark:text-blue-300 font-semibold text-[11px] border border-[#1A4B9F]/20 dark:border-[#1A4B9F]/30 flex items-center gap-1">
-                                  <Target size={12} className="text-[#1A4B9F] dark:text-blue-300 shrink-0" />
                                   <span>{job.matchScore}% Cocok</span>
                                 </span>
                               )}

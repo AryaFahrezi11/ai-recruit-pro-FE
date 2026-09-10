@@ -416,7 +416,6 @@ export const dictionaries = {
       nav: {
         findJobs: 'Cari Pekerjaan',
         companies: 'Perusahaan',
-        careerResources: 'Tips Karir',
       },
       header: {
         portalName: 'Masuk ke Akun Pelamar',
@@ -433,7 +432,7 @@ export const dictionaries = {
         systemActive: 'Sistem Aktif & Aman',
       },
       dashboard: {
-        title: 'Dasbor Karir Anda',
+        title: 'Lowongan Pekerjaan Untuk Anda',
         subtitle: 'Temukan pekerjaan yang paling cocok dengan keahlian dan latar belakang Anda.',
         searchPlaceholder: 'Cari judul, keahlian, atau perusahaan...',
         locationPlaceholder: 'Lokasi (misal: Jakarta, Jarak Jauh)',

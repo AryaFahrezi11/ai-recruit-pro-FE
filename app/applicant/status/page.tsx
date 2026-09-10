@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, Suspense } from 'react';
+import React, { useState, useEffect, useMemo, Suspense } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { toast } from 'react-hot-toast';
@@ -36,6 +36,7 @@ import {
 } from 'lucide-react';
 import { api, parseErrorMessage } from '@/lib/api';
 import { CandidateReviewModal } from '@/components/CandidateReviewModal';
+import { DataTable, ColumnDef } from '@/components/ui/DataTable';
 
 interface ApplicationItem {
   id: number | string;
@@ -351,24 +352,48 @@ function StatusValidasiContent() {
   const { t } = useTranslation();
 
   const [searchTerm, setSearchTerm] = useState(searchParams.get('search') || '');
-  const [platformFilter, setPlatformFilter] = useState(searchParams.get('platform') || t.pelamar.status.allPlatform);
-  const [stageFilter, setStageFilter] = useState(searchParams.get('stage') || t.pelamar.status.allStages);
-  const [statusFilter, setStatusFilter] = useState(searchParams.get('status') || t.pelamar.status.allStatus);
 
-  const updateUrlParams = (updates: Record<string, string>) => {
+  // Keep input value synced with URL search parameter (e.g. browser back/forward)
+  useEffect(() => {
+    setSearchTerm(searchParams.get('search') || '');
+  }, [searchParams]);
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
     const params = new URLSearchParams(searchParams.toString());
-    Object.entries(updates).forEach(([key, value]) => {
-      if (value && value !== t.pelamar.status.allStatus && value !== t.pelamar.status.allStages && value !== t.pelamar.status.allPlatform) {
-        params.set(key, value);
-      } else {
-        params.delete(key);
-      }
-    });
-    router.push(`?${params.toString()}`, { scroll: false });
+    // Clear obsolete filter params if any
+    params.delete('platform');
+    params.delete('stage');
+    params.delete('status');
+
+    if (searchTerm.trim()) {
+      params.set('search', searchTerm.trim());
+    } else {
+      params.delete('search');
+    }
+    const qs = params.toString();
+    router.replace(qs ? `?${qs}` : window.location.pathname, { scroll: false });
   };
 
-  // Expanded application cards state (default: all collapsed)
-  const [expandedJobIds, setExpandedJobIds] = useState<(number | string)[]>([]);
+  const handleClearSearch = () => {
+    setSearchTerm('');
+    const params = new URLSearchParams(searchParams.toString());
+    params.delete('search');
+    params.delete('platform');
+    params.delete('stage');
+    params.delete('status');
+    const qs = params.toString();
+    router.replace(qs ? `?${qs}` : window.location.pathname, { scroll: false });
+  };
+
+  // Table Pagination & Detail Modal State
+  const [currentPage, setCurrentPage] = useState(1);
+  const [selectedDetailApp, setSelectedDetailApp] = useState<ApplicationItem | null>(null);
+
+  // Reset page when search param changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchParams]);
 
   // Modal States
   const [activeCvModalJob, setActiveCvModalJob] = useState<ApplicationItem | null>(null);
@@ -391,11 +416,7 @@ function StatusValidasiContent() {
         setIsLoading(true);
         const apiParams = new URLSearchParams();
         const search = searchParams.get('search');
-        const stage = searchParams.get('stage');
-        const status = searchParams.get('status');
         if (search) apiParams.append('search', search);
-        if (stage && stage !== 'Semua Tahapan') apiParams.append('stage', stage);
-        if (status && status !== 'Semua Status') apiParams.append('status', status);
         const qs = apiParams.toString();
 
         const res = await api.get(qs ? `/applications/?${qs}` : '/applications/');
@@ -557,23 +578,128 @@ function StatusValidasiContent() {
     { number: 5, name: '5. HUMAN VALIDATION', key: 'human_validation' }
   ];
 
-  const toggleExpandJob = (id: number | string) => {
-    if (expandedJobIds.includes(id)) {
-      setExpandedJobIds(expandedJobIds.filter(jobId => jobId !== id));
-    } else {
-      setExpandedJobIds([...expandedJobIds, id]);
-    }
-  };
+  // DataTable Column Definitions
+  const tableColumns: ColumnDef<ApplicationItem>[] = useMemo(() => [
+    {
+      key: 'no',
+      header: 'No',
+      align: 'center',
+      className: 'w-14 font-semibold text-slate-500 dark:text-slate-400 text-center',
+      headerClassName: 'text-center',
+      render: (_, index) => <span>{index + 1}</span>,
+    },
+    {
+      key: 'position_company',
+      header: 'Posisi & Perusahaan',
+      align: 'left',
+      render: (item) => (
+        <div className="flex items-center gap-3.5 py-1">
+          <img
+            src={item.logo}
+            alt={item.companyName}
+            className="w-11 h-11 rounded-xl object-cover border border-slate-200 dark:border-slate-700 shrink-0 shadow-2xs"
+          />
+          <div className="min-w-0">
+            <span className="font-bold text-slate-900 dark:text-white text-xs sm:text-sm block hover:text-[#1A4B9F] dark:hover:text-blue-400 transition-colors line-clamp-1">
+              {item.jobTitle}
+            </span>
+            <span className="text-xs text-slate-500 dark:text-slate-400 font-medium block truncate">
+              {item.companyName}
+            </span>
+          </div>
+        </div>
+      ),
+    },
+    {
+      key: 'applyDate',
+      header: 'Tanggal Melamar',
+      align: 'center',
+      headerClassName: 'text-center',
+      className: 'whitespace-nowrap text-center',
+      render: (item) => (
+        <div className="inline-flex items-center gap-1.5 text-xs text-slate-600 dark:text-slate-300 font-semibold">
+          <Calendar size={13} className="text-slate-400" />
+          <span>{item.applyDate}</span>
+        </div>
+      ),
+    },
+    {
+      key: 'tahapRekrutmen',
+      header: 'Tahapan Rekrutmen',
+      align: 'left',
+      render: (item) => (
+        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-blue-50 dark:bg-blue-950/40 text-[#1A4B9F] dark:text-blue-400 text-xs font-bold border border-blue-200/70 dark:border-blue-800/70">
+          <Clock size={13} className="shrink-0" />
+          <span className="truncate max-w-[220px]">{item.tahapRekrutmen}</span>
+        </span>
+      ),
+    },
+    {
+      key: 'status',
+      header: 'Status',
+      align: 'center',
+      headerClassName: 'text-center',
+      className: 'text-center',
+      render: (item) => {
+        const isPassed = item.status === 'Lolos';
+        const isInProgress = item.status === 'Dalam Proses';
+        const isFailed = item.status === 'Tidak Lolos' || item.status === 'Lowongan Telah Ditutup';
 
-  // Filtered list
-  const filteredApplications = applications.filter(app => {
-    const matchesSearch = app.jobTitle.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      app.companyName.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = statusFilter === t.pelamar.status.allStatus || app.status === statusFilter;
-    const matchesPlatform = platformFilter === t.pelamar.status.allPlatform || app.kegiatan === platformFilter;
-    const matchesStage = stageFilter === t.pelamar.status.allStages || app.tahapRekrutmen.toLowerCase().includes(stageFilter.toLowerCase());
-    return matchesSearch && matchesStatus && matchesPlatform && matchesStage;
-  });
+        return (
+          <span
+            className={`font-bold px-3 py-1 rounded-full text-xs inline-flex items-center gap-1.5 whitespace-nowrap ${
+              isPassed
+                ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800'
+                : isInProgress
+                ? 'bg-blue-50 dark:bg-blue-950/40 text-[#1A4B9F] dark:text-blue-400 border border-blue-200 dark:border-blue-800'
+                : 'bg-rose-100 text-rose-800 dark:bg-rose-950/60 dark:text-rose-300 border border-rose-300 dark:border-rose-800'
+            }`}
+          >
+            {isPassed ? (
+              <CheckCircle2 size={13} />
+            ) : isFailed ? (
+              <XCircle size={13} />
+            ) : (
+              <Clock size={13} />
+            )}
+            <span>{item.status}</span>
+          </span>
+        );
+      },
+    },
+    {
+      key: 'aksi',
+      header: 'Aksi',
+      align: 'center',
+      headerClassName: 'text-center',
+      className: 'text-center',
+      render: (item) => (
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            setSelectedDetailApp(item);
+          }}
+          className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-[#1A4B9F] hover:bg-[#133878] active:scale-95 text-white font-bold text-xs transition-all cursor-pointer shadow-xs hover:shadow"
+        >
+          <Eye size={14} />
+          <span>Lihat Detail</span>
+        </button>
+      ),
+    },
+  ], []);
+
+  // Filtered list: uses committed search query from URL GET param (?search=...), NOT while typing
+  const committedSearch = (searchParams.get('search') || '').toLowerCase().trim();
+
+  const filteredApplications = useMemo(() => {
+    if (!committedSearch) return applications;
+    return applications.filter(app => {
+      const matchJob = app.jobTitle?.toLowerCase().includes(committedSearch);
+      const matchCompany = app.companyName?.toLowerCase().includes(committedSearch);
+      return matchJob || matchCompany;
+    });
+  }, [applications, committedSearch]);
 
   return (
     <div className="max-w-[1600px] w-full mx-auto space-y-6">
@@ -588,584 +714,334 @@ function StatusValidasiContent() {
         </div>
       </div>
 
-      {/* Search & Dropdown Filter Inputs */}
-      <div className="bg-white dark:bg-slate-900 rounded-2xl p-5 sm:p-6 border border-slate-200 dark:border-slate-800 shadow-2xs space-y-4">
+      {/* Search Bar (GET with Search Button, Filters Removed) */}
+      <div className="bg-white dark:bg-slate-900 rounded-2xl p-4 sm:p-5 border border-slate-200 dark:border-slate-800 shadow-xs">
         <form
-          className="grid grid-cols-1 sm:grid-cols-12 gap-3"
-          onSubmit={(e) => {
-            e.preventDefault();
-            updateUrlParams({ search: searchTerm, stage: stageFilter, status: statusFilter, platform: platformFilter });
-          }}
+          onSubmit={handleSearch}
+          className="flex flex-col sm:flex-row items-center gap-3"
         >
           {/* Search Box */}
-          <div className="sm:col-span-4 relative flex items-center">
-            <Search size={18} className="absolute left-4 text-slate-400 pointer-events-none" />
+          <div className="relative flex-1 w-full flex items-center group">
+            <Search size={18} className="absolute left-4 text-slate-400 group-focus-within:text-[#1A4B9F] pointer-events-none transition-colors" />
             <input
               type="text"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder={t.pelamar.status.searchPlaceholder}
-              className="w-full pl-11 pr-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 focus:border-[#1A4B9F] focus:ring-1 focus:ring-[#1A4B9F] rounded-xl text-xs font-bold text-slate-700 dark:text-slate-200 outline-none"
+              placeholder={t.pelamar.status.searchPlaceholder || 'Cari posisi atau perusahaan...'}
+              className="w-full pl-11 pr-10 py-3 bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/80 focus:border-[#1A4B9F] focus:ring-2 focus:ring-[#1A4B9F]/10 rounded-xl text-sm font-semibold text-slate-700 dark:text-slate-200 placeholder:text-slate-400 outline-none transition-all"
             />
-          </div>
-
-          {/* Dropdown 1: Platform */}
-          <div className="sm:col-span-3">
-            <select
-              value={platformFilter}
-              onChange={(e) => setPlatformFilter(e.target.value)}
-              className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 focus:border-[#1A4B9F] rounded-xl text-xs font-bold text-slate-700 dark:text-slate-200 outline-none cursor-pointer"
-            >
-              <option>{t.pelamar.status.allPlatform}</option>
-              <option>WEBCAREER</option>
-              <option>JOBFAIR VIRTUAL</option>
-            </select>
-          </div>
-
-          {/* Dropdown 2: Tahapan */}
-          <div className="sm:col-span-2">
-            <select
-              value={stageFilter}
-              onChange={(e) => setStageFilter(e.target.value)}
-              className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 focus:border-[#1A4B9F] rounded-xl text-xs font-bold text-slate-700 dark:text-slate-200 outline-none cursor-pointer"
-            >
-              <option>{t.pelamar.status.allStages}</option>
-              <option value="UPLOAD CV">1. UPLOAD CV</option>
-              <option value="CV SCREENING">2. CV SCREENING </option>
-              <option value="VIRTUAL INTERVIEW">3. VIRTUAL INTERVIEW</option>
-              <option value="VIDEO ANALYSIS">4. AI VIDEO ANALYSIS</option>
-              <option value="HUMAN VALIDATION">5. HUMAN VALIDATION</option>
-            </select>
-          </div>
-
-          {/* Dropdown 3: Status */}
-          <div className="sm:col-span-2">
-            <select
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-              className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 focus:border-[#1A4B9F] rounded-xl text-xs font-bold text-slate-700 dark:text-slate-200 outline-none cursor-pointer"
-            >
-              <option>{t.pelamar.status.allStatus}</option>
-              <option value="Dalam Proses">{t.pelamar.status.inProgress}</option>
-              <option value="Lolos">{t.pelamar.status.passed}</option>
-              <option value="Tidak Lolos">{t.pelamar.status.failed}</option>
-            </select>
+            {searchTerm && (
+              <button
+                type="button"
+                onClick={handleClearSearch}
+                className="absolute right-3.5 p-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors cursor-pointer"
+                title="Hapus pencarian"
+              >
+                <X size={16} />
+              </button>
+            )}
           </div>
 
           {/* Search Button */}
-          <div className="sm:col-span-1">
-            <button
-              type="submit"
-              className="w-full py-2.5 bg-[#1A4B9F] hover:bg-[#133878] text-white rounded-xl font-bold text-xs shadow-xs transition-colors cursor-pointer"
-            >
-              {t.pelamar.status.searchButton}
-            </button>
-          </div>
+          <button
+            type="submit"
+            className="w-full sm:w-auto px-7 py-3 bg-[#1A4B9F] hover:bg-[#133878] active:scale-[0.99] text-white rounded-xl font-bold text-sm shadow-xs transition-all flex items-center justify-center gap-2 cursor-pointer shrink-0"
+          >
+            <Search size={16} />
+            <span>{t.pelamar.status.searchButton || 'Cari'}</span>
+          </button>
         </form>
       </div>
 
-      {/* APPLICATIONS LIST CARDS */}
-      <div className="space-y-6">
-        {filteredApplications.map((app) => {
-          const isExpanded = expandedJobIds.includes(app.id);
+      {/* APPLICATIONS DATA TABLE */}
+      <DataTable<ApplicationItem>
+        data={filteredApplications}
+        columns={tableColumns}
+        keyExtractor={(item) => item.id}
+        isLoading={isLoading}
+        pageSize={10}
+        currentPage={currentPage}
+        onPageChange={setCurrentPage}
+        onRowClick={(item) => setSelectedDetailApp(item)}
+        emptyTitle={committedSearch ? 'Tidak Ada Lamaran Ditemukan' : 'Belum Ada Lamaran'}
+        emptyDescription={
+          committedSearch
+            ? `Tidak ada data lamaran yang cocok dengan kata kunci "${committedSearch}".`
+            : 'Anda belum memiliki riwayat lamaran pekerjaan saat ini.'
+        }
+      />
 
-          return (
-            <div
-              key={app.id}
-              className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs overflow-hidden transition-all duration-200"
-            >
-              {/* Card Summary Header */}
-              <div className="p-6 sm:p-8 space-y-6">
-                {/* Desktop Grid Layout (>= lg): Perfectly aligned columns across all cards */}
-                <div
-                  className="hidden lg:grid items-center gap-6"
-                  style={{
-                    gridTemplateColumns: 'minmax(260px, 3fr) minmax(110px, 1.1fr) minmax(100px, 1fr) minmax(220px, 2.3fr) minmax(115px, 1.1fr) auto'
-                  }}
-                >
-                  {/* Column 1: Logo & Job Title & Company */}
-                  <div className="flex items-center gap-4 min-w-0">
-                    <img
-                      src={app.logo}
-                      alt={app.companyName}
-                      className="w-14 h-14 rounded-2xl object-cover border border-slate-200 dark:border-slate-700 shrink-0"
-                    />
-                    <div className="min-w-0 space-y-0.5">
-                      <h2 className="text-lg font-black text-[#1A4B9F] dark:text-blue-400 leading-snug line-clamp-2" title={app.jobTitle}>
-                        {app.jobTitle}
-                      </h2>
-                      <span className="text-xs font-bold text-slate-500 dark:text-slate-400 block truncate">
-                        {app.companyName}
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Column 2: Tanggal Melamar */}
-                  <div className="min-w-0 text-xs">
-                    <span className="text-slate-400 block font-semibold mb-1 text-[11px]">{t.pelamar.status.applyDate}</span>
-                    <span className="font-bold text-slate-700 dark:text-slate-200 block truncate">{app.applyDate}</span>
-                  </div>
-
-                  {/* Column 3: Aktivitas */}
-                  <div className="min-w-0 text-xs">
-                    <span className="text-slate-400 block font-semibold mb-1 text-[11px]">{t.pelamar.status.activity}</span>
-                    <span className="font-bold text-slate-700 dark:text-slate-200 block truncate">{app.kegiatan}</span>
-                  </div>
-
-                  {/* Column 4: Tahap Rekrutmen */}
-                  <div className="min-w-0 text-xs">
-                    <span className="text-slate-400 block font-semibold mb-1 text-[11px]">{t.pelamar.status.recruitmentStage}</span>
-                    <span className="font-bold text-[#1A4B9F] dark:text-blue-400 block leading-tight">{app.tahapRekrutmen}</span>
-                  </div>
-
-                  {/* Column 5: Status */}
-                  <div className="min-w-0 text-xs">
-                    <span className="text-slate-400 block font-semibold mb-1 text-[11px]">{t.pelamar.status.statusLabel}</span>
-                    <span className={`font-extrabold px-3 py-1 rounded-full text-xs inline-block whitespace-nowrap ${app.status === 'Lolos'
-                        ? 'bg-emerald-100 text-emerald-800 border border-emerald-300'
-                        : app.status === 'Dalam Proses'
-                          ? 'bg-blue-50 dark:bg-blue-950/40 text-[#1A4B9F] dark:text-blue-400 border border-blue-200 dark:border-blue-800'
-                          : 'bg-red-100 text-red-800 border border-red-300'
-                      }`}>
-                      {app.status}
+      {/* MODAL DETAIL RIWAYAT LAMARAN (SIMPLE & CLEAN) */}
+      {selectedDetailApp && (
+        <div className="fixed inset-0 z-40 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 animate-fadeIn">
+          <div className="bg-white dark:bg-slate-900 rounded-3xl max-w-2xl w-full p-6 sm:p-7 space-y-5 shadow-2xl border border-slate-200 dark:border-slate-800 relative max-h-[90vh] overflow-y-auto">
+            {/* Header */}
+            <div className="flex items-start justify-between border-b border-slate-100 dark:border-slate-800 pb-4">
+              <div className="flex items-center gap-3.5 min-w-0">
+                <img
+                  src={selectedDetailApp.logo}
+                  alt={selectedDetailApp.companyName}
+                  className="w-12 h-12 rounded-xl object-cover border border-slate-200 dark:border-slate-700 shrink-0 shadow-2xs"
+                />
+                <div className="min-w-0">
+                  <h3 className="text-lg font-black text-slate-900 dark:text-white leading-tight">
+                    {selectedDetailApp.jobTitle}
+                  </h3>
+                  <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400 font-medium mt-1">
+                    <span className="font-bold text-slate-700 dark:text-slate-300">{selectedDetailApp.companyName}</span>
+                    <span>&bull;</span>
+                    <span className="inline-flex items-center gap-1">
+                      <Calendar size={12} /> {selectedDetailApp.applyDate}
                     </span>
                   </div>
-
-                  {/* Column 6: Right Action Button */}
-                  <div className="flex justify-end">
-                    <button
-                      onClick={() => toggleExpandJob(app.id)}
-                      className="text-xs font-extrabold text-[#1A4B9F] dark:text-blue-400 hover:underline flex items-center gap-1.5 whitespace-nowrap cursor-pointer"
-                    >
-                      <span>{isExpanded ? t.pelamar.status.hideDetails : t.pelamar.status.showDetails}</span>
-                      {isExpanded ? <ChevronUp size={16} className="shrink-0" /> : <ChevronDown size={16} className="shrink-0" />}
-                    </button>
-                  </div>
                 </div>
+              </div>
 
-                {/* Mobile / Tablet Header (< lg) */}
-                <div className="flex flex-col gap-4 lg:hidden">
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="flex items-start gap-3.5 min-w-0">
-                      <img
-                        src={app.logo}
-                        alt={app.companyName}
-                        className="w-12 h-12 rounded-2xl object-cover border border-slate-200 dark:border-slate-700 shrink-0"
-                      />
-                      <div className="min-w-0 space-y-0.5">
-                        <h2 className="text-base font-black text-[#1A4B9F] dark:text-blue-400 leading-snug">
-                          {app.jobTitle}
-                        </h2>
-                        <span className="text-xs font-bold text-slate-500 dark:text-slate-400 block">
-                          {app.companyName}
-                        </span>
-                      </div>
-                    </div>
-                    <button
-                      onClick={() => toggleExpandJob(app.id)}
-                      className="text-xs font-extrabold text-[#1A4B9F] dark:text-blue-400 hover:underline flex items-center gap-1.5 whitespace-nowrap cursor-pointer shrink-0 pt-1"
-                    >
-                      <span>{isExpanded ? t.pelamar.status.hideDetails : t.pelamar.status.showDetails}</span>
-                      {isExpanded ? <ChevronUp size={16} className="shrink-0" /> : <ChevronDown size={16} className="shrink-0" />}
-                    </button>
-                  </div>
+              <button
+                onClick={() => setSelectedDetailApp(null)}
+                className="p-1.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer transition-colors shrink-0"
+              >
+                <X size={20} />
+              </button>
+            </div>
 
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs pt-3 border-t border-slate-100 dark:border-slate-800">
-                    <div>
-                      <span className="text-slate-400 block font-semibold text-[11px] mb-0.5">{t.pelamar.status.applyDate}</span>
-                      <span className="font-bold text-slate-700 dark:text-slate-200">{app.applyDate}</span>
-                    </div>
-                    <div>
-                      <span className="text-slate-400 block font-semibold text-[11px] mb-0.5">{t.pelamar.status.activity}</span>
-                      <span className="font-bold text-slate-700 dark:text-slate-200">{app.kegiatan}</span>
-                    </div>
-                    <div>
-                      <span className="text-slate-400 block font-semibold text-[11px] mb-0.5">{t.pelamar.status.recruitmentStage}</span>
-                      <span className="font-bold text-[#1A4B9F] dark:text-blue-400">{app.tahapRekrutmen}</span>
-                    </div>
-                    <div>
-                      <span className="text-slate-400 block font-semibold text-[11px] mb-0.5">{t.pelamar.status.statusLabel}</span>
-                      <span className={`font-extrabold px-2.5 py-0.5 rounded-full text-[11px] inline-block whitespace-nowrap ${app.status === 'Lolos'
-                          ? 'bg-emerald-100 text-emerald-800 border border-emerald-300'
-                          : app.status === 'Dalam Proses'
-                            ? 'bg-blue-50 dark:bg-blue-950/40 text-[#1A4B9F] dark:text-blue-400 border border-blue-200 dark:border-blue-800'
-                            : 'bg-red-100 text-red-800 border border-red-300'
-                        }`}>
-                        {app.status}
-                      </span>
-                    </div>
-                  </div>
-                </div>
+            {/* Clean Linear Stepper Timeline */}
+            <div className="p-4 bg-slate-50 dark:bg-slate-800/40 rounded-2xl border border-slate-200/70 dark:border-slate-800">
+              <span className="text-[11px] font-extrabold uppercase tracking-wider text-slate-400 dark:text-slate-500 block mb-3">
+                Linimasa Seleksi
+              </span>
+              <div className="grid grid-cols-5 gap-1 text-center relative">
+                {pipelineStagesList.map((stage, idx) => {
+                  const isCurrent = selectedDetailApp.currentStageIndex === stage.number;
+                  const isPassed = selectedDetailApp.currentStageIndex > stage.number || selectedDetailApp.status === 'Lolos';
+                  const isFailed = (selectedDetailApp.status === 'Tidak Lolos' || selectedDetailApp.status === 'Lowongan Telah Ditutup') && selectedDetailApp.currentStageIndex === stage.number;
 
-                {/* EXPANDED PIPELINE TRACKER & NOTIFICATION BOX */}
-                {isExpanded && (
-                  <div className="pt-6 border-t border-slate-100 dark:border-slate-800 space-y-8 animate-fadeIn">
+                  const shortNames = ['Berkas CV', 'Screening AI', 'Wawancara', 'Analisis Video', 'Keputusan'];
 
-                    {/* Interactive 5-Stage Pipeline Stepper */}
-                    <div className="space-y-3">
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs font-black uppercase tracking-wider text-[#1A4B9F] dark:text-blue-400 flex items-center gap-2">
-                          <BarChart3 size={16} /> {t.pelamar.status.pipelineTitle}
-                        </span>
-                      </div>
-
-                      {/* 5 Dynamic Pipeline Cards */}
-                      <div className="grid grid-cols-1 sm:grid-cols-5 gap-3">
-                        {pipelineStagesList.map((stage) => {
-                          const isCurrentStage = app.currentStageIndex === stage.number;
-                          const isPassedStage = app.currentStageIndex > stage.number || app.status === 'Lolos';
-                          const isFailed = (app.status === 'Tidak Lolos' || app.status === 'Lowongan Telah Ditutup') && app.currentStageIndex === stage.number;
-
-                          const isClickableCv = stage.number === 2 && app.cvScore > 0;
-                          const isClickableHuman = stage.number === 5 && (app.currentStageIndex >= 5 || app.status === 'Lolos' || app.tahapRekrutmen.includes('HUMAN VALIDATION'));
-
-                          return (
-                            <div
-                              key={stage.number}
-                              onClick={() => {
-                                if (isClickableCv) setActiveCvModalJob(app);
-                                if (isClickableHuman) setActiveHumanModalJob(app);
-                              }}
-                              className={`p-4 rounded-2xl border space-y-2 transition-all relative group ${isClickableCv || isClickableHuman ? 'hover:shadow-md hover:scale-[1.02] cursor-pointer' : ''
-                                } ${isFailed
-                                  ? 'bg-red-50 dark:bg-red-950/30 border-red-200 text-red-700 dark:text-red-300'
-                                  : isCurrentStage
-                                    ? 'bg-[#EFF6FF] dark:bg-slate-800 border-[#DBEAFE] dark:border-slate-700 text-[#1A4B9F] dark:text-blue-400 ring-2 ring-[#1A4B9F]'
-                                    : isPassedStage
-                                      ? 'bg-emerald-50 dark:bg-emerald-950/30 border-emerald-200 text-emerald-800 dark:text-emerald-300'
-                                      : 'bg-slate-50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-800 text-slate-500'
-                                }`}
-                            >
-                              <div className="flex flex-col gap-1.5 pb-2 mb-2 border-b border-black/5 dark:border-white/5">
-                                <span className="text-[10px] sm:text-[11px] font-black uppercase tracking-wider leading-tight">
-                                  {stage.name}
-                                </span>
-                              </div>
-                              <div className="flex items-center justify-between text-[10px] font-bold uppercase tracking-wider min-h-[20px]">
-                                <span className="opacity-70">{(isClickableCv || isClickableHuman) ? t.pelamar.status.viewDetails : ''}</span>
-                                {(isClickableCv || isClickableHuman) && (
-                                  <span className="px-2 py-0.5 rounded-full bg-white dark:bg-slate-800 text-[#1A4B9F] dark:text-blue-400 font-bold text-[9px] border border-[#DBEAFE] dark:border-slate-700 shadow-2xs group-hover:bg-[#1A4B9F] group-hover:text-white transition-colors">
-                                    {t.pelamar.status.clickDetail}
-                                  </span>
-                                )}
-                              </div>
-
-                              <div className="flex items-center justify-between text-xs font-bold pt-1">
-                                <span>
-                                  {isFailed
-                                    ? t.pelamar.status.failed
-                                    : isCurrentStage
-                                      ? app.status === 'Dalam Proses' ? t.pelamar.status.inProgress : t.pelamar.status.active
-                                      : isPassedStage
-                                        ? t.pelamar.status.passed
-                                        : t.pelamar.status.waiting}
-                                </span>
-                                {isPassedStage ? (
-                                  <CheckCircle2 size={16} className="text-emerald-600" />
-                                ) : isFailed ? (
-                                  <XCircle size={16} className="text-red-600" />
-                                ) : (
-                                  <Clock size={16} className="text-[#1A4B9F] dark:text-blue-400" />
-                                )}
-                              </div>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </div>
-
-                    {/* Official Notification Message Box */}
-                    <div className={`p-6 rounded-2xl border text-xs sm:text-sm space-y-4 leading-relaxed ${app.status === 'Tidak Lolos' || app.status === 'Lowongan Telah Ditutup'
-                        ? 'bg-red-50/60 dark:bg-red-950/20 border-red-200 text-red-900 dark:text-red-200'
-                        : app.status === 'Lolos'
-                          ? 'bg-emerald-50 dark:bg-emerald-950/20 border-emerald-200 text-emerald-900 dark:text-emerald-200'
-                          : 'bg-blue-50/60 dark:bg-blue-950/20 border-blue-200 dark:border-blue-900 text-[#1A4B9F] dark:text-blue-300'
-                      }`}>
-                      <div className="flex items-center gap-2 font-black text-sm">
-                        {app.status === 'Tidak Lolos' || app.status === 'Lowongan Telah Ditutup' ? (
-                          <>
-                            <XCircle size={18} className="text-red-600 shrink-0" />
-                            <span>{t.pelamar.status.resultLabel}</span>
-                          </>
-                        ) : app.status === 'Lolos' ? (
-                          <>
-                            <CheckCircle2 size={18} className="text-emerald-600 shrink-0" />
-                            <span>{t.pelamar.status.hiredLabel}</span>
-                          </>
+                  return (
+                    <div key={stage.number} className="flex flex-col items-center gap-1.5 relative z-10">
+                      <div
+                        className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs transition-all shadow-2xs ${
+                          isFailed
+                            ? 'bg-rose-500 text-white ring-4 ring-rose-100 dark:ring-rose-950/50'
+                            : isPassed
+                            ? 'bg-emerald-500 text-white'
+                            : isCurrent
+                            ? 'bg-[#1A4B9F] text-white ring-4 ring-blue-100 dark:ring-blue-950/50'
+                            : 'bg-slate-200 dark:bg-slate-700 text-slate-500 dark:text-slate-400'
+                        }`}
+                      >
+                        {isPassed ? (
+                          <CheckCircle2 size={16} />
+                        ) : isFailed ? (
+                          <XCircle size={16} />
                         ) : (
-                          <>
-                            <CheckCircle2 size={18} className="text-[#1A4B9F] dark:text-blue-400 shrink-0" />
-                            <span>{t.pelamar.status.progressLabel}</span>
-                          </>
+                          <span>{stage.number}</span>
                         )}
                       </div>
-
-                      <p className="text-slate-700 dark:text-slate-300 text-xs sm:text-sm font-medium">
-                        {app.statusMessage}
-                      </p>
-
-                      {/* KARTU JADWAL WAWANCARA LANJUTAN */}
-                      {app.interviewDetails && (
-                        <div className="mt-3.5 p-5 rounded-2xl bg-indigo-50/80 dark:bg-indigo-950/40 border-2 border-indigo-200 dark:border-indigo-800 shadow-xs space-y-3">
-                          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-indigo-100 dark:border-indigo-900 pb-2.5">
-                            <div className="flex items-center gap-2">
-                              <Calendar className="text-indigo-600 dark:text-indigo-400 shrink-0" size={20} />
-                              <h4 className="font-extrabold text-sm text-indigo-950 dark:text-indigo-200">
-                                Jadwal Wawancara Lanjutan Bersama Tim Rekruter
-                              </h4>
-                            </div>
-                            <span className="text-[10px] font-extrabold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-indigo-200/60 dark:bg-indigo-900 text-indigo-800 dark:text-indigo-200 w-fit">
-                              {app.interviewDetails.tipe === 'offline' ? 'Tatap Muka di Kantor' : 'Online Meet'}
-                            </span>
-                          </div>
-
-                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
-                            <div className="p-3 bg-white dark:bg-slate-900 rounded-xl border border-indigo-100 dark:border-indigo-900/60">
-                              <span className="text-slate-400 font-bold block text-[11px] mb-1">Tanggal & Waktu:</span>
-                              <p className="font-bold text-slate-800 dark:text-slate-100">
-                                {app.interviewDetails.tanggal} {app.interviewDetails.waktu ? `• Pukul ${app.interviewDetails.waktu} WIB` : ''}
-                              </p>
-                            </div>
-                            <div className="p-3 bg-white dark:bg-slate-900 rounded-xl border border-indigo-100 dark:border-indigo-900/60">
-                              <span className="text-slate-400 font-bold block text-[11px] mb-1">Lokasi / Tautan Pertemuan:</span>
-                              {app.interviewDetails.tipe === 'online' && app.interviewDetails.lokasi_atau_link?.startsWith('http') ? (
-                                <a
-                                  href={app.interviewDetails.lokasi_atau_link}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="inline-flex items-center gap-1.5 font-bold text-indigo-600 dark:text-indigo-400 hover:underline"
-                                >
-                                  <span>Buka Tautan Google Meet / Zoom</span>
-                                  <ExternalLink size={12} />
-                                </a>
-                              ) : (
-                                <p className="font-semibold text-slate-800 dark:text-slate-200">
-                                  {app.interviewDetails.lokasi_atau_link || 'Menunggu konfirmasi HR'}
-                                </p>
-                              )}
-                            </div>
-                          </div>
-
-                          {app.interviewDetails.catatan && (
-                            <div className="p-3 bg-indigo-100/50 dark:bg-indigo-900/30 rounded-xl text-xs text-indigo-900 dark:text-indigo-200">
-                              <span className="font-bold">Instruksi dari Perusahaan:</span> {app.interviewDetails.catatan}
-                            </div>
-                          )}
-                        </div>
-                      )}
-
-                      {/* KARTU ALASAN PENOLAKAN DARI PERUSAHAAN */}
-                      {app.status === 'Tidak Lolos' && app.catatanPerusahaan && (
-                        <div className="mt-3.5 p-4 rounded-2xl bg-rose-50/80 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-800 text-xs text-rose-900 dark:text-rose-200 space-y-1">
-                          <div className="flex items-center gap-1.5 font-bold text-rose-700 dark:text-rose-300">
-                            <AlertCircle size={15} />
-                            <span>Catatan Evaluasi dari Tim Rekruter {app.companyName}:</span>
-                          </div>
-                          <p className="leading-relaxed pl-5 font-medium">
-                            "{app.catatanPerusahaan}"
-                          </p>
-                        </div>
-                      )}
-
-                      {/* KARTU DITERIMA (HIRED) */}
-                      {app.rawStatus === 'hired' && (
-                        <div className="mt-3.5 p-4 rounded-2xl bg-emerald-50/80 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800 text-xs text-emerald-900 dark:text-emerald-200 space-y-1.5">
-                          <div className="flex items-center gap-1.5 font-extrabold text-emerald-700 dark:text-emerald-300 text-sm">
-                            <CheckCircle2 size={17} />
-                            <span>Selamat! Anda Resmi Diterima di {app.companyName}</span>
-                          </div>
-                          {app.catatanPerusahaan && (
-                            <p className="leading-relaxed pl-5 font-medium text-slate-700 dark:text-slate-300">
-                              {app.catatanPerusahaan}
-                            </p>
-                          )}
-                        </div>
-                      )}
-
-                      {/* DAFTAR PERTANYAAN WAWANCARA VIDEO DARI PERUSAHAAN */}
-                      {app.currentStageIndex === 3 && (
-                        <div className="mt-3 p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 shadow-2xs space-y-3">
-                          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2.5 border-b border-slate-100 dark:border-slate-800">
-                            <div className="flex items-center gap-2">
-                              <div className="p-1.5 rounded-lg bg-emerald-50 dark:bg-emerald-950 text-emerald-600 dark:text-emerald-400 shrink-0">
-                                <HelpCircle size={17} />
-                              </div>
-                              <div>
-                                <h5 className="font-bold text-xs sm:text-sm text-slate-800 dark:text-slate-100">
-                                  Pertanyaan Wawancara Wajib Dijawab
-                                </h5>
-                                <p className="text-[11px] text-slate-500">
-                                  Pastikan rekaman video Anda menjawab pertanyaan berikut dari <strong>{app.companyName}</strong>:
-                                </p>
-                              </div>
-                            </div>
-                            <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-900/50 text-emerald-800 dark:text-emerald-300 w-fit shrink-0">
-                              {(app.videoQuestions || DEFAULT_INTERVIEW_QUESTIONS).length} Pertanyaan
-                            </span>
-                          </div>
-
-                          <div className="space-y-2.5 pt-1">
-                            {(app.videoQuestions || DEFAULT_INTERVIEW_QUESTIONS).map((q, idx) => (
-                              <div
-                                key={idx}
-                                className="flex items-start gap-3 p-3 rounded-xl bg-slate-50/80 dark:bg-slate-800/60 border border-slate-200/70 dark:border-slate-700/70 text-xs"
-                              >
-                                <span className="w-5 h-5 rounded-full bg-[#1A4B9F] text-white font-black text-[10px] flex items-center justify-center shrink-0 mt-0.5 shadow-2xs">
-                                  {idx + 1}
-                                </span>
-                                <p className="font-semibold text-slate-800 dark:text-slate-200 leading-relaxed">
-                                  {q}
-                                </p>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-
-                      {/* SPECIAL ACTION BUTTON FOR SCENARIO 5: UPLOAD VIRTUAL INTERVIEW */}
-                      {app.currentStageIndex === 3 && app.status === 'Dalam Proses' && (
-                        <div className="pt-2 flex flex-wrap items-center gap-4">
-                          <label className="inline-flex items-center gap-2.5 px-6 py-3 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs sm:text-sm shadow-md hover:shadow-lg transition-all cursor-pointer">
-                            <input type="file" accept="video/*" className="hidden" onChange={async (e) => {
-                              const file = e.target.files?.[0];
-                              if (file) {
-                                const formData = new FormData();
-                                formData.append('video', file);
-
-                                const uploadPromise = api.post(`/applications/${app.id}/upload-video`, formData);
-
-                                toast.promise(uploadPromise, {
-                                  loading: 'Sedang mengunggah video wawancara...',
-                                  success: (res: any) => res.message || 'Video berhasil diunggah dan sedang diproses AI.',
-                                  error: (err: any) => parseErrorMessage(err) || 'Gagal mengunggah video.'
-                                }).then(() => {
-                                  // Refresh data after successful upload (optional, but good UX)
-                                  setTimeout(() => window.location.reload(), 2000);
-                                }).catch(() => { });
-                              }
-                            }} />
-                            <Video size={18} className="text-emerald-200" />
-                            <span>Upload Video Wawancara</span>
-                          </label>
-                        </div>
-                      )}
+                      <span
+                        className={`text-[10px] sm:text-[11px] font-bold leading-tight ${
+                          isFailed
+                            ? 'text-rose-600 dark:text-rose-400'
+                            : isCurrent
+                            ? 'text-[#1A4B9F] dark:text-blue-400'
+                            : isPassed
+                            ? 'text-emerald-600 dark:text-emerald-400'
+                            : 'text-slate-400 dark:text-slate-500'
+                        }`}
+                      >
+                        {shortNames[idx]}
+                      </span>
                     </div>
-
-                    {/* REKAP DETAIL HASIL AI SCREENING TAHAP 5 (HUMAN VALIDATION) */}
-                    {(app.currentStageIndex === 5 || app.tahapRekrutmen.includes('HUMAN VALIDATION') || app.status === 'Lolos') && (
-                      <div className="p-6 sm:p-7 rounded-3xl bg-gradient-to-br from-[#F8FAFC] to-[#EFF6FF] dark:from-slate-800/80 dark:to-slate-900/90 border-2 border-[#DBEAFE] dark:border-slate-700 space-y-6 shadow-xs">
-                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-[#DBEAFE]/80 dark:border-slate-700/80">
-                          <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-2xl bg-[#1A4B9F] text-white flex items-center justify-center shadow-md shrink-0">
-                              <Sparkles size={20} className="text-blue-200" />
-                            </div>
-                            <div>
-                              <div className="flex items-center gap-2">
-                                <h4 className="font-extrabold text-base sm:text-lg text-[#1A4B9F] dark:text-blue-400">
-                                  Rangkuman Hasil Screening AI
-                                </h4>
-                              </div>
-                              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                                Evaluasi berkas CV dan rekaman video wawancara Anda telah lengkap dan sedang divalidasi langsung oleh tim HR {app.companyName}.
-                              </p>
-                            </div>
-                          </div>
-
-                          <button
-                            onClick={() => setActiveHumanModalJob(app)}
-                            className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-[#1A4B9F] hover:bg-[#133878] text-white text-xs font-bold shadow-sm hover:shadow transition-all cursor-pointer shrink-0"
-                          >
-                            <span>Lihat Detail Lengkap AI</span>
-                          </button>
-                        </div>
-
-                        {/* 3 Metric Cards */}
-                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                          <div className="p-4 rounded-2xl bg-white dark:bg-slate-800 border border-[#DBEAFE] dark:border-slate-700 shadow-2xs space-y-1">
-                            <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wide block">
-                              Kesesuaian Berkas &amp; CV
-                            </span>
-                            <div className="flex items-baseline gap-2">
-                              <span className="text-2xl font-black text-[#1A4B9F] dark:text-blue-400">
-                                {app.cvScore}%
-                              </span>
-                              <span className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400">
-                                (Sangat Sesuai)
-                              </span>
-                            </div>
-                            <p className="text-[11px] text-slate-500 leading-relaxed">
-                              Kualifikasi pendidikan dan keahlian Anda selaras dengan kebutuhan posisi lowongan.
-                            </p>
-                          </div>
-
-                          <div className="p-4 rounded-2xl bg-white dark:bg-slate-800 border border-[#DBEAFE] dark:border-slate-700 shadow-2xs space-y-1">
-                            <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wide block">
-                              Performa Wawancara Video
-                            </span>
-                            <div className="flex items-baseline gap-2">
-                              <span className="text-2xl font-black text-[#1A4B9F] dark:text-blue-400">
-                                {app.videoScore > 0
-                                  ? `${app.videoScore}%`
-                                  : app.aiResult?.skor_keseluruhan !== undefined
-                                    ? `${Math.round(Number(app.aiResult.skor_keseluruhan))}%`
-                                    : 'Sedang Diproses'}
-                              </span>
-                              <span className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400">
-                                {app.videoScore >= 70 ? '(Komunikatif & Positif)' : app.videoScore > 0 ? '(Cukup Baik)' : '(Menunggu Selesai)'}
-                              </span>
-                            </div>
-                            <p className="text-[11px] text-slate-500 leading-relaxed">
-                              {app.aiResult?.status_jawaban_teks || 'Penyampaian jawaban wawancara video yang dianalisis oleh model AI.'}
-                            </p>
-                          </div>
-
-                          <div className="p-4 rounded-2xl bg-white dark:bg-slate-800 border border-[#DBEAFE] dark:border-slate-700 shadow-2xs space-y-1">
-                            <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wide block">
-                              Status Rekomendasi AI
-                            </span>
-                            <div className="flex items-baseline gap-2">
-                              <span className="text-base font-black text-emerald-600 dark:text-emerald-400">
-                                {app.generalAiDetails?.recommendationLabel || (app.aiResult?.kategori_fit || 'Siap Divalidasi')}
-                              </span>
-                            </div>
-                            <p className="text-[11px] text-slate-500 leading-relaxed">
-                              Hasil evaluasi objektif sistem AI untuk ditinjau oleh tim rekruter (Human Validation).
-                            </p>
-                          </div>
-                        </div>
-
-                        {/* Aspek Penilaian Utama (Bahasa Umum) */}
-                        <div className="space-y-3 pt-1">
-                          <h5 className="text-xs font-black uppercase tracking-wider text-slate-600 dark:text-slate-300">
-                            Sorotan Penilaian Kompetensi (Bahasa Umum)
-                          </h5>
-                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                            {(app.generalAiDetails?.competencies || []).slice(0, 4).map((comp, idx) => (
-                              <div key={idx} className="p-3.5 rounded-2xl bg-white/80 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 space-y-1.5 text-xs">
-                                <div className="flex items-center justify-between">
-                                  <span className="font-extrabold text-slate-800 dark:text-slate-100">{comp.title}</span>
-                                  <span className="px-2 py-0.5 rounded-full bg-blue-50 dark:bg-blue-950/60 text-[#1A4B9F] dark:text-blue-400 text-[10px] font-bold border border-blue-200 dark:border-blue-900">
-                                    {comp.badge}
-                                  </span>
-                                </div>
-                                <p className="text-[11px] text-slate-500 leading-relaxed">
-                                  {comp.desc}
-                                </p>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      </div>
-                    )}
-
-                  </div>
-                )}
-
+                  );
+                })}
               </div>
             </div>
-          );
-        })}
-      </div>
+
+            {/* Status Alert Banner */}
+            <div
+              className={`p-4 rounded-2xl border text-xs sm:text-sm space-y-2 ${
+                selectedDetailApp.status === 'Tidak Lolos' || selectedDetailApp.status === 'Lowongan Telah Ditutup'
+                  ? 'bg-rose-50/80 dark:bg-rose-950/20 border-rose-200 dark:border-rose-900/50 text-rose-900 dark:text-rose-200'
+                  : selectedDetailApp.status === 'Lolos'
+                  ? 'bg-emerald-50/80 dark:bg-emerald-950/20 border-emerald-200 dark:border-emerald-900/50 text-emerald-900 dark:text-emerald-200'
+                  : 'bg-blue-50/80 dark:bg-blue-950/20 border-blue-200 dark:border-blue-900/50 text-[#1A4B9F] dark:text-blue-300'
+              }`}
+            >
+              <div className="flex items-center gap-2 font-black text-sm">
+                {selectedDetailApp.status === 'Tidak Lolos' || selectedDetailApp.status === 'Lowongan Telah Ditutup' ? (
+                  <>
+                    <XCircle size={17} className="text-rose-600 shrink-0" />
+                    <span>Status Seleksi: Tidak Lolos</span>
+                  </>
+                ) : selectedDetailApp.status === 'Lolos' ? (
+                  <>
+                    <CheckCircle2 size={17} className="text-emerald-600 shrink-0" />
+                    <span>Selamat! Anda Dinyatakan Lolos</span>
+                  </>
+                ) : (
+                  <>
+                    <Clock size={17} className="text-[#1A4B9F] dark:text-blue-400 shrink-0" />
+                    <span>Status Seleksi: Dalam Proses</span>
+                  </>
+                )}
+              </div>
+              <p className="text-slate-700 dark:text-slate-300 text-xs leading-relaxed font-medium">
+                {selectedDetailApp.statusMessage}
+              </p>
+              {selectedDetailApp.catatanPerusahaan && (
+                <div className="mt-2 pt-2 border-t border-black/5 dark:border-white/5 text-xs text-slate-600 dark:text-slate-400">
+                  <span className="font-bold">Catatan Perusahaan:</span> "{selectedDetailApp.catatanPerusahaan}"
+                </div>
+              )}
+            </div>
+
+            {/* Skor AI Ringkas & Tombol Lihat Detail AI */}
+            {(selectedDetailApp.cvScore > 0 || selectedDetailApp.videoScore > 0) && (
+              <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-800 flex items-center justify-between gap-4">
+                <div className="flex items-center gap-4 text-xs">
+                  <div>
+                    <span className="text-[10px] text-slate-400 font-bold uppercase block">Skor CV</span>
+                    <span className="text-base font-black text-[#1A4B9F] dark:text-blue-400">
+                      {selectedDetailApp.cvScore}%
+                    </span>
+                  </div>
+                  {selectedDetailApp.videoScore > 0 && (
+                    <>
+                      <div className="h-6 w-px bg-slate-200 dark:bg-slate-700" />
+                      <div>
+                        <span className="text-[10px] text-slate-400 font-bold uppercase block">Skor Video</span>
+                        <span className="text-base font-black text-emerald-600 dark:text-emerald-400">
+                          {selectedDetailApp.videoScore}%
+                        </span>
+                      </div>
+                    </>
+                  )}
+                </div>
+
+                <div className="flex items-center gap-2">
+                  {selectedDetailApp.cvScore > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => setActiveCvModalJob(selectedDetailApp)}
+                      className="px-3 py-1.5 rounded-xl bg-white dark:bg-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800 text-[#1A4B9F] dark:text-blue-400 font-bold text-xs border border-slate-200 dark:border-slate-700 transition-colors cursor-pointer shadow-2xs"
+                    >
+                      Detail CV
+                    </button>
+                  )}
+                  {(selectedDetailApp.currentStageIndex >= 4 || selectedDetailApp.generalAiDetails || selectedDetailApp.aiResult) && (
+                    <button
+                      type="button"
+                      onClick={() => setActiveHumanModalJob(selectedDetailApp)}
+                      className="px-3 py-1.5 rounded-xl bg-[#1A4B9F] hover:bg-[#133878] text-white font-bold text-xs transition-colors cursor-pointer shadow-2xs"
+                    >
+                      Detail AI
+                    </button>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Jadwal Wawancara Lanjutan (jika ada) */}
+            {selectedDetailApp.interviewDetails && (
+              <div className="p-4 rounded-2xl bg-indigo-50/70 dark:bg-indigo-950/30 border border-indigo-200 dark:border-indigo-800 text-xs space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="font-extrabold text-indigo-950 dark:text-indigo-200 flex items-center gap-1.5">
+                    <Calendar size={14} className="text-indigo-600 dark:text-indigo-400" />
+                    Jadwal Wawancara Lanjutan
+                  </span>
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-indigo-200/60 dark:bg-indigo-900 text-indigo-800 dark:text-indigo-200">
+                    {selectedDetailApp.interviewDetails.tipe === 'offline' ? 'Offline di Kantor' : 'Online Meet'}
+                  </span>
+                </div>
+                <div className="text-slate-700 dark:text-slate-300 space-y-1">
+                  <p>
+                    <span className="font-semibold text-slate-500">Waktu:</span> {selectedDetailApp.interviewDetails.tanggal} {selectedDetailApp.interviewDetails.waktu ? `(${selectedDetailApp.interviewDetails.waktu} WIB)` : ''}
+                  </p>
+                  {selectedDetailApp.interviewDetails.lokasi_atau_link && (
+                    <p>
+                      <span className="font-semibold text-slate-500">Lokasi/Link:</span>{' '}
+                      {selectedDetailApp.interviewDetails.lokasi_atau_link.startsWith('http') ? (
+                        <a
+                          href={selectedDetailApp.interviewDetails.lokasi_atau_link}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-indigo-600 dark:text-indigo-400 font-bold underline inline-flex items-center gap-1"
+                        >
+                          Buka Tautan <ExternalLink size={11} />
+                        </a>
+                      ) : (
+                        selectedDetailApp.interviewDetails.lokasi_atau_link
+                      )}
+                    </p>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Khusus Tahap 3: Upload Video & Pertanyaan */}
+            {selectedDetailApp.currentStageIndex === 3 && selectedDetailApp.status === 'Dalam Proses' && (
+              <div className="p-4 rounded-2xl bg-emerald-50/60 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-800 space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="font-bold text-xs text-emerald-900 dark:text-emerald-200 flex items-center gap-1.5">
+                    <HelpCircle size={15} /> Pertanyaan Wawancara Video
+                  </span>
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800">
+                    {(selectedDetailApp.videoQuestions || DEFAULT_INTERVIEW_QUESTIONS).length} Pertanyaan
+                  </span>
+                </div>
+                <div className="space-y-1.5">
+                  {(selectedDetailApp.videoQuestions || DEFAULT_INTERVIEW_QUESTIONS).map((q, idx) => (
+                    <div key={idx} className="flex items-start gap-2 text-xs text-slate-700 dark:text-slate-300">
+                      <span className="w-4 h-4 rounded-full bg-emerald-600 text-white font-bold text-[10px] flex items-center justify-center shrink-0 mt-0.5">
+                        {idx + 1}
+                      </span>
+                      <p className="leading-snug">{q}</p>
+                    </div>
+                  ))}
+                </div>
+                <div className="pt-1">
+                  <label className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs cursor-pointer shadow-xs transition-colors">
+                    <input
+                      type="file"
+                      accept="video/*"
+                      className="hidden"
+                      onChange={async (e) => {
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          const formData = new FormData();
+                          formData.append('video', file);
+                          const uploadPromise = api.post(`/applications/${selectedDetailApp.id}/upload-video`, formData);
+                          toast.promise(uploadPromise, {
+                            loading: 'Mengunggah video wawancara...',
+                            success: (res: any) => res.message || 'Video berhasil diunggah.',
+                            error: (err: any) => parseErrorMessage(err) || 'Gagal mengunggah video.'
+                          }).then(() => {
+                            setTimeout(() => window.location.reload(), 2000);
+                          }).catch(() => { });
+                        }
+                      }}
+                    />
+                    <Video size={14} />
+                    <span>Upload Video Wawancara</span>
+                  </label>
+                </div>
+              </div>
+            )}
+
+            {/* Footer */}
+            <div className="pt-2 flex justify-end">
+              <button
+                type="button"
+                onClick={() => setSelectedDetailApp(null)}
+                className="px-5 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-bold text-xs cursor-pointer transition-colors"
+              >
+                Tutup
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* MODAL 1: STAGE 2 CV SCREENING PO-FIT AI RESULT */}
       {activeCvModalJob && (
