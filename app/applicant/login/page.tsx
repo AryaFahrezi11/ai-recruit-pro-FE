@@ -122,15 +122,16 @@ export default function PelamarLoginPage() {
       setError(parsed);
 
       // Detect unverified account requiring OTP
-      if (
+      const isUnverified =
         err?.status === 403 ||
         parsed.toLowerCase().includes('otp') ||
         parsed.toLowerCase().includes('belum aktif') ||
-        parsed.toLowerCase().includes('verifikasi')
-      ) {
-        setUnverifiedAlert(
-          'Perhatian: Anda mencoba masuk tetapi belum memverifikasi kode OTP saat pendaftaran. Silakan masukkan kode OTP di bawah untuk mengaktifkan akun dan langsung masuk ke dasbor.'
-        );
+        parsed.toLowerCase().includes('belum diverifikasi') ||
+        parsed.toLowerCase().includes('verifikasi') ||
+        parsed.toLowerCase().includes('memasukkan kode');
+
+      if (isUnverified) {
+        setUnverifiedAlert(parsed);
         setMode('unverified_otp');
         setOtpError('');
       }

@@ -15,18 +15,17 @@ export default function MaintenanceProvider({ children }: { children: React.Reac
   useEffect(() => {
     const checkMaintenance = async () => {
       try {
-        const res = await fetch(getApiUrl('/config/public'));
-        if (res.ok) {
-          const config = await res.json();
-          if (config.maintenance_mode === true) {
+        const res = await fetch(getApiUrl('/config/public')).catch(() => null);
+        if (res && res.ok) {
+          const config = await res.json().catch(() => null);
+          if (config && config.maintenance_mode === true) {
             setIsMaintenance(true);
           } else {
             setIsMaintenance(false);
           }
         }
       } catch (e) {
-        // Silently fail if API is down
-        console.error("Failed to check maintenance mode:", e);
+        // Silently handle if API is initializing
       } finally {
         setIsLoading(false);
       }

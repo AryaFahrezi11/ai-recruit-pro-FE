@@ -672,7 +672,7 @@ export default function SettingsPage() {
                 <input
                   type="text"
                   value={hrWhatsapp}
-                  onChange={(e) => setHrWhatsapp(e.target.value)}
+                  onChange={(e) => setHrWhatsapp(e.target.value.replace(/\D/g, '').slice(0, 15))}
                   placeholder="08123456789"
                   className="w-full px-4 py-2.5 bg-muted/30 border border-border rounded-xl text-xs text-foreground focus:ring-2 focus:ring-primary/20 outline-none font-medium"
                 />

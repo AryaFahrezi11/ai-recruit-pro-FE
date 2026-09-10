@@ -174,14 +174,36 @@ export default function PelamarRegisterPage() {
   };
 
   const handleOtpKeyDown = (index: number, e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Backspace' && !otpCode[index] && index > 0) {
-      const prevInput = document.getElementById(`pelamar-otp-${index - 1}`);
-      if (prevInput) {
-        prevInput.focus();
-        const newOtp = [...otpCode];
+    if (e.key === 'Backspace') {
+      e.preventDefault();
+      const newOtp = [...otpCode];
+
+      if (otpCode[index]) {
+        newOtp[index] = '';
+        setOtpCode(newOtp);
+        if (index > 0) {
+          const prevInput = document.getElementById(`pelamar-otp-${index - 1}`);
+          if (prevInput) prevInput.focus();
+        }
+      } else if (index > 0) {
         newOtp[index - 1] = '';
         setOtpCode(newOtp);
+        const prevInput = document.getElementById(`pelamar-otp-${index - 1}`);
+        if (prevInput) prevInput.focus();
       }
+      return;
+    }
+
+    if (e.key === 'ArrowLeft' && index > 0) {
+      e.preventDefault();
+      const prevInput = document.getElementById(`pelamar-otp-${index - 1}`);
+      if (prevInput) prevInput.focus();
+    }
+
+    if (e.key === 'ArrowRight' && index < 5) {
+      e.preventDefault();
+      const nextInput = document.getElementById(`pelamar-otp-${index + 1}`);
+      if (nextInput) nextInput.focus();
     }
   };
 

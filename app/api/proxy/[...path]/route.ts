@@ -6,10 +6,10 @@ import { getBaseUrl } from '@/lib/api';
  * Forwards all requests from the browser to the backend API server,
  * avoiding CORS preflight issues entirely.
  *
- * Example: POST /api/proxy/applications/ → POST http://localhost:8080/api/applications/
+ * Example: POST /api/proxy/applications/ → POST http://localhost:8000/api/applications/
  */
 
-const BACKEND_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8080/api';
+const BACKEND_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000/api';
 
 async function proxyRequest(req: NextRequest, { params }: { params: Promise<{ path: string[] }> }) {
   const { path } = await params;
