@@ -309,12 +309,12 @@ ${profileData?.profil?.hr_name || companyName}`;
               </span>
               <span
                 className={`text-[11px] font-bold px-2.5 py-0.5 rounded-md ${isApproved
-                    ? 'text-emerald-700 bg-emerald-100 dark:text-emerald-300 dark:bg-emerald-950/60'
-                    : isRejected
-                      ? 'text-rose-700 bg-rose-100 dark:text-rose-300 dark:bg-rose-950/60'
-                      : isIncomplete
-                        ? 'text-red-700 bg-red-100 dark:text-red-300 dark:bg-red-950/60'
-                        : 'text-amber-700 bg-amber-100 dark:text-amber-300 dark:bg-amber-950/60'
+                  ? 'text-emerald-700 bg-emerald-100 dark:text-emerald-300 dark:bg-emerald-950/60'
+                  : isRejected
+                    ? 'text-rose-700 bg-rose-100 dark:text-rose-300 dark:bg-rose-950/60'
+                    : isIncomplete
+                      ? 'text-red-700 bg-red-100 dark:text-red-300 dark:bg-red-950/60'
+                      : 'text-amber-700 bg-amber-100 dark:text-amber-300 dark:bg-amber-950/60'
                   }`}
               >
                 {isApproved ? 'Telah Disetujui' : isRejected ? 'Perlu Perbaikan (Ditolak)' : isIncomplete ? 'Belum Lengkap' : 'Menunggu Peninjauan Admin'}
@@ -484,8 +484,8 @@ ${profileData?.profil?.hr_name || companyName}`;
               <Link
                 href="/register?step=3"
                 className={`w-full sm:w-auto px-7 py-3 rounded-full text-white font-semibold text-sm shadow-sm transition-all duration-200 inline-flex items-center justify-center gap-2 ${isRejected
-                    ? 'bg-rose-600 hover:bg-rose-700 active:bg-rose-800'
-                    : 'bg-amber-600 hover:bg-amber-700 active:bg-amber-800'
+                  ? 'bg-rose-600 hover:bg-rose-700 active:bg-rose-800'
+                  : 'bg-amber-600 hover:bg-amber-700 active:bg-amber-800'
                   }`}
               >
                 <Edit size={16} />
