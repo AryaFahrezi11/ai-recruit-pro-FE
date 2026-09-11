@@ -66,8 +66,8 @@ export default function PendingApprovalPage() {
       const [profileRes, configRes] = await Promise.all([
         token
           ? fetch(getApiUrl('/users/profile'), {
-              headers: { Authorization: `Bearer ${token}` }
-            })
+            headers: { Authorization: `Bearer ${token}` }
+          })
           : Promise.resolve(null),
         fetch(getApiUrl('/config/public')).catch(() => null)
       ]);
@@ -114,12 +114,12 @@ export default function PendingApprovalPage() {
   // Format real registration timestamp
   const formattedRegistrationDate = profileData?.created_at
     ? new Date(profileData.created_at).toLocaleDateString('id-ID', {
-        day: 'numeric',
-        month: 'long',
-        year: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit',
-      }) + ' WIB'
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    }) + ' WIB'
     : '-';
 
   // Helper to extract clean filename
@@ -140,7 +140,7 @@ export default function PendingApprovalPage() {
 
   const emailSubject = `Konfirmasi Verifikasi Akun Perusahaan - ${companyName}`;
   const emailBody =
-`Yth. Tim Administrator AI-Recruit Pro,
+    `Yth. Tim Administrator AI-Recruit Pro,
 
 Saya ingin mengonfirmasi status peninjauan dan verifikasi akun perusahaan kami:
 
@@ -308,15 +308,14 @@ ${profileData?.profil?.hr_name || companyName}`;
                 <FileCheck2 size={16} className="text-[#1A4B9F] dark:text-blue-400" /> Rincian Berkas Legalitas Yang Dikirim
               </span>
               <span
-                className={`text-[11px] font-bold px-2.5 py-0.5 rounded-md ${
-                  isApproved
+                className={`text-[11px] font-bold px-2.5 py-0.5 rounded-md ${isApproved
                     ? 'text-emerald-700 bg-emerald-100 dark:text-emerald-300 dark:bg-emerald-950/60'
                     : isRejected
-                    ? 'text-rose-700 bg-rose-100 dark:text-rose-300 dark:bg-rose-950/60'
-                    : isIncomplete
-                    ? 'text-red-700 bg-red-100 dark:text-red-300 dark:bg-red-950/60'
-                    : 'text-amber-700 bg-amber-100 dark:text-amber-300 dark:bg-amber-950/60'
-                }`}
+                      ? 'text-rose-700 bg-rose-100 dark:text-rose-300 dark:bg-rose-950/60'
+                      : isIncomplete
+                        ? 'text-red-700 bg-red-100 dark:text-red-300 dark:bg-red-950/60'
+                        : 'text-amber-700 bg-amber-100 dark:text-amber-300 dark:bg-amber-950/60'
+                  }`}
               >
                 {isApproved ? 'Telah Disetujui' : isRejected ? 'Perlu Perbaikan (Ditolak)' : isIncomplete ? 'Belum Lengkap' : 'Menunggu Peninjauan Admin'}
               </span>
@@ -484,11 +483,10 @@ ${profileData?.profil?.hr_name || companyName}`;
             {(isRejected || isIncomplete) && (
               <Link
                 href="/register?step=3"
-                className={`w-full sm:w-auto px-7 py-3 rounded-full text-white font-semibold text-sm shadow-sm transition-all duration-200 inline-flex items-center justify-center gap-2 ${
-                  isRejected
+                className={`w-full sm:w-auto px-7 py-3 rounded-full text-white font-semibold text-sm shadow-sm transition-all duration-200 inline-flex items-center justify-center gap-2 ${isRejected
                     ? 'bg-rose-600 hover:bg-rose-700 active:bg-rose-800'
                     : 'bg-amber-600 hover:bg-amber-700 active:bg-amber-800'
-                }`}
+                  }`}
               >
                 <Edit size={16} />
                 Lengkapi Ulang Dokumen (Tahap 3)
