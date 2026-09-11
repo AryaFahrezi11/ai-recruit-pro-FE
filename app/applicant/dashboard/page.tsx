@@ -172,16 +172,23 @@ function DashboardContent() {
   const [industriesList, setIndustriesList] = useState<string[]>([]);
   const [isLoadingJobs, setIsLoadingJobs] = useState<boolean>(true);
 
-  // Check if CV is incomplete to show initial warning popup
+  const isActualPelamar = useMemo(() => {
+    if (typeof localStorage === 'undefined') return false;
+    const role = localStorage.getItem('user_role');
+    const isLoggedIn = localStorage.getItem('isPelamarLoggedIn') === 'true';
+    return isLoggedIn || role === 'pelamar';
+  }, []);
+
+  // Check if CV is incomplete to show initial warning popup (Only for actual applicants)
   useEffect(() => {
-    if (userHasCv === false && !hasShownCvWarningRef.current) {
+    if (isActualPelamar && userHasCv === false && !hasShownCvWarningRef.current) {
       const timer = setTimeout(() => {
          setShowCvWarningModal(true);
          hasShownCvWarningRef.current = true;
       }, 800);
       return () => clearTimeout(timer);
     }
-  }, [userHasCv]);
+  }, [userHasCv, isActualPelamar]);
 
   // Close location dropdown when clicking outside
   useEffect(() => {
@@ -249,12 +256,15 @@ function DashboardContent() {
 
     const loadInitialData = async () => {
       try {
+        const userRole = typeof localStorage !== 'undefined' ? localStorage.getItem('user_role') : null;
+        const isPelamarRole = !userRole || userRole === 'pelamar' || (typeof localStorage !== 'undefined' && localStorage.getItem('isPelamarLoggedIn'));
+
         const [locRes, catRes, resComp, resProfile, resApps, indRes] = await Promise.all([
           api.get('/jobs/locations').catch(() => null),
           api.get('/jobs/categories').catch(() => null),
           api.get(`/perusahaan/verified?keyword=${encodeURIComponent(searchParams.get('keyword') || searchParams.get('search') || '')}&industry=${encodeURIComponent(searchParams.get('industry') || '')}`).catch(() => null),
-          api.get('/users/profile').catch(() => null),
-          api.get('/applications/').catch(() => null),
+          isPelamarRole ? api.get('/users/profile').catch(() => null) : Promise.resolve(null),
+          isPelamarRole ? api.get('/applications/').catch(() => null) : Promise.resolve(null),
           api.get('/perusahaan/industries').catch(() => null)
         ]);
 
@@ -371,6 +381,7 @@ function DashboardContent() {
       const exp = queryOverride?.experience_level !== undefined ? queryOverride.experience_level : searchParams.get('experience_level');
       const edu = queryOverride?.pendidikan_min !== undefined ? queryOverride.pendidikan_min : searchParams.get('pendidikan_min');
       const sort = queryOverride?.sort !== undefined ? queryOverride.sort : (searchParams.get('sort') || sortOrder || 'rekomendasi');
+      const urlJobId = queryOverride?.jobId !== undefined ? queryOverride.jobId : (searchParams.get('jobId') || searchParams.get('job'));
 
       if (kw && kw.trim()) apiParams.append('keyword', kw.trim());
       if (loc && loc !== 'Semua' && loc.trim()) apiParams.append('location', loc.trim());
@@ -1187,7 +1198,7 @@ function DashboardContent() {
             </div>
 
             {/* Incomplete CV Banner / Fallback Info */}
-            {!userHasCv && (
+            {isActualPelamar && !userHasCv && (
               <div className="p-3.5 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 rounded-2xl flex items-center justify-between gap-3 text-xs text-amber-800 dark:text-amber-200">
                 <div className="flex items-center gap-2.5">
                   <Info className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0" />
@@ -1426,7 +1437,7 @@ function DashboardContent() {
                         </div>
                       </div>
                     </div>
-                  ) : (
+                  ) : isActualPelamar ? (
                     <div className="p-3.5 bg-amber-50 dark:bg-amber-950/30 rounded-2xl border border-amber-200 dark:border-amber-800/60 flex items-center justify-between gap-3">
                       <div className="flex items-center gap-2.5">
                         <Info className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0" />
@@ -1442,6 +1453,16 @@ function DashboardContent() {
                       >
                         {language === 'id' ? 'Lengkapi' : 'Complete'}
                       </Link>
+                    </div>
+                  ) : (
+                    <div className="p-4 bg-blue-50/60 dark:bg-blue-950/30 rounded-2xl border border-blue-100 dark:border-blue-900/50 flex items-center gap-3.5 text-xs text-blue-900 dark:text-blue-200">
+                      <Sparkles size={18} className="text-[#1A4B9F] dark:text-blue-400 shrink-0" />
+                      <div>
+                        <span className="font-bold block text-slate-900 dark:text-white">Pratinjau Publik Lowongan</span>
+                        <p className="text-[11px] text-slate-600 dark:text-slate-400 mt-0.5 leading-relaxed">
+                          {selectedJob.reason || 'Kualifikasi & persyaratan posisi ini dipublikasikan untuk calon pelamar.'}
+                        </p>
+                      </div>
                     </div>
                   )}
 

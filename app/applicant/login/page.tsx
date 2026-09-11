@@ -18,7 +18,9 @@ import {
   Lock,
   Mail,
   CheckCircle2,
-  ShieldCheck
+  ShieldCheck,
+  ShieldBan,
+  User
 } from 'lucide-react';
 import { api, parseErrorMessage } from '@/lib/api';
 import OtpVerificationCard from '@/components/auth/OtpVerificationCard';
@@ -121,14 +123,27 @@ export default function PelamarLoginPage() {
       const parsed = parseErrorMessage(err);
       setError(parsed);
 
-      // Detect unverified account requiring OTP
+      const lowerMsg = parsed.toLowerCase();
+      const isBanned =
+        lowerMsg.includes('ban') ||
+        lowerMsg.includes('banned') ||
+        lowerMsg.includes('blokir') ||
+        lowerMsg.includes('diblokir') ||
+        lowerMsg.includes('suspended') ||
+        lowerMsg.includes('ditangguhkan') ||
+        lowerMsg.includes('dinonaktifkan') ||
+        lowerMsg.includes('nonaktif') ||
+        lowerMsg.includes('non-aktif') ||
+        lowerMsg.includes('deactivated') ||
+        lowerMsg.includes('disabled');
+
+      // Detect unverified account requiring OTP (only if NOT banned)
       const isUnverified =
-        err?.status === 403 ||
-        parsed.toLowerCase().includes('otp') ||
-        parsed.toLowerCase().includes('belum aktif') ||
-        parsed.toLowerCase().includes('belum diverifikasi') ||
-        parsed.toLowerCase().includes('verifikasi') ||
-        parsed.toLowerCase().includes('memasukkan kode');
+        !isBanned &&
+        (lowerMsg.includes('otp') ||
+          lowerMsg.includes('belum diverifikasi') ||
+          (lowerMsg.includes('verifikasi') && !lowerMsg.includes('dinonaktifkan')) ||
+          lowerMsg.includes('memasukkan kode'));
 
       if (isUnverified) {
         setUnverifiedAlert(parsed);
@@ -270,10 +285,10 @@ export default function PelamarLoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 flex flex-col justify-between font-sans antialiased transition-colors duration-300">
+    <div className="min-h-screen bg-[#F8FAFC] dark:bg-slate-950 flex flex-col font-sans antialiased text-slate-900 dark:text-white">
 
-      {/* Top Header */}
-      <header className="py-6 px-6 sm:px-12 max-w-[1600px] w-full mx-auto flex items-center justify-between">
+      {/* Top Simple Header */}
+      <header className="w-full max-w-[1440px] mx-auto px-6 sm:px-10 lg:px-14 py-5 flex items-center justify-between">
         <Link href="/" className="flex items-center gap-3 group">
           <Image
             src="/Logo Ai Recruit Pro..png"
@@ -283,36 +298,35 @@ export default function PelamarLoginPage() {
             className="h-13 sm:h-15 w-auto object-contain shrink-0 transition-transform group-hover:scale-105"
             priority
           />
-          <div className="flex flex-col justify-center">
-            <span className="font-extrabold text-lg sm:text-xl tracking-tight text-slate-900 dark:text-white leading-tight">
-              AI-RecruitPro
-            </span>
-            <span className="text-[10px] font-bold text-slate-400 dark:text-slate-400 uppercase tracking-widest mt-0.5">
-              Masuk ke Akun Pelamar
-            </span>
-          </div>
+          <span className="font-extrabold text-lg sm:text-xl tracking-tight text-slate-900 dark:text-white leading-none">
+            AI-RecruitPro
+          </span>
         </Link>
 
-        <div className="flex items-center gap-6">
-          <Link
-            href="/login"
-            className="text-xs sm:text-sm font-semibold text-[#1A4B9F] hover:underline flex items-center gap-1.5"
-          >
-            <Building2 size={16} />
-            {t.pelamar.header.forEmployers}
-          </Link>
-        </div>
+        <Link
+          href="/login"
+          className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 hover:text-[#1A4B9F] dark:hover:text-blue-400 hover:border-[#1A4B9F]/40 shadow-xs text-xs font-semibold transition-all group"
+        >
+          <Building2 size={15} className="text-[#1A4B9F] dark:text-blue-400" />
+          <span>Portal Perusahaan</span>
+          <ArrowRight size={14} className="text-slate-400 group-hover:translate-x-0.5 transition-transform" />
+        </Link>
       </header>
 
       {/* Main Centered Sign In Card */}
-      <main className="flex-1 flex items-center justify-center px-4 py-8">
+      <main className="flex-1 max-w-[1440px] w-full mx-auto px-6 sm:px-10 lg:px-14 py-8 flex items-center justify-center">
 
         {/* 1. VIEW: STANDARD LOGIN */}
         {mode === 'login' && (
-          <div className="w-full max-w-md bg-white dark:bg-slate-900 rounded-3xl p-8 sm:p-10 shadow-2xl border border-slate-200 dark:border-slate-800 space-y-7 relative animate-in fade-in duration-200">
-            <div className="space-y-2">
-              <h1 className="text-2xl font-bold text-slate-900 dark:text-white">{t.pelamar.auth.loginTitle}</h1>
-              <p className="text-sm text-slate-500 dark:text-slate-400">
+          <div className="w-full max-w-md bg-white dark:bg-slate-900 rounded-3xl border border-slate-200/80 dark:border-slate-800 shadow-xl p-6 sm:p-8 space-y-6 animate-in fade-in duration-200">
+            <div className="space-y-2 text-center">
+              <div className="w-12 h-12 rounded-2xl bg-[#1A4B9F]/10 dark:bg-slate-800 border border-[#1A4B9F]/20 dark:border-slate-700 flex items-center justify-center text-[#1A4B9F] dark:text-blue-400 mx-auto">
+                <User size={24} />
+              </div>
+              <h1 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white tracking-tight">
+                {t.pelamar.auth.loginTitle}
+              </h1>
+              <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400">
                 {t.pelamar.auth.loginSubtitle}
               </p>
             </div>
@@ -399,9 +413,35 @@ export default function PelamarLoginPage() {
               </div>
 
               {error && (
-                <div className="p-3.5 rounded-2xl bg-red-50 dark:bg-red-950/50 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300 text-xs font-semibold flex items-start gap-2">
-                  <AlertCircle size={16} className="shrink-0 mt-0.5" />
-                  <span>{error}</span>
+                <div
+                  className={`p-4 rounded-2xl border text-xs font-semibold flex items-start gap-3 ${
+                    error.toLowerCase().includes('ban') ||
+                    error.toLowerCase().includes('blokir') ||
+                    error.toLowerCase().includes('suspended') ||
+                    error.toLowerCase().includes('ditangguhkan') ||
+                    error.toLowerCase().includes('dinonaktifkan') ||
+                    error.toLowerCase().includes('nonaktif') ||
+                    error.toLowerCase().includes('non-aktif') ||
+                    error.toLowerCase().includes('deactivated') ||
+                    error.toLowerCase().includes('disabled')
+                      ? 'bg-rose-50 dark:bg-rose-950/80 border-rose-300 dark:border-rose-800 text-rose-800 dark:text-rose-200'
+                      : 'bg-red-50 dark:bg-red-950/50 border-red-200 dark:border-red-800 text-red-700 dark:text-red-300'
+                  }`}
+                >
+                  {error.toLowerCase().includes('ban') ||
+                  error.toLowerCase().includes('blokir') ||
+                  error.toLowerCase().includes('suspended') ||
+                  error.toLowerCase().includes('ditangguhkan') ||
+                  error.toLowerCase().includes('dinonaktifkan') ||
+                  error.toLowerCase().includes('nonaktif') ||
+                  error.toLowerCase().includes('non-aktif') ||
+                  error.toLowerCase().includes('deactivated') ||
+                  error.toLowerCase().includes('disabled') ? (
+                    <ShieldBan size={20} className="shrink-0 text-rose-600 dark:text-rose-400 mt-0.5" />
+                  ) : (
+                    <AlertCircle size={18} className="shrink-0 mt-0.5" />
+                  )}
+                  <p className="leading-relaxed font-semibold text-xs mt-0.5">{error}</p>
                 </div>
               )}
 

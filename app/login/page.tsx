@@ -20,7 +20,9 @@ import {
   EyeOff,
   Check,
   X,
-  ShieldCheck
+  ShieldCheck,
+  ShieldBan,
+  User
 } from 'lucide-react';
 import { api, parseErrorMessage, setAuthToken } from '@/lib/api';
 import { toast } from 'react-hot-toast';
@@ -36,6 +38,7 @@ export default function CompanyLoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [agreedConsent, setAgreedConsent] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -87,6 +90,10 @@ export default function CompanyLoginPage() {
       setError('Masukkan password akun perusahaan Anda.');
       return;
     }
+    if (!agreedConsent) {
+      setError('Anda harus menyetujui pemrosesan dan penyimpanan data perusahaan untuk melanjutkan masuk.');
+      return;
+    }
 
     setIsLoading(true);
 
@@ -121,16 +128,32 @@ export default function CompanyLoginPage() {
       }
     } catch (err: any) {
       const errorMsg = parseErrorMessage(err);
+      const lowerMsg = (errorMsg || '').toLowerCase();
+
+      const isBanned =
+        lowerMsg.includes('ban') ||
+        lowerMsg.includes('banned') ||
+        lowerMsg.includes('blokir') ||
+        lowerMsg.includes('diblokir') ||
+        lowerMsg.includes('suspended') ||
+        lowerMsg.includes('ditangguhkan') ||
+        lowerMsg.includes('dinonaktifkan') ||
+        lowerMsg.includes('nonaktif') ||
+        lowerMsg.includes('non-aktif') ||
+        lowerMsg.includes('deactivated') ||
+        lowerMsg.includes('disabled');
 
       const isUnverified =
-        err?.status === 403 ||
-        errorMsg.toLowerCase().includes('otp') ||
-        errorMsg.toLowerCase().includes('belum aktif') ||
-        errorMsg.toLowerCase().includes('belum diverifikasi') ||
-        errorMsg.toLowerCase().includes('verifikasi') ||
-        errorMsg.toLowerCase().includes('memasukkan kode');
+        !isBanned &&
+        (lowerMsg.includes('otp') ||
+        lowerMsg.includes('belum aktif') ||
+        lowerMsg.includes('belum diverifikasi') ||
+        lowerMsg.includes('verifikasi') ||
+        lowerMsg.includes('memasukkan kode'));
 
-      if (isUnverified) {
+      if (isBanned) {
+        setError(errorMsg || 'Akun Anda telah dibanned/diblokir oleh Admin. Anda tidak dapat masuk atau mendaftar kembali dengan email ini.');
+      } else if (isUnverified) {
         setMode('unverified_otp');
         setOtpError(errorMsg);
         setCountdown(60);
@@ -381,15 +404,14 @@ export default function CompanyLoginPage() {
           </span>
         </Link>
 
-        <div className="flex items-center gap-3 text-xs sm:text-sm font-semibold">
-          <span className="text-slate-500 dark:text-slate-400 hidden sm:inline">Portal Pelamar Kerja?</span>
-          <Link
-            href="/applicant/login"
-            className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 font-bold transition-colors border border-slate-200 dark:border-slate-700"
-          >
-            Masuk Pelamar
-          </Link>
-        </div>
+        <Link
+          href="/applicant/login"
+          className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 hover:text-[#1A4B9F] dark:hover:text-blue-400 hover:border-[#1A4B9F]/40 shadow-xs text-xs font-semibold transition-all group"
+        >
+          <User size={15} className="text-[#1A4B9F] dark:text-blue-400" />
+          <span>Portal Pelamar Kerja</span>
+          <ArrowRight size={14} className="text-slate-400 group-hover:translate-x-0.5 transition-transform" />
+        </Link>
       </header>
 
       {/* Main Container */}
@@ -484,11 +506,48 @@ export default function CompanyLoginPage() {
                   </div>
                 </div>
 
+                {/* Checkbox Persetujuan Pemrosesan & Penyimpanan Data Perusahaan */}
+                <div className="flex items-start gap-2.5 pt-1">
+                  <input
+                    id="company-login-consent"
+                    type="checkbox"
+                    checked={agreedConsent}
+                    onChange={(e) => {
+                      setAgreedConsent(e.target.checked);
+                      if (e.target.checked && error.includes('persetujuan')) setError('');
+                    }}
+                    className="mt-1 w-4 h-4 text-[#1A4B9F] rounded border-slate-300 dark:border-slate-700 focus:ring-[#1A4B9F] dark:focus:ring-blue-400 cursor-pointer shrink-0"
+                  />
+                  <label htmlFor="company-login-consent" className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed cursor-pointer select-none">
+                    Saya menyetujui pemrosesan dan penyimpanan data perusahaan serta informasi penanggung jawab (seperti profil perusahaan, NIB/NPWP, dan kontak HR) untuk keperluan pengelolaan akun, verifikasi legalitas, dan rekrutmen pekerjaan di platform AI-RecruitPro.
+                  </label>
+                </div>
+
                 {/* Error Notification */}
                 {error && (
-                  <div className="p-3.5 rounded-2xl bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900/60 text-red-700 dark:text-red-300 text-xs font-semibold flex items-start gap-2.5 leading-relaxed">
-                    <AlertCircle size={18} className="shrink-0 mt-0.5" />
-                    <span>{error}</span>
+                  <div className={`p-4 rounded-2xl border text-xs font-semibold flex items-start gap-3 leading-relaxed ${
+                    error.toLowerCase().includes('ban') ||
+                    error.toLowerCase().includes('blokir') ||
+                    error.toLowerCase().includes('dinonaktifkan') ||
+                    error.toLowerCase().includes('nonaktif') ||
+                    error.toLowerCase().includes('non-aktif') ||
+                    error.toLowerCase().includes('suspended') ||
+                    error.toLowerCase().includes('ditangguhkan')
+                      ? 'bg-rose-50 dark:bg-rose-950/60 border-rose-300 dark:border-rose-800 text-rose-800 dark:text-rose-200'
+                      : 'bg-red-50 dark:bg-red-950/40 border-red-200 dark:border-red-900/60 text-red-700 dark:text-red-300'
+                  }`}>
+                    {error.toLowerCase().includes('ban') ||
+                    error.toLowerCase().includes('blokir') ||
+                    error.toLowerCase().includes('dinonaktifkan') ||
+                    error.toLowerCase().includes('nonaktif') ||
+                    error.toLowerCase().includes('non-aktif') ||
+                    error.toLowerCase().includes('suspended') ||
+                    error.toLowerCase().includes('ditangguhkan') ? (
+                      <ShieldBan size={20} className="shrink-0 text-rose-600 dark:text-rose-400 mt-0.5" />
+                    ) : (
+                      <AlertCircle size={18} className="shrink-0 mt-0.5" />
+                    )}
+                    <p className="leading-relaxed font-semibold text-xs mt-0.5">{error}</p>
                   </div>
                 )}
 

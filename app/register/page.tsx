@@ -22,6 +22,8 @@ import {
   RefreshCw,
   Info,
   ArrowLeft,
+  ArrowRight,
+  ShieldBan
 } from 'lucide-react';
 
 function CompanyRegistrationInner() {
@@ -37,6 +39,7 @@ function CompanyRegistrationInner() {
   const [errorStep1, setErrorStep1] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
+  const [agreedConsent, setAgreedConsent] = useState(false);
 
   const checkPasswordStrength = (pwd: string) => ({
     length: pwd.length >= 8,
@@ -166,6 +169,11 @@ function CompanyRegistrationInner() {
 
     if (password !== confirmPassword) {
       setErrorStep1('Konfirmasi kata sandi tidak cocok dengan kata sandi.');
+      return;
+    }
+
+    if (!agreedConsent) {
+      setErrorStep1('Anda harus menyetujui pemrosesan dan penyimpanan data perusahaan untuk melanjutkan pendaftaran.');
       return;
     }
 
@@ -418,10 +426,10 @@ function CompanyRegistrationInner() {
   ];
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 flex flex-col justify-between font-sans antialiased transition-colors duration-300">
+    <div className="min-h-screen bg-[#F8FAFC] dark:bg-slate-950 flex flex-col font-sans antialiased text-slate-900 dark:text-white">
 
-      {/* Header */}
-      <header className="py-6 px-6 sm:px-12 max-w-[1600px] w-full mx-auto flex items-center justify-between">
+      {/* Top Simple Header */}
+      <header className="w-full max-w-[1440px] mx-auto px-6 sm:px-10 lg:px-14 py-5 flex items-center justify-between">
         <Link href="/" className="flex items-center gap-3 group">
           <Image
             src="/Logo Ai Recruit Pro..png"
@@ -431,24 +439,25 @@ function CompanyRegistrationInner() {
             className="h-13 sm:h-15 w-auto object-contain shrink-0 transition-transform group-hover:scale-105"
             priority
           />
-          <div className="flex flex-col justify-center">
-            <span className="font-extrabold text-lg sm:text-xl tracking-tight text-slate-900 dark:text-white leading-tight">
-              AI-RecruitPro
-            </span>
-            <span className="text-[10px] font-bold text-slate-400 dark:text-slate-400 uppercase tracking-widest mt-0.5">
-              Daftar Akun Perusahaan
-            </span>
-          </div>
+          <span className="font-extrabold text-lg sm:text-xl tracking-tight text-slate-900 dark:text-white leading-none">
+            AI-RecruitPro
+          </span>
         </Link>
-        <Link href="/login" className="text-xs sm:text-sm font-semibold text-[#1A4B9F] hover:underline">
-          Sudah punya akun? Masuk
+
+        <Link
+          href="/applicant/register"
+          className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 hover:text-[#1A4B9F] dark:hover:text-blue-400 hover:border-[#1A4B9F]/40 shadow-xs text-xs font-semibold transition-all group"
+        >
+          <User size={15} className="text-[#1A4B9F] dark:text-blue-400" />
+          <span>Portal Pelamar Kerja</span>
+          <ArrowRight size={14} className="text-slate-400 group-hover:translate-x-0.5 transition-transform" />
         </Link>
       </header>
 
       <main className="flex-1 w-full max-w-2xl mx-auto px-4 py-8">
 
-        {/* Step Progress */}
-        <div className="bg-white dark:bg-slate-900 rounded-2xl p-5 shadow-sm border border-slate-200 dark:border-slate-800 mb-6">
+        {/* Multi-step indicator bar */}
+        <div className="bg-white dark:bg-slate-900 rounded-2xl p-4 shadow-sm border border-slate-200 dark:border-slate-800 mb-8">
           <div className="flex items-center justify-between relative">
             <div className="absolute top-4 left-[calc(16.66%)] right-[calc(16.66%)] h-px bg-slate-200 dark:bg-slate-700 z-0" />
             {steps.map((s, i) => {
@@ -475,10 +484,13 @@ function CompanyRegistrationInner() {
 
         {/* STEP 1 */}
         {step === 1 && (
-          <div className="bg-white dark:bg-slate-900 rounded-3xl p-8 sm:p-10 shadow-2xl border border-slate-200 dark:border-slate-800 space-y-6">
-            <div className="space-y-1.5">
-              <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Buat Akun Perusahaan</h1>
-              <p className="text-sm text-slate-500 dark:text-slate-400">
+          <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-8 shadow-xl border border-slate-200/80 dark:border-slate-800 space-y-6 animate-in fade-in duration-200">
+            <div className="space-y-2 text-center">
+              <div className="w-12 h-12 rounded-2xl bg-[#1A4B9F]/10 dark:bg-slate-800 border border-[#1A4B9F]/20 dark:border-slate-700 flex items-center justify-center text-[#1A4B9F] dark:text-blue-400 mx-auto">
+                <Building2 size={24} />
+              </div>
+              <h1 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white tracking-tight">Buat Akun Perusahaan</h1>
+              <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400">
                 Gunakan email domain perusahaan Anda untuk memulai proses pendaftaran.
               </p>
             </div>
@@ -572,10 +584,47 @@ function CompanyRegistrationInner() {
                 )}
               </div>
 
+              {/* Checkbox Persetujuan Pemrosesan & Penyimpanan Data Perusahaan */}
+              <div className="flex items-start gap-2.5 pt-2">
+                <input
+                  id="company-register-consent"
+                  type="checkbox"
+                  checked={agreedConsent}
+                  onChange={(e) => {
+                    setAgreedConsent(e.target.checked);
+                    if (e.target.checked && errorStep1.includes('persetujuan')) setErrorStep1('');
+                  }}
+                  className="mt-1 w-4 h-4 text-[#1A4B9F] rounded border-slate-300 dark:border-slate-700 focus:ring-[#1A4B9F] dark:focus:ring-blue-400 cursor-pointer shrink-0"
+                />
+                <label htmlFor="company-register-consent" className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed cursor-pointer select-none">
+                  Saya menyetujui pemrosesan dan penyimpanan data perusahaan serta informasi penanggung jawab (seperti profil perusahaan, NIB/NPWP, dan kontak HR) untuk keperluan pengelolaan akun, verifikasi legalitas, dan rekrutmen pekerjaan di platform AI-RecruitPro.
+                </label>
+              </div>
+
               {errorStep1 && (
-                <div className="p-3.5 rounded-2xl bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300 text-xs font-semibold flex items-start gap-2.5 leading-relaxed">
-                  <AlertCircle size={18} className="shrink-0 mt-0.5" />
-                  <div className="flex-1">
+                <div
+                  className={`p-4 rounded-2xl border text-xs font-semibold flex items-start gap-3 leading-relaxed ${
+                    errorStep1.toLowerCase().includes('ban') ||
+                    errorStep1.toLowerCase().includes('blokir') ||
+                    errorStep1.toLowerCase().includes('dinonaktifkan') ||
+                    errorStep1.toLowerCase().includes('nonaktif') ||
+                    errorStep1.toLowerCase().includes('suspended') ||
+                    errorStep1.toLowerCase().includes('ditangguhkan')
+                      ? 'bg-rose-50 dark:bg-rose-950/80 border-rose-300 dark:border-rose-800 text-rose-800 dark:text-rose-200'
+                      : 'bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300'
+                  }`}
+                >
+                  {errorStep1.toLowerCase().includes('ban') ||
+                  errorStep1.toLowerCase().includes('blokir') ||
+                  errorStep1.toLowerCase().includes('dinonaktifkan') ||
+                  errorStep1.toLowerCase().includes('nonaktif') ||
+                  errorStep1.toLowerCase().includes('suspended') ||
+                  errorStep1.toLowerCase().includes('ditangguhkan') ? (
+                    <ShieldBan size={20} className="shrink-0 text-rose-600 dark:text-rose-400 mt-0.5" />
+                  ) : (
+                    <AlertCircle size={18} className="shrink-0 mt-0.5" />
+                  )}
+                  <div className="flex-1 space-y-1">
                     <p>{errorStep1}</p>
                     {errorStep1.toLowerCase().includes('terdaftar') && (
                       <Link
@@ -593,11 +642,19 @@ function CompanyRegistrationInner() {
                 id="reg-submit-btn"
                 type="submit"
                 disabled={isLoading}
-                className="w-full py-3 rounded-full bg-[#1A4B9F] hover:bg-[#133878] active:bg-[#0f2a5a] text-white font-semibold text-sm shadow-sm transition-all duration-200 disabled:opacity-60 disabled:cursor-not-allowed"
+                className="w-full py-3 rounded-full bg-[#1A4B9F] hover:bg-[#133878] active:bg-[#0f2a5a] text-white font-semibold text-sm shadow-sm transition-all duration-200 disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer"
               >
                 {isLoading ? 'Mengirim kode verifikasi...' : 'Lanjutkan'}
               </button>
             </form>
+
+            {/* Bottom Switch to Login */}
+            <div className="pt-2 text-center text-xs text-slate-600 dark:text-slate-400 font-medium">
+              Sudah memiliki akun perusahaan?{' '}
+              <Link href="/login" className="font-semibold text-[#1A4B9F] dark:text-blue-400 hover:underline">
+                Masuk ke Akun Perusahaan
+              </Link>
+            </div>
           </div>
         )}
 

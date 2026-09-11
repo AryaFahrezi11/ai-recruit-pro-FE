@@ -18,7 +18,8 @@ import {
   X,
   Clock,
   Layers,
-  Users
+  Users,
+  Calendar
 } from 'lucide-react';
 import { fetchAuth } from '@/lib/api/auth';
 import { toast } from 'react-hot-toast';
@@ -47,6 +48,22 @@ interface JobItem {
   };
 }
 
+const MONTH_OPTIONS = [
+  { value: 'all', label: 'Semua Bulan' },
+  { value: '1', label: 'Januari' },
+  { value: '2', label: 'Februari' },
+  { value: '3', label: 'Maret' },
+  { value: '4', label: 'April' },
+  { value: '5', label: 'Mei' },
+  { value: '6', label: 'Juni' },
+  { value: '7', label: 'Juli' },
+  { value: '8', label: 'Agustus' },
+  { value: '9', label: 'September' },
+  { value: '10', label: 'Oktober' },
+  { value: '11', label: 'November' },
+  { value: '12', label: 'Desember' },
+];
+
 function AdminJobsContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -55,9 +72,17 @@ function AdminJobsContent() {
   const [isLoading, setIsLoading] = useState(true);
   const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
 
+  // Default to current month & current year for auto-refresh behavior
+  const currentDate = new Date();
+  const currentYearStr = currentDate.getFullYear().toString();
+  const currentMonthStr = (currentDate.getMonth() + 1).toString();
+
   // Filters & Search
   const [filterStatus, setFilterStatus] = useState(searchParams.get('status') || '');
   const [filterType, setFilterType] = useState(searchParams.get('type') || '');
+  const [filterYear, setFilterYear] = useState<string>(searchParams.get('year') || currentYearStr);
+  const [filterMonth, setFilterMonth] = useState<string>(searchParams.get('month') || currentMonthStr);
+  const [filterDate, setFilterDate] = useState<string>(searchParams.get('date') || '');
   const [searchInput, setSearchInput] = useState(searchParams.get('search') || '');
   const [activeSearch, setActiveSearch] = useState(searchParams.get('search') || '');
   const [currentPage, setCurrentPage] = useState(1);
@@ -101,10 +126,23 @@ function AdminJobsContent() {
     loadJobs(activeSearch, filterStatus);
   }, [filterStatus]);
 
+  const updateUrlParams = (updates: Record<string, string>) => {
+    const params = new URLSearchParams(searchParams.toString());
+    Object.entries(updates).forEach(([key, value]) => {
+      if (value && value !== 'all') {
+        params.set(key, value);
+      } else {
+        params.delete(key);
+      }
+    });
+    router.push(`?${params.toString()}`, { scroll: false });
+  };
+
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setActiveSearch(searchInput);
     setCurrentPage(1);
+    updateUrlParams({ search: searchInput });
     loadJobs(searchInput, filterStatus);
   };
 
@@ -113,7 +151,18 @@ function AdminJobsContent() {
     setActiveSearch('');
     setFilterStatus('');
     setFilterType('');
+    setFilterYear('all');
+    setFilterMonth('all');
+    setFilterDate('');
     setCurrentPage(1);
+    updateUrlParams({
+      search: '',
+      status: '',
+      type: '',
+      year: 'all',
+      month: 'all',
+      date: ''
+    });
     loadJobs('', '');
   };
 
@@ -155,7 +204,7 @@ function AdminJobsContent() {
     }
   };
 
-  // Client-side additional filtering (e.g. Type)
+  // Client-side additional filtering (Type & Period: Year/Month/Date)
   const filteredJobs = useMemo(() => {
     return jobs.filter((j) => {
       const matchType = filterType ? j.tipe_pekerjaan.toLowerCase() === filterType.toLowerCase() : true;
@@ -164,9 +213,42 @@ function AdminJobsContent() {
           (j.perusahaan?.nama_perusahaan || '').toLowerCase().includes(activeSearch.toLowerCase()) ||
           (j.kota || '').toLowerCase().includes(activeSearch.toLowerCase())
         : true;
-      return matchType && matchLocalSearch;
+
+      // Period Filter Logic
+      let matchPeriod = true;
+      if (j.created_at) {
+        const createdDate = new Date(j.created_at);
+        if (!isNaN(createdDate.getTime())) {
+          if (filterDate) {
+            const yyyy = createdDate.getFullYear();
+            const mm = String(createdDate.getMonth() + 1).padStart(2, '0');
+            const dd = String(createdDate.getDate()).padStart(2, '0');
+            const dateStr = `${yyyy}-${mm}-${dd}`;
+            matchPeriod = dateStr === filterDate;
+          } else {
+            if (filterYear !== 'all') {
+              matchPeriod = matchPeriod && createdDate.getFullYear().toString() === filterYear;
+            }
+            if (filterMonth !== 'all') {
+              matchPeriod = matchPeriod && (createdDate.getMonth() + 1).toString() === filterMonth;
+            }
+          }
+        }
+      }
+
+      return matchType && matchLocalSearch && matchPeriod;
     });
-  }, [jobs, filterType, activeSearch]);
+  }, [jobs, filterType, activeSearch, filterYear, filterMonth, filterDate]);
+
+  // Year options generated from current year back to 2024
+  const yearOptions = useMemo(() => {
+    const years = [{ value: 'all', label: 'Semua Tahun' }];
+    const thisYear = new Date().getFullYear();
+    for (let y = thisYear; y >= 2024; y--) {
+      years.push({ value: y.toString(), label: y.toString() });
+    }
+    return years;
+  }, []);
 
   // Metric Stats
   const metrics = useMemo(() => {
@@ -346,36 +428,28 @@ function AdminJobsContent() {
 
   return (
     <div className="space-y-6 font-sans antialiased">
-      {/* Header Toolbar */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      {/* Header Bar */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-100 dark:border-slate-800/80 pb-4">
         <div>
-          <div className="flex items-center gap-3">
-            <h1 className="text-2xl font-extrabold text-slate-900 dark:text-white tracking-tight">
-              Manajemen Lowongan
-            </h1>
-            {!isLoading && (
-              <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-700">
-                {jobs.length} Lowongan
-              </span>
-            )}
-          </div>
+          <h1 className="text-2xl font-extrabold text-slate-900 dark:text-white tracking-tight">
+            Manajemen Lowongan
+          </h1>
           <p className="text-slate-500 dark:text-slate-400 text-xs font-medium mt-1">
             Pantau publikasi lowongan kerja, moderasi status, dan periksa kesesuaian data perusahaan.
           </p>
         </div>
 
-        {/* Toolbar Controls */}
-        <div className="flex items-center gap-2.5 flex-wrap sm:flex-nowrap">
-          {/* Search Input Form via GET */}
-          <form onSubmit={handleSearchSubmit} className="flex items-center gap-1.5 w-full sm:w-auto">
-            <div className="relative flex-1 sm:w-64">
-              <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+        {/* Search & Refresh Bar */}
+        <div className="flex items-center gap-2.5">
+          <form onSubmit={handleSearchSubmit} className="flex items-center gap-2">
+            <div className="relative w-64 sm:w-72">
+              <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
               <input
                 type="text"
                 placeholder="Cari posisi atau kota..."
                 value={searchInput}
                 onChange={(e) => setSearchInput(e.target.value)}
-                className="w-full pl-9 pr-8 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-xs text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white transition-all"
+                className="w-full pl-9 pr-8 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-xs text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white transition-all shadow-xs"
               />
               {searchInput && (
                 <button
@@ -389,18 +463,102 @@ function AdminJobsContent() {
             </div>
             <button
               type="submit"
-              className="bg-black hover:bg-slate-800 text-white px-3.5 py-2 rounded-xl text-xs font-semibold transition-colors cursor-pointer shrink-0 shadow-xs"
+              className="bg-black hover:bg-slate-800 text-white px-4 py-2 rounded-xl text-xs font-bold transition-colors cursor-pointer shrink-0 shadow-xs"
             >
               Cari
             </button>
           </form>
 
-          {/* Filter Status */}
+          <button
+            onClick={() => loadJobs(activeSearch, filterStatus)}
+            disabled={isLoading}
+            title="Muat Ulang"
+            className="p-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors shrink-0 cursor-pointer shadow-xs"
+          >
+            <RefreshCw size={16} className={isLoading ? 'animate-spin' : ''} />
+          </button>
+        </div>
+      </div>
+
+      {/* Filter Bar */}
+      <div className="p-3.5 bg-slate-50/80 dark:bg-slate-900/60 rounded-2xl border border-slate-200/80 dark:border-slate-800 flex flex-wrap items-center justify-between gap-3 shadow-2xs">
+        <div className="flex flex-wrap items-center gap-3">
+          {/* Label Filter */}
+          <div className="flex items-center gap-1.5 text-xs font-bold text-slate-600 dark:text-slate-300 mr-1">
+            <Filter size={14} className="text-[#1A4B9F]" />
+            <span>Filter Data:</span>
+          </div>
+
+          {/* Group 1: Periode (Tahun, Bulan, Tanggal) */}
+          <div className="inline-flex items-center gap-1.5 p-1 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-2xs">
+            <div className="flex items-center gap-1 pl-2 text-slate-400">
+              <Calendar size={13} />
+              <span className="text-[11px] font-bold text-slate-500 hidden sm:inline">Periode:</span>
+            </div>
+
+            <select
+              value={filterYear}
+              onChange={(e) => {
+                const val = e.target.value;
+                setFilterYear(val);
+                setFilterDate('');
+                updateUrlParams({ year: val, date: '' });
+              }}
+              className="bg-transparent text-xs font-semibold text-slate-800 dark:text-slate-200 focus:outline-none cursor-pointer py-1 px-1.5"
+              title="Filter Tahun"
+            >
+              {yearOptions.map((opt) => (
+                <option key={opt.value} value={opt.value} className="bg-white dark:bg-slate-900">
+                  {opt.label}
+                </option>
+              ))}
+            </select>
+
+            <span className="text-slate-300 dark:text-slate-700 font-light">•</span>
+
+            <select
+              value={filterMonth}
+              onChange={(e) => {
+                const val = e.target.value;
+                setFilterMonth(val);
+                setFilterDate('');
+                updateUrlParams({ month: val, date: '' });
+              }}
+              className="bg-transparent text-xs font-semibold text-slate-800 dark:text-slate-200 focus:outline-none cursor-pointer py-1 px-1.5"
+              title="Filter Bulan"
+            >
+              {MONTH_OPTIONS.map((opt) => (
+                <option key={opt.value} value={opt.value} className="bg-white dark:bg-slate-900">
+                  {opt.label}
+                </option>
+              ))}
+            </select>
+
+            <span className="text-slate-300 dark:text-slate-700 font-light">•</span>
+
+            <input
+              type="date"
+              value={filterDate}
+              onChange={(e) => {
+                const val = e.target.value;
+                setFilterDate(val);
+                updateUrlParams({ date: val });
+              }}
+              className="bg-transparent text-xs font-semibold text-slate-800 dark:text-slate-200 focus:outline-none cursor-pointer py-0.5 px-1"
+              title="Filter Tanggal Spesifik (mm/dd/yyyy)"
+            />
+          </div>
+
+          {/* Group 2: Status */}
           <div className="relative">
             <select
               value={filterStatus}
-              onChange={(e) => setFilterStatus(e.target.value)}
-              className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-xs font-medium text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-black cursor-pointer"
+              onChange={(e) => {
+                const val = e.target.value;
+                setFilterStatus(val);
+                updateUrlParams({ status: val });
+              }}
+              className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-1.5 text-xs font-semibold text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-black cursor-pointer shadow-2xs"
             >
               <option value="">Semua Status</option>
               <option value="active">Aktif</option>
@@ -409,12 +567,16 @@ function AdminJobsContent() {
             </select>
           </div>
 
-          {/* Filter Tipe Pekerjaan */}
+          {/* Group 3: Tipe Pekerjaan */}
           <div className="relative">
             <select
               value={filterType}
-              onChange={(e) => setFilterType(e.target.value)}
-              className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-xs font-medium text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-black cursor-pointer"
+              onChange={(e) => {
+                const val = e.target.value;
+                setFilterType(val);
+                updateUrlParams({ type: val });
+              }}
+              className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-1.5 text-xs font-semibold text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-black cursor-pointer shadow-2xs"
             >
               <option value="">Semua Tipe</option>
               <option value="Full-time">Full-time</option>
@@ -424,24 +586,24 @@ function AdminJobsContent() {
               <option value="Freelance">Freelance</option>
             </select>
           </div>
-
-          {/* Refresh Button */}
-          <button
-            onClick={() => loadJobs(activeSearch, filterStatus)}
-            disabled={isLoading}
-            title="Muat Ulang"
-            className="p-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors shrink-0 cursor-pointer"
-          >
-            <RefreshCw size={16} className={isLoading ? 'animate-spin' : ''} />
-          </button>
         </div>
+
+        {/* Reset Button (If filters active) */}
+        {(activeSearch || filterStatus || filterType || filterYear !== 'all' || filterMonth !== 'all' || filterDate) && (
+          <button
+            onClick={handleClearSearch}
+            className="text-xs text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 px-3 py-1.5 rounded-xl font-bold inline-flex items-center gap-1.5 transition-colors cursor-pointer border border-rose-200/60 dark:border-rose-900/60"
+          >
+            <X size={13} /> Reset Filter
+          </button>
+        )}
       </div>
 
       {/* Metric Stat Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Stat 1: Total */}
         <div className="p-4 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs flex items-center gap-3.5">
-          <div className="w-11 h-11 rounded-xl bg-blue-50 dark:bg-blue-950/60 text-[#1A4B9F] dark:text-blue-400 flex items-center justify-center shrink-0 border border-blue-200 dark:border-blue-900/60">
+          <div className="w-11 h-11 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-slate-100 flex items-center justify-center shrink-0 border border-slate-200 dark:border-slate-700 font-bold">
             <Briefcase size={20} />
           </div>
           <div>
@@ -456,7 +618,7 @@ function AdminJobsContent() {
 
         {/* Stat 2: Aktif */}
         <div className="p-4 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs flex items-center gap-3.5">
-          <div className="w-11 h-11 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0 border border-emerald-200 dark:border-emerald-900/60">
+          <div className="w-11 h-11 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-slate-100 flex items-center justify-center shrink-0 border border-slate-200 dark:border-slate-700 font-bold">
             <CheckCircle2 size={20} />
           </div>
           <div>
@@ -471,7 +633,7 @@ function AdminJobsContent() {
 
         {/* Stat 3: Ditutup */}
         <div className="p-4 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs flex items-center gap-3.5">
-          <div className="w-11 h-11 rounded-xl bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0 border border-amber-200 dark:border-amber-900/60">
+          <div className="w-11 h-11 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-slate-100 flex items-center justify-center shrink-0 border border-slate-200 dark:border-slate-700 font-bold">
             <Clock size={20} />
           </div>
           <div>
@@ -486,7 +648,7 @@ function AdminJobsContent() {
 
         {/* Stat 4: Perusahaan */}
         <div className="p-4 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs flex items-center gap-3.5">
-          <div className="w-11 h-11 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 flex items-center justify-center shrink-0 border border-indigo-200 dark:border-indigo-900/60">
+          <div className="w-11 h-11 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-slate-100 flex items-center justify-center shrink-0 border border-slate-200 dark:border-slate-700 font-bold">
             <Building2 size={20} />
           </div>
           <div>
@@ -501,15 +663,23 @@ function AdminJobsContent() {
       </div>
 
       {/* Active Filter Notification Banner */}
-      {(activeSearch || filterStatus || filterType) && (
+      {(activeSearch || filterStatus || filterType || filterYear !== 'all' || filterMonth !== 'all' || filterDate) && (
         <div className="flex items-center justify-between px-4 py-2.5 rounded-xl bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-900 text-xs text-blue-900 dark:text-blue-300">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             <Search size={14} className="text-blue-600 dark:text-blue-400 shrink-0" />
             <span>
               Menampilkan filter:&nbsp;
               {activeSearch && <span>Pencarian: &ldquo;<strong>{activeSearch}</strong>&rdquo;&nbsp;</span>}
               {filterStatus && <span>• Status: <strong>{filterStatus}</strong>&nbsp;</span>}
               {filterType && <span>• Tipe: <strong>{filterType}</strong>&nbsp;</span>}
+              {filterDate ? (
+                <span>• Tanggal: <strong>{filterDate}</strong>&nbsp;</span>
+              ) : (
+                <>
+                  {filterMonth !== 'all' && <span>• Bulan: <strong>{MONTH_OPTIONS.find(m => m.value === filterMonth)?.label}</strong>&nbsp;</span>}
+                  {filterYear !== 'all' && <span>• Tahun: <strong>{filterYear}</strong>&nbsp;</span>}
+                </>
+              )}
               ({filteredJobs.length} lowongan ditemukan)
             </span>
           </div>
@@ -564,7 +734,7 @@ function AdminJobsContent() {
                 lowongan <strong className="text-slate-900 dark:text-white">&ldquo;{confirmDialog.jobTitle}&rdquo;</strong>?
                 {confirmDialog.currentStatus === 'active' && (
                   <span className="block mt-1 text-slate-400 text-[11px]">
-                    Lowongan yang ditutup tidak dapat dilamar oleh kandidat di platform.
+                    Lowongan yang ditutup tidak dapat dilamar oleh pelamar di platform.
                   </span>
                 )}
               </p>

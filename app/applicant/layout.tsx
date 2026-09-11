@@ -109,31 +109,52 @@ export default function PelamarPerfectLayout({
 
   useEffect(() => {
     setIsMounted(true);
-    // Exclude public authentication pages from route guard
-    const isAuthPage = pathname === '/applicant/login' || pathname === '/applicant/register';
 
-    if (isAuthPage) {
-      setIsAuthenticated(true);
-      return;
-    }
-
-    // Check candidate session state in localStorage
-    const loggedIn = localStorage.getItem('isPelamarLoggedIn');
-    // Auth guard check
     const isLoggedIn = localStorage.getItem('isPelamarLoggedIn');
     const token = localStorage.getItem('access_token');
     const role = localStorage.getItem('user_role');
 
+    // Public pages under /applicant accessible to anyone (guests, admins, developers, employers)
+    const isPublicPage = 
+      pathname === '/applicant/dashboard' || 
+      pathname === '/applicant/companies' || 
+      pathname.startsWith('/applicant/companies/') ||
+      pathname === '/applicant/login' || 
+      pathname === '/applicant/register';
+
+    if (isPublicPage) {
+      if (isLoggedIn) {
+        const savedEmail = localStorage.getItem('user_email');
+        const savedName = localStorage.getItem('user_name');
+        if (savedEmail || savedName) {
+          const formattedName = savedName || savedEmail?.split('@')[0] || 'Pelamar AI';
+          setUserProfile({ email: savedEmail || 'pelamar@example.com', name: formattedName });
+        }
+        api
+          .get('/users/profile')
+          .then((res) => {
+            if (res) {
+              const email = res.email || savedEmail || 'pelamar@example.com';
+              const name = res.profil?.nama_lengkap || res.email?.split('@')[0] || 'Pelamar AI';
+              setUserProfile({ email, name });
+              localStorage.setItem('user_email', email);
+            }
+          })
+          .catch(() => null);
+      }
+      setIsAuthenticated(true);
+      return;
+    }
+
+    // Protected candidate routes (upload-cv, status, saved, interviews)
     if (role === 'perusahaan') {
       router.push('/dashboard');
       return;
     }
 
     if (!isLoggedIn && !token) {
-      if (pathname.startsWith('/applicant') && pathname !== '/applicant/login' && pathname !== '/applicant/register') {
-        router.push('/applicant/login');
-        return;
-      }
+      router.push('/applicant/login');
+      return;
     }
 
     if (isLoggedIn) {
@@ -144,7 +165,6 @@ export default function PelamarPerfectLayout({
         setUserProfile({ email: savedEmail || 'pelamar@example.com', name: formattedName });
       }
 
-      // Fetch from API
       api
         .get('/users/profile')
         .then((res) => {

@@ -218,7 +218,7 @@ function AdminJobDetailView() {
         <div className="flex items-center gap-2.5 flex-wrap sm:flex-nowrap">
           {/* Public Preview */}
           <Link
-            href={`/jobs/${jobId}`}
+            href={`/applicant/dashboard?jobId=${jobId}`}
             target="_blank"
             className="px-3.5 py-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 text-xs font-bold shadow-xs transition-colors inline-flex items-center gap-1.5 cursor-pointer"
           >

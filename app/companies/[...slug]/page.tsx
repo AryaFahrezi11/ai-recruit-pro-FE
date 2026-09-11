@@ -487,7 +487,7 @@ export default function GlintsCleanCompanyDetailPage({ params }: { params: Promi
                   return (
                     <div
                       key={idx}
-                      onClick={() => router.push(isApplicantRoute ? `/applicant/dashboard` : '/applicant/login')}
+                      onClick={() => router.push(`/applicant/dashboard?jobId=${job.id}`)}
                       className="bg-white dark:bg-slate-950 rounded-2xl border border-slate-200 dark:border-slate-800 p-5 shadow-2xs hover:shadow-lg hover:border-[#1A4B9F] transition-all flex flex-col justify-between space-y-4 cursor-pointer group"
                     >
                       <div className="space-y-3">

@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useEffect, useState, useMemo, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import {
   Search,
   Filter,
@@ -190,13 +191,41 @@ function parseSocialLinks(raw: any): SocialLinkEntry[] {
   return [];
 }
 
-export default function AdminUsersPage() {
+function AdminUsersContent() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+
+  const now = new Date();
+  const currentYearStr = now.getFullYear().toString();
+  const currentMonthStr = String(now.getMonth() + 1).padStart(2, '0');
+
+  const initialSearch = searchParams.get('search') || '';
+  const initialRole = searchParams.get('role') || '';
+  const initialYear = searchParams.get('year') || currentYearStr;
+  const initialMonth = searchParams.get('month') || currentMonthStr;
+  const initialDate = searchParams.get('date') || '';
+
   const [users, setUsers] = useState<UserItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [filterRole, setFilterRole] = useState('');
-  const [searchInput, setSearchInput] = useState('');
-  const [activeSearch, setActiveSearch] = useState('');
+  const [filterRole, setFilterRole] = useState(initialRole);
+  const [filterYear, setFilterYear] = useState(initialYear);
+  const [filterMonth, setFilterMonth] = useState(initialMonth);
+  const [filterDate, setFilterDate] = useState(initialDate);
+  const [searchInput, setSearchInput] = useState(initialSearch);
+  const [activeSearch, setActiveSearch] = useState(initialSearch);
   const [currentPage, setCurrentPage] = useState(1);
+
+  const updateUrlParams = (updates: Record<string, string>) => {
+    const params = new URLSearchParams(searchParams.toString());
+    Object.entries(updates).forEach(([key, value]) => {
+      if (value && value !== '') {
+        params.set(key, value);
+      } else {
+        params.delete(key);
+      }
+    });
+    router.push(`?${params.toString()}`, { scroll: false });
+  };
 
   // Modal states
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -236,22 +265,31 @@ export default function AdminUsersPage() {
   };
 
   useEffect(() => {
+    const qRole = searchParams.get('role') || '';
+    const qSearch = searchParams.get('search') || '';
+    const qYear = searchParams.get('year') || currentYearStr;
+    const qMonth = searchParams.get('month') || currentMonthStr;
+    const qDate = searchParams.get('date') || '';
+
+    setFilterRole(qRole);
+    setSearchInput(qSearch);
+    setActiveSearch(qSearch);
+    setFilterYear(qYear);
+    setFilterMonth(qMonth);
+    setFilterDate(qDate);
+
     setCurrentPage(1);
-    loadUsers(activeSearch, filterRole);
-  }, [filterRole]);
+    loadUsers(qSearch, qRole);
+  }, [searchParams]);
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    setActiveSearch(searchInput);
-    setCurrentPage(1);
-    loadUsers(searchInput, filterRole);
+    updateUrlParams({ search: searchInput });
   };
 
   const handleClearSearch = () => {
     setSearchInput('');
-    setActiveSearch('');
-    setCurrentPage(1);
-    loadUsers('', filterRole);
+    updateUrlParams({ search: '' });
   };
 
   const handleBan = async (userId: string, currentStatus: boolean) => {
@@ -279,6 +317,55 @@ export default function AdminUsersPage() {
     } catch (error) {
       toast.error('Gagal menghapus pengguna');
     }
+  };
+
+    const availableYears = useMemo(() => {
+    const years = new Set<string>();
+    const currentYear = new Date().getFullYear().toString();
+    years.add(currentYear);
+    users.forEach((u) => {
+      if (u.created_at) {
+        const y = new Date(u.created_at).getFullYear().toString();
+        if (y && !isNaN(Number(y))) years.add(y);
+      }
+    });
+    return Array.from(years).sort((a, b) => b.localeCompare(a));
+  }, [users]);
+
+  const filteredUsers = useMemo(() => {
+    return users.filter((u) => {
+      if (!u.created_at) return true;
+      const dateObj = new Date(u.created_at);
+
+      if (filterYear && filterYear !== 'all' && dateObj.getFullYear().toString() !== filterYear) {
+        return false;
+      }
+
+      if (filterMonth && filterMonth !== 'all') {
+        const monthStr = String(dateObj.getMonth() + 1).padStart(2, '0');
+        if (monthStr !== filterMonth) return false;
+      }
+
+      if (filterDate) {
+        const yyyy = dateObj.getFullYear();
+        const mm = String(dateObj.getMonth() + 1).padStart(2, '0');
+        const dd = String(dateObj.getDate()).padStart(2, '0');
+        const formattedUserDate = `${yyyy}-${mm}-${dd}`;
+        if (formattedUserDate !== filterDate) return false;
+      }
+
+      return true;
+    });
+  }, [users, filterYear, filterMonth, filterDate]);
+
+  const isDateFiltered = Boolean(
+    (filterYear && filterYear !== 'all') ||
+    (filterMonth && filterMonth !== 'all') ||
+    filterDate
+  );
+
+  const handleClearDateFilter = () => {
+    updateUrlParams({ year: 'all', month: 'all', date: '' });
   };
 
   const resetForm = () => {
@@ -488,6 +575,22 @@ export default function AdminUsersPage() {
       )
     },
     {
+      key: 'created_at',
+      header: 'Tanggal Terdaftar',
+      align: 'left',
+      render: (u) => (
+        <span className="text-slate-600 dark:text-slate-300 text-xs font-medium whitespace-nowrap">
+          {u.created_at
+            ? new Date(u.created_at).toLocaleDateString('id-ID', {
+                day: 'numeric',
+                month: 'short',
+                year: 'numeric'
+              })
+            : '-'}
+        </span>
+      )
+    },
+    {
       key: 'status',
       header: 'Status Akun',
       align: 'left',
@@ -522,13 +625,6 @@ export default function AdminUsersPage() {
             <Eye size={15} className="text-black dark:text-white" />
           </button>
           <button
-            onClick={() => handleOpenEdit(u)}
-            title="Edit Data"
-            className="p-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-black dark:text-white hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors border border-slate-200 dark:border-slate-700"
-          >
-            <Edit2 size={15} className="text-black dark:text-white" />
-          </button>
-          <button
             onClick={() => handleBan(u.id, u.is_banned)}
             title={u.is_banned ? 'Unban User' : 'Ban User'}
             className="p-1.5 rounded-lg transition-colors border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 text-black dark:text-white hover:bg-slate-200 dark:hover:bg-slate-700"
@@ -552,8 +648,8 @@ export default function AdminUsersPage() {
   ];
 
   return (
-    <div className="space-y-6 font-sans antialiased">
-      {/* Header Toolbar */}
+    <div className="space-y-5 font-sans antialiased">
+      {/* Top Header Row: Title & Primary Actions */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-3">
@@ -571,83 +667,150 @@ export default function AdminUsersPage() {
           </p>
         </div>
 
-        {/* Toolbar: GET Search, Role Filter, Refresh, Tambah Pengguna */}
-        <div className="flex items-center gap-2.5 flex-wrap sm:flex-nowrap">
-          {/* Search Form via GET */}
-          <form onSubmit={handleSearchSubmit} className="flex items-center gap-1.5 w-full sm:w-auto">
-            <div className="relative flex-1 sm:w-64">
-              <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-              <input
-                type="text"
-                value={searchInput}
-                onChange={(e) => setSearchInput(e.target.value)}
-                placeholder="Cari nama, email, peran..."
-                className="w-full pl-9 pr-20 py-2 text-xs bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-400 text-slate-800 dark:text-slate-200 shadow-xs"
-              />
-              {searchInput && (
-                <button
-                  type="button"
-                  onClick={handleClearSearch}
-                  className="absolute right-14 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
-                  title="Hapus pencarian"
-                >
-                  <X size={13} />
-                </button>
-              )}
-              <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] text-slate-400 dark:text-slate-500 bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded border border-slate-200 dark:border-slate-700 font-mono inline-flex items-center gap-0.5 select-none pointer-events-none">
-                <CornerDownLeft size={10} /> Enter
-              </span>
-            </div>
-
-            <button
-              type="submit"
-              disabled={isLoading}
-              className="px-3.5 py-2 bg-black hover:bg-slate-800 text-white rounded-xl text-xs font-semibold shadow-xs transition-colors inline-flex items-center gap-1.5 shrink-0 cursor-pointer"
-              title="Cari (GET)"
-            >
-              <Search size={13} />
-              <span className="hidden sm:inline">Cari</span>
-            </button>
-          </form>
-
-          {/* Filter Role */}
-          <div className="relative shrink-0">
-            <Filter size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-black dark:text-white" />
-            <select
-              value={filterRole}
-              onChange={(e) => setFilterRole(e.target.value)}
-              className="pl-8 pr-8 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-xs text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-slate-400 appearance-none font-semibold shadow-xs cursor-pointer"
-            >
-              <option value="">Semua Peran</option>
-              <option value="pelamar">Pelamar</option>
-              <option value="perusahaan">Perusahaan</option>
-              <option value="kampus">Universitas</option>
-              <option value="admin">Admin</option>
-            </select>
-          </div>
-
-          {/* Refresh Button */}
+        {/* Action Buttons: Refresh & Tambah Pengguna */}
+        <div className="flex items-center gap-2.5 shrink-0">
           <button
             onClick={() => loadUsers(activeSearch, filterRole)}
             disabled={isLoading}
-            title="Muat Ulang"
-            className="p-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors shrink-0 cursor-pointer"
+            title="Muat Ulang Data"
+            className="p-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors shrink-0 cursor-pointer shadow-2xs"
           >
             <RefreshCw size={16} className={isLoading ? 'animate-spin' : ''} />
           </button>
 
-          {/* Tambah Pengguna Button */}
           <button
             onClick={handleOpenAdd}
-            className="flex items-center gap-2 bg-black hover:bg-slate-800 text-white px-4 py-2 rounded-xl text-xs font-semibold transition-colors shadow-xs cursor-pointer shrink-0"
+            className="px-4 py-2.5 bg-black hover:bg-slate-800 text-white rounded-xl text-xs font-bold shadow-sm transition-all inline-flex items-center gap-2 cursor-pointer shrink-0"
           >
-            <Plus size={16} className="text-white" />
-            <span className="hidden sm:inline">Tambah Pengguna</span>
+            <Plus size={16} />
+            <span>Tambah Pengguna</span>
           </button>
         </div>
       </div>
 
-      {/* Active Search Filter Banner */}
+      {/* Filter Card Container: Search & Filter Controls */}
+      <div className="bg-white dark:bg-slate-900 p-3.5 sm:p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-2xs space-y-3">
+        <div className="flex flex-wrap lg:flex-nowrap items-center justify-between gap-3">
+          
+          {/* Left Group: Search Input + Role Filter */}
+          <div className="flex items-center gap-2.5 flex-1 min-w-[280px] flex-wrap sm:flex-nowrap">
+            {/* Search Input */}
+            <form onSubmit={handleSearchSubmit} className="flex items-center gap-1.5 flex-1 min-w-[220px]">
+              <div className="relative flex-1">
+                <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                <input
+                  type="text"
+                  value={searchInput}
+                  onChange={(e) => setSearchInput(e.target.value)}
+                  placeholder="Cari nama, email, peran..."
+                  className="w-full pl-9 pr-8 py-2 text-xs bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/80 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-400 text-slate-800 dark:text-slate-200 shadow-2xs font-medium"
+                />
+                {searchInput && (
+                  <button
+                    type="button"
+                    onClick={handleClearSearch}
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+                    title="Hapus pencarian"
+                  >
+                    <X size={13} />
+                  </button>
+                )}
+              </div>
+
+              <button
+                type="submit"
+                disabled={isLoading}
+                className="px-3.5 py-2 bg-slate-900 dark:bg-slate-800 hover:bg-black dark:hover:bg-slate-700 text-white rounded-xl text-xs font-semibold transition-colors inline-flex items-center gap-1.5 shrink-0 cursor-pointer shadow-2xs"
+              >
+                <Search size={13} />
+                <span>Cari</span>
+              </button>
+            </form>
+
+            {/* Filter Role */}
+            <div className="relative shrink-0">
+              <Filter size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-400 pointer-events-none" />
+              <select
+                value={filterRole}
+                onChange={(e) => updateUrlParams({ role: e.target.value })}
+                className="pl-8 pr-8 py-2 bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/80 rounded-xl text-xs text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-slate-400 appearance-none font-semibold shadow-2xs cursor-pointer"
+              >
+                <option value="">Semua Peran</option>
+                <option value="pelamar">Pelamar</option>
+                <option value="perusahaan">Perusahaan</option>
+                <option value="kampus">Universitas</option>
+                <option value="admin">Admin</option>
+              </select>
+            </div>
+          </div>
+
+          {/* Divider line for large screens */}
+          <div className="hidden lg:block w-px h-6 bg-slate-200 dark:bg-slate-800 shrink-0 mx-1"></div>
+
+          {/* Right Group: Date Filters (Tahun, Bulan, Tanggal) */}
+          <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap shrink-0">
+            <div className="flex items-center gap-1.5 text-xs font-bold text-slate-500 dark:text-slate-400 mr-1 shrink-0">
+              <Calendar size={14} className="text-slate-500 dark:text-slate-400" />
+              <span className="hidden xl:inline text-[11px] uppercase tracking-wider">Periode:</span>
+            </div>
+
+            {/* Filter Year */}
+            <select
+              value={filterYear}
+              onChange={(e) => updateUrlParams({ year: e.target.value })}
+              className="px-3 py-2 bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/80 rounded-xl text-xs text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-slate-400 appearance-none font-semibold shadow-2xs cursor-pointer"
+            >
+              <option value="all">Semua Tahun</option>
+              {availableYears.map((y) => (
+                <option key={y} value={y}>Tahun {y}</option>
+              ))}
+            </select>
+
+            {/* Filter Month */}
+            <select
+              value={filterMonth}
+              onChange={(e) => updateUrlParams({ month: e.target.value })}
+              className="px-3 py-2 bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/80 rounded-xl text-xs text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-slate-400 appearance-none font-semibold shadow-2xs cursor-pointer"
+            >
+              <option value="all">Semua Bulan</option>
+              <option value="01">Januari</option>
+              <option value="02">Februari</option>
+              <option value="03">Maret</option>
+              <option value="04">April</option>
+              <option value="05">Mei</option>
+              <option value="06">Juni</option>
+              <option value="07">Juli</option>
+              <option value="08">Agustus</option>
+              <option value="09">September</option>
+              <option value="10">Oktober</option>
+              <option value="11">November</option>
+              <option value="12">Desember</option>
+            </select>
+
+            {/* Filter Specific Date */}
+            <input
+              type="date"
+              value={filterDate}
+              onChange={(e) => updateUrlParams({ date: e.target.value })}
+              className="px-3 py-1.5 bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/80 rounded-xl text-xs text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-slate-400 font-semibold shadow-2xs cursor-pointer"
+              title="Pilih Tanggal Spesifik"
+            />
+
+            {isDateFiltered && (
+              <button
+                onClick={handleClearDateFilter}
+                className="px-2.5 py-1.5 rounded-xl border border-rose-200 dark:border-rose-900 bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 hover:bg-rose-100 transition-colors shrink-0 cursor-pointer text-xs font-bold flex items-center gap-1"
+                title="Reset Filter Tanggal"
+              >
+                <X size={13} />
+                <span className="hidden sm:inline">Reset</span>
+              </button>
+            )}
+          </div>
+
+        </div>
+      </div>
+{/* Active Search Filter Banner */}
       {activeSearch && (
         <div className="flex items-center justify-between px-4 py-2.5 rounded-xl bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-900 text-xs text-blue-900 dark:text-blue-300">
           <div className="flex items-center gap-2">
@@ -667,7 +830,7 @@ export default function AdminUsersPage() {
 
       {/* Reusable DataTable Component with 10 Rows Pagination */}
       <DataTable<UserItem>
-        data={users}
+        data={filteredUsers}
         columns={tableColumns}
         keyExtractor={(item) => item.id}
         isLoading={isLoading}
@@ -1628,5 +1791,22 @@ export default function AdminUsersPage() {
       )}
 
     </div>
+  );
+}
+
+export default function AdminUsersPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-[400px] flex items-center justify-center">
+          <div className="flex items-center gap-2 text-xs font-semibold text-slate-400">
+            <RefreshCw size={16} className="animate-spin text-slate-600" />
+            <span>Memuat manajemen pengguna...</span>
+          </div>
+        </div>
+      }
+    >
+      <AdminUsersContent />
+    </Suspense>
   );
 }

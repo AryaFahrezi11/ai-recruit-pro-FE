@@ -111,17 +111,24 @@ export async function apiRequest<T = any>(
     });
 
     if (response.status === 401) {
-      removeAuthToken();
-      if (typeof window !== 'undefined' && !window.location.pathname.includes('/login')) {
-        const isPelamar = window.location.pathname.startsWith('/applicant');
-        const isAdmin = window.location.pathname.startsWith('/admin');
+      const isPublicApplicantPage = typeof window !== 'undefined' && 
+        (window.location.pathname === '/applicant/dashboard' || 
+         window.location.pathname === '/applicant/companies' ||
+         window.location.pathname.startsWith('/applicant/companies/'));
 
-        if (isAdmin) {
-          window.location.href = '/admin/login';
-        } else if (isPelamar) {
-          window.location.href = '/applicant/login';
-        } else {
-          window.location.href = '/login';
+      if (!isPublicApplicantPage) {
+        removeAuthToken();
+        if (typeof window !== 'undefined' && !window.location.pathname.includes('/login')) {
+          const isPelamar = window.location.pathname.startsWith('/applicant');
+          const isAdmin = window.location.pathname.startsWith('/admin');
+
+          if (isAdmin) {
+            window.location.href = '/admin/login';
+          } else if (isPelamar) {
+            window.location.href = '/applicant/login';
+          } else {
+            window.location.href = '/login';
+          }
         }
       }
     }

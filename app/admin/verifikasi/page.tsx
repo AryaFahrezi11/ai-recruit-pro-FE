@@ -1,8 +1,10 @@
 'use client';
 
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useEffect, useState, useMemo, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import {
   ShieldCheck,
+  ShieldBan,
   Building2,
   ExternalLink,
   FileText,
@@ -50,15 +52,22 @@ interface CompanyVerificationItem {
   hr_position?: string;
   hr_id_card_url?: string;
   is_verified?: boolean;
+  is_banned?: boolean;
   status?: string;
   rejection_reason?: string;
 }
 
-export default function AdminVerificationPage() {
+function AdminVerificationContent() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+
+  const initialSearch = searchParams.get('search') || '';
+  const initialStatus = (searchParams.get('status') as 'PENDING' | 'REJECTED' | 'ALL') || 'PENDING';
+
   const [companies, setCompanies] = useState<CompanyVerificationItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [searchInput, setSearchInput] = useState('');
-  const [activeSearch, setActiveSearch] = useState('');
+  const [searchInput, setSearchInput] = useState(initialSearch);
+  const [activeSearch, setActiveSearch] = useState(initialSearch);
   const [viewMode, setViewMode] = useState<'table' | 'grid'>('table');
   const [selectedCompany, setSelectedCompany] = useState<CompanyVerificationItem | null>(null);
   const [approvingId, setApprovingId] = useState<string | null>(null);
@@ -68,8 +77,20 @@ export default function AdminVerificationPage() {
   const [isRejecting, setIsRejecting] = useState(false);
 
   // Status Filter State (Default: PENDING / Belum Verifikasi)
-  const [statusFilter, setStatusFilter] = useState<'PENDING' | 'REJECTED' | 'ALL'>('PENDING');
+  const [statusFilter, setStatusFilter] = useState<'PENDING' | 'REJECTED' | 'ALL'>(initialStatus);
   const [currentPage, setCurrentPage] = useState(1);
+
+  const updateUrlParams = (updates: Record<string, string>) => {
+    const params = new URLSearchParams(searchParams.toString());
+    Object.entries(updates).forEach(([key, value]) => {
+      if (value && value !== 'PENDING' && value !== '') {
+        params.set(key, value);
+      } else {
+        params.delete(key);
+      }
+    });
+    router.push(`?${params.toString()}`, { scroll: false });
+  };
 
   // Fetch pending companies with GET search query parameter
   const loadPendingCompanies = async (searchQuery: string = activeSearch) => {
@@ -94,19 +115,23 @@ export default function AdminVerificationPage() {
   };
 
   useEffect(() => {
-    loadPendingCompanies();
-  }, []);
+    const qSearch = searchParams.get('search') || '';
+    const qStatus = (searchParams.get('status') as 'PENDING' | 'REJECTED' | 'ALL') || 'PENDING';
+
+    setSearchInput(qSearch);
+    setActiveSearch(qSearch);
+    setStatusFilter(qStatus);
+    loadPendingCompanies(qSearch);
+  }, [searchParams]);
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    setActiveSearch(searchInput);
-    loadPendingCompanies(searchInput);
+    updateUrlParams({ search: searchInput });
   };
 
   const handleClearSearch = () => {
     setSearchInput('');
-    setActiveSearch('');
-    loadPendingCompanies('');
+    updateUrlParams({ search: '' });
   };
 
   const handleApprove = async (companyId: string, companyName: string) => {
@@ -180,6 +205,45 @@ export default function AdminVerificationPage() {
     }
   };
 
+  const handleBanCompany = async (company: CompanyVerificationItem) => {
+    const targetUserId = company.user_id;
+    if (!targetUserId) {
+      toast.error('ID Pengguna tidak ditemukan untuk akun perusahaan ini.');
+      return;
+    }
+
+    const isBanned = Boolean(company.is_banned);
+    const actionLabel = isBanned ? 'Unban (Buka Blokir)' : 'Ban (Blokir Akun)';
+    if (
+      !window.confirm(
+        `Yakin ingin melakukan ${actionLabel} untuk perusahaan "${company.nama_perusahaan || 'ini'}"?`
+      )
+    )
+      return;
+
+    try {
+      const res = await fetchAuth(`/api/admin/users/${targetUserId}/ban`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ is_banned: !isBanned })
+      });
+
+      if (res.ok) {
+        toast.success(
+          `Akun "${company.nama_perusahaan || 'Perusahaan'}" berhasil di-${!isBanned ? 'Banned' : 'Unbanned'}`
+        );
+        if (selectedCompany?.id === company.id) {
+          setSelectedCompany((prev) => (prev ? { ...prev, is_banned: !isBanned } : null));
+        }
+        loadPendingCompanies(activeSearch);
+      } else {
+        toast.error('Gagal mengubah status banned pengguna.');
+      }
+    } catch {
+      toast.error('Terjadi kesalahan saat memproses status banned.');
+    }
+  };
+
   // Status Counts
   const pendingCount = useMemo(() => companies.filter((c) => c.status !== 'REJECTED').length, [companies]);
   const rejectedCount = useMemo(() => companies.filter((c) => c.status === 'REJECTED').length, [companies]);
@@ -201,7 +265,7 @@ export default function AdminVerificationPage() {
   }, [filteredCompanies, currentPage]);
 
   const handleStatusFilterChange = (filter: 'PENDING' | 'REJECTED' | 'ALL') => {
-    setStatusFilter(filter);
+    updateUrlParams({ status: filter });
     setCurrentPage(1);
   };
 
@@ -344,19 +408,26 @@ export default function AdminVerificationPage() {
       key: 'status',
       header: 'Status',
       align: 'left',
-      render: (c) =>
-        c.status === 'REJECTED' ? (
-          <span
-            className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-400 text-[10px] font-bold border border-rose-200 dark:border-rose-800"
-            title={c.rejection_reason || 'Verifikasi ditolak'}
-          >
-            <XCircle size={10} /> Ditolak
-          </span>
-        ) : (
-          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 text-[10px] font-bold border border-amber-200 dark:border-amber-800">
-            <Clock size={10} /> Belum Verifikasi
-          </span>
-        )
+      render: (c) => (
+        <div className="flex flex-col gap-1 items-start">
+          {c.is_banned ? (
+            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-rose-100 dark:bg-rose-950/60 text-rose-800 dark:text-rose-300 text-[10px] font-bold border border-rose-300 dark:border-rose-800">
+              <ShieldBan size={10} /> BANNED
+            </span>
+          ) : c.status === 'REJECTED' ? (
+            <span
+              className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-400 text-[10px] font-bold border border-rose-200 dark:border-rose-800"
+              title={c.rejection_reason || 'Verifikasi ditolak'}
+            >
+              <XCircle size={10} /> Ditolak
+            </span>
+          ) : (
+            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 text-[10px] font-bold border border-amber-200 dark:border-amber-800">
+              <Clock size={10} /> Belum Verifikasi
+            </span>
+          )}
+        </div>
+      )
     },
     {
       key: 'aksi',
@@ -385,6 +456,22 @@ export default function AdminVerificationPage() {
               title="Ubah Catatan Penolakan"
             >
               <Edit size={13} />
+            </button>
+            <button
+              onClick={() => handleBanCompany(c)}
+              disabled={isApproving || isRejecting}
+              className={`p-1.5 rounded-lg border transition-colors ${
+                c.is_banned
+                  ? 'bg-rose-100 dark:bg-rose-950/60 text-rose-700 dark:text-rose-400 border-rose-300 dark:border-rose-800'
+                  : 'bg-slate-100 dark:bg-slate-800 text-black dark:text-white hover:bg-rose-100 dark:hover:bg-rose-950/60 hover:text-rose-600 border-slate-200 dark:border-slate-700'
+              }`}
+              title={c.is_banned ? 'Unban Akun Perusahaan' : 'Ban Akun Perusahaan (Spam / Iseng)'}
+            >
+              {c.is_banned ? (
+                <ShieldCheck size={14} className="text-emerald-600 dark:text-emerald-400" />
+              ) : (
+                <ShieldBan size={14} className="text-black dark:text-white" />
+              )}
             </button>
           </div>
         ) : (
@@ -419,6 +506,23 @@ export default function AdminVerificationPage() {
             >
               <XCircle size={14} />
               <span>Tolak</span>
+            </button>
+
+            <button
+              onClick={() => handleBanCompany(c)}
+              disabled={isApproving || isRejecting}
+              className={`p-1.5 rounded-lg border transition-colors ${
+                c.is_banned
+                  ? 'bg-rose-100 dark:bg-rose-950/60 text-rose-700 dark:text-rose-400 border-rose-300 dark:border-rose-800'
+                  : 'bg-slate-100 dark:bg-slate-800 text-black dark:text-white hover:bg-rose-100 dark:hover:bg-rose-950/60 hover:text-rose-600 border-slate-200 dark:border-slate-700'
+              }`}
+              title={c.is_banned ? 'Unban Akun Perusahaan' : 'Ban Akun Perusahaan (Spam / Iseng)'}
+            >
+              {c.is_banned ? (
+                <ShieldCheck size={14} className="text-emerald-600 dark:text-emerald-400" />
+              ) : (
+                <ShieldBan size={14} className="text-black dark:text-white" />
+              )}
             </button>
           </div>
         );
@@ -457,21 +561,18 @@ export default function AdminVerificationPage() {
                 value={searchInput}
                 onChange={(e) => setSearchInput(e.target.value)}
                 placeholder="Cari perusahaan, NIB, PIC..."
-                className="w-full pl-9 pr-24 py-2 text-xs bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 text-slate-800 dark:text-slate-200 shadow-xs"
+                className="w-full pl-9 pr-8 py-2 text-xs bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 text-slate-800 dark:text-slate-200 shadow-xs"
               />
               {searchInput && (
                 <button
                   type="button"
                   onClick={handleClearSearch}
-                  className="absolute right-16 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
                   title="Hapus pencarian"
                 >
                   <X size={13} />
                 </button>
               )}
-              <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] text-slate-400 dark:text-slate-500 bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded border border-slate-200 dark:border-slate-700 font-mono inline-flex items-center gap-0.5 select-none pointer-events-none">
-                <CornerDownLeft size={10} /> Enter
-              </span>
             </div>
 
             <button
@@ -786,30 +887,46 @@ export default function AdminVerificationPage() {
                       <div className="pt-2 border-t border-slate-100 dark:border-slate-800 flex items-center gap-2">
                         {c.status === 'REJECTED' ? (
                           <>
-                            <div className="flex-1 py-2 px-2.5 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 text-amber-700 dark:text-amber-400 text-[11px] font-bold inline-flex items-center justify-center gap-1.5">
+                            <div className="flex-1 py-2 px-2.5 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 text-amber-700 dark:text-amber-400 text-[11px] font-bold inline-flex items-center justify-center gap-1.5 min-w-0 truncate">
                               <Clock size={12} className="animate-pulse text-amber-600 dark:text-amber-400 shrink-0" />
-                              <span>Menunggu upload ulang</span>
+                              <span className="truncate">Menunggu upload ulang</span>
                             </div>
                             <button
                               onClick={() => setSelectedCompany(c)}
-                              className="py-2 px-3 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-semibold inline-flex items-center justify-center gap-1 transition-colors"
+                              className="py-2 px-3 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-semibold inline-flex items-center justify-center gap-1 transition-colors shrink-0"
                               title="Lihat Rincian"
                             >
                               <Eye size={13} />
                             </button>
                             <button
                               onClick={() => handleOpenRejectModal(c)}
-                              className="py-2 px-2.5 rounded-xl border border-rose-200 dark:border-rose-800 text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/50 text-xs font-semibold inline-flex items-center justify-center transition-colors"
+                              className="py-2 px-2.5 rounded-xl border border-rose-200 dark:border-rose-800 text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/50 text-xs font-semibold inline-flex items-center justify-center transition-colors shrink-0"
                               title="Ubah Catatan Penolakan"
                             >
                               <Edit size={13} />
+                            </button>
+                            <button
+                              onClick={() => handleBanCompany(c)}
+                              disabled={isApproving || isRejecting}
+                              className={`p-2 rounded-xl border transition-colors text-xs font-bold inline-flex items-center justify-center shrink-0 ${
+                                c.is_banned
+                                  ? 'bg-rose-100 dark:bg-rose-950/60 text-rose-700 dark:text-rose-400 border-rose-300 dark:border-rose-800'
+                                  : 'bg-slate-100 dark:bg-slate-800 text-black dark:text-white hover:bg-rose-100 dark:hover:bg-rose-950/60 hover:text-rose-600 border-slate-200 dark:border-slate-700'
+                              }`}
+                              title={c.is_banned ? 'Unban Akun Perusahaan' : 'Ban Akun Perusahaan (Spam / Iseng)'}
+                            >
+                              {c.is_banned ? (
+                                <ShieldCheck size={14} className="text-emerald-600 dark:text-emerald-400" />
+                              ) : (
+                                <ShieldBan size={14} className="text-black dark:text-white" />
+                              )}
                             </button>
                           </>
                         ) : (
                           <>
                             <button
                               onClick={() => setSelectedCompany(c)}
-                              className="py-2 px-3 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-semibold inline-flex items-center justify-center gap-1 transition-colors"
+                              className="py-2 px-3 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-semibold inline-flex items-center justify-center gap-1 transition-colors shrink-0"
                               title="Lihat Rincian"
                             >
                               <Eye size={13} />
@@ -835,6 +952,23 @@ export default function AdminVerificationPage() {
                                 <ShieldCheck size={14} />
                               )}
                               <span>Setujui</span>
+                            </button>
+
+                            <button
+                              onClick={() => handleBanCompany(c)}
+                              disabled={isApproving || isRejecting}
+                              className={`p-2 rounded-xl border transition-colors text-xs font-bold inline-flex items-center justify-center shrink-0 ${
+                                c.is_banned
+                                  ? 'bg-rose-100 dark:bg-rose-950/60 text-rose-700 dark:text-rose-400 border-rose-300 dark:border-rose-800'
+                                  : 'bg-slate-100 dark:bg-slate-800 text-black dark:text-white hover:bg-rose-100 dark:hover:bg-rose-950/60 hover:text-rose-600 border-slate-200 dark:border-slate-700'
+                              }`}
+                              title={c.is_banned ? 'Unban Akun Perusahaan' : 'Ban Akun Perusahaan (Spam / Iseng)'}
+                            >
+                              {c.is_banned ? (
+                                <ShieldCheck size={14} className="text-emerald-600 dark:text-emerald-400" />
+                              ) : (
+                                <ShieldBan size={14} className="text-black dark:text-white" />
+                              )}
                             </button>
                           </>
                         )}
@@ -1082,6 +1216,29 @@ export default function AdminVerificationPage() {
               </button>
 
               <div className="flex items-center gap-2">
+                <button
+                  onClick={() => handleBanCompany(selectedCompany)}
+                  disabled={approvingId === selectedCompany.id || isRejecting}
+                  className={`px-3.5 py-2.5 rounded-xl border text-xs font-bold transition-all inline-flex items-center gap-1.5 disabled:opacity-50 ${
+                    selectedCompany.is_banned
+                      ? 'bg-rose-100 dark:bg-rose-950/60 text-rose-700 dark:text-rose-400 border-rose-300 dark:border-rose-800'
+                      : 'bg-slate-100 dark:bg-slate-800 text-black dark:text-white hover:bg-rose-100 dark:hover:bg-rose-950/60 hover:text-rose-600 border-slate-200 dark:border-slate-700'
+                  }`}
+                  title={selectedCompany.is_banned ? 'Unban Akun Perusahaan' : 'Ban Akun Perusahaan (Spam / Iseng)'}
+                >
+                  {selectedCompany.is_banned ? (
+                    <>
+                      <ShieldCheck size={15} className="text-emerald-600 dark:text-emerald-400" />
+                      <span>Unban</span>
+                    </>
+                  ) : (
+                    <>
+                      <ShieldBan size={15} className="text-black dark:text-white" />
+                      <span>Ban Akun</span>
+                    </>
+                  )}
+                </button>
+
                 {selectedCompany.status === 'REJECTED' ? (
                   <>
                     <div className="px-3 py-2 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 text-amber-700 dark:text-amber-400 text-xs font-bold inline-flex items-center gap-1.5">
@@ -1255,5 +1412,22 @@ export default function AdminVerificationPage() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function AdminVerificationPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-[400px] flex items-center justify-center">
+          <div className="flex items-center gap-2 text-xs font-semibold text-slate-400">
+            <RefreshCw size={16} className="animate-spin text-blue-600" />
+            <span>Memuat data verifikasi...</span>
+          </div>
+        </div>
+      }
+    >
+      <AdminVerificationContent />
+    </Suspense>
   );
 }

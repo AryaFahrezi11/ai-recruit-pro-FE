@@ -724,22 +724,6 @@ export default function SystemSettingsPage() {
             </div>
           )}
 
-          {/* Bottom Save Action */}
-          <div className="mt-8 pt-6 border-t border-slate-100 dark:border-slate-800 flex justify-end">
-            <button
-              onClick={handleSave}
-              disabled={isSaving}
-              className="px-6 py-2.5 bg-black hover:bg-slate-800 dark:bg-white dark:hover:bg-slate-200 text-white dark:text-black text-xs font-extrabold rounded-xl shadow-xs flex items-center gap-2 transition-all disabled:opacity-50 cursor-pointer"
-            >
-              {isSaving ? (
-                <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
-              ) : (
-                <Save size={16} />
-              )}
-              Simpan Semua Pengaturan
-            </button>
-          </div>
-
         </div>
       </div>
 

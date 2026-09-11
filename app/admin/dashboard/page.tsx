@@ -109,8 +109,18 @@ export default function AdminDashboard() {
           { name: 'Admin', value: roles.admin, color: '#4F46E5' },
         ].filter(d => d.value > 0));
 
-        // Get recent users
-        const sortedUsers = [...users].sort((a, b) => {
+        // Get recent users (Filter for Current Month & Current Year only)
+        const now = new Date();
+        const currentMonth = now.getMonth();
+        const currentYear = now.getFullYear();
+
+        const currentMonthUsers = users.filter((u: any) => {
+          if (!u.created_at) return false;
+          const uDate = new Date(u.created_at);
+          return uDate.getMonth() === currentMonth && uDate.getFullYear() === currentYear;
+        });
+
+        const sortedUsers = [...currentMonthUsers].sort((a, b) => {
           if (!a.created_at) return 1;
           if (!b.created_at) return -1;
           return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
@@ -313,7 +323,7 @@ export default function AdminDashboard() {
                     contentStyle={{ borderRadius: '12px', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.05)' }}
                   />
                   <Legend iconType="circle" wrapperStyle={{ paddingTop: '20px', fontSize: '12px' }} />
-                  <Bar dataKey="kandidat" name="Kandidat" fill="#1E4B9F" radius={[6, 6, 0, 0]} maxBarSize={40} />
+                  <Bar dataKey="kandidat" name="Pelamar" fill="#1E4B9F" radius={[6, 6, 0, 0]} maxBarSize={40} />
                   <Bar dataKey="perusahaan" name="Perusahaan" fill="#059669" radius={[6, 6, 0, 0]} maxBarSize={40} />
                 </BarChart>
               </ResponsiveContainer>
@@ -410,7 +420,7 @@ export default function AdminDashboard() {
           <div className="flex items-center justify-between mb-6">
             <div>
               <h2 className="text-base font-extrabold text-slate-900 dark:text-white">Pendaftar Terbaru</h2>
-              <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">Pengguna yang baru bergabung</p>
+              <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">Pengguna yang baru bergabung bulan ini</p>
             </div>
             <Link href="/admin/users" className="px-3 py-1.5 bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-bold rounded-xl transition-colors border border-slate-200 dark:border-slate-700">
               Lihat Semua
@@ -433,7 +443,7 @@ export default function AdminDashboard() {
             ) : recentUsers.length === 0 ? (
               <div className="h-full flex flex-col items-center justify-center text-center text-slate-400 py-10 font-medium">
                 <Users size={36} className="mb-2 text-black dark:text-white" />
-                <p className="text-xs">Belum ada pengguna terbaru</p>
+                <p className="text-xs">Belum ada pengguna bergabung di bulan ini</p>
               </div>
             ) : (
               <div className="space-y-3">
