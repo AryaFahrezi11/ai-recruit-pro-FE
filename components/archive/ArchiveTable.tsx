@@ -21,7 +21,7 @@ export function ArchiveTable({ search, jobFilter, date }: any) {
       if (res.ok) {
         const data = await res.json();
         const archivedApps = (data.data || []).filter((a: any) => 
-          a.status === 'Lolos' || a.status === 'ditolak' || a.status === 'Tidak Lolos'
+          ['Lolos', 'ditolak', 'Tidak Lolos', 'ditolak_sistem', 'rejected'].includes(a.status)
         );
         setApplications(archivedApps);
       }
@@ -184,9 +184,16 @@ export function ArchiveTable({ search, jobFilter, date }: any) {
                         {t.archive?.hired || 'Hired / Diterima'}
                       </span>
                     ) : (
-                      <span className="px-3 py-1 bg-rose-100 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400 text-xs font-semibold rounded-full border border-rose-200 dark:border-rose-800/50">
-                        {t.archive?.rejected || 'Rejected / Ditolak'}
-                      </span>
+                      <div className="flex flex-col gap-1 items-start">
+                        <span className="px-3 py-1 bg-rose-100 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400 text-xs font-semibold rounded-full border border-rose-200 dark:border-rose-800/50">
+                          {row.status === 'ditolak_sistem' ? 'Ditolak (CV Screening)' : 'Ditolak (Tahap Akhir)'}
+                        </span>
+                        {row.catatan_perusahaan && (
+                           <span className="text-[10px] text-muted-foreground line-clamp-2 max-w-[220px]" title={row.catatan_perusahaan}>
+                             {row.catatan_perusahaan}
+                           </span>
+                        )}
+                      </div>
                     )}
                   </td>
                   <td className="px-6 py-4 text-center">

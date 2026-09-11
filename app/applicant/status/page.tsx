@@ -305,47 +305,6 @@ const getJobVideoQuestions = (item: any): string[] => {
   return [];
 };
 
-const initialMockApplications: ApplicationItem[] = [
-  {
-    id: 5,
-    jobTitle: 'Senior Frontend Engineer (AI Solutions)',
-    companyName: 'PT Tech Inovasi Nusantara',
-    logo: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=120&auto=format&fit=crop&q=80',
-    applyDate: '29/07/2026',
-    kegiatan: 'WEBCAREER',
-    tahapRekrutmen: 'Stage 3: Wawancara Video (Tindakan Diperlukan)',
-    currentStageIndex: 3,
-    status: 'Dalam Proses',
-    hasActionRequired: true,
-    statusMessage: 'CV ATS-Friendly Anda telah LOLOS skrining AI dengan skor 92%! Silakan lakukan perekaman Wawancara Video Singkat (Virtual Interview) untuk melanjutkan proses seleksi ke tahap berikutnya.',
-    cvScore: 92,
-    threshold: 60,
-    kategori: 'Frontend Engineer',
-    hybridDetails: {
-      sbert_score: 90,
-      keyword_score: 94,
-      keywords_found: 8,
-      keywords_total: 10
-    },
-    videoQuestions: [
-      'Ceritakan tentang diri Anda dan pengalaman relevan Anda dalam pengembangan aplikasi web modern.',
-      'Bagaimana pendekatan Anda dalam memecahkan masalah teknis atau arsitektur sistem yang kompleks?',
-      'Mengapa Anda tertarik melamar posisi ini di PT Tech Inovasi Nusantara?'
-    ],
-    videoScore: 0,
-    videoBreakdown: {
-      fluency: 0,
-      confidence: 0,
-      keywords: 0,
-      emotion: 0,
-      logic: 0,
-      notes: [
-        'Kandidat belum melakukan perekaman Wawancara Video Singkat.'
-      ]
-    }
-  }
-];
-
 function StatusValidasiContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -446,11 +405,16 @@ function StatusValidasiContent() {
               stageIndex = 3;
               tahapName = 'Stage 3: VIRTUAL INTERVIEW';
               msg = `Selamat! CV Anda telah LOLOS screening AI dengan skor kecocokan ${cvScore}%. Silakan lakukan perekaman Wawancara Video Singkat.`;
-            } else if (s === 'ditolak_sistem' || s === 'ditolak' || s === 'rejected') {
-              stageIndex = 5;
-              tahapName = 'Stage 5: LAMARAN DITOLAK';
+            } else if (s === 'ditolak_sistem') {
+              stageIndex = 2;
+              tahapName = 'Stage 2: DITOLAK (CV SCREENING)';
               statusLabel = 'Tidak Lolos';
-              msg = item.catatan_perusahaan || `Mohon maaf, profil Anda belum memenuhi kriteria yang dibutuhkan untuk posisi ini.`;
+              msg = item.catatan_perusahaan || `Mohon maaf, profil Anda belum memenuhi kriteria yang dibutuhkan pada tahap CV Screening.`;
+            } else if (s === 'ditolak' || s === 'rejected') {
+              stageIndex = 5;
+              tahapName = 'Stage 5: DITOLAK (KEPUTUSAN AKHIR)';
+              statusLabel = 'Tidak Lolos';
+              msg = item.catatan_perusahaan || `Mohon maaf, profil Anda belum memenuhi kriteria yang dibutuhkan untuk posisi ini pada tahap akhir.`;
             } else if (s === 'video_analysis') {
               stageIndex = 4;
               tahapName = 'Stage 4: AI VIDEO ANALYSIS';
@@ -557,11 +521,11 @@ function StatusValidasiContent() {
           setApplications(mapped);
         } else {
           // Fallback mock scenarios if no applications in DB yet
-          setApplications(initialMockApplications);
+          setApplications([]);
         }
       } catch (err) {
         console.error('Failed to fetch application status:', err);
-        setApplications(initialMockApplications);
+        setApplications([]);
       } finally {
         setIsLoading(false);
       }
@@ -644,25 +608,30 @@ function StatusValidasiContent() {
         const isPassed = item.status === 'Lolos';
         const isInProgress = item.status === 'Dalam Proses';
         const isFailed = item.status === 'Tidak Lolos' || item.status === 'Lowongan Telah Ditutup';
+        const isActionRequired = item.currentStageIndex === 3 && isInProgress;
+        const isWaitingHR = item.currentStageIndex === 5 && isInProgress;
 
         return (
           <span
-            className={`font-bold px-3 py-1 rounded-full text-xs inline-flex items-center gap-1.5 whitespace-nowrap ${
-              isPassed
+            className={`font-bold px-3 py-1 rounded-full text-xs inline-flex items-center gap-1.5 whitespace-nowrap ${isPassed
                 ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800'
-                : isInProgress
-                ? 'bg-blue-50 dark:bg-blue-950/40 text-[#1A4B9F] dark:text-blue-400 border border-blue-200 dark:border-blue-800'
-                : 'bg-rose-100 text-rose-800 dark:bg-rose-950/60 dark:text-rose-300 border border-rose-300 dark:border-rose-800'
-            }`}
+                : isActionRequired
+                  ? 'bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300 border border-amber-300 dark:border-amber-800'
+                  : isInProgress
+                    ? 'bg-blue-50 dark:bg-blue-950/40 text-[#1A4B9F] dark:text-blue-400 border border-blue-200 dark:border-blue-800'
+                    : 'bg-rose-100 text-rose-800 dark:bg-rose-950/60 dark:text-rose-300 border border-rose-300 dark:border-rose-800'
+              }`}
           >
             {isPassed ? (
               <CheckCircle2 size={13} />
             ) : isFailed ? (
               <XCircle size={13} />
+            ) : isActionRequired ? (
+              <AlertCircle size={13} className="animate-pulse" />
             ) : (
               <Clock size={13} />
             )}
-            <span>{item.status}</span>
+            <span>{isActionRequired ? 'Segera Upload Video' : isWaitingHR ? 'Menunggu Keputusan HR' : item.status}</span>
           </span>
         );
       },
@@ -773,25 +742,25 @@ function StatusValidasiContent() {
 
       {/* MODAL DETAIL RIWAYAT LAMARAN (SIMPLE & CLEAN) */}
       {selectedDetailApp && (
-        <div className="fixed inset-0 z-40 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 animate-fadeIn">
-          <div className="bg-white dark:bg-slate-900 rounded-3xl max-w-2xl w-full p-6 sm:p-7 space-y-5 shadow-2xl border border-slate-200 dark:border-slate-800 relative max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 z-[999] bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 animate-fadeIn">
+          <div className="bg-white dark:bg-slate-900 rounded-[24px] max-w-2xl w-full flex flex-col shadow-2xl border border-slate-200 dark:border-slate-800 relative max-h-[85vh] overflow-hidden">
             {/* Header */}
-            <div className="flex items-start justify-between border-b border-slate-100 dark:border-slate-800 pb-4">
-              <div className="flex items-center gap-3.5 min-w-0">
+            <div className="flex items-start justify-between border-b border-slate-100 dark:border-slate-800 p-4 sm:p-5 shrink-0 bg-white dark:bg-slate-900 z-10">
+              <div className="flex items-center gap-3 min-w-0">
                 <img
                   src={selectedDetailApp.logo}
                   alt={selectedDetailApp.companyName}
-                  className="w-12 h-12 rounded-xl object-cover border border-slate-200 dark:border-slate-700 shrink-0 shadow-2xs"
+                  className="w-10 h-10 rounded-xl object-cover border border-slate-200 dark:border-slate-700 shrink-0 shadow-2xs"
                 />
                 <div className="min-w-0">
-                  <h3 className="text-lg font-black text-slate-900 dark:text-white leading-tight">
+                  <h3 className="text-base sm:text-lg font-black text-slate-900 dark:text-white leading-tight truncate">
                     {selectedDetailApp.jobTitle}
                   </h3>
-                  <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400 font-medium mt-1">
-                    <span className="font-bold text-slate-700 dark:text-slate-300">{selectedDetailApp.companyName}</span>
+                  <div className="flex items-center gap-2 text-[10px] sm:text-xs text-slate-500 dark:text-slate-400 font-medium mt-0.5">
+                    <span className="font-bold text-slate-700 dark:text-slate-300 truncate">{selectedDetailApp.companyName}</span>
                     <span>&bull;</span>
-                    <span className="inline-flex items-center gap-1">
-                      <Calendar size={12} /> {selectedDetailApp.applyDate}
+                    <span className="inline-flex items-center gap-1 shrink-0">
+                      <Calendar size={11} /> {selectedDetailApp.applyDate}
                     </span>
                   </div>
                 </div>
@@ -801,11 +770,13 @@ function StatusValidasiContent() {
                 onClick={() => setSelectedDetailApp(null)}
                 className="p-1.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer transition-colors shrink-0"
               >
-                <X size={20} />
+                <X size={18} />
               </button>
             </div>
 
-            {/* Clean Linear Stepper Timeline */}
+            {/* Scrollable Body */}
+            <div className="p-4 sm:p-5 space-y-4 overflow-y-auto flex-1 bg-white dark:bg-slate-900">
+              {/* Clean Linear Stepper Timeline */}
             <div className="p-4 bg-slate-50 dark:bg-slate-800/40 rounded-2xl border border-slate-200/70 dark:border-slate-800">
               <span className="text-[11px] font-extrabold uppercase tracking-wider text-slate-400 dark:text-slate-500 block mb-3">
                 Linimasa Seleksi
@@ -821,15 +792,14 @@ function StatusValidasiContent() {
                   return (
                     <div key={stage.number} className="flex flex-col items-center gap-1.5 relative z-10">
                       <div
-                        className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs transition-all shadow-2xs ${
-                          isFailed
+                        className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs transition-all shadow-2xs ${isFailed
                             ? 'bg-rose-500 text-white ring-4 ring-rose-100 dark:ring-rose-950/50'
                             : isPassed
-                            ? 'bg-emerald-500 text-white'
-                            : isCurrent
-                            ? 'bg-[#1A4B9F] text-white ring-4 ring-blue-100 dark:ring-blue-950/50'
-                            : 'bg-slate-200 dark:bg-slate-700 text-slate-500 dark:text-slate-400'
-                        }`}
+                              ? 'bg-emerald-500 text-white'
+                              : isCurrent
+                                ? 'bg-[#1A4B9F] text-white ring-4 ring-blue-100 dark:ring-blue-950/50'
+                                : 'bg-slate-200 dark:bg-slate-700 text-slate-500 dark:text-slate-400'
+                          }`}
                       >
                         {isPassed ? (
                           <CheckCircle2 size={16} />
@@ -840,15 +810,14 @@ function StatusValidasiContent() {
                         )}
                       </div>
                       <span
-                        className={`text-[10px] sm:text-[11px] font-bold leading-tight ${
-                          isFailed
+                        className={`text-[10px] sm:text-[11px] font-bold leading-tight ${isFailed
                             ? 'text-rose-600 dark:text-rose-400'
                             : isCurrent
-                            ? 'text-[#1A4B9F] dark:text-blue-400'
-                            : isPassed
-                            ? 'text-emerald-600 dark:text-emerald-400'
-                            : 'text-slate-400 dark:text-slate-500'
-                        }`}
+                              ? 'text-[#1A4B9F] dark:text-blue-400'
+                              : isPassed
+                                ? 'text-emerald-600 dark:text-emerald-400'
+                                : 'text-slate-400 dark:text-slate-500'
+                          }`}
                       >
                         {shortNames[idx]}
                       </span>
@@ -860,13 +829,14 @@ function StatusValidasiContent() {
 
             {/* Status Alert Banner */}
             <div
-              className={`p-4 rounded-2xl border text-xs sm:text-sm space-y-2 ${
-                selectedDetailApp.status === 'Tidak Lolos' || selectedDetailApp.status === 'Lowongan Telah Ditutup'
+              className={`p-4 rounded-2xl border text-xs sm:text-sm space-y-2 ${selectedDetailApp.status === 'Tidak Lolos' || selectedDetailApp.status === 'Lowongan Telah Ditutup'
                   ? 'bg-rose-50/80 dark:bg-rose-950/20 border-rose-200 dark:border-rose-900/50 text-rose-900 dark:text-rose-200'
                   : selectedDetailApp.status === 'Lolos'
-                  ? 'bg-emerald-50/80 dark:bg-emerald-950/20 border-emerald-200 dark:border-emerald-900/50 text-emerald-900 dark:text-emerald-200'
-                  : 'bg-blue-50/80 dark:bg-blue-950/20 border-blue-200 dark:border-blue-900/50 text-[#1A4B9F] dark:text-blue-300'
-              }`}
+                    ? 'bg-emerald-50/80 dark:bg-emerald-950/20 border-emerald-200 dark:border-emerald-900/50 text-emerald-900 dark:text-emerald-200'
+                    : selectedDetailApp.currentStageIndex === 3 && selectedDetailApp.status === 'Dalam Proses'
+                      ? 'bg-amber-50/80 dark:bg-amber-950/20 border-amber-300 dark:border-amber-800/50 text-amber-900 dark:text-amber-200'
+                      : 'bg-blue-50/80 dark:bg-blue-950/20 border-blue-200 dark:border-blue-900/50 text-[#1A4B9F] dark:text-blue-300'
+                }`}
             >
               <div className="flex items-center gap-2 font-black text-sm">
                 {selectedDetailApp.status === 'Tidak Lolos' || selectedDetailApp.status === 'Lowongan Telah Ditutup' ? (
@@ -878,6 +848,16 @@ function StatusValidasiContent() {
                   <>
                     <CheckCircle2 size={17} className="text-emerald-600 shrink-0" />
                     <span>Selamat! Anda Dinyatakan Lolos</span>
+                  </>
+                ) : selectedDetailApp.currentStageIndex === 3 && selectedDetailApp.status === 'Dalam Proses' ? (
+                  <>
+                    <AlertCircle size={17} className="text-amber-600 dark:text-amber-400 shrink-0" />
+                    <span className="animate-pulse">Tindakan Diperlukan: Segera Upload Video</span>
+                  </>
+                ) : selectedDetailApp.currentStageIndex === 5 && selectedDetailApp.status === 'Dalam Proses' ? (
+                  <>
+                    <Clock size={17} className="text-[#1A4B9F] dark:text-blue-400 shrink-0" />
+                    <span>Status Seleksi: Menunggu Keputusan HR</span>
                   </>
                 ) : (
                   <>
@@ -929,7 +909,7 @@ function StatusValidasiContent() {
                       Detail CV
                     </button>
                   )}
-                  {(selectedDetailApp.currentStageIndex >= 4 || selectedDetailApp.generalAiDetails || selectedDetailApp.aiResult) && (
+                  {selectedDetailApp.currentStageIndex >= 5 && selectedDetailApp.rawStatus !== 'ditolak_sistem' && (
                     <button
                       type="button"
                       onClick={() => setActiveHumanModalJob(selectedDetailApp)}
@@ -1029,12 +1009,14 @@ function StatusValidasiContent() {
               </div>
             )}
 
+            </div>
+
             {/* Footer */}
-            <div className="pt-2 flex justify-end">
+            <div className="p-4 sm:p-5 border-t border-slate-100 dark:border-slate-800 flex justify-end shrink-0 bg-slate-50/50 dark:bg-slate-800/30">
               <button
                 type="button"
                 onClick={() => setSelectedDetailApp(null)}
-                className="px-5 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-bold text-xs cursor-pointer transition-colors"
+                className="px-6 py-2 rounded-xl bg-slate-200/80 dark:bg-slate-800 hover:bg-slate-300/80 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-bold text-xs cursor-pointer transition-colors"
               >
                 Tutup
               </button>
@@ -1045,11 +1027,10 @@ function StatusValidasiContent() {
 
       {/* MODAL 1: STAGE 2 CV SCREENING PO-FIT AI RESULT */}
       {activeCvModalJob && (
-        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-slate-900 rounded-3xl max-w-3xl w-full p-6 sm:p-10 space-y-8 shadow-2xl border border-slate-200 dark:border-slate-800 relative max-h-[90vh] overflow-y-auto">
-
+        <div className="fixed inset-0 z-[999] bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4">
+          <div className="bg-white dark:bg-slate-900 rounded-[24px] max-w-3xl w-full flex flex-col shadow-2xl border border-slate-200 dark:border-slate-800 relative max-h-[85vh] overflow-hidden">
             {/* Header */}
-            <div className="flex items-start justify-between border-b border-slate-100 dark:border-slate-800 pb-4">
+            <div className="flex items-start justify-between border-b border-slate-100 dark:border-slate-800 p-4 sm:p-5 shrink-0 bg-white dark:bg-slate-900 z-10">
               <div>
                 <span className="text-xs font-bold text-[#1A4B9F] dark:text-blue-400 uppercase tracking-wider block">
                   {t.pelamar.status.cvAnalysisTitle}
@@ -1064,14 +1045,16 @@ function StatusValidasiContent() {
 
               <button
                 onClick={() => setActiveCvModalJob(null)}
-                className="p-2 text-slate-400 hover:text-slate-600 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer transition-colors"
+                className="p-2 text-slate-400 hover:text-slate-600 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer transition-colors shrink-0"
               >
-                <X size={22} />
+                <X size={20} />
               </button>
             </div>
 
-            {/* Score Banner */}
-            {(() => {
+            {/* Scrollable Body */}
+            <div className="p-4 sm:p-5 space-y-5 overflow-y-auto flex-1 bg-white dark:bg-slate-900">
+              {/* Score Banner */}
+              {(() => {
               const isFailedEdu = activeCvModalJob.kategori === 'tidak_memenuhi_syarat_pendidikan';
               const isPassed = activeCvModalJob.cvScore >= activeCvModalJob.threshold && !isFailedEdu;
 
@@ -1079,8 +1062,8 @@ function StatusValidasiContent() {
                 <div className="p-6 rounded-3xl bg-[#EFF6FF] dark:bg-slate-800/70 border border-[#DBEAFE] dark:border-slate-700 flex flex-col sm:flex-row items-center gap-6">
                   {/* Circle Score */}
                   <div className={`w-24 h-24 rounded-2xl flex flex-col items-center justify-center text-white shrink-0 shadow-md ${isPassed
-                      ? 'bg-gradient-to-br from-emerald-500 to-teal-600 shadow-emerald-500/20'
-                      : 'bg-gradient-to-br from-rose-500 to-red-600 shadow-rose-500/20'
+                    ? 'bg-gradient-to-br from-emerald-500 to-teal-600 shadow-emerald-500/20'
+                    : 'bg-gradient-to-br from-rose-500 to-red-600 shadow-rose-500/20'
                     }`}>
                     <span className="text-3xl font-black">{activeCvModalJob.cvScore}%</span>
                     <span className="text-[10px] font-bold uppercase tracking-wider text-white/90 mt-0.5">Kecocokan</span>
@@ -1121,141 +1104,94 @@ function StatusValidasiContent() {
               );
             })()}
 
-            {/* Real Data Breakdown Cards */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              {/* Card 1: Pengalaman */}
-              <div className="p-5 rounded-2xl bg-white dark:bg-slate-800 border border-[#DBEAFE] dark:border-slate-700 text-center space-y-2 shadow-2xs">
-                <span className="text-xs font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wide block">Kesesuaian Pengalaman</span>
-                <span className="text-3xl font-black text-[#1A4B9F] dark:text-blue-400 block">
-                  {activeCvModalJob.hybridDetails?.sbert_score ?? activeCvModalJob.cvScore}%
-                </span>
-                <p className="text-[11px] text-slate-500 leading-snug">
-                  Relevansi riwayat kerja & tugas (Porsi 60%)
-                </p>
-              </div>
+            {/* Informasi Sederhana */}
+            <div className="space-y-4">
+              <h4 className="text-sm font-extrabold text-slate-800 dark:text-slate-100">Rangkuman Penilaian:</h4>
+              <div className="p-5 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm space-y-4 text-sm text-slate-600 dark:text-slate-300">
+                <div className="flex items-start gap-3">
+                  <div className="p-1.5 bg-blue-100 dark:bg-blue-900/50 text-blue-600 dark:text-blue-400 rounded-lg shrink-0">
+                    <FileText size={18} />
+                  </div>
+                  <div>
+                    <strong className="block text-slate-800 dark:text-slate-200 mb-0.5">Pengalaman Kerja</strong>
+                    <p>Sistem menilai latar belakang dan pengalaman kerja Anda memiliki tingkat kecocokan sekitar <strong>{Math.round(activeCvModalJob.hybridDetails?.sbert_score ?? activeCvModalJob.cvScore)}%</strong> dengan yang dicari oleh perusahaan.</p>
+                  </div>
+                </div>
 
-              {/* Card 2: Keahlian */}
-              <div className="p-5 rounded-2xl bg-white dark:bg-slate-800 border border-[#DBEAFE] dark:border-slate-700 text-center space-y-2 shadow-2xs">
-                <span className="text-xs font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wide block">Kesesuaian Keahlian</span>
-                {!activeCvModalJob.hybridDetails?.keywords_total ? (
-                  <span className="text-xl font-bold text-slate-400 block pt-1 pb-1">Sesuai Kriteria</span>
-                ) : (
-                  <span className="text-3xl font-black text-[#1A4B9F] dark:text-blue-400 block">
-                    {activeCvModalJob.hybridDetails.keyword_score}%
-                  </span>
-                )}
-                <p className="text-[11px] text-slate-500 leading-snug">
-                  Kecocokan keterampilan khusus (Porsi 40%)
-                </p>
-              </div>
+                <div className="flex items-start gap-3">
+                  <div className="p-1.5 bg-emerald-100 dark:bg-emerald-900/50 text-emerald-600 dark:text-emerald-400 rounded-lg shrink-0">
+                    <CheckCircle2 size={18} />
+                  </div>
+                  <div>
+                    <strong className="block text-slate-800 dark:text-slate-200 mb-0.5">Kemampuan (Skill)</strong>
+                    <p>Sistem berhasil mengenali <strong>{activeCvModalJob.hybridDetails?.keywords_found || 0} kemampuan utama</strong> dari profil Anda, yang sesuai dengan kriteria pekerjaan ini.</p>
+                  </div>
+                </div>
 
-              {/* Card 3: Syarat Terpenuhi */}
-              <div className="p-5 rounded-2xl bg-white dark:bg-slate-800 border border-[#DBEAFE] dark:border-slate-700 text-center space-y-2 shadow-2xs">
-                <span className="text-xs font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wide block">Keahlian Terpenuhi</span>
-                {!activeCvModalJob.hybridDetails?.keywords_total ? (
-                  <span className="text-xl font-bold text-slate-400 block pt-1 pb-1">Terpenuhi</span>
-                ) : (
-                  <span className="text-3xl font-black text-[#1A4B9F] dark:text-blue-400 block">
-                    {activeCvModalJob.hybridDetails.keywords_found} <span className="text-sm font-semibold text-slate-400">dari {activeCvModalJob.hybridDetails.keywords_total}</span>
-                  </span>
-                )}
-                <p className="text-[11px] text-slate-500 leading-snug">
-                  Keahlian wajib yang ditemukan di CV
-                </p>
+                <div className="flex items-start gap-3">
+                  <div className="p-1.5 bg-amber-100 dark:bg-amber-900/50 text-amber-600 dark:text-amber-400 rounded-lg shrink-0">
+                    <Sparkles size={18} />
+                  </div>
+                  <div>
+                    <strong className="block text-slate-800 dark:text-slate-200 mb-0.5">Kesimpulan</strong>
+                    {activeCvModalJob.kategori === 'tidak_memenuhi_syarat_pendidikan' ? (
+                      <p className="text-rose-600 dark:text-rose-400 font-medium">Tingkat pendidikan pada profil Anda saat ini belum memenuhi kualifikasi minimal yang disyaratkan untuk posisi ini.</p>
+                    ) : activeCvModalJob.cvScore >= activeCvModalJob.threshold ? (
+                      <p className="text-emerald-600 dark:text-emerald-400 font-medium">Selamat! Secara keseluruhan profil Anda sudah sangat baik dan memenuhi standar perusahaan.</p>
+                    ) : (
+                      <p>Saat ini profil Anda masih butuh peningkatan untuk bisa mencapai standar minimal ({activeCvModalJob.threshold}%). Jangan menyerah dan coba tambahkan pengalaman atau skill yang relevan di CV Anda!</p>
+                    )}
+                  </div>
+                </div>
               </div>
             </div>
 
-            {/* AI Evaluation Notes */}
-            <div className="p-6 rounded-2xl bg-[#EFF6FF] dark:bg-slate-800/80 border border-[#DBEAFE] dark:border-slate-700 space-y-3.5 text-xs sm:text-sm text-slate-700 dark:text-slate-300">
-              <span className="font-extrabold text-[#1A4B9F] dark:text-blue-400 flex items-center gap-2 text-sm">
-                Catatan Hasil Evaluasi CV
-              </span>
-              <ul className="space-y-3">
-                <li className="flex items-start gap-2.5">
-                  <div className="p-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5">
-                    <Check size={14} />
-                  </div>
-                  <span>
-                    Kategori Kesesuaian: <strong className="font-bold text-slate-800 dark:text-slate-100 uppercase">
-                      {activeCvModalJob.kategori === 'tidak_memenuhi_syarat_pendidikan'
-                        ? 'Pendidikan Belum Memenuhi Syarat'
-                        : activeCvModalJob.kategori
-                          ? activeCvModalJob.kategori.replaceAll('_', ' ')
-                          : (activeCvModalJob.cvScore >= activeCvModalJob.threshold ? 'Cocok' : 'Kurang Cocok')}
-                    </strong>
-                  </span>
-                </li>
-
-                <li className="flex items-start gap-2.5">
-                  <div className="p-0.5 rounded-full bg-blue-100 dark:bg-blue-950 text-[#1A4B9F] shrink-0 mt-0.5">
-                    <Check size={14} />
-                  </div>
-                  <span>
-                    Nilai akhir diperoleh dari gabungan <strong>Kesesuaian Pengalaman (bobot 60%)</strong> dan <strong>Pemenuhan Keahlian (bobot 40%)</strong> terhadap standar minimal kelulusan perusahaan (<strong>{activeCvModalJob.threshold}%</strong>).
-                  </span>
-                </li>
-
-                {activeCvModalJob.kategori === 'tidak_memenuhi_syarat_pendidikan' ? (
-                  <li className="flex items-start gap-2.5 text-rose-600 dark:text-rose-400 font-medium bg-rose-50 dark:bg-rose-950/40 p-3 rounded-xl border border-rose-200 dark:border-rose-900/50">
-                    <AlertCircle size={16} className="shrink-0 mt-0.5" />
-                    <span>Tingkat pendidikan pada profil/CV Anda belum memenuhi syarat minimal untuk posisi ini. Anda dapat memperbarui data pendidikan di profil Anda atau melamar posisi lain.</span>
-                  </li>
-                ) : activeCvModalJob.cvScore >= activeCvModalJob.threshold ? (
-                  <li className="flex items-start gap-2.5 text-emerald-800 dark:text-emerald-300 font-medium bg-emerald-50 dark:bg-emerald-950/40 p-3 rounded-xl border border-emerald-200 dark:border-emerald-800/50">
-                    <CheckCircle2 size={16} className="shrink-0 mt-0.5 text-emerald-600" />
-                    <span>Selamat! Profil Anda dinyatakan <strong>Lolos Seleksi Screening CV</strong>. Silakan pantau linimasa status lamaran untuk mengikuti tahap berikutnya (Wawancara Video).</span>
-                  </li>
-                ) : (
-                  <li className="flex items-start gap-2.5 text-amber-800 dark:text-amber-300 font-medium bg-amber-50 dark:bg-amber-950/40 p-3 rounded-xl border border-amber-200 dark:border-amber-800/50">
-                    <AlertCircle size={16} className="shrink-0 mt-0.5 text-amber-600" />
-                    <span>Nilai kesesuaian berkas Anda saat ini belum mencapai standar minimal kelulusan ({activeCvModalJob.threshold}%). Anda tetap dapat mengeksplorasi dan melamar lowongan lain yang cocok dengan keahlian Anda.</span>
-                  </li>
-                )}
-              </ul>
             </div>
 
-            <div className="pt-4 border-t border-slate-100 dark:border-slate-800 flex justify-end">
+            {/* Footer */}
+            <div className="p-4 sm:p-5 border-t border-slate-100 dark:border-slate-800 flex justify-end shrink-0 bg-slate-50/50 dark:bg-slate-800/30">
               <button
                 onClick={() => setActiveCvModalJob(null)}
-                className="px-6 py-2.5 rounded-full bg-[#1A4B9F] hover:bg-[#133878] text-white font-bold text-xs cursor-pointer shadow-sm transition-colors"
+                className="px-6 py-2 rounded-xl bg-slate-200/80 dark:bg-slate-800 hover:bg-slate-300/80 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-bold text-xs cursor-pointer shadow-sm transition-colors"
               >
                 {t.pelamar.status.backToList}
               </button>
             </div>
-
           </div>
         </div>
       )}
 
       {/* MODAL 3: STAGE 5 HUMAN VALIDATION AI SCREENING SUMMARY */}
       {activeHumanModalJob && (
-        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 animate-fadeIn">
-          <div className="bg-white dark:bg-slate-900 rounded-3xl max-w-3xl w-full p-6 sm:p-9 space-y-7 shadow-2xl border border-slate-200 dark:border-slate-800 relative max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 z-[999] bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 animate-fadeIn">
+          <div className="bg-white dark:bg-slate-900 rounded-[24px] max-w-3xl w-full flex flex-col shadow-2xl border border-slate-200 dark:border-slate-800 relative max-h-[85vh] overflow-hidden">
 
             {/* Header */}
-            <div className="flex items-start justify-between border-b border-slate-100 dark:border-slate-800 pb-4">
+            <div className="flex items-start justify-between border-b border-slate-100 dark:border-slate-800 p-4 sm:p-5 shrink-0 bg-white dark:bg-slate-900 z-10">
               <div className="space-y-1">
                 <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-50 dark:bg-blue-950/60 text-[#1A4B9F] dark:text-blue-400 text-[11px] font-extrabold border border-blue-200 dark:border-blue-800">
                   <Sparkles size={13} />
                   <span>Tahap 5 &bull; Human Validation</span>
                 </div>
-                <h3 className="font-black text-2xl text-slate-900 dark:text-white mt-1">
+                <h3 className="font-black text-xl sm:text-2xl text-slate-900 dark:text-white mt-1 leading-tight">
                   Detail Hasil Screening AI
                 </h3>
-                <p className="text-xs text-slate-500 dark:text-slate-400">
+                <p className="text-xs text-slate-500 dark:text-slate-400 truncate max-w-sm sm:max-w-md">
                   {activeHumanModalJob.jobTitle} &bull; <strong>{activeHumanModalJob.companyName}</strong>
                 </p>
               </div>
 
               <button
                 onClick={() => setActiveHumanModalJob(null)}
-                className="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer transition-colors"
+                className="p-1.5 sm:p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer transition-colors shrink-0"
               >
-                <X size={22} />
+                <X size={20} />
               </button>
             </div>
 
-            {/* Composite Score Banner */}
+            {/* Scrollable Body */}
+            <div className="p-4 sm:p-5 space-y-5 overflow-y-auto flex-1 bg-white dark:bg-slate-900">
+              {/* Composite Score Banner */}
             <div className="p-6 rounded-3xl bg-gradient-to-r from-blue-50 to-indigo-50/70 dark:from-slate-800 dark:to-slate-800/60 border border-[#DBEAFE] dark:border-slate-700 flex flex-col sm:flex-row items-center gap-6">
               <div className="w-24 h-24 rounded-2xl bg-gradient-to-br from-[#1A4B9F] to-indigo-600 text-white flex flex-col items-center justify-center shrink-0 shadow-lg shadow-blue-500/20">
                 <span className="text-3xl font-black">
@@ -1289,95 +1225,48 @@ function StatusValidasiContent() {
               </div>
             </div>
 
-            {/* Dua Pilar Penilaian: CV vs Wawancara Video */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {/* Pilar 1: Dokumen CV */}
-              <div className="p-5 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 space-y-3 shadow-2xs">
-                <div className="flex items-center justify-between pb-2.5 border-b border-slate-100 dark:border-slate-700">
-                  <span className="text-xs font-extrabold uppercase tracking-wider text-[#1A4B9F] dark:text-blue-400 flex items-center gap-1.5">
-                    <FileText size={15} /> Evaluasi Berkas &amp; CV
-                  </span>
-                  <span className="text-base font-black text-[#1A4B9F] dark:text-blue-400">
-                    {activeHumanModalJob.cvScore}%
-                  </span>
+            {/* Informasi Penilaian Sederhana */}
+            <div className="space-y-4">
+              <h4 className="text-sm font-extrabold text-slate-800 dark:text-slate-100">Rincian Penilaian:</h4>
+              <div className="p-5 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm space-y-4 text-sm text-slate-600 dark:text-slate-300">
+                <div className="flex items-start gap-3">
+                  <div className="p-1.5 bg-blue-100 dark:bg-blue-900/50 text-blue-600 dark:text-blue-400 rounded-lg shrink-0">
+                    <FileText size={18} />
+                  </div>
+                  <div>
+                    <strong className="block text-slate-800 dark:text-slate-200 mb-0.5">Penilaian Berkas (CV)</strong>
+                    <p>Latar belakang dan pengalaman Anda dinilai cocok sekitar <strong>{activeHumanModalJob.cvScore}%</strong>. Sistem juga mengenali kemampuan-kemampuan utama yang dicari oleh perusahaan dari profil Anda.</p>
+                  </div>
                 </div>
-                <ul className="space-y-2 text-xs text-slate-600 dark:text-slate-300">
-                  <li className="flex items-start gap-2">
-                    <Check size={14} className="text-emerald-600 shrink-0 mt-0.5" />
-                    <span>Latar belakang pendidikan dan kualifikasi memenuhi kriteria posisi ({activeHumanModalJob.cvScore}%).</span>
-                  </li>
-                  {activeHumanModalJob.hybridDetails && (
-                    <li className="flex items-start gap-2">
-                      <Check size={14} className="text-emerald-600 shrink-0 mt-0.5" />
-                      <span>Ditemukan {activeHumanModalJob.hybridDetails.keywords_found} dari {activeHumanModalJob.hybridDetails.keywords_total} keahlian utama yang disyaratkan.</span>
-                    </li>
-                  )}
-                  <li className="flex items-start gap-2">
-                    <Check size={14} className="text-emerald-600 shrink-0 mt-0.5" />
-                    <span>Status kelulusan screening dokumen: <strong>{activeHumanModalJob.cvScore >= activeHumanModalJob.threshold ? 'Lolos Standar' : 'Di Bawah Standar'}</strong>.</span>
-                  </li>
-                </ul>
-              </div>
 
-              {/* Pilar 2: Wawancara Video */}
-              <div className="p-5 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 space-y-3 shadow-2xs">
-                <div className="flex items-center justify-between pb-2.5 border-b border-slate-100 dark:border-slate-700">
-                  <span className="text-xs font-extrabold uppercase tracking-wider text-[#1A4B9F] dark:text-blue-400 flex items-center gap-1.5">
-                    <Video size={15} /> Evaluasi Wawancara Video
-                  </span>
-                  <span className="text-base font-black text-[#1A4B9F] dark:text-blue-400">
-                    {activeHumanModalJob.videoScore > 0
-                      ? `${activeHumanModalJob.videoScore}%`
-                      : activeHumanModalJob.aiResult?.skor_keseluruhan !== undefined
-                        ? `${Math.round(Number(activeHumanModalJob.aiResult.skor_keseluruhan))}%`
-                        : '0%'}
-                  </span>
+                <div className="flex items-start gap-3">
+                  <div className="p-1.5 bg-emerald-100 dark:bg-emerald-900/50 text-emerald-600 dark:text-emerald-400 rounded-lg shrink-0">
+                    <Video size={18} />
+                  </div>
+                  <div>
+                    <strong className="block text-slate-800 dark:text-slate-200 mb-0.5">Penilaian Wawancara Video</strong>
+                    <p>Performa komunikasi dan penyampaian Anda dinilai sebesar <strong>{activeHumanModalJob.videoScore > 0 ? activeHumanModalJob.videoScore : Math.round(Number(activeHumanModalJob.aiResult?.skor_keseluruhan || 0))}%</strong>. Ini sudah mencakup penilaian kejelasan Anda dalam berbicara dan ketenangan saat menjawab.</p>
+                  </div>
                 </div>
-                <ul className="space-y-2 text-xs text-slate-600 dark:text-slate-300">
-                  {activeHumanModalJob.generalAiDetails?.realDetails?.eyeContact !== null && (
-                    <li className="flex items-start gap-2">
-                      <Check size={14} className="text-emerald-600 shrink-0 mt-0.5" />
-                      <span>Fokus tatapan ke kamera: <strong>{activeHumanModalJob.generalAiDetails?.realDetails?.eyeContact}%</strong></span>
-                    </li>
-                  )}
-                  {activeHumanModalJob.generalAiDetails?.realDetails?.posture !== null && (
-                    <li className="flex items-start gap-2">
-                      <Check size={14} className="text-emerald-600 shrink-0 mt-0.5" />
-                      <span>Kestabilan dan kerapian postur: <strong>{activeHumanModalJob.generalAiDetails?.realDetails?.posture}%</strong></span>
-                    </li>
-                  )}
-                  {activeHumanModalJob.generalAiDetails?.realDetails?.wps !== null && (
-                    <li className="flex items-start gap-2">
-                      <Check size={14} className="text-emerald-600 shrink-0 mt-0.5" />
-                      <span>Kecepatan berbicara: <strong>{activeHumanModalJob.generalAiDetails?.realDetails?.wps} kata/detik</strong></span>
-                    </li>
-                  )}
-                  {activeHumanModalJob.generalAiDetails?.realDetails?.durasiFormatted && (
-                    <li className="flex items-start gap-2">
-                      <Clock size={14} className="text-blue-600 shrink-0 mt-0.5" />
-                      <span>Durasi rekaman wawancara: <strong>{activeHumanModalJob.generalAiDetails?.realDetails?.durasiFormatted}</strong></span>
-                    </li>
-                  )}
-                </ul>
+
+                {activeHumanModalJob.generalAiDetails?.realDetails?.ringkasanJawaban && (
+                  <div className="flex items-start gap-3 border-t border-slate-100 dark:border-slate-700 pt-4 mt-2">
+                    <div className="p-1.5 bg-amber-100 dark:bg-amber-900/50 text-amber-600 dark:text-amber-400 rounded-lg shrink-0">
+                      <Sparkles size={18} />
+                    </div>
+                    <div>
+                      <strong className="block text-slate-800 dark:text-slate-200 mb-0.5">Catatan Komunikasi Anda</strong>
+                      <p className="italic">"{activeHumanModalJob.generalAiDetails.realDetails.ringkasanJawaban}"</p>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
-
-            {/* Rangkuman Jawaban Transkripsi AI jika ada */}
-            {activeHumanModalJob.generalAiDetails?.realDetails?.ringkasanJawaban && (
-              <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 space-y-1.5 text-xs">
-                <span className="font-extrabold text-[#1A4B9F] dark:text-blue-400 block">
-                  Rangkuman Analisis Jawaban Video:
-                </span>
-                <p className="text-slate-600 dark:text-slate-300 leading-relaxed text-[11px]">
-                  "{activeHumanModalJob.generalAiDetails.realDetails.ringkasanJawaban}"
-                </p>
-              </div>
-            )}
 
             {/* Rincian Aspek Penilaian Utama (Bahasa Umum) */}
             <div className="space-y-3">
               <h4 className="text-xs font-extrabold text-slate-800 dark:text-slate-200 uppercase tracking-wider">
-                Rincian Aspek Penilaian Utama (Bahasa Umum)
+                Aspek Kemampuan Tambahan Anda
               </h4>
 
               <div className="space-y-2.5">
@@ -1408,7 +1297,7 @@ function StatusValidasiContent() {
             {/* Poin Keunggulan Utama */}
             <div className="p-5 rounded-2xl bg-emerald-50/60 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-800/50 space-y-2 text-xs text-emerald-900 dark:text-emerald-200">
               <span className="font-extrabold flex items-center gap-2 text-emerald-800 dark:text-emerald-300">
-                <Sparkles size={15} /> Poin Keunggulan Utama Anda:
+                <Sparkles size={15} /> Kelebihan Utama Anda yang Terlihat oleh Sistem:
               </span>
               <ul className="space-y-1.5 pl-5 list-disc text-[11px] leading-relaxed">
                 {(activeHumanModalJob.generalAiDetails?.strengths || []).map((strength, sIdx) => (
@@ -1424,15 +1313,17 @@ function StatusValidasiContent() {
                 <span>Catatan Penting Tahap Validasi Manusia (Human Validation)</span>
               </div>
               <p className="leading-relaxed text-[11px]">
-                Hasil evaluasi di atas dirangkum secara otomatis oleh AI sebagai alat bantu penilaian awal. <strong>Keputusan akhir kelulusan serta jadwal wawancara tatap muka sepenuhnya divalidasi oleh Tim HR {activeHumanModalJob.companyName}.</strong> Mohon pantau status lamaran Anda secara berkala.
+                Hasil evaluasi di atas dirangkum secara otomatis oleh AI sebagai alat bantu penilaian awal. <strong>Keputusan akhir kelulusan serta jadwal wawancara tatap muka sepenuhnya divalidasi oleh Tim HR {activeHumanModalJob.companyName}.</strong> Mohon pantau Riwayat Lamaran Anda secara berkala.
               </p>
             </div>
 
+            </div>
+
             {/* Footer */}
-            <div className="pt-4 border-t border-slate-100 dark:border-slate-800 flex justify-end">
+            <div className="p-4 sm:p-5 border-t border-slate-100 dark:border-slate-800 flex justify-end shrink-0 bg-slate-50/50 dark:bg-slate-800/30">
               <button
                 onClick={() => setActiveHumanModalJob(null)}
-                className="px-6 py-2.5 rounded-full bg-[#1A4B9F] hover:bg-[#133878] text-white font-bold text-xs cursor-pointer shadow-sm transition-colors"
+                className="px-6 py-2 rounded-xl bg-slate-200/80 dark:bg-slate-800 hover:bg-slate-300/80 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-bold text-xs cursor-pointer shadow-sm transition-colors"
               >
                 {t.pelamar.status.backToList}
               </button>
