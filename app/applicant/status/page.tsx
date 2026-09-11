@@ -349,6 +349,24 @@ function StatusValidasiContent() {
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedDetailApp, setSelectedDetailApp] = useState<ApplicationItem | null>(null);
 
+  useEffect(() => {
+    if (selectedDetailApp && selectedDetailApp.rawStatus) {
+      const s = selectedDetailApp.rawStatus;
+      if (s === 'hired' || s === 'accepted' || s === 'Lolos' || s === 'rejected' || s === 'ditolak_sistem' || s === 'ditolak' || s === 'Tidak Lolos') {
+        const isHired = s === 'hired' || s === 'accepted' || s === 'Lolos';
+        const ctx = isHired ? 'status_hired' : 'status_rejected';
+        api.get(`/reviews/me/status?context_event=${ctx}`)
+          .then((res: any) => {
+            if (!res.has_reviewed) {
+              setReviewContextEvent(ctx);
+              setIsReviewModalOpen(true);
+            }
+          })
+          .catch(() => {});
+      }
+    }
+  }, [selectedDetailApp]);
+
   // Reset page when search param changes
   useEffect(() => {
     setCurrentPage(1);
@@ -358,11 +376,18 @@ function StatusValidasiContent() {
   const [activeCvModalJob, setActiveCvModalJob] = useState<ApplicationItem | null>(null);
   const [activeHumanModalJob, setActiveHumanModalJob] = useState<ApplicationItem | null>(null);
   const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
+  const [reviewContextEvent, setReviewContextEvent] = useState('general');
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     if (searchParams.get('showReview') === 'true') {
+      const ctx = searchParams.get('context') || 'general';
+      setReviewContextEvent(ctx);
       setIsReviewModalOpen(true);
+      
+      // Clean up URL so it doesn't reopen on refresh
+      const newUrl = window.location.pathname;
+      window.history.replaceState({}, '', newUrl);
     }
   }, [searchParams]);
 
@@ -1035,7 +1060,9 @@ function StatusValidasiContent() {
                                 success: (res: any) => res.message || 'Video berhasil diunggah.',
                                 error: (err: any) => parseErrorMessage(err) || 'Gagal mengunggah video.'
                               }).then(() => {
-                                setTimeout(() => window.location.reload(), 2000);
+                                setTimeout(() => {
+                                  window.location.href = window.location.pathname + '?showReview=true&context=uploaded_video';
+                                }, 1500);
                               }).catch(() => { });
                             };
                             video.src = URL.createObjectURL(file);
@@ -1379,6 +1406,7 @@ function StatusValidasiContent() {
       <CandidateReviewModal
         isOpen={isReviewModalOpen}
         onClose={() => setIsReviewModalOpen(false)}
+        contextEvent={reviewContextEvent}
       />
 
     </div>

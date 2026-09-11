@@ -326,6 +326,14 @@ export function ApplyJobModal({ job, cvData, onClose, onSuccess }: ApplyJobModal
         )}
       </div>
 
+      {showReviewModal && (
+        <CandidateReviewModal
+          isOpen={showReviewModal}
+          onClose={() => setShowReviewModal(false)}
+          contextEvent="applied_job"
+        />
+      )}
+
     </div>
   );
 }

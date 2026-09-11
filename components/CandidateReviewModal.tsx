@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { Star, X, CheckCircle2, Send, Sparkles, User, Briefcase, MessageSquareQuote } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { api, parseErrorMessage } from '@/lib/api';
 
 export interface UserReview {
   id: string;
@@ -11,7 +12,7 @@ export interface UserReview {
   rating: number; // 1 to 5
   category?: string;
   comment: string;
-  createdAt: string;
+  created_at: string;
 }
 
 interface CandidateReviewModalProps {
@@ -20,6 +21,7 @@ interface CandidateReviewModalProps {
   onSubmitSuccess?: (newReview: UserReview) => void;
   defaultName?: string;
   defaultRole?: string;
+  contextEvent: string;
 }
 
 export function CandidateReviewModal({
@@ -27,7 +29,8 @@ export function CandidateReviewModal({
   onClose,
   onSubmitSuccess,
   defaultName = '',
-  defaultRole = ''
+  defaultRole = '',
+  contextEvent
 }: CandidateReviewModalProps) {
   const [rating, setRating] = useState<number>(5);
   const [hoverRating, setHoverRating] = useState<number>(0);
@@ -35,6 +38,7 @@ export function CandidateReviewModal({
   const [role, setRole] = useState<string>(defaultRole);
   const [category, setCategory] = useState<string>('Wawancara Video Virtual');
   const [comment, setComment] = useState<string>('');
+  const [isAnonymous, setIsAnonymous] = useState<boolean>(false);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
 
   // Auto-fill from candidate profile in localStorage if available
@@ -44,8 +48,8 @@ export function CandidateReviewModal({
       if (storedCv) {
         try {
           const parsed = JSON.parse(storedCv);
-          if (parsed.full_name && !name) setName(parsed.full_name);
-          if (parsed.target_role && !role) setRole(parsed.target_role);
+          if (parsed.fullName && !name) setName(parsed.fullName);
+          if (parsed.jobTitle && !role) setRole(parsed.jobTitle);
         } catch (e) {
           // ignore
         }
@@ -75,7 +79,7 @@ export function CandidateReviewModal({
     5: 'Luar Biasa & Sangat Memuaskan (5/5)'
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!comment.trim()) {
@@ -91,36 +95,30 @@ export function CandidateReviewModal({
     setIsSubmitting(true);
 
     try {
-      const newReview: UserReview = {
-        id: `rev-${Date.now()}`,
-        name: name.trim(),
-        role: role.trim() || 'Pelamar Kerja',
+      const payload = {
         rating,
         category,
+        role: role.trim() || 'Pelamar Kerja',
         comment: comment.trim(),
-        createdAt: new Date().toISOString()
+        context_event: contextEvent,
+        is_anonymous: isAnonymous
       };
 
-      // Save to localStorage
-      const existingStr = localStorage.getItem('airecruit_user_reviews');
-      const existingReviews: UserReview[] = existingStr ? JSON.parse(existingStr) : [];
-      const updatedReviews = [newReview, ...existingReviews];
-      localStorage.setItem('airecruit_user_reviews', JSON.stringify(updatedReviews));
+      const res = await api.post('/reviews/', payload);
 
-      if (typeof window !== 'undefined') {
-        window.dispatchEvent(new Event('storage'));
-        window.dispatchEvent(new Event('airecruit_reviews_updated'));
-      }
-
-      toast.success('Terima kasih! Ulasan Anda berhasil dikirim dan kini tampil di Landing Page.');
+      toast.success('Terima kasih! Ulasan Anda berhasil dikirim dan akan tampil di Landing Page (jika memenuhi syarat).');
 
       if (onSubmitSuccess) {
-        onSubmitSuccess(newReview);
+        onSubmitSuccess(res);
       }
 
       onClose();
-    } catch (err) {
-      toast.error('Gagal menyimpan ulasan. Silakan coba lagi.');
+    } catch (err: any) {
+      if (err.status === 400 && err.message?.includes('sudah memberikan ulasan')) {
+        toast.error('Anda sudah memberikan ulasan untuk tahap ini.');
+      } else {
+        toast.error('Gagal menyimpan ulasan. Silakan coba lagi.');
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -267,6 +265,20 @@ export function CandidateReviewModal({
                 />
               </div>
             </div>
+          </div>
+
+          {/* Anonymous Checkbox */}
+          <div className="flex items-center gap-2">
+            <input
+              id="reviewer-anonymous"
+              type="checkbox"
+              checked={isAnonymous}
+              onChange={(e) => setIsAnonymous(e.target.checked)}
+              className="w-4 h-4 rounded border-slate-300 text-[#1A4B9F] focus:ring-[#1A4B9F]"
+            />
+            <label htmlFor="reviewer-anonymous" className="text-xs font-medium text-slate-600 dark:text-slate-400 cursor-pointer">
+              Sembunyikan nama saya saat ditampilkan (Anonim)
+            </label>
           </div>
 
           {/* Submit Button */}
