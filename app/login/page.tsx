@@ -38,7 +38,6 @@ export default function CompanyLoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [agreedConsent, setAgreedConsent] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -88,10 +87,6 @@ export default function CompanyLoginPage() {
     }
     if (!password) {
       setError('Masukkan password akun perusahaan Anda.');
-      return;
-    }
-    if (!agreedConsent) {
-      setError('Anda harus menyetujui pemrosesan dan penyimpanan data perusahaan untuk melanjutkan masuk.');
       return;
     }
 
@@ -504,23 +499,6 @@ export default function CompanyLoginPage() {
                       {showPassword ? <Eye size={18} /> : <EyeOff size={18} />}
                     </button>
                   </div>
-                </div>
-
-                {/* Checkbox Persetujuan Pemrosesan & Penyimpanan Data Perusahaan */}
-                <div className="flex items-start gap-2.5 pt-1">
-                  <input
-                    id="company-login-consent"
-                    type="checkbox"
-                    checked={agreedConsent}
-                    onChange={(e) => {
-                      setAgreedConsent(e.target.checked);
-                      if (e.target.checked && error.includes('persetujuan')) setError('');
-                    }}
-                    className="mt-1 w-4 h-4 text-[#1A4B9F] rounded border-slate-300 dark:border-slate-700 focus:ring-[#1A4B9F] dark:focus:ring-blue-400 cursor-pointer shrink-0"
-                  />
-                  <label htmlFor="company-login-consent" className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed cursor-pointer select-none">
-                    Saya menyetujui pemrosesan dan penyimpanan data perusahaan serta informasi penanggung jawab (seperti profil perusahaan, NIB/NPWP, dan kontak HR) untuk keperluan pengelolaan akun, verifikasi legalitas, dan rekrutmen pekerjaan di platform AI-RecruitPro.
-                  </label>
                 </div>
 
                 {/* Error Notification */}

@@ -186,7 +186,7 @@ export function ArchiveTable({ search, jobFilter, date }: any) {
                     ) : (
                       <div className="flex flex-col gap-1 items-start">
                         <span className="px-3 py-1 bg-rose-100 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400 text-xs font-semibold rounded-full border border-rose-200 dark:border-rose-800/50">
-                          {row.status === 'ditolak_sistem' ? 'Ditolak (CV Screening)' : 'Ditolak (Tahap Akhir)'}
+                          {row.status === 'ditolak_sistem' || (row.status === 'rejected' && (row.analisis_cv?.hasil === 'ditolak' || row.analisis_cv?.hasil === 'tidak_memenuhi_syarat')) ? 'Ditolak (CV Screening)' : 'Ditolak (Tahap Akhir)'}
                         </span>
                         {row.catatan_perusahaan && (
                            <span className="text-[10px] text-muted-foreground line-clamp-2 max-w-[220px]" title={row.catatan_perusahaan}>

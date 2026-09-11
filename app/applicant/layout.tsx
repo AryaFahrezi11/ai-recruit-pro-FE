@@ -106,6 +106,7 @@ export default function PelamarPerfectLayout({
   });
   const dropdownRef = useRef<HTMLDivElement>(null);
   const [isMounted, setIsMounted] = useState(false);
+  const [hasUnreadNotification, setHasUnreadNotification] = useState(false);
 
   useEffect(() => {
     setIsMounted(true);
@@ -176,7 +177,43 @@ export default function PelamarPerfectLayout({
           }
         })
         .catch((err) => console.error('Failed to fetch profile in layout:', err));
+        
+      // Fetch applications to check for unread status updates with cache busting
+      api
+        .get(`/applications/?t=${new Date().getTime()}`, { cache: 'no-store' })
+        .then((res: any) => {
+          const appsList = Array.isArray(res) ? res : (res?.data || []);
+          if (Array.isArray(appsList) && appsList.length > 0) {
+            const savedStatusesStr = localStorage.getItem('seen_statuses');
+            let savedStatuses: Record<string, string> = {};
+            try {
+              if (savedStatusesStr) savedStatuses = JSON.parse(savedStatusesStr);
+            } catch (e) {}
+
+            let hasUnread = false;
+            for (const app of appsList) {
+              // Trigger notification if the status has changed from what was last seen
+              if (app.status) {
+                if (savedStatuses[app.id] !== app.status) {
+                  hasUnread = true;
+                  break;
+                }
+              }
+            }
+            setHasUnreadNotification(hasUnread);
+          }
+        })
+        .catch(() => null);
+
+      const handleSeenStatusesUpdate = () => {
+        setHasUnreadNotification(false);
+      };
+      window.addEventListener('seen_statuses_updated', handleSeenStatusesUpdate);
+
       setIsAuthenticated(true);
+      return () => {
+        window.removeEventListener('seen_statuses_updated', handleSeenStatusesUpdate);
+      };
     } else {
       setIsAuthenticated(false);
     }
@@ -261,10 +298,13 @@ export default function PelamarPerfectLayout({
             <div className="relative" ref={dropdownRef}>
               <button
                 onClick={() => setIsProfileOpen(!isProfileOpen)}
-                className="flex items-center gap-2 p-1 rounded-full border-2 border-[#1A4B9F]/30 hover:border-[#1A4B9F] bg-white dark:bg-slate-800 transition-all cursor-pointer shadow-xs group"
+                className="relative flex items-center gap-2 p-1 rounded-full border-2 border-[#1A4B9F]/30 hover:border-[#1A4B9F] bg-white dark:bg-slate-800 transition-all cursor-pointer shadow-xs group"
               >
-                <div className="w-8 h-8 rounded-full bg-[#1A4B9F] text-white flex items-center justify-center font-bold text-sm shadow-inner">
+                <div className="relative w-8 h-8 rounded-full bg-[#1A4B9F] text-white flex items-center justify-center font-bold text-sm shadow-inner">
                   {userProfile.name ? userProfile.name.charAt(0).toUpperCase() : 'P'}
+                  {hasUnreadNotification && (
+                    <span className="absolute -top-1 -right-1 w-3.5 h-3.5 bg-red-500 border-2 border-white rounded-full animate-pulse"></span>
+                  )}
                 </div>
                 <ChevronDown size={15} className={`text-slate-500 transition-transform duration-200 ${isProfileOpen ? 'rotate-180' : ''}`} />
               </button>
@@ -298,10 +338,15 @@ export default function PelamarPerfectLayout({
                   <Link
                     href="/applicant/status"
                     onClick={() => setIsProfileOpen(false)}
-                    className="flex items-center gap-3 px-4 py-2.5 rounded-2xl text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-[#EFF6FF] dark:hover:bg-slate-800 hover:text-[#1A4B9F] transition-colors"
+                    className="flex items-center justify-between px-4 py-2.5 rounded-2xl text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-[#EFF6FF] dark:hover:bg-slate-800 hover:text-[#1A4B9F] transition-colors"
                   >
-                    <ClockCheck size={16} className="text-[#1A4B9F]" />
-                    <span>{t.pelamar.profile.applicationHistory}</span>
+                    <div className="flex items-center gap-3">
+                      <ClockCheck size={16} className="text-[#1A4B9F]" />
+                      <span>{t.pelamar.profile.applicationHistory}</span>
+                    </div>
+                    {hasUnreadNotification && (
+                      <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse"></span>
+                    )}
                   </Link>
 
                   <div className="border-t border-slate-100 dark:border-slate-800 pt-1"></div>

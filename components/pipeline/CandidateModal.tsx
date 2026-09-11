@@ -86,7 +86,7 @@ function StepIndicator({ currentStage, isInterviewLanjutan, t }: { currentStage?
   const currentIndex = steps.findIndex(s => s.key === currentStage);
 
   return (
-    <div className="flex items-center justify-between px-6 py-3 bg-muted/20 border-b border-border/80 overflow-x-auto no-scrollbar gap-2">
+    <div className="flex items-center justify-between px-6 py-2 bg-transparent border-b border-border/40 overflow-x-auto no-scrollbar gap-2">
       {steps.map((step, index) => {
         const isCompleted = index < currentIndex;
         const isActive = index === currentIndex;
@@ -137,6 +137,14 @@ export function CandidateModal({ candidate, onClose, onStatusUpdated }: Candidat
   const [intvTime, setIntvTime] = useState(interviewData?.waktu || '14:00');
   const [intvLocationUrl, setIntvLocationUrl] = useState(interviewData?.lokasi_atau_link || 'https://meet.google.com/');
   const [intvNotes, setIntvNotes] = useState(interviewData?.catatan || 'Mohon hadir tepat waktu dan siapkan resume portofolio.');
+  const [rejectReason, setRejectReason] = useState('Kualifikasi profil belum memenuhi kebutuhan posisi saat ini.');
+  const [expandedQs, setExpandedQs] = useState<Record<number, boolean>>({});
+  const [expandedObservasi, setExpandedObservasi] = useState(false);
+  const [expandedKompetensi, setExpandedKompetensi] = useState(false);
+
+  const toggleQuestion = (idx: number) => {
+    setExpandedQs(prev => ({ ...prev, [idx]: !prev[idx] }));
+  };
 
   useEffect(() => {
     if (candidate.interviewDetails) {
@@ -375,7 +383,7 @@ export function CandidateModal({ candidate, onClose, onStatusUpdated }: Candidat
       />
 
       {/* Modal Container */}
-      <div className="relative bg-card text-card-foreground w-full max-w-5xl max-h-[90vh] rounded-xl shadow-2xl border border-border flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+      <div className="relative bg-card text-card-foreground w-full max-w-5xl max-h-[90vh] rounded-xl flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200 shadow-xl border border-border/50">
 
         {/* Archive Feedback Overlay Banner */}
         {archiveStatus !== 'idle' && (
@@ -411,11 +419,9 @@ export function CandidateModal({ candidate, onClose, onStatusUpdated }: Candidat
           </div>
         )}
 
-        {/* Flowchart Step Indicator */}
-        <StepIndicator currentStage={stage} isInterviewLanjutan={isInterviewLanjutan} t={t} />
-
+        {/* Flowchart Step Indicator (Removed for minimalism) */}
         {/* Header Navigation Tabs — ONLY allow previous & current stage tabs */}
-        <div className="flex items-center justify-between px-6 border-b border-border bg-card/60 backdrop-blur-xs gap-4">
+        <div className="flex items-center justify-between px-4 border-b border-border/40 bg-transparent gap-4">
           <div className="flex-1 min-w-0 flex items-center gap-1 sm:gap-2 overflow-x-auto no-scrollbar -mb-px">
             {modalTabs.map((tab) => {
               const isAccessible = stageIndex >= tab.minStageIndex || (tab.id === 'full_validation' && (stageIndex >= 4 || isVideoAnalysisCompleted));
@@ -424,7 +430,7 @@ export function CandidateModal({ candidate, onClose, onStatusUpdated }: Candidat
                 return (
                   <div
                     key={tab.id}
-                    className="flex items-center gap-1.5 px-3 py-3.5 text-xs font-medium text-muted-foreground/40 cursor-not-allowed opacity-50 select-none whitespace-nowrap shrink-0"
+                    className="flex items-center gap-1.5 px-2 py-3 text-[11px] font-medium text-muted-foreground/40 cursor-not-allowed opacity-50 select-none whitespace-nowrap shrink-0"
                     title={t.modal.tahapBelumDicapai}
                   >
                     <Lock size={12} />
@@ -436,10 +442,10 @@ export function CandidateModal({ candidate, onClose, onStatusUpdated }: Candidat
               const isActive = activeTab === tab.id;
 
               return (
-                <button
+                  <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
-                  className={`flex items-center gap-2 px-2.5 sm:px-3 py-3.5 font-semibold text-xs sm:text-sm transition-all border-b-2 whitespace-nowrap shrink-0 cursor-pointer ${isActive
+                  className={`flex items-center gap-1.5 px-2 py-3 font-semibold text-[11px] sm:text-xs transition-all border-b-2 whitespace-nowrap shrink-0 cursor-pointer ${isActive
                       ? 'border-primary text-primary'
                       : 'border-transparent text-muted-foreground hover:text-foreground hover:border-border/60'
                     }`}
@@ -476,7 +482,7 @@ export function CandidateModal({ candidate, onClose, onStatusUpdated }: Candidat
             <div className="space-y-6 animate-in fade-in duration-300">
 
               {/* Candidate Info Header */}
-              <div className="bg-card p-4 sm:p-6 rounded-xl border border-border shadow-sm flex flex-col sm:flex-row justify-between gap-4 sm:gap-4 items-start">
+              <div className="flex flex-col sm:flex-row justify-between gap-4 sm:gap-4 items-start pb-4 border-b border-border/40">
                 <div className="flex gap-3 sm:gap-4 items-start sm:items-center w-full sm:w-auto">
                   <div className="w-12 h-12 sm:w-16 sm:h-16 shrink-0 rounded-full bg-blue-100 dark:bg-blue-950 text-blue-600 dark:text-blue-400 flex items-center justify-center font-bold text-xl sm:text-2xl border border-blue-200 dark:border-blue-800">
                     {candidate.name.charAt(0)}
@@ -870,7 +876,7 @@ export function CandidateModal({ candidate, onClose, onStatusUpdated }: Candidat
                     </div>
 
                     {/* Progress Bar vs Threshold */}
-                    <div className="bg-card p-5 rounded-2xl border border-border shadow-sm space-y-3">
+                    <div className="pt-2 space-y-3">
                       <div className="flex justify-between items-center text-xs font-semibold">
                         <span className="text-foreground">Tingkat Kecocokan dengan Kriteria Posisi</span>
                         <span className={`font-bold text-sm ${isPassed ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}`}>
@@ -897,7 +903,7 @@ export function CandidateModal({ candidate, onClose, onStatusUpdated }: Candidat
               })()}
 
               {/* Detail Evaluasi */}
-              <div className="bg-card p-6 rounded-2xl border border-border shadow-sm space-y-4">
+              <div className="pt-6 space-y-4 border-t border-border/40 mt-6">
                 <div>
                   <h3 className="font-bold text-foreground text-sm flex items-center gap-2">
                     Rincian Penilaian Kualifikasi
@@ -910,7 +916,7 @@ export function CandidateModal({ candidate, onClose, onStatusUpdated }: Candidat
                 {candidate.analisisCv?.hybrid_details ? (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-1">
                     {/* Aspek 1: Kesesuaian Pengalaman Kerja */}
-                    <div className="bg-slate-50/80 dark:bg-slate-800/40 p-4 rounded-xl border border-border/80 flex flex-col justify-between space-y-3">
+                    <div className="bg-transparent p-0 flex flex-col justify-between space-y-3">
                       <div>
                         <div className="flex items-center justify-between gap-2 mb-1.5">
                           <span className="text-xs font-bold text-foreground flex items-center gap-1.5">
@@ -934,7 +940,7 @@ export function CandidateModal({ candidate, onClose, onStatusUpdated }: Candidat
                     </div>
 
                     {/* Aspek 2: Pemenuhan Keahlian Wajib */}
-                    <div className="bg-slate-50/80 dark:bg-slate-800/40 p-4 rounded-xl border border-border/80 flex flex-col justify-between space-y-3">
+                    <div className="bg-transparent p-0 flex flex-col justify-between space-y-3">
                       <div>
                         <div className="flex items-center justify-between gap-2 mb-1.5">
                           <span className="text-xs font-bold text-foreground flex items-center gap-1.5">
@@ -968,7 +974,7 @@ export function CandidateModal({ candidate, onClose, onStatusUpdated }: Candidat
 
               {/* Action Bar for CV Screening / Tahap Awal */}
               {(stage === 'cv_screening' || stage === 'upload_cv') && (
-                <div className="p-4 bg-muted/30 border border-border rounded-2xl flex flex-col sm:flex-row items-center justify-between gap-3 shadow-2xs">
+                <div className="pt-6 border-t border-border/40 flex flex-col sm:flex-row items-center justify-between gap-3">
                   <div className="text-xs text-muted-foreground font-medium">
                     Loloskan kandidat ini untuk melanjutkan ke tahap <strong className="text-foreground">Wawancara Video AI</strong>.
                   </div>
@@ -1262,8 +1268,8 @@ export function CandidateModal({ candidate, onClose, onStatusUpdated }: Candidat
               )}
 
               {/* Overview Summary Bar */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <div className="p-4 bg-card rounded-xl border border-border shadow-sm flex items-center justify-between">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 border-b border-border/40 pb-6 mb-6">
+                <div className="flex items-center justify-between">
                   <div>
                     <p className="text-xs text-muted-foreground font-medium">Kesesuaian Berkas CV</p>
                     <p className="text-xl font-bold text-emerald-600 dark:text-emerald-400">{candidate.cvScore || 0}% Cocok</p>
@@ -1272,7 +1278,7 @@ export function CandidateModal({ candidate, onClose, onStatusUpdated }: Candidat
                   <FileText className="text-emerald-500" size={28} />
                 </div>
 
-                <div className="p-4 bg-card rounded-xl border border-border shadow-sm flex items-center justify-between">
+                <div className="flex items-center justify-between">
                   <div>
                     <p className="text-xs text-muted-foreground font-medium">Skor Evaluasi Wawancara</p>
                     <p className="text-xl font-bold text-blue-600 dark:text-blue-400">{overallVideoScore} / 100</p>
@@ -1281,7 +1287,7 @@ export function CandidateModal({ candidate, onClose, onStatusUpdated }: Candidat
                   <BarChart3 className="text-blue-500" size={28} />
                 </div>
 
-                <div className="p-4 bg-card rounded-xl border border-border shadow-sm flex items-center justify-between">
+                <div className="flex items-center justify-between">
                   <div>
                     <p className="text-xs text-muted-foreground font-medium">Rekaman Wawancara</p>
                     <p className="text-sm font-bold text-foreground mt-0.5">{videoDurationDisplay}</p>
@@ -1295,7 +1301,7 @@ export function CandidateModal({ candidate, onClose, onStatusUpdated }: Candidat
 
               {/* Banner Rangkuman & Kategori Fit (dari Analisis Video) */}
               {aiResult && (
-                <div className="bg-primary/10 border border-primary/20 p-4 rounded-xl flex items-start gap-4">
+                <div className="bg-transparent flex items-start gap-4 pb-6 border-b border-border/40 mb-6">
                   <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-primary-foreground shrink-0 mt-0.5">
                     <Sparkles size={20} />
                   </div>
@@ -1321,7 +1327,7 @@ export function CandidateModal({ candidate, onClose, onStatusUpdated }: Candidat
                 {/* Left Side: Video Player, Info Rekaman & 5 Parameter Observasi */}
                 <div className="space-y-4">
                   {/* Kartu Video Wawancara & Detail Rekaman */}
-                  <div className="p-4 bg-card rounded-xl border border-border shadow-sm space-y-3">
+                  <div className="space-y-3">
                     <div className="flex items-center justify-between">
                       <h4 className="font-bold text-sm text-foreground flex items-center gap-2">
                         <Video size={16} className="text-primary" />
@@ -1371,7 +1377,8 @@ export function CandidateModal({ candidate, onClose, onStatusUpdated }: Candidat
                             return (
                               <div
                                 key={idx}
-                                className={`p-3 rounded-lg border text-xs transition-all ${isAnswered
+                                onClick={() => toggleQuestion(idx)}
+                                className={`p-3 rounded-lg border text-xs transition-all cursor-pointer select-none ${isAnswered
                                     ? "bg-card border-border/80 hover:border-emerald-500/40"
                                     : isPartial
                                       ? "bg-amber-500/5 border-amber-500/30"
@@ -1424,12 +1431,15 @@ export function CandidateModal({ candidate, onClose, onStatusUpdated }: Candidat
                                         status
                                       )}
                                     </span>
+                                    <div className={`p-0.5 rounded-md transition-transform duration-200 ${expandedQs[idx] ? "rotate-180" : ""}`}>
+                                      <ChevronDown size={14} className="text-muted-foreground" />
+                                    </div>
                                   </div>
                                 </div>
 
                                 {/* Ringkasan Jawaban AI untuk soal ini */}
-                                {detail?.ringkasan && (
-                                  <div className="mt-2.5 pt-2 border-t border-border/50 space-y-1.5">
+                                {detail?.ringkasan && expandedQs[idx] && (
+                                  <div className="mt-2.5 pt-2 border-t border-border/50 space-y-1.5 animate-in slide-in-from-top-1 fade-in duration-200">
                                     <div className="flex items-center gap-1 text-[10px] font-semibold text-primary">
                                       <Sparkles size={11} />
                                       <span>Rangkuman Jawaban Kandidat:</span>
@@ -1457,85 +1467,106 @@ export function CandidateModal({ candidate, onClose, onStatusUpdated }: Candidat
                 {/* Right Side: Radar Chart, 5 Aspek Kompetensi & Decision Buttons */}
                 <div className="space-y-4">
                   {/* Observasi Perilaku & Gaya Komunikasi */}
-                  <div className="p-4 bg-card rounded-xl border border-border shadow-sm space-y-3">
-                    <div>
-                      <h4 className="font-bold text-sm text-foreground flex items-center gap-2">
-                        <Scan size={16} className="text-primary" />
-                        <span>Observasi Sikap & Bahasa Tubuh Rekaman</span>
-                      </h4>
-                      <p className="text-[11px] text-muted-foreground mt-0.5">
-                        Catatan pengamatan fisik rekaman video yang menjadi dasar pertimbangan nilai kompetensi.
-                      </p>
+                  <div className="p-4 bg-card rounded-xl border border-border shadow-sm space-y-3 transition-all">
+                    <div 
+                      className="cursor-pointer flex items-center justify-between select-none" 
+                      onClick={() => setExpandedObservasi(!expandedObservasi)}
+                    >
+                      <div>
+                        <h4 className="font-bold text-sm text-foreground flex items-center gap-2">
+                          <Scan size={16} className="text-primary" />
+                          <span>Observasi Sikap & Bahasa Tubuh</span>
+                        </h4>
+                        <p className="text-[11px] text-muted-foreground mt-0.5">
+                          Catatan pengamatan fisik rekaman video.
+                        </p>
+                      </div>
+                      <div className={`p-1 rounded-md transition-transform duration-200 ${expandedObservasi ? "rotate-180" : ""}`}>
+                        <ChevronDown size={16} className="text-muted-foreground" />
+                      </div>
                     </div>
 
-                    <div className="space-y-2 pt-1">
-                      {videoObservations.map((item, index) => (
-                        <div key={index} className="p-2.5 bg-muted/30 hover:bg-muted/50 transition-colors rounded-lg border border-border/70 flex items-center justify-between gap-3">
-                          <div className="min-w-0 flex-1">
-                            <span className="text-xs font-semibold text-foreground block truncate">
-                              {item.label}
-                            </span>
-                            <span className="text-[11px] text-muted-foreground flex items-center gap-1.5 mt-0.5 font-medium">
-                              <span className={`w-1.5 h-1.5 rounded-full ${item.dotColor}`} />
-                              {item.statusText}
+                    {expandedObservasi && (
+                      <div className="space-y-2 pt-3 border-t border-border/50 animate-in slide-in-from-top-2 fade-in duration-200">
+                        {videoObservations.map((item, index) => (
+                          <div key={index} className="p-2.5 bg-muted/30 hover:bg-muted/50 transition-colors rounded-lg border border-border/70 flex items-center justify-between gap-3">
+                            <div className="min-w-0 flex-1">
+                              <span className="text-xs font-semibold text-foreground block truncate">
+                                {item.label}
+                              </span>
+                              <span className="text-[11px] text-muted-foreground flex items-center gap-1.5 mt-0.5 font-medium">
+                                <span className={`w-1.5 h-1.5 rounded-full ${item.dotColor}`} />
+                                {item.statusText}
+                              </span>
+                            </div>
+                            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md border shrink-0 ${item.badgeColor}`}>
+                              {item.value}% Konsisten
                             </span>
                           </div>
-                          <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md border shrink-0 ${item.badgeColor}`}>
-                            {item.value}% Konsisten
-                          </span>
-                        </div>
-                      ))}
-                    </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
 
                   {/* Evaluasi Kompetensi & Keputusan HR (Gabungan Radar Chart & Bar) */}
-                  <div className="p-5 bg-card rounded-xl border border-border shadow-sm space-y-5">
-                    <div className="flex items-center justify-between border-b border-border/50 pb-3">
+                  <div className="p-5 bg-card rounded-xl border border-border shadow-sm space-y-5 transition-all">
+                    <div 
+                      className="flex items-center justify-between cursor-pointer select-none"
+                      onClick={() => setExpandedKompetensi(!expandedKompetensi)}
+                    >
                       <h3 className="font-bold text-sm text-foreground flex items-center gap-2">
                         <BarChart3 size={16} className="text-primary" />
                         Hasil Evaluasi Kompetensi
                       </h3>
-                      <span className="text-xs font-bold text-primary px-2.5 py-1 bg-primary/10 rounded-md">
-                        Rata-rata: {overallVideoScore}/100
-                      </span>
-                    </div>
-
-                    <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 items-center">
-                      {/* Radar Chart */}
-                      <div className="h-[200px] w-full">
-                        <ResponsiveContainer width="100%" height="100%">
-                          <RadarChart cx="50%" cy="50%" outerRadius="70%" data={radarData}>
-                            <PolarGrid stroke="currentColor" className="text-border" />
-                            <PolarAngleAxis dataKey="subject" tick={{ fill: 'currentColor', fontSize: 10 }} className="text-muted-foreground" />
-                            <Radar name="Candidate" dataKey="A" stroke="#1b7b9e" fill="#1b7b9e" fillOpacity={0.3} />
-                          </RadarChart>
-                        </ResponsiveContainer>
-                      </div>
-
-                      {/* Read-Only Competency Bars */}
-                      <div className="space-y-3.5">
-                        {[
-                          { label: 'Komunikasi & Artikulasi', score: Math.round(abilityScore), color: 'bg-blue-600' },
-                          { label: 'Pemahaman & Respon', score: Math.round(intelligentScore), color: 'bg-indigo-600' },
-                          { label: 'Kepercayaan Diri', score: Math.round(personalityScore), color: 'bg-amber-600' },
-                          { label: 'Sikap Kerja & Profesionalisme', score: Math.round(attitudeScore), color: 'bg-emerald-600' },
-                          { label: 'Ketenangan & Emosi', score: Math.round(emotionalIntelligenceScore), color: 'bg-cyan-600' },
-                        ].map((item, i) => (
-                          <div key={i} className="space-y-1.5">
-                            <div className="flex justify-between items-center text-[11px]">
-                              <span className="font-medium text-foreground">{item.label}</span>
-                              <span className="font-bold text-primary">{item.score} / 100</span>
-                            </div>
-                            <div className="w-full bg-muted rounded-full h-1.5 overflow-hidden">
-                              <div
-                                className={`h-full rounded-full transition-all duration-500 ${item.color}`}
-                                style={{ width: `${item.score}%` }}
-                              ></div>
-                            </div>
-                          </div>
-                        ))}
+                      <div className="flex items-center gap-3">
+                        <span className="text-xs font-bold text-primary px-2.5 py-1 bg-primary/10 rounded-md">
+                          Rata-rata: {overallVideoScore}/100
+                        </span>
+                        <div className={`p-1 rounded-md transition-transform duration-200 ${expandedKompetensi ? "rotate-180" : ""}`}>
+                          <ChevronDown size={16} className="text-muted-foreground" />
+                        </div>
                       </div>
                     </div>
+
+                    {expandedKompetensi && (
+                      <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 items-center pt-3 border-t border-border/50 animate-in slide-in-from-top-2 fade-in duration-200">
+                        {/* Radar Chart */}
+                        <div className="h-[200px] w-full">
+                          <ResponsiveContainer width="100%" height="100%">
+                            <RadarChart cx="50%" cy="50%" outerRadius="70%" data={radarData}>
+                              <PolarGrid stroke="currentColor" className="text-border" />
+                              <PolarAngleAxis dataKey="subject" tick={{ fill: 'currentColor', fontSize: 10 }} className="text-muted-foreground" />
+                              <Radar name="Candidate" dataKey="A" stroke="#1b7b9e" fill="#1b7b9e" fillOpacity={0.3} />
+                            </RadarChart>
+                          </ResponsiveContainer>
+                        </div>
+
+                        {/* Read-Only Competency Bars */}
+                        <div className="space-y-3.5">
+                          {[
+                            { label: 'Komunikasi & Artikulasi', score: Math.round(abilityScore), color: 'bg-blue-600' },
+                            { label: 'Pemahaman & Respon', score: Math.round(intelligentScore), color: 'bg-indigo-600' },
+                            { label: 'Kepercayaan Diri', score: Math.round(personalityScore), color: 'bg-amber-600' },
+                            { label: 'Sikap Kerja & Profesionalisme', score: Math.round(attitudeScore), color: 'bg-emerald-600' },
+                            { label: 'Ketenangan & Emosi', score: Math.round(emotionalIntelligenceScore), color: 'bg-cyan-600' },
+                          ].map((item, i) => (
+                            <div key={i} className="space-y-1.5">
+                              <div className="flex justify-between items-center text-[11px]">
+                                <span className="font-medium text-foreground">{item.label}</span>
+                                <span className="font-bold text-primary">{item.score} / 100</span>
+                              </div>
+                              <div className="w-full bg-muted rounded-full h-1.5 overflow-hidden">
+                                <div
+                                  className={`h-full rounded-full transition-all duration-500 ${item.color}`}
+                                  style={{ width: `${item.score}%` }}
+                                ></div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
                     {/* Keputusan Akhir HR & Detail Wawancara Lanjutan */}
                     <div className="space-y-3 pt-4 border-t border-border/70">
                       {isInterviewLanjutan ? (

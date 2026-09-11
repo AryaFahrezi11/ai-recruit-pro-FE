@@ -411,10 +411,17 @@ function StatusValidasiContent() {
               statusLabel = 'Tidak Lolos';
               msg = item.catatan_perusahaan || `Mohon maaf, profil Anda belum memenuhi kriteria yang dibutuhkan pada tahap CV Screening.`;
             } else if (s === 'ditolak' || s === 'rejected') {
-              stageIndex = 5;
-              tahapName = 'Stage 5: DITOLAK (KEPUTUSAN AKHIR)';
-              statusLabel = 'Tidak Lolos';
-              msg = item.catatan_perusahaan || `Mohon maaf, profil Anda belum memenuhi kriteria yang dibutuhkan untuk posisi ini pada tahap akhir.`;
+              if (item.analisis_cv?.hasil === 'ditolak' || item.analisis_cv?.hasil === 'tidak_memenuhi_syarat') {
+                stageIndex = 2;
+                tahapName = 'Stage 2: DITOLAK (CV SCREENING)';
+                statusLabel = 'Tidak Lolos';
+                msg = item.catatan_perusahaan || `Mohon maaf, profil Anda belum memenuhi kriteria yang dibutuhkan pada tahap CV Screening.`;
+              } else {
+                stageIndex = 5;
+                tahapName = 'Stage 5: DITOLAK (KEPUTUSAN AKHIR)';
+                statusLabel = 'Tidak Lolos';
+                msg = item.catatan_perusahaan || `Mohon maaf, profil Anda belum memenuhi kriteria yang dibutuhkan untuk posisi ini pada tahap akhir.`;
+              }
             } else if (s === 'video_analysis') {
               stageIndex = 4;
               tahapName = 'Stage 4: AI VIDEO ANALYSIS';
@@ -519,6 +526,27 @@ function StatusValidasiContent() {
           });
 
           setApplications(mapped);
+
+          // Update seen_statuses to clear notification dot
+          try {
+            const savedStatusesStr = localStorage.getItem('seen_statuses');
+            let savedStatuses: Record<string, string> = {};
+            if (savedStatusesStr) savedStatuses = JSON.parse(savedStatusesStr);
+            
+            let updated = false;
+            for (const app of mapped) {
+              if (savedStatuses[app.id] !== app.rawStatus) {
+                savedStatuses[app.id] = app.rawStatus || app.status;
+                updated = true;
+              }
+            }
+            if (updated) {
+              localStorage.setItem('seen_statuses', JSON.stringify(savedStatuses));
+              // Dispatch custom event to let layout know
+              window.dispatchEvent(new Event('seen_statuses_updated'));
+            }
+          } catch (e) {}
+
         } else {
           // Fallback mock scenarios if no applications in DB yet
           setApplications([]);
@@ -980,31 +1008,45 @@ function StatusValidasiContent() {
                     </div>
                   ))}
                 </div>
-                <div className="pt-1">
-                  <label className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs cursor-pointer shadow-xs transition-colors">
-                    <input
-                      type="file"
-                      accept="video/*"
-                      className="hidden"
-                      onChange={async (e) => {
-                        const file = e.target.files?.[0];
-                        if (file) {
-                          const formData = new FormData();
-                          formData.append('video', file);
-                          const uploadPromise = api.post(`/applications/${selectedDetailApp.id}/upload-video`, formData);
-                          toast.promise(uploadPromise, {
-                            loading: 'Mengunggah video wawancara...',
-                            success: (res: any) => res.message || 'Video berhasil diunggah.',
-                            error: (err: any) => parseErrorMessage(err) || 'Gagal mengunggah video.'
-                          }).then(() => {
-                            setTimeout(() => window.location.reload(), 2000);
-                          }).catch(() => { });
-                        }
-                      }}
-                    />
-                    <Video size={14} />
-                    <span>Upload Video Wawancara</span>
-                  </label>
+                <div className="pt-2">
+                  <div className="flex items-center gap-3">
+                    <label className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs cursor-pointer shadow-xs transition-colors">
+                      <input
+                        type="file"
+                        accept="video/*"
+                        className="hidden"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file) {
+                            const video = document.createElement('video');
+                            video.preload = 'metadata';
+                            video.onloadedmetadata = () => {
+                              window.URL.revokeObjectURL(video.src);
+                              if (video.duration > 240) {
+                                toast.error('Durasi video maksimal adalah 4 menit. Silakan persingkat video Anda.');
+                                e.target.value = '';
+                                return;
+                              }
+                              const formData = new FormData();
+                              formData.append('video', file);
+                              const uploadPromise = api.post(`/applications/${selectedDetailApp.id}/upload-video`, formData);
+                              toast.promise(uploadPromise, {
+                                loading: 'Mengunggah video wawancara...',
+                                success: (res: any) => res.message || 'Video berhasil diunggah.',
+                                error: (err: any) => parseErrorMessage(err) || 'Gagal mengunggah video.'
+                              }).then(() => {
+                                setTimeout(() => window.location.reload(), 2000);
+                              }).catch(() => { });
+                            };
+                            video.src = URL.createObjectURL(file);
+                          }
+                        }}
+                      />
+                      <Video size={14} />
+                      <span>Upload Video Wawancara</span>
+                    </label>
+                    <span className="text-[10px] text-slate-500 font-medium">*Durasi maksimal: 4 menit</span>
+                  </div>
                 </div>
               </div>
             )}
