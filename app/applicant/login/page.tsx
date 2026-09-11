@@ -38,7 +38,6 @@ export default function PelamarLoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [agreedConsent, setAgreedConsent] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -76,10 +75,6 @@ export default function PelamarLoginPage() {
     }
     if (!password) {
       setError('Masukkan password akun Anda.');
-      return;
-    }
-    if (!agreedConsent) {
-      setError('Anda harus menyetujui persetujuan pemrosesan dan penyimpanan data diri untuk melanjutkan masuk.');
       return;
     }
 
@@ -393,23 +388,6 @@ export default function PelamarLoginPage() {
                     {showPassword ? <Eye size={18} /> : <EyeOff size={18} />}
                   </button>
                 </div>
-              </div>
-
-              {/* Checkbox Persetujuan Pemrosesan & Penyimpanan Data Diri */}
-              <div className="flex items-start gap-2.5 pt-1">
-                <input
-                  id="login-consent"
-                  type="checkbox"
-                  checked={agreedConsent}
-                  onChange={(e) => {
-                    setAgreedConsent(e.target.checked);
-                    if (e.target.checked && error.includes('persetujuan')) setError('');
-                  }}
-                  className="mt-1 w-4 h-4 text-[#1A4B9F] rounded border-slate-300 dark:border-slate-700 focus:ring-[#1A4B9F] dark:focus:ring-blue-400 cursor-pointer shrink-0"
-                />
-                <label htmlFor="login-consent" className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed cursor-pointer select-none">
-                  Saya menyetujui pemrosesan dan penyimpanan data diri (seperti biodata, riwayat pendidikan, pengalaman kerja, dan berkas CV) untuk keperluan melengkapi CV dan lamaran pekerjaan di platform AI-RecruitPro.
-                </label>
               </div>
 
               {error && (

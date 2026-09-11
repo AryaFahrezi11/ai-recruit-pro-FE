@@ -193,9 +193,9 @@ export default function PipelinePage() {
         body: JSON.stringify({ status: newStatus }),
       });
       if (!res.ok) {
-        throw new Error('Gagal memperbarui status lamaran');
+        throw new Error('Gagal memperbarui Riwayat Lamaran');
       }
-      toast.success('Status lamaran berhasil diperbarui');
+      toast.success('Riwayat Lamaran berhasil diperbarui');
       loadApplications();
     } catch (error: any) {
       toast.error(error.message || parseErrorMessage(error) || 'Gagal memperbarui status');
@@ -505,8 +505,8 @@ export default function PipelinePage() {
         return (
           <div className="flex flex-col items-center">
             <span className={`px-2 py-0.5 rounded-md font-mono text-xs font-bold border ${isPassed
-                ? 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800'
-                : 'bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-950/40 dark:text-rose-300 dark:border-rose-800'
+              ? 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800'
+              : 'bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-950/40 dark:text-rose-300 dark:border-rose-800'
               }`}>
               {score}% Match
             </span>
@@ -613,8 +613,8 @@ export default function PipelinePage() {
             type="button"
             onClick={() => setViewMode('table')}
             className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${viewMode === 'table'
-                ? 'bg-foreground text-background shadow-xs'
-                : 'text-muted-foreground hover:text-foreground'
+              ? 'bg-foreground text-background shadow-xs'
+              : 'text-muted-foreground hover:text-foreground'
               }`}
           >
             <TableIcon size={14} />
@@ -625,8 +625,8 @@ export default function PipelinePage() {
             type="button"
             onClick={() => setViewMode('kanban')}
             className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${viewMode === 'kanban'
-                ? 'bg-foreground text-background shadow-xs'
-                : 'text-muted-foreground hover:text-foreground'
+              ? 'bg-foreground text-background shadow-xs'
+              : 'text-muted-foreground hover:text-foreground'
               }`}
           >
             <LayoutGrid size={14} />

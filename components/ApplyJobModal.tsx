@@ -71,6 +71,7 @@ export function ApplyJobModal({ job, cvData, onClose, onSuccess }: ApplyJobModal
       const applicationData = res.data || res;
       setPendingAiResult(applicationData);
       setShowReviewModal(true);
+      setAiResult(applicationData);
     } catch (err: any) {
       setError(parseErrorMessage(err));
     } finally {

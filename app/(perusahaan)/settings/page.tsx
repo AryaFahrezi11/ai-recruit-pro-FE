@@ -6,18 +6,18 @@ import { fetchAuth } from '@/lib/api/auth';
 import { getApiUrl, getMediaUrl } from '@/lib/api';
 import { useAppStore } from '@/lib/store/useAppStore';
 import {
-  Building2, 
-  Mail, 
-  Save, 
-  CheckCircle2, 
-  Upload, 
-  Video, 
-  Calendar, 
-  XCircle, 
-  Eye, 
-  RotateCcw, 
-  Send, 
-  Sparkles, 
+  Building2,
+  Mail,
+  Save,
+  CheckCircle2,
+  Upload,
+  Video,
+  Calendar,
+  XCircle,
+  Eye,
+  RotateCcw,
+  Send,
+  Sparkles,
   Info,
   UserCheck
 } from 'lucide-react';
@@ -40,7 +40,7 @@ const DEFAULT_COMPANY_TEMPLATES: Record<string, string> = {
 
 Selamat! CV Anda telah lolos tahap seleksi awal (CV Screening).
 
-Kami mengundang Anda untuk mengikuti tahapan Wawancara Video AI (Virtual Interview) berdurasi singkat. Silakan masuk ke dashboard status lamaran Anda melalui tautan berikut:
+Kami mengundang Anda untuk mengikuti tahapan Wawancara Video AI (Virtual Interview) berdurasi singkat. Silakan masuk ke dashboard Riwayat Lamaran Anda melalui tautan berikut:
 {{interview_link}}
 
 Harap selesaikan perekaman video sebelum batas waktu yang ditentukan.
@@ -79,7 +79,7 @@ Selamat bergabung di tim kami!
 Salam hangat,
 Tim Manajemen {{company_name}}`,
 
-  email_reject_subject: "[AI Recruit Pro] Update Status Lamaran: {{job_title}}",
+  email_reject_subject: "[AI Recruit Pro] Update Riwayat Lamaran: {{job_title}}",
   email_reject_body: `Halo {{candidate_name}},
 
 Terima kasih atas waktu, antusiasme, dan ketertarikan Anda untuk melamar posisi {{job_title}} di {{company_name}}.
@@ -393,7 +393,7 @@ export default function SettingsPage() {
   };
 
   const activeTplConfig = COMPANY_TEMPLATE_CONFIGS.find(t => t.id === selectedTemplateId) || COMPANY_TEMPLATE_CONFIGS[0];
-  
+
   // Render simulated email preview
   const getRenderedPreview = (tpl: TemplateConfig) => {
     let subject = emailTemplates[tpl.subjectKey] || DEFAULT_COMPANY_TEMPLATES[tpl.subjectKey] || '';
@@ -450,11 +450,10 @@ export default function SettingsPage() {
         <button
           type="button"
           onClick={() => setActiveTab('profile')}
-          className={`flex items-center gap-2 px-6 py-3 font-bold text-xs border-b-2 transition-colors cursor-pointer ${
-            activeTab === 'profile'
+          className={`flex items-center gap-2 px-6 py-3 font-bold text-xs border-b-2 transition-colors cursor-pointer ${activeTab === 'profile'
               ? 'border-primary text-primary'
               : 'border-transparent text-muted-foreground hover:text-foreground'
-          }`}
+            }`}
         >
           <Building2 size={16} />
           {t.settings?.companyProfileTab || 'Profil Perusahaan'}
@@ -463,11 +462,10 @@ export default function SettingsPage() {
         <button
           type="button"
           onClick={() => setActiveTab('email')}
-          className={`flex items-center gap-2 px-6 py-3 font-bold text-xs border-b-2 transition-colors cursor-pointer ${
-            activeTab === 'email'
+          className={`flex items-center gap-2 px-6 py-3 font-bold text-xs border-b-2 transition-colors cursor-pointer ${activeTab === 'email'
               ? 'border-primary text-primary'
               : 'border-transparent text-muted-foreground hover:text-foreground'
-          }`}
+            }`}
         >
           <Mail size={16} />
           {t.settings?.emailTemplatesTab || 'Template Email Notifikasi'}
@@ -700,15 +698,14 @@ export default function SettingsPage() {
                 <button
                   type="button"
                   onClick={() => setShowPreview(!showPreview)}
-                  className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                    showPreview 
-                      ? 'bg-foreground text-background' 
+                  className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${showPreview
+                      ? 'bg-foreground text-background'
                       : 'bg-muted text-muted-foreground hover:text-foreground'
-                  }`}
+                    }`}
                 >
                   <Eye size={14} /> {showPreview ? 'Sembunyikan Preview' : 'Tampilkan Preview'}
                 </button>
-                
+
                 <button
                   type="button"
                   onClick={() => {
@@ -732,11 +729,10 @@ export default function SettingsPage() {
                     type="button"
                     key={tpl.id}
                     onClick={() => setSelectedTemplateId(tpl.id)}
-                    className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                      isActive 
-                        ? 'bg-foreground text-background shadow-2xs' 
+                    className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${isActive
+                        ? 'bg-foreground text-background shadow-2xs'
                         : 'bg-muted/40 text-muted-foreground hover:text-foreground border border-border'
-                    }`}
+                      }`}
                   >
                     <Icon size={14} />
                     {tpl.title}
@@ -779,7 +775,7 @@ export default function SettingsPage() {
                   </div>
                   <div className="flex flex-wrap gap-1.5">
                     {activeTplConfig.variables.map(v => (
-                      <div 
+                      <div
                         key={v.tag}
                         className="group flex items-center bg-card border border-border hover:border-primary/50 rounded-lg p-1 transition-all shadow-2xs"
                       >
@@ -809,8 +805,8 @@ export default function SettingsPage() {
                   <label className="block text-xs font-bold text-foreground mb-1.5">
                     Subjek Email (Subject)
                   </label>
-                  <input 
-                    type="text" 
+                  <input
+                    type="text"
                     value={emailTemplates[activeTplConfig.subjectKey] || ''}
                     onChange={(e) => handleTemplateChange(activeTplConfig.subjectKey, e.target.value)}
                     placeholder="Masukkan judul subjek email..."
@@ -828,7 +824,7 @@ export default function SettingsPage() {
                       Format Teks Bersih (Gunakan baris baru untuk paragraf)
                     </span>
                   </div>
-                  <textarea 
+                  <textarea
                     value={emailTemplates[activeTplConfig.bodyKey] || ''}
                     onChange={(e) => handleTemplateChange(activeTplConfig.bodyKey, e.target.value)}
                     rows={12}
@@ -908,7 +904,7 @@ export default function SettingsPage() {
               <h3 className="text-sm font-extrabold text-foreground flex items-center gap-2">
                 <Send size={16} /> Uji Coba Pengiriman Email
               </h3>
-              <button 
+              <button
                 onClick={() => setTestEmailModal(false)}
                 className="text-muted-foreground hover:text-foreground text-xs font-bold"
               >
@@ -924,8 +920,8 @@ export default function SettingsPage() {
               <label className="block text-xs font-bold text-foreground mb-1.5">
                 Alamat Email Penerima
               </label>
-              <input 
-                type="email" 
+              <input
+                type="email"
                 value={testEmailRecipient}
                 onChange={(e) => setTestEmailRecipient(e.target.value)}
                 placeholder="email.anda@perusahaan.com"

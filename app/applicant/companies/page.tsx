@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useMemo, Suspense } from 'react';
+import React, { useState, useEffect, useMemo, useRef, Suspense } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
@@ -43,6 +43,7 @@ interface Company {
   ukuran: string;
   website_url?: string;
   deskripsi?: string;
+  alamat?: string;
   kota?: string;
   provinsi?: string;
   rating?: number;
@@ -69,8 +70,24 @@ function CompaniesPageContent() {
   // Search & Filter State
   const [searchQuery, setSearchQuery] = useState(initialQuery);
   const [selectedIndustry, setSelectedIndustry] = useState(initialIndustry);
-  const [selectedCity, setSelectedCity] = useState(initialCity);
+  const [selectedCity, setSelectedCity] = useState(initialCity === 'Semua' ? '' : initialCity);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [suggestedLocations, setSuggestedLocations] = useState<string[]>([]);
+  const [showLocationSuggestions, setShowLocationSuggestions] = useState(false);
+  const locationContainerRef = useRef<HTMLDivElement>(null);
+
+  // Close location suggestions on click outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (locationContainerRef.current && !locationContainerRef.current.contains(event.target as Node)) {
+        setShowLocationSuggestions(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
 
   // Pagination State (Max 15 boxes per page)
   const [currentPage, setCurrentPage] = useState(initialPage);
@@ -80,7 +97,8 @@ function CompaniesPageContent() {
   useEffect(() => {
     setSearchQuery(searchParams.get('q') || '');
     setSelectedIndustry(searchParams.get('industry') || 'Semua');
-    setSelectedCity(searchParams.get('city') || 'Semua');
+    const cParam = searchParams.get('city') || '';
+    setSelectedCity(cParam === 'Semua' ? '' : cParam);
     const p = parseInt(searchParams.get('page') || '1', 10);
     setCurrentPage(isNaN(p) || p < 1 ? 1 : p);
   }, [searchParams]);
@@ -90,7 +108,7 @@ function CompaniesPageContent() {
     const params = new URLSearchParams();
     if (q.trim()) params.set('q', q.trim());
     if (ind && ind !== 'Semua') params.set('industry', ind);
-    if (city && city !== 'Semua') params.set('city', city);
+    if (city && city !== 'Semua' && city.trim()) params.set('city', city.trim());
     if (page > 1) params.set('page', page.toString());
 
     const queryString = params.toString();
@@ -113,11 +131,12 @@ function CompaniesPageContent() {
             ukuran: c.ukuran || '51 - 200 Karyawan',
             website_url: c.website_url || '',
             deskripsi: c.deskripsi || '',
-            kota: c.kota || c.alamat || 'Jakarta Barat',
-            provinsi: c.provinsi || 'DKI Jakarta',
-            rating: c.rating || 4.8,
-            jobs_count: c.jobs_count || (c.jobs ? c.jobs.length : 1),
-            last_active: c.last_active || 'sejam yang lalu',
+            alamat: c.alamat || '',
+            kota: c.alamat || c.kota || 'Indonesia',
+            provinsi: c.provinsi || '',
+            rating: c.rating || 5.0,
+            jobs_count: c.jobs_count || (c.jobs ? c.jobs.length : 0),
+            last_active: c.last_active || 'Baru saja',
             jobs: c.jobs || []
           }));
           setCompanies(mapped);
@@ -128,7 +147,20 @@ function CompaniesPageContent() {
         setLoading(false);
       }
     };
+
+    const fetchLocations = async () => {
+      try {
+        const res = await api.get('/perusahaan/locations');
+        if (res?.locations && Array.isArray(res.locations)) {
+          setSuggestedLocations(res.locations);
+        }
+      } catch (err) {
+        console.error('Failed to fetch company locations:', err);
+      }
+    };
+
     fetchCompanies();
+    fetchLocations();
   }, []);
 
   const allCompanies = useMemo(() => {
@@ -141,25 +173,27 @@ function CompaniesPageContent() {
     return ['Semua', ...list];
   }, [allCompanies]);
 
-  const citiesList = useMemo(() => {
-    const list = Array.from(new Set(allCompanies.map(c => c.kota))).filter(Boolean);
-    return ['Semua', ...list];
-  }, [allCompanies]);
-
-  // Filtered List
+  // Filtered List (Based on URL search params, not live local state)
   const filteredCompanies = useMemo(() => {
+    const q = searchParams.get('q') || '';
+    const ind = searchParams.get('industry') || 'Semua';
+    const city = searchParams.get('city') || '';
+
     return allCompanies.filter(c => {
-      const matchName = searchQuery === '' || 
-        c.nama_perusahaan.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        c.industri.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (c.kota && c.kota.toLowerCase().includes(searchQuery.toLowerCase()));
+      const matchName = q === '' || 
+        c.nama_perusahaan.toLowerCase().includes(q.toLowerCase()) ||
+        c.industri.toLowerCase().includes(q.toLowerCase()) ||
+        (c.alamat && c.alamat.toLowerCase().includes(q.toLowerCase())) ||
+        (c.kota && c.kota.toLowerCase().includes(q.toLowerCase()));
       
-      const matchInd = selectedIndustry === 'Semua' || c.industri === selectedIndustry;
-      const matchCity = selectedCity === 'Semua' || c.kota === selectedCity;
+      const matchInd = ind === 'Semua' || c.industri === ind;
+      const matchCity = !city || city === 'Semua' || 
+        (c.alamat && c.alamat.toLowerCase().includes(city.toLowerCase())) ||
+        (c.kota && c.kota.toLowerCase().includes(city.toLowerCase()));
 
       return matchName && matchInd && matchCity;
     });
-  }, [allCompanies, searchQuery, selectedIndustry, selectedCity]);
+  }, [allCompanies, searchParams]);
 
   // Paginated List (max 15 items per page)
   const totalPages = Math.ceil(filteredCompanies.length / itemsPerPage) || 1;
@@ -168,28 +202,30 @@ function CompaniesPageContent() {
     return filteredCompanies.slice(start, start + itemsPerPage);
   }, [filteredCompanies, currentPage]);
 
+  const handleSearchSubmit = (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    setShowLocationSuggestions(false);
+    setCurrentPage(1);
+    updateUrl(searchQuery, selectedIndustry, selectedCity, 1);
+  };
+
   const handleSearchChange = (val: string) => {
     setSearchQuery(val);
-    setCurrentPage(1);
-    updateUrl(val, selectedIndustry, selectedCity, 1);
   };
 
   const handleIndustryChange = (val: string) => {
     setSelectedIndustry(val);
-    setCurrentPage(1);
-    updateUrl(searchQuery, val, selectedCity, 1);
   };
 
   const handleCityChange = (val: string) => {
     setSelectedCity(val);
-    setCurrentPage(1);
-    updateUrl(searchQuery, selectedIndustry, val, 1);
   };
 
   const handleReset = () => {
+    setShowLocationSuggestions(false);
     setSearchQuery('');
     setSelectedIndustry('Semua');
-    setSelectedCity('Semua');
+    setSelectedCity('');
     setCurrentPage(1);
     router.replace(pathname, { scroll: false });
   };
@@ -322,7 +358,7 @@ function CompaniesPageContent() {
           </div>
 
           {/* Unified Integrated Search Command Box */}
-          <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-2 sm:p-2.5 shadow-xs">
+          <form onSubmit={handleSearchSubmit} className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-2 sm:p-2.5 shadow-xs relative z-30">
             <div className="flex flex-col lg:flex-row items-stretch gap-2">
               
               {/* Field 1: Keyword Input */}
@@ -332,20 +368,75 @@ function CompaniesPageContent() {
                   type="text"
                   value={searchQuery}
                   onChange={(e) => handleSearchChange(e.target.value)}
-                  placeholder="Cari nama perusahaan, industri, atau kata kunci..."
+                  placeholder="Cari nama perusahaan atau kata kunci..."
                   className="w-full text-xs sm:text-sm font-semibold text-slate-800 dark:text-slate-100 placeholder-slate-400 bg-transparent focus:outline-none"
                 />
                 {searchQuery && (
                   <button
-                    onClick={() => handleSearchChange('')}
-                    className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-xs p-1 cursor-pointer"
+                    type="button"
+                    onClick={() => { setSearchQuery(''); handleSearchSubmit(); }}
+                    className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-xs p-1 cursor-pointer shrink-0"
                   >
                     <X size={14} />
                   </button>
                 )}
               </div>
 
-              {/* Field 2: Industry Selector */}
+              {/* Field 2: Location Search Input */}
+              <div ref={locationContainerRef} className="flex-1 bg-slate-50 dark:bg-slate-800/80 rounded-xl border border-slate-200 dark:border-slate-700 px-3.5 py-2.5 flex items-center gap-2.5 focus-within:bg-white focus-within:border-slate-400 transition-all relative z-40">
+                <MapPin size={18} className="text-slate-400 shrink-0" />
+                <input
+                  type="text"
+                  value={selectedCity === 'Semua' ? '' : selectedCity}
+                  onFocus={() => setShowLocationSuggestions(true)}
+                  onChange={(e) => {
+                    setSelectedCity(e.target.value);
+                    setShowLocationSuggestions(true);
+                  }}
+                  placeholder="Cari lokasi atau kota..."
+                  className="w-full text-xs sm:text-sm font-semibold text-slate-800 dark:text-slate-100 placeholder-slate-400 bg-transparent focus:outline-none"
+                />
+                {selectedCity && selectedCity !== 'Semua' && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSelectedCity('');
+                      setShowLocationSuggestions(false);
+                    }}
+                    className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-xs p-1 cursor-pointer shrink-0"
+                  >
+                    <X size={14} />
+                  </button>
+                )}
+
+                {/* Location Suggestions Dropdown */}
+                {showLocationSuggestions && suggestedLocations.length > 0 && (
+                  <div className="absolute top-[calc(100%+8px)] left-0 right-0 bg-white dark:bg-slate-900 rounded-2xl shadow-xl border border-slate-100 dark:border-slate-800 py-2 z-50 text-slate-800 dark:text-slate-200 max-h-60 overflow-y-auto animate-in fade-in slide-in-from-top-2">
+                    <div className="px-4 py-2 text-[11px] font-bold text-slate-400 uppercase tracking-wider flex items-center justify-between border-b border-slate-50 dark:border-slate-800/50">
+                      <span>Lokasi Sering Dicari</span>
+                      <X className="w-4 h-4 cursor-pointer hover:text-slate-700 dark:hover:text-slate-300 transition-colors" onClick={() => setShowLocationSuggestions(false)} />
+                    </div>
+                    {suggestedLocations
+                      .filter(loc => !selectedCity || selectedCity === 'Semua' || loc.toLowerCase().includes(selectedCity.toLowerCase()))
+                      .map((loc, idx) => (
+                        <div
+                          key={idx}
+                          onMouseDown={(e) => {
+                            e.preventDefault();
+                            setSelectedCity(loc);
+                            setShowLocationSuggestions(false);
+                          }}
+                          className="px-5 py-3 hover:bg-[#EFF6FF] dark:hover:bg-slate-800 text-xs font-semibold cursor-pointer flex items-center gap-3 transition-colors border-b border-slate-50 dark:border-slate-800/50 last:border-0"
+                        >
+                          <MapPin className="w-4 h-4 text-[#1A4B9F] dark:text-blue-400" />
+                          <span>{loc}</span>
+                        </div>
+                      ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Field 3: Industry Selector */}
               <div className="w-full lg:w-56 bg-slate-50 dark:bg-slate-800/80 rounded-xl border border-slate-200 dark:border-slate-700 px-3.5 py-2 flex items-center gap-2 relative hover:border-slate-400 transition-colors">
                 <Building2 size={16} className="text-slate-400 shrink-0" />
                 <div className="flex-1 min-w-0">
@@ -365,29 +456,19 @@ function CompaniesPageContent() {
                 <ChevronDown size={14} className="absolute right-3 text-slate-400 pointer-events-none stroke-[2]" />
               </div>
 
-              {/* Field 3: City Selector */}
-              <div className="w-full lg:w-48 bg-slate-50 dark:bg-slate-800/80 rounded-xl border border-slate-200 dark:border-slate-700 px-3.5 py-2 flex items-center gap-2 relative hover:border-slate-400 transition-colors">
-                <MapPin size={16} className="text-slate-400 shrink-0" />
-                <div className="flex-1 min-w-0">
-                  <span className="block text-[10px] uppercase tracking-wider font-extrabold text-slate-400 dark:text-slate-500 leading-none mb-0.5">Lokasi</span>
-                  <select
-                    value={selectedCity}
-                    onChange={(e) => handleCityChange(e.target.value)}
-                    className="w-full appearance-none bg-transparent pr-4 font-bold text-slate-800 dark:text-slate-200 focus:outline-none cursor-pointer text-xs truncate"
-                  >
-                    {citiesList.map(city => (
-                      <option key={city} value={city} className="bg-white dark:bg-slate-900 font-medium">
-                        {city === 'Semua' ? 'Semua Lokasi' : city}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <ChevronDown size={14} className="absolute right-3 text-slate-400 pointer-events-none stroke-[2]" />
-              </div>
+              {/* Search Button */}
+              <button
+                type="submit"
+                className="px-6 py-2.5 rounded-xl bg-[#1A4B9F] hover:bg-[#133878] text-white font-bold text-xs flex items-center justify-center gap-2 transition-colors shrink-0 cursor-pointer shadow-sm"
+              >
+                <Search size={16} />
+                <span>Cari</span>
+              </button>
 
               {/* Reset / Clear Button (if active) */}
-              {(searchQuery || selectedIndustry !== 'Semua' || selectedCity !== 'Semua') && (
+              {(searchQuery || (selectedIndustry && selectedIndustry !== 'Semua') || Boolean(selectedCity && selectedCity !== 'Semua')) && (
                 <button
+                  type="button"
                   onClick={handleReset}
                   title="Reset Filter"
                   className="px-3.5 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold text-xs flex items-center justify-center gap-1.5 border border-slate-200 dark:border-slate-700 transition-colors shrink-0 cursor-pointer"
@@ -398,7 +479,7 @@ function CompaniesPageContent() {
               )}
 
             </div>
-          </div>
+          </form>
 
         </div>
       </section>
@@ -459,7 +540,7 @@ function CompaniesPageContent() {
                       </div>
                       <p className="text-xs font-medium text-slate-500 dark:text-slate-400 truncate flex items-center gap-1">
                         <MapPin size={12} className="text-slate-400 shrink-0" />
-                        <span>{comp.kota ? `${comp.kota}, ${comp.provinsi || 'DKI Jakarta'}` : 'Indonesia'}</span>
+                        <span>{comp.alamat || comp.kota || 'Indonesia'}</span>
                       </p>
                     </div>
                   </div>
