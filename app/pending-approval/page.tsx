@@ -166,9 +166,19 @@ ${profileData?.profil?.hr_name || companyName}`;
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 flex flex-col justify-between font-sans antialiased transition-colors duration-300">
       {/* Top Header */}
       <header className="py-6 px-6 sm:px-12 max-w-[1600px] w-full mx-auto flex items-center justify-between">
-        <Link href="/" className="flex items-center gap-2 group">
+        <Link href="/" className="flex items-center gap-3 group">
+          <Image
+            src="/logo_hd.png"
+            alt="AI-RecruitPro Logo"
+            width={280}
+            height={280}
+            quality={100}
+            unoptimized
+            className="h-10 sm:h-12 w-auto object-contain shrink-0 transition-transform group-hover:scale-105"
+            priority
+          />
           <div className="flex flex-col">
-            <span className="font-bold text-2xl tracking-tight text-slate-900 dark:text-white leading-none">
+            <span className="font-extrabold text-xl tracking-tight text-slate-900 dark:text-white leading-none">
               AI-RecruitPro
             </span>
             <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest mt-1">
@@ -193,41 +203,30 @@ ${profileData?.profil?.hr_name || companyName}`;
       <main className="flex-1 w-full max-w-3xl mx-auto px-4 py-8 flex items-center justify-center">
         <div className="w-full bg-white dark:bg-slate-900 rounded-3xl p-8 sm:p-12 shadow-2xl border border-slate-200 dark:border-slate-800 space-y-8 text-center relative overflow-hidden">
           {/* Animated Status Icon */}
-          {isRejected ? (
+          {isRejected && (
             <div className="w-20 h-20 bg-rose-50 dark:bg-rose-950/40 border-2 border-rose-200 dark:border-rose-800/60 rounded-3xl flex items-center justify-center text-rose-600 dark:text-rose-400 mx-auto shadow-sm relative">
               <XCircle size={40} />
-            </div>
-          ) : (
-            <div className="w-20 h-20 bg-blue-50 dark:bg-blue-950/40 border-2 border-blue-200 dark:border-blue-800/60 rounded-3xl flex items-center justify-center text-[#1A4B9F] dark:text-blue-400 mx-auto shadow-sm relative">
-              <Clock size={36} className="animate-spin" style={{ animationDuration: '8s' }} />
-              <div className="absolute -top-1 -right-1 w-6 h-6 bg-amber-500 text-white rounded-full flex items-center justify-center font-black text-[10px] shadow-sm">
-                !
-              </div>
             </div>
           )}
 
           {/* Heading & Notice */}
           <div className="space-y-3 max-w-xl mx-auto">
-            {isRejected ? (
+            {isRejected && (
               <span className="inline-block px-4 py-1.5 rounded-full bg-rose-50 dark:bg-rose-950/50 text-rose-700 dark:text-rose-400 font-extrabold text-xs border border-rose-200 dark:border-rose-800 uppercase tracking-wider">
                 Verifikasi Ditolak / Perlu Perbaikan
-              </span>
-            ) : (
-              <span className="inline-block px-4 py-1.5 rounded-full bg-amber-50 dark:bg-amber-950/50 text-amber-700 dark:text-amber-400 font-extrabold text-xs border border-amber-200 dark:border-amber-800 uppercase tracking-wider">
-                Verifikasi Dalam Proses
               </span>
             )}
 
             <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-white leading-tight">
               {isRejected
-                ? 'Pengajuan Verifikasi Akun Belum Disetujui'
-                : 'Pendaftaran Berhasil Dikirim & Dalam Peninjauan Admin'}
+                ? 'Pengajuan Akun Perusahaan Memerlukan Perbaikan'
+                : 'Pendaftaran Akun Berhasil Dikirim'}
             </h1>
 
-            <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 leading-relaxed pt-2">
+            <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 leading-relaxed pt-1">
               {isRejected
-                ? 'Admin telah meninjau pengajuan akun perusahaan Anda. Terdapat berkas legalitas atau data profil yang belum memenuhi kualifikasi. Silakan periksa catatan perbaikan dari admin di bawah ini.'
-                : 'Terima kasih telah melengkapi data legalitas perusahaan & perwakilan HRD. Tim Administrator AI-Recruit Pro saat ini sedang memverifikasi keabsahan Dokumen NIB/NPWP dan ID Card Perusahaan Anda demi menjaga keamanan & kualitas ekosistem rekrutmen.'}
+                ? 'Tim kami telah memeriksa data perusahaan Anda dan menemukan beberapa berkas yang perlu diperbaiki. Silakan cek catatan admin di bawah ini.'
+                : 'Terima kasih telah mendaftarkan perusahaan Anda. Tim admin kami sedang memeriksa berkas NIB/NPWP dan ID Card HRD yang telah Anda unggah. Kami akan mengabari Anda setelah proses verifikasi selesai.'}
             </p>
           </div>
 

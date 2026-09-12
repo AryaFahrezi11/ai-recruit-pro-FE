@@ -1007,11 +1007,21 @@ function LandingPageContent() {
                       {/* Top Header */}
                       <div className="flex items-start justify-between gap-3">
                         <div className="flex items-center gap-3">
-                          <img
-                            src={job.logo}
-                            alt={job.company}
-                            className="w-10 h-10 rounded-lg object-contain border border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800 p-0.5 shrink-0 group-hover:scale-105 transition-transform"
-                          />
+                          {job.logo ? (
+                            <img
+                              src={job.logo}
+                              alt={job.company}
+                              className="w-10 h-10 rounded-lg object-contain border border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800 p-0.5 shrink-0 group-hover:scale-105 transition-transform"
+                              onError={(e) => {
+                                (e.target as HTMLElement).style.display = 'none';
+                                const sibling = (e.target as HTMLElement).nextElementSibling;
+                                if (sibling) sibling.classList.remove('hidden');
+                              }}
+                            />
+                          ) : null}
+                          <div className={`w-10 h-10 rounded-lg border border-slate-100 dark:border-slate-800 bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 flex items-center justify-center font-bold text-sm shrink-0 ${job.logo ? 'hidden' : ''}`}>
+                            <Building2 size={20} />
+                          </div>
                           <div className="space-y-0.5">
                             <div className="flex items-center gap-1.5">
                               <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 block truncate">{job.company}</span>
@@ -1103,11 +1113,21 @@ function LandingPageContent() {
               {selectedPreviewJob ? (
                 <>
                   <div className="flex items-start gap-3 border-b border-slate-100 dark:border-slate-800 pb-3">
-                    <img
-                      src={selectedPreviewJob.logo}
-                      alt={selectedPreviewJob.company}
-                      className="w-12 h-12 rounded-xl object-cover border border-slate-200 dark:border-slate-700"
-                    />
+                    {selectedPreviewJob.logo ? (
+                      <img
+                        src={selectedPreviewJob.logo}
+                        alt={selectedPreviewJob.company}
+                        className="w-12 h-12 rounded-xl object-cover border border-slate-200 dark:border-slate-700"
+                        onError={(e) => {
+                          (e.target as HTMLElement).style.display = 'none';
+                          const sibling = (e.target as HTMLElement).nextElementSibling;
+                          if (sibling) sibling.classList.remove('hidden');
+                        }}
+                      />
+                    ) : null}
+                    <div className={`w-12 h-12 rounded-xl border border-slate-200 dark:border-slate-700 bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 flex items-center justify-center font-bold shrink-0 ${selectedPreviewJob.logo ? 'hidden' : ''}`}>
+                      <Building2 size={24} />
+                    </div>
                     <div className="space-y-0.5">
                       <span className="text-xs font-bold text-slate-900 dark:text-slate-200 block">{selectedPreviewJob.company}</span>
                       <h3 className="font-bold text-base text-slate-900 dark:text-white leading-snug">{selectedPreviewJob.title}</h3>

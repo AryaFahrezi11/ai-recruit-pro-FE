@@ -411,7 +411,7 @@ function CreateJobForm() {
                     type="text"
                     value={customCategoryName}
                     onChange={(e) => { setCustomCategoryName(e.target.value); setValidationErrors(prev => ({...prev, customCategoryName: ''})); }}
-                    placeholder="Contoh: Blockchain, AI Engineering, Legal & Compliance..."
+                    placeholder="Contoh: Manajemen Proyek, Komunikasi Bisnis, Legal & Compliance..."
                     className={`w-full px-4 py-2.5 bg-background border rounded-lg text-sm font-medium text-foreground outline-none focus:ring-1 transition-all ${validationErrors.customCategoryName ? 'border-rose-500 focus:border-rose-500 focus:ring-rose-500' : 'border-border focus:border-primary focus:ring-primary'}`}
                   />
                   {validationErrors.customCategoryName && <p className="text-rose-500 text-[10px] mt-1 font-medium">{validationErrors.customCategoryName}</p>}
@@ -561,7 +561,7 @@ function CreateJobForm() {
                 type="text"
                 value={newResp}
                 onChange={(e) => setNewResp(e.target.value)}
-                placeholder="Misal: Merancang arsitektur frontend web aplikasi berskala besar"
+                placeholder="Misal: Mengelola operasional harian dan koordinasi tim kerja"
                 className="flex-1 px-4 py-2 bg-muted/30 border border-border rounded-lg text-xs text-foreground focus:outline-none focus:border-primary"
                 onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddResponsibility())}
               />
