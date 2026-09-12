@@ -253,10 +253,11 @@ function CompaniesPageContent() {
           <div className="w-full max-w-[1440px] mx-auto px-6 sm:px-10 lg:px-14 h-20 flex items-center justify-between">
             <Link href="/" className="flex items-center gap-3 group">
               <Image
-                src="/Logo Ai Recruit Pro..png"
+                src="/logo_hd.png"
                 alt="AI-RecruitPro Logo"
                 width={70}
                 height={70}
+                unoptimized
                 className="h-13 sm:h-15 w-auto object-contain shrink-0 transition-transform group-hover:scale-105"
                 priority
               />

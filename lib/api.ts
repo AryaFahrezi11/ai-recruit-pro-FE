@@ -1,9 +1,9 @@
 export const getBaseUrl = () => {
   if (process.env.NEXT_PUBLIC_API_URL) return process.env.NEXT_PUBLIC_API_URL;
   if (typeof window !== 'undefined') {
-    return `http://${window.location.hostname}:8080/api`;
+    return `http://${window.location.hostname}:8000/api`;
   }
-  return 'http://127.0.0.1:8080/api';
+  return 'http://127.0.0.1:8000/api';
 };
 
 export const getMediaUrl = (path?: string) => {
@@ -111,10 +111,10 @@ export async function apiRequest<T = any>(
     });
 
     if (response.status === 401) {
-      const isPublicApplicantPage = typeof window !== 'undefined' && 
-        (window.location.pathname === '/applicant/dashboard' || 
-         window.location.pathname === '/applicant/companies' ||
-         window.location.pathname.startsWith('/applicant/companies/'));
+      const isPublicApplicantPage = typeof window !== 'undefined' &&
+        (window.location.pathname === '/applicant/dashboard' ||
+          window.location.pathname === '/applicant/companies' ||
+          window.location.pathname.startsWith('/applicant/companies/'));
 
       if (!isPublicApplicantPage) {
         removeAuthToken();

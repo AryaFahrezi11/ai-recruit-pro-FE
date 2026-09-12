@@ -76,10 +76,11 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             <div className="p-5 flex items-center justify-between border-b border-slate-100 dark:border-slate-800">
               <Link href="/admin/dashboard" className="flex items-center gap-3 group">
                 <Image
-                  src="/Logo Ai Recruit Pro..png"
+                  src="/logo_hd.png"
                   alt="AI-RecruitPro Logo"
                   width={44}
                   height={44}
+                  unoptimized
                   className="h-10 w-auto object-contain shrink-0"
                   priority
                 />

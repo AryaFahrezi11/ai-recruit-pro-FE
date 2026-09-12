@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+  <defs>
+    <!-- Left Dark Navy Gradient -->
+    <linearGradient id="navyGrad" x1="0%" y1="100%" x2="50%" y2="0%">
+      <stop offset="0%" stop-color="#0A2540" />
+      <stop offset="100%" stop-color="#1A365D" />
+    </linearGradient>
+
+    <!-- Right Vivid Blue Gradient -->
+    <linearGradient id="blueGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1E60D5" />
+      <stop offset="100%" stop-color="#1A4B9F" />
+    </linearGradient>
+
+    <!-- Translucent Frosted Glass Loop Gradient -->
+    <linearGradient id="glassGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.85" />
+      <stop offset="50%" stop-color="#CBD5E1" stop-opacity="0.65" />
+      <stop offset="100%" stop-color="#94A3B8" stop-opacity="0.4" />
+    </linearGradient>
+
+    <filter id="subtleShadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="4" stdDeviation="6" flood-color="#0F172A" flood-opacity="0.15" />
+    </filter>
+  </defs>
+
+  <g filter="url(#subtleShadow)">
+    <!-- 1. Left Diagonal Navy Ribbon -->
+    <path d="M 96 384 L 246 130 C 262 103 294 92 322 106 L 272 192 L 160 384 C 150 401 130 412 110 412 C 90 412 78 398 96 384 Z" fill="url(#navyGrad)" />
+
+    <!-- 2. Bottom Right Royal Blue Swoosh -->
+    <path d="M 260 286 L 416 380 C 435 391 440 412 420 412 L 290 412 C 268 412 250 398 260 286 Z" fill="url(#blueGrad)" />
+
+    <!-- 3. Top Translucent Frosted Loop -->
+    <path d="M 246 130 C 275 80 370 70 420 140 C 460 196 425 286 362 286 C 298 286 270 200 246 130 Z" fill="url(#glassGrad)" />
+  </g>
+</svg>

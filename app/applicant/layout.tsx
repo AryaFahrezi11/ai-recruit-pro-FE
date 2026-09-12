@@ -269,10 +269,11 @@ export default function PelamarPerfectLayout({
           <div className="flex items-center gap-8">
             <Link href="/applicant/dashboard" className="flex items-center gap-3 group">
               <Image
-                src="/Logo Ai Recruit Pro..png"
+                src="/logo_hd.png"
                 alt="AI-RecruitPro Logo"
                 width={70}
                 height={70}
+                unoptimized
                 className="h-13 sm:h-15 w-auto object-contain shrink-0 transition-transform group-hover:scale-105"
                 priority
               />
