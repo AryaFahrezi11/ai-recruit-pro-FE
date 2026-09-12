@@ -11,6 +11,8 @@ import { getBaseUrl } from '@/lib/api';
 
 const BACKEND_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000/api';
 
+export const dynamic = 'force-dynamic';
+
 async function proxyRequest(req: NextRequest, { params }: { params: Promise<{ path: string[] }> }) {
   const { path } = await params;
   const targetPath = '/' + (path || []).join('/');

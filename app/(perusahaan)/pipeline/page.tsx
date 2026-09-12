@@ -243,7 +243,14 @@ export default function PipelinePage() {
     if (s === 'cv_screening' || s === 'lolos_cv' || s === 'ditolak_sistem') currentStage = 'cv_screening';
     else if (s === 'virtual_interview') currentStage = 'interview';
     else if (s === 'video_analysis') currentStage = 'ai_analysis';
-    else if (s === 'human_validation' || s === 'interview_lanjutan' || s === 'hired' || s === 'rejected') currentStage = 'human_validation';
+    else if (s === 'rejected') {
+      if (app.analisis_cv?.hasil === 'ditolak' || app.analisis_cv?.hasil === 'tidak_memenuhi_syarat') {
+        currentStage = 'cv_screening';
+      } else {
+        currentStage = 'human_validation';
+      }
+    }
+    else if (s === 'human_validation' || s === 'interview_lanjutan' || s === 'hired') currentStage = 'human_validation';
 
     setSelectedCandidate({
 
@@ -612,25 +619,25 @@ export default function PipelinePage() {
           <button
             type="button"
             onClick={() => setViewMode('table')}
-            className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${viewMode === 'table'
+            title="Tampilan Tabel"
+            className={`flex items-center justify-center p-2 rounded-lg transition-all cursor-pointer ${viewMode === 'table'
               ? 'bg-foreground text-background shadow-xs'
               : 'text-muted-foreground hover:text-foreground'
               }`}
           >
-            <TableIcon size={14} />
-            <span>Tampilan Tabel</span>
+            <TableIcon size={16} />
           </button>
 
           <button
             type="button"
             onClick={() => setViewMode('kanban')}
-            className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${viewMode === 'kanban'
+            title="Kanban Board"
+            className={`flex items-center justify-center p-2 rounded-lg transition-all cursor-pointer ${viewMode === 'kanban'
               ? 'bg-foreground text-background shadow-xs'
               : 'text-muted-foreground hover:text-foreground'
               }`}
           >
-            <LayoutGrid size={14} />
-            <span>Kanban Board</span>
+            <LayoutGrid size={16} />
           </button>
         </div>
       </div>

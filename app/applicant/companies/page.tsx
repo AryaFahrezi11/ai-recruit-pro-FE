@@ -363,8 +363,8 @@ function CompaniesPageContent() {
             <div className="flex flex-col lg:flex-row items-stretch gap-2">
               
               {/* Field 1: Keyword Input */}
-              <div className="flex-1 bg-slate-50 dark:bg-slate-800/80 rounded-xl border border-slate-200 dark:border-slate-700 px-3.5 py-2.5 flex items-center gap-2.5 focus-within:bg-white focus-within:border-slate-400 transition-all">
-                <Search size={18} className="text-slate-400 shrink-0" />
+              <div className="flex-1 bg-slate-50 dark:bg-slate-800/80 rounded-lg border border-slate-200 dark:border-slate-700 px-3 py-2 flex items-center gap-2 focus-within:bg-white focus-within:border-slate-400 transition-all">
+                <Search size={16} className="text-slate-400 shrink-0" />
                 <input
                   type="text"
                   value={searchQuery}
@@ -384,8 +384,8 @@ function CompaniesPageContent() {
               </div>
 
               {/* Field 2: Location Search Input */}
-              <div ref={locationContainerRef} className="flex-1 bg-slate-50 dark:bg-slate-800/80 rounded-xl border border-slate-200 dark:border-slate-700 px-3.5 py-2.5 flex items-center gap-2.5 focus-within:bg-white focus-within:border-slate-400 transition-all relative z-40">
-                <MapPin size={18} className="text-slate-400 shrink-0" />
+              <div ref={locationContainerRef} className="flex-1 bg-slate-50 dark:bg-slate-800/80 rounded-lg border border-slate-200 dark:border-slate-700 px-3 py-2 flex items-center gap-2 focus-within:bg-white focus-within:border-slate-400 transition-all relative z-40">
+                <MapPin size={16} className="text-slate-400 shrink-0" />
                 <input
                   type="text"
                   value={selectedCity === 'Semua' ? '' : selectedCity}
@@ -438,8 +438,8 @@ function CompaniesPageContent() {
               </div>
 
               {/* Field 3: Industry Selector */}
-              <div className="w-full lg:w-56 bg-slate-50 dark:bg-slate-800/80 rounded-xl border border-slate-200 dark:border-slate-700 px-3.5 py-2 flex items-center gap-2 relative hover:border-slate-400 transition-colors">
-                <Building2 size={16} className="text-slate-400 shrink-0" />
+              <div className="w-full lg:w-56 bg-slate-50 dark:bg-slate-800/80 rounded-lg border border-slate-200 dark:border-slate-700 px-3 py-1.5 flex items-center gap-2 relative hover:border-slate-400 transition-colors">
+                <Building2 size={14} className="text-slate-400 shrink-0" />
                 <div className="flex-1 min-w-0">
                   <span className="block text-[10px] uppercase tracking-wider font-extrabold text-slate-400 dark:text-slate-500 leading-none mb-0.5">Industri</span>
                   <select
@@ -460,9 +460,9 @@ function CompaniesPageContent() {
               {/* Search Button */}
               <button
                 type="submit"
-                className="px-6 py-2.5 rounded-xl bg-[#1A4B9F] hover:bg-[#133878] text-white font-bold text-xs flex items-center justify-center gap-2 transition-colors shrink-0 cursor-pointer shadow-sm"
+                className="px-4 py-2 rounded-lg bg-[#1A4B9F] hover:bg-[#133878] text-white font-bold text-xs flex items-center justify-center gap-2 transition-colors shrink-0 cursor-pointer shadow-sm"
               >
-                <Search size={16} />
+                <Search size={14} />
                 <span>Cari</span>
               </button>
 
@@ -472,7 +472,7 @@ function CompaniesPageContent() {
                   type="button"
                   onClick={handleReset}
                   title="Reset Filter"
-                  className="px-3.5 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold text-xs flex items-center justify-center gap-1.5 border border-slate-200 dark:border-slate-700 transition-colors shrink-0 cursor-pointer"
+                  className="px-3 py-2 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold text-xs flex items-center justify-center gap-1.5 border border-slate-200 dark:border-slate-700 transition-colors shrink-0 cursor-pointer"
                 >
                   <RotateCcw size={14} />
                   <span className="hidden sm:inline">Reset</span>

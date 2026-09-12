@@ -345,39 +345,28 @@ function LandingPageContent() {
   const [userSubmittedReviews, setUserSubmittedReviews] = useState<any[]>([]);
 
   useEffect(() => {
-    const loadReviews = () => {
-      if (typeof window !== 'undefined') {
-        try {
-          const stored = localStorage.getItem('airecruit_user_reviews');
-          if (stored) {
-            setUserSubmittedReviews(JSON.parse(stored));
-          }
-        } catch (e) {
-          // ignore
+    const loadReviews = async () => {
+      try {
+        const res = await fetch(getApiUrl('/reviews/public'));
+        if (res.ok) {
+          const data = await res.json();
+          setUserSubmittedReviews(data);
         }
+      } catch (e) {
+        // ignore
       }
     };
 
     loadReviews();
-
-    if (typeof window !== 'undefined') {
-      window.addEventListener('storage', loadReviews);
-      window.addEventListener('airecruit_reviews_updated', loadReviews);
-      window.addEventListener('focus', loadReviews);
-    }
-
-    return () => {
-      if (typeof window !== 'undefined') {
-        window.removeEventListener('storage', loadReviews);
-        window.removeEventListener('airecruit_reviews_updated', loadReviews);
-        window.removeEventListener('focus', loadReviews);
-      }
-    };
   }, []);
 
   const displayedStories = useMemo(() => {
+    // If backend returns reviews, combine them with defaults.
+    // If we have enough backend reviews, maybe just use them.
+    // For now, combine them, filter for 5-star, and take top 3.
     const combined = [...userSubmittedReviews, ...defaultStories];
     const fiveStarOnly = combined.filter((item) => (item.rating || 5) === 5);
+    // Remove duplicates based on ID if needed, though they shouldn't conflict
     return fiveStarOnly.slice(0, 3);
   }, [userSubmittedReviews, defaultStories]);
 

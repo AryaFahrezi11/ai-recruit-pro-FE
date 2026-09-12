@@ -728,20 +728,20 @@ function DashboardContent() {
         >
           {/* Left Input: Keyword */}
           <div className="md:col-span-5 relative flex items-center group">
-            <Search className="absolute left-4.5 text-slate-400 group-focus-within:text-[#1A4B9F] w-5 h-5 pointer-events-none transition-colors" />
+            <Search className="absolute left-3.5 text-slate-400 group-focus-within:text-[#1A4B9F] w-4 h-4 pointer-events-none transition-colors" />
             <input
               type="text"
               name="keyword"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder={activeTab === 'companies' ? (language === 'id' ? 'Cari nama perusahaan atau industri...' : 'Search company or industry...') : t.pelamar.dashboard.searchPlaceholder}
-              className="w-full pl-12 pr-4 py-4 bg-slate-50 dark:bg-slate-800/50 border border-slate-200/60 dark:border-slate-700 text-slate-800 dark:text-white rounded-2xl text-sm font-semibold placeholder:text-slate-400 outline-none focus:bg-white focus:ring-2 focus:ring-[#1A4B9F]/20 focus:border-[#1A4B9F] transition-all shadow-sm inset-ring-slate-100"
+              className="w-full pl-10 pr-4 py-3 bg-slate-50 dark:bg-slate-800/50 border border-slate-200/60 dark:border-slate-700 text-slate-800 dark:text-white rounded-xl text-sm font-semibold placeholder:text-slate-400 outline-none focus:bg-white focus:ring-2 focus:ring-[#1A4B9F]/20 focus:border-[#1A4B9F] transition-all shadow-sm inset-ring-slate-100"
             />
           </div>
 
           {/* Right Input: Location with Suggestions */}
           <div className="md:col-span-5 relative z-30 flex items-center group" ref={locationContainerRef}>
-            <MapPin className="absolute left-4.5 text-slate-400 group-focus-within:text-[#1A4B9F] w-5 h-5 pointer-events-none transition-colors" />
+            <MapPin className="absolute left-3.5 text-slate-400 group-focus-within:text-[#1A4B9F] w-4 h-4 pointer-events-none transition-colors" />
             <input
               type="text"
               name="location"
@@ -752,7 +752,7 @@ function DashboardContent() {
                 setShowLocationSuggestions(true);
               }}
               placeholder={t.pelamar.dashboard.locationPlaceholder}
-              className="w-full pl-12 pr-10 py-4 bg-slate-50 dark:bg-slate-800/50 border border-slate-200/60 dark:border-slate-700 text-slate-800 dark:text-white rounded-2xl text-sm font-semibold placeholder:text-slate-400 outline-none focus:bg-white focus:ring-2 focus:ring-[#1A4B9F]/20 focus:border-[#1A4B9F] transition-all shadow-sm inset-ring-slate-100"
+              className="w-full pl-10 pr-10 py-3 bg-slate-50 dark:bg-slate-800/50 border border-slate-200/60 dark:border-slate-700 text-slate-800 dark:text-white rounded-xl text-sm font-semibold placeholder:text-slate-400 outline-none focus:bg-white focus:ring-2 focus:ring-[#1A4B9F]/20 focus:border-[#1A4B9F] transition-all shadow-sm inset-ring-slate-100"
             />
             {locationQuery && (
               <button
@@ -799,12 +799,12 @@ function DashboardContent() {
             <button
               type="submit"
               disabled={isSearching}
-              className="w-full h-full min-h-[56px] px-6 bg-[#1A4B9F] hover:bg-[#133878] active:scale-[0.98] disabled:opacity-75 disabled:cursor-not-allowed text-white rounded-2xl font-bold flex items-center justify-center gap-2.5 transition-all shadow-md shadow-blue-900/10 cursor-pointer text-sm"
+              className="w-full h-full min-h-[44px] px-6 bg-[#1A4B9F] hover:bg-[#133878] active:scale-[0.98] disabled:opacity-75 disabled:cursor-not-allowed text-white rounded-xl font-bold flex items-center justify-center gap-2 transition-all shadow-md shadow-blue-900/10 cursor-pointer text-sm"
             >
               {isSearching ? (
-                <Loader2 className="w-5 h-5 animate-spin shrink-0 text-white" />
+                <Loader2 className="w-4 h-4 animate-spin shrink-0 text-white" />
               ) : (
-                <Search className="w-5 h-5 shrink-0" />
+                <Search className="w-4 h-4 shrink-0" />
               )}
               <span>{isSearching ? (language === 'id' ? 'Mencari...' : 'Searching...') : (language === 'id' ? 'Cari' : 'Search')}</span>
             </button>
