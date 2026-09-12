@@ -7,10 +7,23 @@ import {
   ChevronDown, ChevronUp, Bot, FileText, Video, ShieldCheck, Mail, Headphones
 } from 'lucide-react';
 
+import { api } from '@/lib/api';
+
 export default function SupportPage() {
   const { t } = useTranslation();
   const [openFaq, setOpenFaq] = useState<number | null>(0);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [adminEmail, setAdminEmail] = useState('aryafahrezi11@gmail.com');
+
+  React.useEffect(() => {
+    api.get('/config/public')
+      .then(data => {
+        if (data.admin_email) {
+          setAdminEmail(data.admin_email);
+        }
+      })
+      .catch(err => console.error("Failed to fetch admin email", err));
+  }, []);
 
   // Ticket Form States
   const [ticketSubject, setTicketSubject] = useState('');
@@ -24,7 +37,11 @@ export default function SupportPage() {
   const handleSendTicket = (e: React.FormEvent) => {
     e.preventDefault();
     if (ticketSubject && ticketMessage) {
-      showToast('Tiket bantuan berhasil dikirim! Tim Support kami akan merespons dalam 24 jam.');
+      // Buka email client default yang mengarah ke admin developer
+      const mailtoLink = `mailto:${adminEmail}?subject=${encodeURIComponent(ticketSubject)}&body=${encodeURIComponent(ticketMessage)}`;
+      window.location.href = mailtoLink;
+      
+      showToast('Mengarahkan ke email untuk dikirim ke Admin Developer...');
       setTicketSubject('');
       setTicketMessage('');
     }
@@ -33,175 +50,179 @@ export default function SupportPage() {
   const faqs = [
     {
       q: 'Mengapa kandidat dengan skor kecocokan 79% ditandai tidak lolos di tahap Seleksi CV?',
-      a: 'Sistem AI menggunakan algoritma Cosine Similarity untuk mengukur kecocokan teks CV pelamar dengan deskripsi pekerjaan. Jika skor berada di bawah ambang batas yang ditentukan perusahaan (misal 60%), kandidat akan ditandai gagal seleksi PO-FIT. Namun, HR tetap memiliki wewenang untuk meninjau kembali berkas kandidat tersebut.'
+      a: 'Sistem AI menggunakan algoritma Cosine Similarity untuk mengukur kecocokan teks CV pelamar dengan deskripsi pekerjaan. Jika skor berada di bawah ambang batas yang ditentukan perusahaan (misal 60%), kandidat akan ditandai gagal seleksi PO-FIT. Namun, HR tetap memiliki wewenang untuk meninjau kembali.'
     },
     {
       q: 'Apakah HR dapat mengubah keputusan rekomendasi yang diberikan oleh sistem AI?',
-      a: 'Ya, tentu saja! Sistem AI Recruit Pro dirancang sebagai alat bantu (Human Validation Suite). Rekomendasi AI berfungsi sebagai bahan pertimbangan awal, namun keputusan akhir penerimaan (Hire) atau penolakan (Reject) sepenuhnya berada di tangan HR pada Tahap 5 (Validasi Manusia).'
+      a: 'Ya! Sistem AI dirancang sebagai Human Validation Suite. Rekomendasi AI berfungsi sebagai bahan pertimbangan awal, namun keputusan akhir (Hire/Reject) sepenuhnya di tangan HR pada Tahap Validasi.'
     },
     {
-      q: 'Bagaimana proses rekaman wawancara video virtual dari sisi pelamar?',
-      a: 'Setelah pelamar lolos seleksi CV, sistem akan mengirimkan undangan email berisi tautan ke portal wawancara. Pelamar akan menjawab 5 pertanyaan yang dikonfigurasi perusahaan secara langsung melalui rekaman kamera web tanpa perlu bertatap muka langsung secara bersamaan.'
+      q: 'Bagaimana proses rekaman wawancara video dari sisi pelamar?',
+      a: 'Setelah lolos seleksi CV, pelamar mendapat undangan email ke portal wawancara. Pelamar menjawab 5 pertanyaan secara langsung melalui rekaman kamera web.'
     },
     {
       q: 'Bagaimana sistem AI mengekstraksi 5 parameter analisis video wawancara?',
-      a: 'Sistem menganalisis 5 indikator gestur dan akustik dari rekaman video: Gerakan Tangan, Gerakan Badan, Gerakan Kepala, Interaksi Mata (Eye Contact), serta Tempo Bicara (Words per Second). Indikator ini kemudian dikalkulasi menjadi 5 nilai output karakteristik (Ability, Intelligent, Personality, Attitude, Emotional Intelligence).'
+      a: 'Sistem menganalisis 5 indikator gestur/akustik: Gerakan Tangan, Badan, Kepala, Interaksi Mata, & Tempo Bicara. Indikator ini dikalkulasi menjadi 5 nilai (Ability, Intelligent, Personality, Attitude, Emotional Intelligence).'
     },
     {
       q: 'Apakah data dokumen CV dan rekaman video pelamar dijamin kerahasiaannya?',
-      a: 'Ya, seluruh data dokumen dan media video disimpan dengan enkripsi kelas bank (AES-256) dan hanya dapat diakses oleh tim HR terverifikasi dari perusahaan yang membuka lowongan.'
+      a: 'Ya, seluruh data disimpan dengan enkripsi (AES-256) dan hanya dapat diakses oleh tim HR terverifikasi dari perusahaan yang membuka lowongan.'
     }
   ];
 
   return (
-    <div className="max-w-6xl mx-auto pb-16 animate-in fade-in duration-300 space-y-8">
+    <div className="max-w-5xl mx-auto pb-16 animate-in fade-in duration-500 font-sans space-y-4">
 
       {/* Toast Notification */}
       {toastMessage && (
-        <div className="fixed top-6 right-6 z-50 bg-slate-900 text-white dark:bg-card dark:text-card-foreground border border-border px-4 py-3 rounded-xl shadow-2xl flex items-center gap-3 animate-in fade-in slide-in-from-top-4 duration-200">
-          <CheckCircle2 size={18} className="text-emerald-400 shrink-0" />
-          <span className="text-xs font-semibold">{toastMessage}</span>
+        <div className="fixed top-6 right-6 z-50 bg-slate-900 text-white dark:bg-slate-800 dark:text-slate-100 border border-slate-700 px-4 py-3 rounded-lg shadow-xl flex items-center gap-3 animate-in fade-in slide-in-from-top-4 duration-200">
+          <CheckCircle2 size={16} className="text-emerald-400 shrink-0" />
+          <span className="text-xs font-bold">{toastMessage}</span>
         </div>
       )}
 
-      {/* Header */}
-      <div>
-        <h1 className="text-2xl font-bold text-foreground mb-1">{t.support.title}</h1>
-        <p className="text-sm text-muted-foreground">{t.support.subtitle}</p>
-      </div>
-
-      {/* Documentation Banner */}
-      <div className="bg-card p-6 sm:p-8 rounded-xl border border-border shadow-sm space-y-6 relative overflow-hidden">
-        <div className="flex items-center gap-3 border-b border-border pb-4">
-          <div className="w-8 h-8 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-slate-100 flex items-center justify-center font-bold shrink-0 border border-slate-200 dark:border-slate-700">
-            <BookOpen size={18} />
-          </div>
-          <div>
-            <h2 className="text-lg font-bold text-foreground">{t.support.aiGuideTitle}</h2>
-            <p className="text-xs text-muted-foreground">Transparansi alur kerja dan metrik perhitungan AI Recruit Pro</p>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {/* Card 1: PO-FIT */}
-          <div className="p-4 bg-muted/30 border border-border rounded-xl space-y-2">
-            <div className="flex items-center gap-2 text-foreground font-bold text-sm">
-              <FileText size={16} />
-              1. Seleksi CV
-            </div>
-            <p className="text-xs text-muted-foreground leading-relaxed">
-              Membandingkan Vektor Kata CV dengan Deskripsi Pekerjaan menggunakan algoritma <strong>Cosine Similarity</strong>. Menghasilkan persentase skor kecocokan (60% = Ambang Batas Lolos).
-            </p>
-          </div>
-
-          {/* Card 2: Video Analysis */}
-          <div className="p-4 bg-muted/30 border border-border rounded-xl space-y-2">
-            <div className="flex items-center gap-2 text-foreground font-bold text-sm">
-              <Video size={16} />
-              2. Analisis Video AI
-            </div>
-            <p className="text-xs text-muted-foreground leading-relaxed">
-              Mengekstraksi 5 parameter gestur: <em>Gerakan Tangan, Badan, Kepala, Interaksi Mata, &amp; Words/Sec</em> dari rekaman wawancara virtual pelamar.
-            </p>
-          </div>
-
-          {/* Card 3: Human Validation */}
-          <div className="p-4 bg-muted/30 border border-border rounded-xl space-y-2">
-            <div className="flex items-center gap-2 text-foreground font-bold text-sm">
-              <ShieldCheck size={16} />
-              3. Validasi Manusia HR
-            </div>
-            <p className="text-xs text-muted-foreground leading-relaxed">
-              Menggabungkan seluruh skor AI ke dalam 5 metrik output: <strong>Ability, Intelligent, Personality, Attitude, Emotional Eq.</strong> sebagai bahan pertimbangan HR.
-            </p>
-          </div>
+      {/* Global Header */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-2">
+        <div>
+          <h1 className="text-xl font-bold text-slate-900 dark:text-white tracking-tight">{t.support.title}</h1>
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{t.support.subtitle}</p>
         </div>
       </div>
 
-      {/* FAQ Accordion */}
-      <div className="bg-card p-6 sm:p-8 rounded-xl border border-border shadow-sm space-y-6">
-        <div className="flex items-center gap-2.5 border-b border-border pb-4">
-          <div className="w-8 h-8 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-slate-100 flex items-center justify-center font-bold shrink-0 border border-slate-200 dark:border-slate-700">
-            <HelpCircle size={18} />
-          </div>
-          <h2 className="text-lg font-bold text-foreground">{t.support.faqTitle}</h2>
-        </div>
-
-        <div className="space-y-3">
-          {faqs.map((faq, index) => {
-            const isOpen = openFaq === index;
-            return (
-              <div
-                key={index}
-                className="border border-border rounded-xl overflow-hidden transition-all"
-              >
-                <button
-                  onClick={() => setOpenFaq(isOpen ? null : index)}
-                  className="w-full p-4 bg-muted/20 hover:bg-muted/40 text-left font-semibold text-xs sm:text-sm text-foreground flex justify-between items-center gap-4 transition-colors"
-                >
-                  <span>{faq.q}</span>
-                  {isOpen ? <ChevronUp size={16} className="shrink-0 text-primary" /> : <ChevronDown size={16} className="shrink-0 text-muted-foreground" />}
-                </button>
-
-                {isOpen && (
-                  <div className="p-4 bg-card border-t border-border text-xs text-muted-foreground leading-relaxed animate-in fade-in duration-200">
-                    {faq.a}
-                  </div>
-                )}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        
+        {/* Left Column: Docs & FAQ */}
+        <div className="lg:col-span-2 space-y-4">
+          
+          {/* Documentation Banner (Dense) */}
+          <div className="bg-white dark:bg-slate-950 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
+            <div className="flex items-center gap-2 border-b border-slate-100 dark:border-slate-800 p-4">
+              <div className="w-8 h-8 rounded-lg bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 flex items-center justify-center text-slate-700 dark:text-slate-300">
+                <BookOpen size={16} />
               </div>
-            );
-          })}
+              <div>
+                <h2 className="text-sm font-bold text-slate-800 dark:text-slate-100">{t.support.aiGuideTitle}</h2>
+                <p className="text-[11px] text-slate-500">Transparansi alur kerja dan metrik AI</p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 p-4">
+              <div className="p-3 bg-slate-50 dark:bg-slate-900/50 border border-slate-200/60 dark:border-slate-800/60 rounded-lg">
+                <div className="flex items-center gap-1.5 font-bold text-xs text-slate-800 dark:text-slate-200 mb-1.5">
+                  <FileText size={14} className="text-blue-600 dark:text-blue-400" />
+                  1. Seleksi CV
+                </div>
+                <p className="text-[10px] text-slate-500 leading-relaxed">
+                  Membandingkan Vektor CV vs Deskripsi Pekerjaan (Cosine Similarity). Menghasilkan skor kecocokan.
+                </p>
+              </div>
+              <div className="p-3 bg-slate-50 dark:bg-slate-900/50 border border-slate-200/60 dark:border-slate-800/60 rounded-lg">
+                <div className="flex items-center gap-1.5 font-bold text-xs text-slate-800 dark:text-slate-200 mb-1.5">
+                  <Video size={14} className="text-blue-600 dark:text-blue-400" />
+                  2. Analisis Video AI
+                </div>
+                <p className="text-[10px] text-slate-500 leading-relaxed">
+                  Mengekstraksi 5 parameter gestur & akustik dari rekaman wawancara virtual pelamar secara otomatis.
+                </p>
+              </div>
+              <div className="p-3 bg-slate-50 dark:bg-slate-900/50 border border-slate-200/60 dark:border-slate-800/60 rounded-lg">
+                <div className="flex items-center gap-1.5 font-bold text-xs text-slate-800 dark:text-slate-200 mb-1.5">
+                  <ShieldCheck size={14} className="text-blue-600 dark:text-blue-400" />
+                  3. Validasi HR
+                </div>
+                <p className="text-[10px] text-slate-500 leading-relaxed">
+                  Konsolidasi nilai menjadi 5 metrik (Ability, Eq, dll) sebagai bahan pertimbangan akhir HR (Human-in-the-loop).
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* FAQ Accordion (Dense) */}
+          <div className="bg-white dark:bg-slate-950 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
+            <div className="flex items-center gap-2 border-b border-slate-100 dark:border-slate-800 p-4">
+              <div className="w-8 h-8 rounded-lg bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 flex items-center justify-center text-slate-700 dark:text-slate-300">
+                <HelpCircle size={16} />
+              </div>
+              <h2 className="text-sm font-bold text-slate-800 dark:text-slate-100">{t.support.faqTitle}</h2>
+            </div>
+            
+            <div className="p-4 space-y-2">
+              {faqs.map((faq, index) => {
+                const isOpen = openFaq === index;
+                return (
+                  <div key={index} className="border border-slate-200 dark:border-slate-800 rounded-lg overflow-hidden">
+                    <button
+                      onClick={() => setOpenFaq(isOpen ? null : index)}
+                      className="w-full px-3 py-2.5 bg-slate-50/50 hover:bg-slate-100 dark:bg-slate-900/30 dark:hover:bg-slate-900/50 text-left font-bold text-[11px] text-slate-800 dark:text-slate-200 flex justify-between items-center gap-3 transition-colors"
+                    >
+                      <span>{faq.q}</span>
+                      {isOpen ? <ChevronUp size={14} className="shrink-0 text-blue-600" /> : <ChevronDown size={14} className="shrink-0 text-slate-400" />}
+                    </button>
+                    {isOpen && (
+                      <div className="px-3 py-2.5 bg-white dark:bg-slate-950 border-t border-slate-100 dark:border-slate-800 text-[11px] text-slate-500 leading-relaxed animate-in fade-in duration-200">
+                        {faq.a}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
         </div>
-      </div>
 
-      {/* Contact Support Form */}
-      <div className="bg-card p-6 sm:p-8 rounded-xl border border-border shadow-sm space-y-6">
-        <div className="flex items-center gap-2.5 border-b border-border pb-4">
-          <div className="w-8 h-8 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-slate-100 flex items-center justify-center font-bold shrink-0 border border-slate-200 dark:border-slate-700">
-            <Headphones size={18} />
+        {/* Right Column: Contact Admin Form */}
+        <div className="lg:col-span-1">
+          <div className="bg-white dark:bg-slate-950 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden sticky top-6">
+            <div className="flex items-center gap-2 border-b border-slate-100 dark:border-slate-800 p-4">
+              <div className="w-8 h-8 rounded-lg bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 flex items-center justify-center text-slate-700 dark:text-slate-300">
+                <Mail size={16} />
+              </div>
+              <div>
+                <h2 className="text-sm font-bold text-slate-800 dark:text-slate-100">Hubungi Developer</h2>
+                <p className="text-[10px] text-slate-500">Kirim email ke Admin Developer</p>
+              </div>
+            </div>
+
+            <form onSubmit={handleSendTicket} className="p-4 space-y-3">
+              <div>
+                <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1">
+                  Subjek <span className="text-rose-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={ticketSubject}
+                  onChange={(e) => setTicketSubject(e.target.value)}
+                  placeholder="e.g. Bug pada tabel dashboard..."
+                  className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-md text-xs text-slate-900 dark:text-slate-100 outline-none focus:border-blue-500 transition-colors"
+                />
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1">
+                  Rincian Pesan <span className="text-rose-500">*</span>
+                </label>
+                <textarea
+                  rows={5}
+                  required
+                  value={ticketMessage}
+                  onChange={(e) => setTicketMessage(e.target.value)}
+                  placeholder="Jelaskan detail kendala teknis atau saran..."
+                  className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-md text-xs text-slate-900 dark:text-slate-100 outline-none focus:border-blue-500 transition-colors resize-none"
+                ></textarea>
+              </div>
+
+              <button
+                type="submit"
+                className="w-full px-4 py-2 bg-slate-900 hover:bg-blue-600 dark:bg-white dark:hover:bg-blue-500 dark:text-slate-900 text-white font-bold text-xs rounded-md transition-colors flex items-center justify-center gap-2 shadow-sm active:scale-95"
+              >
+                <Send size={14} />
+                Kirim via Email Client
+              </button>
+            </form>
           </div>
-          <h2 className="text-lg font-bold text-foreground">{t.support.contactTitle}</h2>
         </div>
 
-        <form onSubmit={handleSendTicket} className="space-y-4">
-          <div>
-            <label className="block text-xs font-semibold text-foreground mb-1.5">
-              Subjek Kendala / Pertanyaan <span className="text-rose-500">*</span>
-            </label>
-            <input
-              type="text"
-              required
-              value={ticketSubject}
-              onChange={(e) => setTicketSubject(e.target.value)}
-              placeholder="e.g. Kendala pemrosesan video wawancara kandidat..."
-              className="w-full px-4 py-2.5 bg-muted/30 border border-border rounded-lg text-xs text-foreground focus:outline-none focus:border-primary"
-            />
-          </div>
-
-          <div>
-            <label className="block text-xs font-semibold text-foreground mb-1.5">
-              Rincian Pesan & Kendala Teknis <span className="text-rose-500">*</span>
-            </label>
-            <textarea
-              rows={4}
-              required
-              value={ticketMessage}
-              onChange={(e) => setTicketMessage(e.target.value)}
-              placeholder="Jelaskan kendala teknis atau pertanyaan yang Anda alami secara detail..."
-              className="w-full p-4 bg-muted/30 border border-border rounded-lg text-xs text-foreground focus:outline-none focus:border-primary resize-none"
-            ></textarea>
-          </div>
-
-          <div className="flex justify-end">
-            <button
-              type="submit"
-              className="px-6 py-2.5 bg-primary hover:bg-primary/90 text-primary-foreground font-semibold text-xs rounded-lg transition-colors flex items-center gap-2 shadow-sm active:scale-95"
-            >
-              <Send size={14} />
-              {t.support.sendTicket}
-            </button>
-          </div>
-        </form>
       </div>
 
     </div>

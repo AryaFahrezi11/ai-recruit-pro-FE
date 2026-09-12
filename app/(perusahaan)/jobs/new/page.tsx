@@ -65,7 +65,17 @@ function CreateJobForm() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
   const [isLoadingEdit, setIsLoadingEdit] = useState(false);
+
+  const today = new Date().toISOString().split('T')[0];
+
+  // Formatter
+  const formatNumberWithDots = (val: string) => {
+    const clean = val.replace(/\D/g, '');
+    if (!clean) return '';
+    return new Intl.NumberFormat('id-ID').format(Number(clean));
+  };
 
   // Add Item Handlers
   const handleAddResponsibility = () => {
@@ -175,8 +185,8 @@ function CreateJobForm() {
         setAiKeywords(parseJsonArray(job.ai_keywords_json));
         setThreshold(job.cv_threshold || 60);
         setVideoQuestions(parseJsonArray(job.video_questions_json));
-        setSalaryMin(job.gaji_min ? String(job.gaji_min) : '');
-        setSalaryMax(job.gaji_max ? String(job.gaji_max) : '');
+        setSalaryMin(job.gaji_min ? formatNumberWithDots(String(job.gaji_min)) : '');
+        setSalaryMax(job.gaji_max ? formatNumberWithDots(String(job.gaji_max)) : '');
         setShowSalaryPublic(job.tampilkan_gaji || false);
         setSelectedBenefits(parseJsonArray(job.benefits_json));
         setDeadline(job.tanggal_tutup || '');
@@ -194,6 +204,36 @@ function CreateJobForm() {
   const handlePublish = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
+    setErrorMsg(null);
+
+    // Validasi Kelengkapan Data
+    const newErrors: Record<string, string> = {};
+    if (!jobTitle.trim()) newErrors.jobTitle = 'Judul posisi wajib diisi';
+    if (!categoryId) newErrors.categoryId = 'Kategori wajib dipilih';
+    if (categoryId === 'other' && !customCategoryName.trim()) newErrors.customCategoryName = 'Kategori baru wajib diisi';
+    if (!employmentType) newErrors.employmentType = 'Tipe pekerjaan wajib dipilih';
+    if (!workMode) newErrors.workMode = 'Sistem kerja wajib dipilih';
+    if (!location.trim()) newErrors.location = 'Lokasi wajib diisi';
+    if (!experienceLevel) newErrors.experienceLevel = 'Pengalaman wajib dipilih';
+    if (!pendidikanMin) newErrors.pendidikanMin = 'Minimal pendidikan wajib dipilih';
+    if (!summary.trim()) newErrors.summary = 'Deskripsi pekerjaan wajib diisi';
+    if (responsibilities.length === 0) newErrors.responsibilities = 'Minimal 1 tanggung jawab wajib ditambahkan';
+    if (requirements.length === 0) newErrors.requirements = 'Minimal 1 kualifikasi wajib ditambahkan';
+    if (aiKeywords.length === 0) newErrors.aiKeywords = 'Minimal 1 kata kunci AI wajib ditambahkan';
+    if (videoQuestions.length === 0) newErrors.videoQuestions = 'Minimal 1 pertanyaan AI wajib ditambahkan';
+    if (!salaryMin) newErrors.salaryMin = 'Gaji minimum wajib diisi';
+    if (!salaryMax) newErrors.salaryMax = 'Gaji maksimum wajib diisi';
+    if (!deadline) newErrors.deadline = 'Batas lamaran wajib diisi';
+    if (openingsCount < 1) newErrors.openingsCount = 'Kuota tidak valid';
+
+    if (Object.keys(newErrors).length > 0) {
+      setValidationErrors(newErrors);
+      setErrorMsg('Harap perbaiki kolom yang ditandai merah (yang belum terisi) sebelum menyimpan.');
+      setIsSubmitting(false);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      return;
+    }
+    setValidationErrors({});
 
     let finalCategoryId = categoryId;
 
@@ -235,8 +275,8 @@ function CreateJobForm() {
       tipe_pekerjaan: employmentType,
       lokasi_kerja: workMode,
       kota: location,
-      gaji_min: parseFloat(salaryMin.replace(/[^0-9.-]+/g, "")),
-      gaji_max: parseFloat(salaryMax.replace(/[^0-9.-]+/g, "")),
+      gaji_min: salaryMin ? parseFloat(salaryMin.replace(/\D/g, "")) : null,
+      gaji_max: salaryMax ? parseFloat(salaryMax.replace(/\D/g, "")) : null,
       tampilkan_gaji: showSalaryPublic,
       pengalaman_min_tahun: parseInt(experienceLevel) || 0, // Simplified for now
       cv_threshold: threshold,
@@ -329,12 +369,12 @@ function CreateJobForm() {
               </label>
               <input
                 type="text"
-                required
                 value={jobTitle}
-                onChange={(e) => setJobTitle(e.target.value)}
+                onChange={(e) => { setJobTitle(e.target.value); setValidationErrors(prev => ({...prev, jobTitle: ''})); }}
                 placeholder={t.jobs.jobTitlePlaceholder}
-                className="w-full px-4 py-2.5 bg-muted/30 border border-border rounded-lg text-sm text-foreground focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all"
+                className={`w-full px-4 py-2.5 bg-muted/30 border rounded-lg text-sm text-foreground focus:outline-none focus:ring-1 transition-all ${validationErrors.jobTitle ? 'border-rose-500 focus:border-rose-500 focus:ring-rose-500' : 'border-border focus:border-primary focus:ring-primary'}`}
               />
+              {validationErrors.jobTitle && <p className="text-rose-500 text-[10px] mt-1.5 font-medium">{validationErrors.jobTitle}</p>}
             </div>
 
             {/* Category */}
@@ -346,11 +386,13 @@ function CreateJobForm() {
                 value={categoryId}
                 onChange={(e) => {
                   setCategoryId(e.target.value);
+                  setValidationErrors(prev => ({...prev, categoryId: ''}));
                   if (e.target.value !== 'other') {
                     setCustomCategoryName('');
+                    setValidationErrors(prev => ({...prev, customCategoryName: ''}));
                   }
                 }}
-                className="w-full px-4 py-2.5 bg-muted/30 border border-border rounded-lg text-sm text-foreground focus:outline-none focus:border-primary transition-all font-medium cursor-pointer"
+                className={`w-full px-4 py-2.5 bg-muted/30 border rounded-lg text-sm text-foreground focus:outline-none transition-all font-medium cursor-pointer ${validationErrors.categoryId ? 'border-rose-500 focus:border-rose-500' : 'border-border focus:border-primary'}`}
               >
                 <option value="" disabled>-- Pilih Kategori --</option>
                 {categories.map(cat => (
@@ -358,6 +400,7 @@ function CreateJobForm() {
                 ))}
                 <option value="other" className="font-bold text-primary">+ Lainnya (Tambah Kategori Baru...)</option>
               </select>
+              {validationErrors.categoryId && <p className="text-rose-500 text-[10px] mt-1.5 font-medium">{validationErrors.categoryId}</p>}
 
               {categoryId === 'other' && (
                 <div className="mt-3 p-3.5 bg-muted/30 border border-border rounded-xl space-y-2 animate-in fade-in duration-200">
@@ -366,12 +409,12 @@ function CreateJobForm() {
                   </label>
                   <input
                     type="text"
-                    required={categoryId === 'other'}
                     value={customCategoryName}
-                    onChange={(e) => setCustomCategoryName(e.target.value)}
+                    onChange={(e) => { setCustomCategoryName(e.target.value); setValidationErrors(prev => ({...prev, customCategoryName: ''})); }}
                     placeholder="Contoh: Blockchain, AI Engineering, Legal & Compliance..."
-                    className="w-full px-4 py-2.5 bg-background border border-border rounded-lg text-sm font-medium text-foreground outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all"
+                    className={`w-full px-4 py-2.5 bg-background border rounded-lg text-sm font-medium text-foreground outline-none focus:ring-1 transition-all ${validationErrors.customCategoryName ? 'border-rose-500 focus:border-rose-500 focus:ring-rose-500' : 'border-border focus:border-primary focus:ring-primary'}`}
                   />
+                  {validationErrors.customCategoryName && <p className="text-rose-500 text-[10px] mt-1 font-medium">{validationErrors.customCategoryName}</p>}
                 </div>
               )}
             </div>
@@ -383,8 +426,8 @@ function CreateJobForm() {
               </label>
               <select
                 value={employmentType}
-                onChange={(e) => setEmploymentType(e.target.value)}
-                className="w-full px-4 py-2.5 bg-muted/30 border border-border rounded-lg text-sm text-foreground focus:outline-none focus:border-primary transition-all"
+                onChange={(e) => { setEmploymentType(e.target.value); setValidationErrors(prev => ({...prev, employmentType: ''})); }}
+                className={`w-full px-4 py-2.5 bg-muted/30 border rounded-lg text-sm text-foreground focus:outline-none transition-all ${validationErrors.employmentType ? 'border-rose-500 focus:border-rose-500' : 'border-border focus:border-primary'}`}
               >
                 <option value="Full-time">Full-time (Tetap)</option>
                 <option value="Contract">Contract (Kontrak)</option>
@@ -392,6 +435,7 @@ function CreateJobForm() {
                 <option value="Internship">Internship (Magang)</option>
                 <option value="Freelance">Freelance</option>
               </select>
+              {validationErrors.employmentType && <p className="text-rose-500 text-[10px] mt-1.5 font-medium">{validationErrors.employmentType}</p>}
             </div>
 
             {/* Work Mode & Location */}
@@ -402,21 +446,26 @@ function CreateJobForm() {
               <div className="flex gap-2">
                 <select
                   value={workMode}
-                  onChange={(e) => setWorkMode(e.target.value)}
-                  className="w-1/3 px-3 py-2.5 bg-muted/30 border border-border rounded-lg text-sm text-foreground focus:outline-none focus:border-primary transition-all"
+                  onChange={(e) => { setWorkMode(e.target.value); setValidationErrors(prev => ({...prev, workMode: ''})); }}
+                  className={`w-1/3 px-3 py-2.5 bg-muted/30 border rounded-lg text-sm text-foreground focus:outline-none transition-all ${validationErrors.workMode ? 'border-rose-500 focus:border-rose-500' : 'border-border focus:border-primary'}`}
                 >
                   <option value="hybrid">Hybrid</option>
                   <option value="remote">Remote</option>
                   <option value="onsite">On-site</option>
                 </select>
-                <input
-                  type="text"
-                  value={location}
-                  onChange={(e) => setLocation(e.target.value)}
-                  placeholder="Misal: Jakarta, Indonesia"
-                  className="w-2/3 px-4 py-2.5 bg-muted/30 border border-border rounded-lg text-sm text-foreground focus:outline-none focus:border-primary transition-all"
-                />
+                <div className="w-2/3">
+                  <input
+                    type="text"
+                    value={location}
+                    onChange={(e) => { setLocation(e.target.value); setValidationErrors(prev => ({...prev, location: ''})); }}
+                    placeholder="Misal: Jakarta, Indonesia"
+                    className={`w-full px-4 py-2.5 bg-muted/30 border rounded-lg text-sm text-foreground focus:outline-none transition-all ${validationErrors.location ? 'border-rose-500 focus:border-rose-500' : 'border-border focus:border-primary'}`}
+                  />
+                </div>
               </div>
+              {(validationErrors.workMode || validationErrors.location) && (
+                <p className="text-rose-500 text-[10px] mt-1.5 font-medium">{validationErrors.workMode || validationErrors.location}</p>
+              )}
             </div>
 
             {/* Experience Level */}
@@ -426,25 +475,26 @@ function CreateJobForm() {
               </label>
               <select
                 value={experienceLevel}
-                onChange={(e) => setExperienceLevel(e.target.value)}
-                className="w-full px-4 py-2.5 bg-muted/30 border border-border rounded-lg text-sm text-foreground focus:outline-none focus:border-primary transition-all"
+                onChange={(e) => { setExperienceLevel(e.target.value); setValidationErrors(prev => ({...prev, experienceLevel: ''})); }}
+                className={`w-full px-4 py-2.5 bg-muted/30 border rounded-lg text-sm text-foreground focus:outline-none transition-all ${validationErrors.experienceLevel ? 'border-rose-500 focus:border-rose-500' : 'border-border focus:border-primary'}`}
               >
                 <option value="Entry Level">Entry Level (0 - 1 Tahun)</option>
                 <option value="Mid Level">Mid Level (2 - 4 Tahun)</option>
                 <option value="Senior Level">Senior Level (5+ Tahun)</option>
                 <option value="Lead / Manager">Lead / Manager (8+ Tahun)</option>
               </select>
+              {validationErrors.experienceLevel && <p className="text-rose-500 text-[10px] mt-1.5 font-medium">{validationErrors.experienceLevel}</p>}
             </div>
 
             {/* Minimal Pendidikan */}
             <div>
               <label className="block text-xs font-semibold text-foreground mb-2">
-                Minimal Pendidikan
+                Minimal Pendidikan <span className="text-rose-500">*</span>
               </label>
               <select
                 value={pendidikanMin}
-                onChange={(e) => setPendidikanMin(e.target.value)}
-                className="w-full px-4 py-2.5 bg-muted/30 border border-border rounded-lg text-sm text-foreground focus:outline-none focus:border-primary transition-all"
+                onChange={(e) => { setPendidikanMin(e.target.value); setValidationErrors(prev => ({...prev, pendidikanMin: ''})); }}
+                className={`w-full px-4 py-2.5 bg-muted/30 border rounded-lg text-sm text-foreground focus:outline-none transition-all ${validationErrors.pendidikanMin ? 'border-rose-500 focus:border-rose-500' : 'border-border focus:border-primary'}`}
               >
                 <option value="" disabled>-- Pilih Pendidikan --</option>
                 <option value="SMA/SMK">SMA / SMK Sederajat</option>
@@ -453,6 +503,7 @@ function CreateJobForm() {
                 <option value="S2">S2 (Magister)</option>
                 <option value="S3">S3 (Doktor)</option>
               </select>
+              {validationErrors.pendidikanMin && <p className="text-rose-500 text-[10px] mt-1.5 font-medium">{validationErrors.pendidikanMin}</p>}
             </div>
           </div>
         </div>
@@ -475,18 +526,18 @@ function CreateJobForm() {
             </label>
             <textarea
               rows={4}
-              required
               value={summary}
-              onChange={(e) => setSummary(e.target.value)}
+              onChange={(e) => { setSummary(e.target.value); setValidationErrors(prev => ({...prev, summary: ''})); }}
               placeholder={t.jobs.roleSummaryPlaceholder}
-              className="w-full p-4 bg-muted/30 border border-border rounded-lg text-sm text-foreground focus:outline-none focus:border-primary transition-all resize-none"
+              className={`w-full p-4 bg-muted/30 border rounded-lg text-sm text-foreground focus:outline-none focus:ring-1 transition-all resize-none ${validationErrors.summary ? 'border-rose-500 focus:border-rose-500 focus:ring-rose-500' : 'border-border focus:border-primary focus:ring-primary'}`}
             ></textarea>
+            {validationErrors.summary && <p className="text-rose-500 text-[10px] mt-1.5 font-medium">{validationErrors.summary}</p>}
           </div>
 
           {/* Key Responsibilities */}
           <div>
             <label className="block text-xs font-semibold text-foreground mb-2">
-              {t.jobs.keyResponsibilities}
+              {t.jobs.keyResponsibilities} <span className="text-rose-500">*</span>
             </label>
             <ul className="space-y-2 mb-3">
               {responsibilities.map((resp, i) => (
@@ -516,19 +567,20 @@ function CreateJobForm() {
               />
               <button
                 type="button"
-                onClick={handleAddResponsibility}
+                onClick={() => { handleAddResponsibility(); setValidationErrors(prev => ({...prev, responsibilities: ''})); }}
                 className="px-3 py-2 bg-muted hover:bg-muted/80 text-foreground text-xs font-medium rounded-lg transition-colors flex items-center gap-1"
               >
                 <Plus size={14} />
                 Tambah
               </button>
             </div>
+            {validationErrors.responsibilities && <p className="text-rose-500 text-[10px] mt-1.5 font-medium">{validationErrors.responsibilities}</p>}
           </div>
 
           {/* Qualifications & Requirements */}
           <div>
             <label className="block text-xs font-semibold text-foreground mb-2">
-              {t.jobs.requirements}
+              {t.jobs.requirements} <span className="text-rose-500">*</span>
             </label>
             <ul className="space-y-2 mb-3">
               {requirements.map((req, i) => (
@@ -558,19 +610,20 @@ function CreateJobForm() {
               />
               <button
                 type="button"
-                onClick={handleAddRequirement}
+                onClick={() => { handleAddRequirement(); setValidationErrors(prev => ({...prev, requirements: ''})); }}
                 className="px-3 py-2 bg-muted hover:bg-muted/80 text-foreground text-xs font-medium rounded-lg transition-colors flex items-center gap-1"
               >
                 <Plus size={14} />
                 Tambah
               </button>
             </div>
+            {validationErrors.requirements && <p className="text-rose-500 text-[10px] mt-1.5 font-medium">{validationErrors.requirements}</p>}
           </div>
 
           {/* AI PO-FIT Keywords */}
           <div>
             <label className="block text-xs font-semibold text-foreground mb-1">
-              {t.jobs.aiKeywords}
+              {t.jobs.aiKeywords} <span className="text-rose-500">*</span>
             </label>
             <p className="text-[11px] text-muted-foreground mb-3">
               Keahlian ini akan ditambahkan sebagai bobot utama perhitungan AI saat membandingkan kecocokan dengan CV kandidat.
@@ -593,11 +646,12 @@ function CreateJobForm() {
                 type="text"
                 value={keywordInput}
                 onChange={(e) => setKeywordInput(e.target.value)}
-                onKeyDown={handleAddKeyword}
+                onKeyDown={(e) => { handleAddKeyword(e); setValidationErrors(prev => ({...prev, aiKeywords: ''})); }}
                 placeholder={t.jobs.aiKeywordsPlaceholder}
                 className="flex-1 bg-transparent text-xs text-foreground focus:outline-none min-w-[200px] py-1"
               />
             </div>
+            {validationErrors.aiKeywords && <p className="text-rose-500 text-[10px] mt-1.5 font-medium">{validationErrors.aiKeywords}</p>}
           </div>
         </div>
 
@@ -651,7 +705,7 @@ function CreateJobForm() {
             <div className="flex justify-between items-center mb-3">
               <label className="text-xs font-bold text-foreground flex items-center gap-1.5">
                 <Video size={16} className="text-foreground" />
-                {t.jobs.videoQuestions}
+                {t.jobs.videoQuestions} <span className="text-rose-500">*</span>
               </label>
               <span className="text-xs text-muted-foreground font-mono">
                 {videoQuestions.length} / 5 Pertanyaan
@@ -688,7 +742,7 @@ function CreateJobForm() {
                 />
                 <button
                   type="button"
-                  onClick={handleAddQuestion}
+                  onClick={() => { handleAddQuestion(); setValidationErrors(prev => ({...prev, videoQuestions: ''})); }}
                   className="px-4 py-2 bg-primary text-primary-foreground hover:bg-primary/90 text-xs font-medium rounded-lg transition-colors flex items-center gap-1 shrink-0"
                 >
                   <Plus size={14} />
@@ -696,6 +750,7 @@ function CreateJobForm() {
                 </button>
               </div>
             )}
+            {validationErrors.videoQuestions && <p className="text-rose-500 text-[10px] mt-1.5 font-medium">{validationErrors.videoQuestions}</p>}
           </div>
         </div>
 
@@ -712,7 +767,7 @@ function CreateJobForm() {
             {/* Currency & Min Salary */}
             <div>
               <label className="block text-xs font-semibold text-foreground mb-2">
-                {t.jobs.salaryMin}
+                {t.jobs.salaryMin} <span className="text-rose-500">*</span>
               </label>
               <div className="flex gap-2">
                 <select
@@ -723,28 +778,32 @@ function CreateJobForm() {
                   <option value="IDR">IDR (Rp)</option>
                   <option value="USD">USD ($)</option>
                 </select>
-                <input
-                  type="text"
-                  value={salaryMin}
-                  onChange={(e) => setSalaryMin(e.target.value)}
-                  placeholder="Misal: 8.000.000"
-                  className="flex-1 px-4 py-2.5 bg-muted/30 border border-border rounded-lg text-sm text-foreground focus:outline-none focus:border-primary"
-                />
+                <div className="flex-1">
+                  <input
+                    type="text"
+                    value={salaryMin}
+                    onChange={(e) => { setSalaryMin(formatNumberWithDots(e.target.value)); setValidationErrors(prev => ({...prev, salaryMin: ''})); }}
+                    placeholder="Misal: 8.000.000"
+                    className={`w-full px-4 py-2.5 bg-muted/30 border rounded-lg text-sm text-foreground focus:outline-none focus:ring-1 transition-all ${validationErrors.salaryMin ? 'border-rose-500 focus:border-rose-500 focus:ring-rose-500' : 'border-border focus:border-primary focus:ring-primary'}`}
+                  />
+                </div>
               </div>
+              {validationErrors.salaryMin && <p className="text-rose-500 text-[10px] mt-1.5 font-medium">{validationErrors.salaryMin}</p>}
             </div>
 
             {/* Max Salary */}
             <div>
               <label className="block text-xs font-semibold text-foreground mb-2">
-                {t.jobs.salaryMax}
+                {t.jobs.salaryMax} <span className="text-rose-500">*</span>
               </label>
               <input
                 type="text"
                 value={salaryMax}
-                onChange={(e) => setSalaryMax(e.target.value)}
+                onChange={(e) => { setSalaryMax(formatNumberWithDots(e.target.value)); setValidationErrors(prev => ({...prev, salaryMax: ''})); }}
                 placeholder="Misal: 15.000.000"
-                className="w-full px-4 py-2.5 bg-muted/30 border border-border rounded-lg text-sm text-foreground focus:outline-none focus:border-primary"
+                className={`w-full px-4 py-2.5 bg-muted/30 border rounded-lg text-sm text-foreground focus:outline-none focus:ring-1 transition-all ${validationErrors.salaryMax ? 'border-rose-500 focus:border-rose-500 focus:ring-rose-500' : 'border-border focus:border-primary focus:ring-primary'}`}
               />
+              {validationErrors.salaryMax && <p className="text-rose-500 text-[10px] mt-1.5 font-medium">{validationErrors.salaryMax}</p>}
             </div>
 
             <div className="col-span-2 flex items-center gap-2">
@@ -810,28 +869,31 @@ function CreateJobForm() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div>
               <label className="block text-xs font-semibold text-foreground mb-2">
-                {t.jobs.deadline}
+                {t.jobs.deadline} <span className="text-rose-500">*</span>
               </label>
               <input
                 type="date"
+                min={today}
                 value={deadline}
-                onChange={(e) => setDeadline(e.target.value)}
-                className="w-full px-4 py-2.5 bg-muted/30 border border-border rounded-lg text-sm text-foreground focus:outline-none focus:border-primary"
+                onChange={(e) => { setDeadline(e.target.value); setValidationErrors(prev => ({...prev, deadline: ''})); }}
+                className={`w-full px-4 py-2.5 bg-muted/30 border rounded-lg text-sm text-foreground focus:outline-none focus:ring-1 transition-all ${validationErrors.deadline ? 'border-rose-500 focus:border-rose-500 focus:ring-rose-500' : 'border-border focus:border-primary focus:ring-primary'}`}
               />
+              {validationErrors.deadline && <p className="text-rose-500 text-[10px] mt-1.5 font-medium">{validationErrors.deadline}</p>}
             </div>
 
             <div>
               <label className="block text-xs font-semibold text-foreground mb-2">
-                {t.jobs.openingsCount}
+                {t.jobs.openingsCount} <span className="text-rose-500">*</span>
               </label>
               <input
                 type="number"
                 min="1"
                 max="50"
                 value={openingsCount}
-                onChange={(e) => setOpeningsCount(Number(e.target.value))}
-                className="w-full px-4 py-2.5 bg-muted/30 border border-border rounded-lg text-sm text-foreground focus:outline-none focus:border-primary"
+                onChange={(e) => { setOpeningsCount(Number(e.target.value)); setValidationErrors(prev => ({...prev, openingsCount: ''})); }}
+                className={`w-full px-4 py-2.5 bg-muted/30 border rounded-lg text-sm text-foreground focus:outline-none focus:ring-1 transition-all ${validationErrors.openingsCount ? 'border-rose-500 focus:border-rose-500 focus:ring-rose-500' : 'border-border focus:border-primary focus:ring-primary'}`}
               />
+              {validationErrors.openingsCount && <p className="text-rose-500 text-[10px] mt-1.5 font-medium">{validationErrors.openingsCount}</p>}
             </div>
 
             <div>
@@ -843,9 +905,8 @@ function CreateJobForm() {
                 onChange={(e) => setVisibility(e.target.value)}
                 className="w-full px-4 py-2.5 bg-muted/30 border border-border rounded-lg text-sm text-foreground focus:outline-none focus:border-primary"
               >
-                <option value="Public">Publik di Portal Rekrutmen</option>
-                <option value="Internal">Khusus Undangan Internal</option>
-                <option value="Draft">Simpan Draf Saja</option>
+                <option value="Public">Publik</option>
+                <option value="Internal">Draf</option>
               </select>
             </div>
           </div>

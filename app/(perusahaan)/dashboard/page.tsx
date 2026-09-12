@@ -43,6 +43,14 @@ export default function DashboardPage() {
   const [trendCv, setTrendCv] = useState('+0');
   const [avgSpeed, setAvgSpeed] = useState('< 2.5');
 
+  // Date filter state
+  const [startDate, setStartDate] = useState<string>(() => {
+    const d = new Date();
+    d.setDate(d.getDate() - 7);
+    return d.toISOString().split('T')[0];
+  });
+  const [endDate, setEndDate] = useState<string>(() => new Date().toISOString().split('T')[0]);
+
   // Dashboard stats
   const [stats, setStats] = useState({
     cvReceived: 0,
@@ -72,13 +80,26 @@ export default function DashboardPage() {
           appsData = appsJson.data || [];
         }
 
-        // Pipeline Chart Data (Last 7 Days)
+        // Pipeline Chart Data (Based on Date Filter)
         const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
         const chartDataMap: Record<string, number> = {};
-        for (let i = 6; i >= 0; i--) {
-          const d = new Date();
-          d.setDate(d.getDate() - i);
-          chartDataMap[days[d.getDay()]] = 0;
+        const start = new Date(startDate);
+        start.setHours(0, 0, 0, 0);
+        const end = new Date(endDate);
+        end.setHours(23, 59, 59, 999);
+        
+        // Populate chart map with days in range
+        let curr = new Date(start);
+        while (curr <= end) {
+          const rangeDays = Math.ceil((end.getTime() - start.getTime()) / (1000 * 3600 * 24));
+          let keyStr = '';
+          if (rangeDays <= 7) {
+            keyStr = days[curr.getDay()];
+          } else {
+            keyStr = `${curr.getDate()}/${curr.getMonth()+1}`;
+          }
+          if (!chartDataMap[keyStr]) chartDataMap[keyStr] = 0;
+          curr.setDate(curr.getDate() + 1);
         }
         
         // Also trend metrics calculations
@@ -101,9 +122,17 @@ export default function DashboardPage() {
           }
           if (a.applied_at) {
             const appliedDate = new Date(a.applied_at);
-            const dayStr = days[appliedDate.getDay()];
-            if (chartDataMap[dayStr] !== undefined) {
-              chartDataMap[dayStr]++;
+            if (appliedDate >= start && appliedDate <= end) {
+              const rangeDays = Math.ceil((end.getTime() - start.getTime()) / (1000 * 3600 * 24));
+              let keyStr = '';
+              if (rangeDays <= 7) {
+                keyStr = days[appliedDate.getDay()];
+              } else {
+                keyStr = `${appliedDate.getDate()}/${appliedDate.getMonth()+1}`;
+              }
+              if (chartDataMap[keyStr] !== undefined) {
+                chartDataMap[keyStr]++;
+              }
             }
             if (appliedDate >= oneWeekAgo) {
               cvThisWeek++;
@@ -212,17 +241,30 @@ export default function DashboardPage() {
         setRecentActivities(recent);
 
         // Get Pending Candidates (status === 'human_validation')
-        const pending = appsData.filter((a: any) => a.status === 'human_validation').map((a: any) => ({
-          id: a.id,
-          name: a.pelamar?.nama_lengkap || "Candidate",
-          role: a.job?.judul_posisi || "Role",
-          education: "-", // Education not exposed in /api/applications/ default
-          stage: "human_validation",
-          status: "needs_approval",
-          cvScore: Math.round(a.analisis_cv?.skor_kecocokan || 0),
-          videoUploaded: true,
-          videoScores: { ability: 85, intelligent: 92, personality: 78, attitude: 88, emotionalIntelligence: 80 } // Mock video scores for now as they aren't in applications/ list
-        }));
+        const pending = appsData.filter((a: any) => a.status === 'human_validation').map((a: any) => {
+          let videoScores: any = "Belum ada";
+          if (a.ai_result?.dimensi_psikologis) {
+            const parseScore = (val: string) => parseFloat(val.replace('%', ''));
+            videoScores = {
+              ability: parseScore(a.ai_result.dimensi_psikologis.Ability || '0'),
+              intelligent: parseScore(a.ai_result.dimensi_psikologis.Intelligent || '0'),
+              personality: parseScore(a.ai_result.dimensi_psikologis.Personality || '0'),
+              attitude: parseScore(a.ai_result.dimensi_psikologis.Attitude || '0'),
+              emotionalIntelligence: parseScore(a.ai_result.dimensi_psikologis['Emotional Intelligent'] || '0')
+            };
+          }
+          return {
+            id: a.id,
+            name: a.pelamar?.nama_lengkap || "Candidate",
+            role: a.job?.judul_posisi || "Role",
+            education: "-",
+            stage: "human_validation",
+            status: "needs_approval",
+            cvScore: Math.round(a.analisis_cv?.skor_kecocokan || 0),
+            videoUploaded: !!a.video_url,
+            videoScores: videoScores
+          };
+        });
         setPendingCandidates(pending);
 
         // Process Jobs with correct `passed` count
@@ -247,275 +289,204 @@ export default function DashboardPage() {
       }
     };
     loadData();
-  }, []);
+  }, [startDate, endDate]);
 
   return (
-    <div className="max-w-7xl mx-auto space-y-8 pb-16 animate-in fade-in duration-300">
-
-      {/* Header Banner */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-border pb-5">
+    <div className="max-w-7xl mx-auto space-y-4 pb-16 animate-in fade-in duration-500 font-sans">
+      
+      {/* Global Header & Date Picker */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-2">
         <div>
-          <div className="flex items-center gap-2">
-            <h1 className="text-2xl font-extrabold text-foreground tracking-tight">{t.dashboard.title}</h1>
-          </div>
-          <p className="text-sm text-muted-foreground mt-1">{t.dashboard.subtitle}</p>
+          <h1 className="text-xl font-bold text-slate-900 dark:text-white tracking-tight">{t.dashboard.title}</h1>
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{t.dashboard.subtitle}</p>
         </div>
-
-        <div className="flex items-center gap-3 w-full sm:w-auto">
+        <div className="flex items-center gap-2 bg-white dark:bg-slate-950 p-1.5 rounded-lg border border-slate-200 dark:border-slate-800 shadow-sm">
+          <div className="relative">
+            <input 
+              type="date" 
+              value={startDate}
+              onChange={(e) => setStartDate(e.target.value)}
+              className="pl-7 pr-2 py-1.5 text-[11px] font-semibold bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded text-slate-700 dark:text-slate-300 outline-none focus:border-blue-500 transition-all cursor-pointer"
+            />
+            <Calendar size={12} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+          </div>
+          <span className="text-slate-400 text-xs font-medium px-1">-</span>
+          <div className="relative">
+            <input 
+              type="date" 
+              value={endDate}
+              onChange={(e) => setEndDate(e.target.value)}
+              className="pl-7 pr-2 py-1.5 text-[11px] font-semibold bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded text-slate-700 dark:text-slate-300 outline-none focus:border-blue-500 transition-all cursor-pointer"
+            />
+            <Calendar size={12} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+          </div>
         </div>
       </div>
 
-      {/* Executive Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
+      {/* Row 1: Dense Quick Metrics */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         <StatCard
-          title={t.dashboard.cvReceived || 'CV DITERIMA'}
+          title={t.dashboard.cvReceived || 'Total CV Masuk'}
           value={stats.cvReceived.toString()}
-          subtitle={t.dashboard.cvReceivedSub || 'minggu ini'}
-          icon={<Users size={18} />}
+          icon={<Users size={16} />}
           trend={trendCv.startsWith('-') ? 'down' : 'up'}
           trendValue={trendCv}
-          iconBgColor="bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700"
-          iconColor="text-slate-800 dark:text-slate-200"
         />
         <StatCard
-          title={t.dashboard.passedScreening || 'LOLOS CV SCREENING'}
+          title={t.dashboard.passedScreening || 'Lolos AI (Threshold)'}
           value={stats.passedScreening.toString()}
-          subtitle={t.dashboard.passedScreeningSub || 'threshold >= 60%'}
-          icon={<BrainCircuit size={18} />}
+          icon={<BrainCircuit size={16} />}
           trend="neutral"
           trendValue="-"
-          iconBgColor="bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700"
-          iconColor="text-slate-800 dark:text-slate-200"
         />
         <StatCard
-          title={t.dashboard.interviewScheduled || 'WAWANCARA VIDEO'}
+          title={t.dashboard.interviewScheduled || 'Wawancara Terjadwal'}
           value={stats.interviewScheduled.toString()}
-          subtitle={t.dashboard.interviewScheduledSub || 'proses analisis AI'}
-          icon={<Calendar size={18} />}
+          icon={<Calendar size={16} />}
           trend="neutral"
           trendValue="-"
-          iconBgColor="bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700"
-          iconColor="text-slate-800 dark:text-slate-200"
         />
         <StatCard
-          title={t.dashboard.awaitingValidation || 'MENUNGGU VALIDASI HR'}
+          title={t.dashboard.awaitingValidation || 'Perlu Validasi HR'}
           value={stats.awaitingValidation.toString()}
-          subtitle={t.dashboard.awaitingValidationSub || 'siap dikonfirmasi HR'}
-          icon={<Clock size={18} />}
+          icon={<Clock size={16} />}
           trend="neutral"
           trendValue="-"
-          iconBgColor="bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700"
-          iconColor="text-slate-800 dark:text-slate-200"
+          highlight={stats.awaitingValidation > 0}
         />
       </div>
 
-      {/* PENDING HR APPROVAL PANEL */}
-      <div className="bg-card p-6 rounded-2xl border border-border shadow-xs space-y-4">
-
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-border pb-4">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 flex items-center justify-center font-bold border border-slate-200 dark:border-slate-700 shrink-0 shadow-2xs">
-              <UserCheck size={20} />
+      {/* Row 2: Action Items (Left 50%) & Pipeline (Right 50%) */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        
+        {/* Left: Pending Validation List (Dense) */}
+        <div className="bg-white dark:bg-slate-950 p-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col min-h-[300px]">
+          <div className="flex justify-between items-center mb-4">
+            <div className="flex items-center gap-2">
+              <h2 className="text-sm font-bold text-slate-800 dark:text-slate-100">Tindakan Diperlukan</h2>
+              {pendingCandidates.length > 0 && (
+                <span className="px-2 py-0.5 bg-rose-100 text-rose-700 dark:bg-rose-500/20 dark:text-rose-300 font-bold text-[10px] uppercase rounded">
+                  {pendingCandidates.length} Antrean
+                </span>
+              )}
             </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <h2 className="font-bold text-base text-foreground">{t.dashboard.pendingApprovalTitle}</h2>
-                {pendingCandidates.length > 0 && (
-                  <span className="px-2.5 py-0.5 bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 border border-slate-200 dark:border-slate-700 font-bold text-[11px] rounded-md">
-                    {pendingCandidates.length} Perlu Validasi
-                  </span>
-                )}
-              </div>
-              <p className="text-xs text-muted-foreground mt-0.5">{t.dashboard.pendingApprovalSub}</p>
-            </div>
+            <Link href="/pipeline" className="text-[11px] font-bold text-blue-600 hover:underline">
+              Buka Pipeline
+            </Link>
           </div>
 
-          <Link
-            href="/pipeline"
-            className="text-xs font-bold text-primary hover:underline flex items-center gap-1 shrink-0"
-          >
-            Lihat Semua di Pipeline
+          <div className="flex-1 overflow-y-auto pr-1 space-y-2">
+            {pendingCandidates.length === 0 ? (
+              <div className="h-full flex flex-col items-center justify-center text-center p-6 border border-dashed border-slate-200 dark:border-slate-800 rounded-lg">
+                <CheckCircle2 size={24} className="text-slate-300 dark:text-slate-600 mb-2" />
+                <p className="text-xs font-bold text-slate-500 dark:text-slate-400">Tidak ada antrean validasi.</p>
+              </div>
+            ) : (
+              pendingCandidates.map((c, i) => (
+                <div key={i} className="p-3 bg-slate-50 dark:bg-slate-900/50 hover:bg-slate-100 dark:hover:bg-slate-900 border border-slate-200/60 dark:border-slate-800/60 rounded-lg flex items-center justify-between gap-3 transition-colors">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-full bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300 font-black flex items-center justify-center text-xs shrink-0">
+                      {c.name.charAt(0)}
+                    </div>
+                    <div>
+                      <h4 className="text-xs font-bold text-slate-900 dark:text-white leading-tight truncate max-w-[150px] sm:max-w-[200px]">{c.name}</h4>
+                      <p className="text-[10px] font-semibold text-slate-500 uppercase truncate max-w-[150px] sm:max-w-[200px]">{c.role}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <div className="hidden sm:flex flex-col items-end">
+                      <span className="text-[10px] font-bold text-slate-500">CV: {c.cvScore}%</span>
+                      <span className="text-[10px] font-bold text-slate-500">
+                        Vid: {typeof c.videoScores === 'string' ? 'N/A' : ((c.videoScores.ability + c.videoScores.intelligent + c.videoScores.personality + c.videoScores.attitude + c.videoScores.emotionalIntelligence) / 5).toFixed(1) + '%'}
+                      </span>
+                    </div>
+                    <button
+                      onClick={() => setSelectedCandidate(c)}
+                      className="px-3 py-1.5 bg-slate-900 hover:bg-blue-600 dark:bg-white dark:text-slate-900 dark:hover:bg-blue-500 text-white font-bold text-[10px] rounded-md transition-colors shadow-sm"
+                    >
+                      Review
+                    </button>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+
+        {/* Right: Chart & AI Speed */}
+        <div className="flex flex-col gap-4">
+          <PipelineChart data={pipelineData} />
+          
+          {/* AI Metrics Compact */}
+          <div className="grid grid-cols-2 gap-3">
+             <div className="bg-white dark:bg-slate-950 p-3 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col justify-center">
+                <span className="text-[10px] font-bold text-slate-500 uppercase mb-1">Akurasi AI vs HR</span>
+                <span className="text-xl font-black text-emerald-600 dark:text-emerald-400">{stats.aiHrAccuracy}%</span>
+             </div>
+             <div className="bg-white dark:bg-slate-950 p-3 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col justify-center">
+                <span className="text-[10px] font-bold text-slate-500 uppercase mb-1">Rata-rata Waktu</span>
+                <span className="text-xl font-black text-slate-800 dark:text-slate-200">{avgSpeed} <span className="text-[10px] font-semibold text-slate-500">dtk/CV</span></span>
+             </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Row 3: Active Jobs Dense Table */}
+      <div className="bg-white dark:bg-slate-950 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
+        <div className="flex items-center justify-between p-4 border-b border-slate-100 dark:border-slate-800">
+          <h2 className="text-sm font-bold text-slate-800 dark:text-slate-100">Lowongan Pekerjaan Aktif</h2>
+          <Link href="/jobs" className="text-[11px] font-bold text-blue-600 hover:underline">
+            Kelola Lowongan
           </Link>
         </div>
-
-        {/* Candidate Cards Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {pendingCandidates.length === 0 ? (
-            <div className="col-span-1 md:col-span-2 p-8 text-center bg-muted/20 border border-border rounded-xl">
-              <p className="text-sm text-muted-foreground font-medium">Tidak ada kandidat yang menunggu validasi HR saat ini.</p>
-            </div>
-          ) : (
-            pendingCandidates.map((c, i) => (
-              <div key={i} className="p-4 bg-muted/30 hover:bg-muted/50 rounded-xl border border-border transition-all flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                <div className="flex items-start gap-3">
-                  <div className="w-10 h-10 rounded-full bg-primary/15 text-primary dark:bg-primary/30 dark:text-blue-300 font-black flex items-center justify-center text-sm border border-primary/30 shrink-0 mt-0.5 sm:mt-0 shadow-2xs">
-                    {c.name.charAt(0)}
-                  </div>
-                  <div className="space-y-1">
-                    <h4 className="font-bold text-sm text-foreground leading-snug">{c.name}</h4>
-                    <p className="text-xs font-semibold text-muted-foreground">{c.role}</p>
-
-                    {c.education && c.education !== "-" && (
-                      <div className="inline-flex items-center gap-1 text-[11px] font-bold text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-md border border-slate-200 dark:border-slate-700">
-                        <GraduationCap size={12} className="text-slate-600 dark:text-slate-400 shrink-0" />
-                        <span>{c.education}</span>
-                      </div>
-                    )}
-
-                    <div className="flex flex-wrap items-center gap-2 pt-1">
-                      <span className="px-2.5 py-0.5 bg-slate-100 text-slate-800 dark:bg-slate-800 dark:text-slate-200 font-bold text-[11px] rounded-md border border-slate-200 dark:border-slate-700">
-                        CV Match: {c.cvScore}%
-                      </span>
-                      <span className="px-2.5 py-0.5 bg-slate-100 text-slate-800 dark:bg-slate-800 dark:text-slate-200 font-bold text-[11px] rounded-md border border-slate-200 dark:border-slate-700">
-                        Video Score: {c.videoScores ? ((c.videoScores.ability + c.videoScores.intelligent + c.videoScores.personality + c.videoScores.attitude + c.videoScores.emotionalIntelligence) / 5).toFixed(1) : '-'}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-
-                <button
-                  onClick={() => setSelectedCandidate(c)}
-                  className="w-full sm:w-auto px-4 py-2 bg-primary hover:bg-primary/90 text-primary-foreground font-extrabold text-xs rounded-xl transition-all shrink-0 flex items-center justify-center gap-1.5 shadow-sm active:scale-95 cursor-pointer"
-                >
-                  <UserCheck size={14} />
-                  {t.dashboard.validateNow}
-                </button>
-              </div>
-            ))
-          )}
-        </div>
-      </div>
-
-      {/* Main Content Grid (Chart + Jobs & AI Performance) */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-
-        {/* Left Columns (Chart + Active Jobs) */}
-        <div className="lg:col-span-2 space-y-6">
-
-          {/* Pipeline Growth Chart */}
-          <PipelineChart data={pipelineData} />
-
-          {/* ACTIVE JOBS OVERVIEW */}
-          <div className="bg-card p-5 sm:p-6 rounded-2xl border border-border shadow-sm space-y-4 w-full">
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 border-b border-border pb-4">
-              <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-slate-100 flex items-center justify-center font-bold shrink-0 border border-slate-200 dark:border-slate-700">
-                  <Briefcase size={18} />
-                </div>
-                <div>
-                  <h3 className="font-bold text-base text-foreground">{t.dashboard.activeJobsTitle}</h3>
-                  <p className="text-xs text-muted-foreground">{t.dashboard.activeJobsSub}</p>
-                </div>
-              </div>
-
-              <Link
-                href="/jobs"
-                className="text-xs font-bold text-primary hover:underline flex items-center gap-1 self-end sm:self-auto"
-              >
-                {t.dashboard.viewAllJobs}
-              </Link>
-            </div>
-
-            <div className="space-y-3">
+        <div className="overflow-x-auto">
+          <table className="w-full text-left border-collapse">
+            <thead>
+              <tr className="bg-slate-50 dark:bg-slate-900/50 border-b border-slate-100 dark:border-slate-800">
+                <th className="py-2.5 px-4 text-[10px] font-bold text-slate-500 uppercase tracking-wider">Posisi</th>
+                <th className="py-2.5 px-4 text-[10px] font-bold text-slate-500 uppercase tracking-wider">Departemen</th>
+                <th className="py-2.5 px-4 text-[10px] font-bold text-slate-500 uppercase tracking-wider">Dibuat</th>
+                <th className="py-2.5 px-4 text-[10px] font-bold text-slate-500 uppercase tracking-wider text-right">Pelamar</th>
+                <th className="py-2.5 px-4 text-[10px] font-bold text-slate-500 uppercase tracking-wider text-right">Lolos AI</th>
+                <th className="py-2.5 px-4 text-[10px] font-bold text-slate-500 uppercase tracking-wider text-center">Aksi</th>
+              </tr>
+            </thead>
+            <tbody>
               {activeJobs.map((job, idx) => (
-                <div key={idx} className="p-4 bg-muted/30 border border-border rounded-xl flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3.5 hover:bg-muted/50 transition-colors w-full">
-                  <div className="space-y-1 w-full sm:w-auto">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <h4 className="font-bold text-sm text-foreground">{job.title}</h4>
-                      <span className="px-2 py-0.5 bg-muted text-muted-foreground text-[10px] rounded-md font-bold border border-border shrink-0">
-                        {job.department}
-                      </span>
-                    </div>
-                    <p className="text-xs text-muted-foreground">
-                      Dipublikasikan {job.posted} &bull; <span>Threshold: {job.threshold}%</span>
-                    </p>
-                  </div>
-
-                  <div className="flex items-center justify-between sm:justify-end gap-3 w-full sm:w-auto border-t sm:border-t-0 border-border/60 pt-2 sm:pt-0">
-                    <div className="text-left sm:text-right">
-                      <p className="text-xs font-bold text-foreground">{job.applicants} Pelamar</p>
-                      <p className="text-[11px] text-muted-foreground font-semibold">
-                        {job.passed} Lolos Screening
-                      </p>
-                    </div>
-
-                    <Link
-                      href="/pipeline"
-                      className="px-3.5 py-1.5 bg-card border border-border hover:bg-muted text-foreground text-xs font-bold rounded-lg transition-colors flex items-center gap-1 shrink-0 shadow-2xs"
-                    >
-                      Pipeline
+                <tr key={idx} className="border-b border-slate-100 dark:border-slate-800 hover:bg-slate-50/50 dark:hover:bg-slate-900/30 transition-colors">
+                  <td className="py-2.5 px-4 text-xs font-bold text-slate-900 dark:text-slate-100">{job.title}</td>
+                  <td className="py-2.5 px-4">
+                    <span className="px-2 py-0.5 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 text-[10px] font-bold rounded">
+                      {job.department}
+                    </span>
+                  </td>
+                  <td className="py-2.5 px-4 text-[11px] font-medium text-slate-500">{job.posted}</td>
+                  <td className="py-2.5 px-4 text-xs font-bold text-slate-700 dark:text-slate-300 text-right">{job.applicants}</td>
+                  <td className="py-2.5 px-4 text-xs font-bold text-emerald-600 dark:text-emerald-400 text-right">{job.passed}</td>
+                  <td className="py-2.5 px-4 text-center">
+                    <Link href={`/pipeline`} className="text-[10px] font-bold text-slate-600 hover:text-blue-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700 px-2 py-1 rounded hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
+                      Lihat
                     </Link>
-                  </div>
-                </div>
+                  </td>
+                </tr>
               ))}
-            </div>
-          </div>
-
+              {activeJobs.length === 0 && (
+                <tr>
+                  <td colSpan={6} className="py-6 text-center text-xs text-slate-500">Tidak ada lowongan aktif.</td>
+                </tr>
+              )}
+            </tbody>
+          </table>
         </div>
-
-        {/* Right Column (AI Metrics & Recent Activity) */}
-        <div className="space-y-6">
-
-          {/* AI SYSTEM PERFORMANCE METRICS */}
-          <div className="bg-card p-6 rounded-2xl border border-border shadow-sm space-y-4">
-            <div className="flex items-center gap-2.5 border-b border-border pb-3">
-              <div className="w-8 h-8 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-slate-100 flex items-center justify-center font-bold shrink-0 border border-slate-200 dark:border-slate-700">
-                <BrainCircuit size={18} />
-              </div>
-              <h3 className="font-bold text-base text-foreground">{t.dashboard.aiPerformanceTitle}</h3>
-            </div>
-
-            <div className="space-y-3">
-              {/* Avg Cosine Similarity */}
-              <div className="p-4 bg-muted/30 border border-border rounded-xl space-y-2">
-                <div className="flex justify-between items-center text-xs">
-                  <span className="font-bold text-foreground">{t.dashboard.avgCosineSimilarity}</span>
-                  <span className="font-bold text-primary">{stats.avgCosineSimilarity}%</span>
-                </div>
-                <div className="w-full bg-muted rounded-full h-2 overflow-hidden">
-                  <div className="bg-primary h-full rounded-full" style={{ width: `${stats.avgCosineSimilarity}%` }}></div>
-                </div>
-              </div>
-
-              {/* AI vs HR Accuracy */}
-              <div className="p-4 bg-muted/30 border border-border rounded-xl space-y-2">
-                <div className="flex justify-between items-center text-xs">
-                  <span className="font-bold text-foreground">{t.dashboard.aiHrAccuracy}</span>
-                  <span className="font-bold text-emerald-600 dark:text-emerald-400">{stats.aiHrAccuracy}%</span>
-                </div>
-                <div className="w-full bg-muted rounded-full h-2 overflow-hidden">
-                  <div className="bg-emerald-600 h-full rounded-full" style={{ width: `${stats.aiHrAccuracy}%` }}></div>
-                </div>
-              </div>
-
-              {/* Avg Screening Speed */}
-              <div className="p-4 bg-muted/30 border border-border rounded-xl flex items-center justify-between">
-                <div>
-                  <p className="text-xs font-bold text-foreground">{t.dashboard.avgProcessingSpeed}</p>
-                  <p className="text-xs text-muted-foreground">{avgSpeed} Detik per Berkas CV</p>
-                </div>
-                <span className="text-xs font-semibold text-muted-foreground">
-                  Kecepatan Tinggi
-                </span>
-              </div>
-            </div>
-          </div>
-
-          {/* Recent Activity Feed */}
-          <RecentActivity activities={recentActivities} />
-
-        </div>
-
       </div>
 
-      {/* Candidate Modal Render for Quick Validation */}
+      {/* Candidate Modal */}
       {selectedCandidate && (
         <CandidateModal
           candidate={selectedCandidate}
           onClose={() => setSelectedCandidate(null)}
         />
       )}
-
     </div>
   );
 }

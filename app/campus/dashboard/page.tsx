@@ -56,42 +56,30 @@ export default function KampusDashboardPage() {
         <StatCard
           title={t.kampus?.totalStudents || 'MAHASISWA TERDAFTAR'}
           value="1,250"
-          subtitle="Tercatat dalam portal karir"
-          icon={<GraduationCap size={20} />}
+          icon={<GraduationCap size={16} />}
           trend="up"
           trendValue="+142"
-          iconBgColor="bg-purple-50 dark:bg-purple-950/60 border border-purple-200/80 dark:border-purple-800"
-          iconColor="text-purple-600 dark:text-purple-400"
         />
         <StatCard
           title={t.kampus?.employmentRate || 'TINGKAT DITERIMA KERJA'}
           value="68.4%"
-          subtitle="855 Mahasiswa telah bekerja"
-          icon={<Award size={20} />}
+          icon={<Award size={16} />}
           trend="up"
           trendValue="+5.2%"
-          iconBgColor="bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200/80 dark:border-emerald-800"
-          iconColor="text-emerald-600 dark:text-emerald-400"
         />
         <StatCard
           title={t.kampus?.partnerCompanies || 'PERUSAHAAN PEREKRUT'}
           value="48"
-          subtitle="Mitra industri aktif"
-          icon={<Building2 size={20} />}
+          icon={<Building2 size={16} />}
           trend="up"
           trendValue="+8 Mitra"
-          iconBgColor="bg-sky-50 dark:bg-sky-950/60 border border-sky-200/80 dark:border-sky-800"
-          iconColor="text-sky-600 dark:text-sky-400"
         />
         <StatCard
           title={t.kampus?.inPipeline || 'AKTIF DALAM SELEKSI'}
           value="185"
-          subtitle="Sedang proses di AI Pipeline"
-          icon={<Sparkles size={20} />}
+          icon={<Sparkles size={16} />}
           trend="neutral"
           trendValue="185 Mahasiswa"
-          iconBgColor="bg-amber-50 dark:bg-amber-950/60 border border-amber-200/80 dark:border-amber-800"
-          iconColor="text-amber-600 dark:text-amber-400"
         />
       </div>
 

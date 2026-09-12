@@ -1,10 +1,9 @@
 'use client';
 
 import React from 'react';
-import { useTranslation } from '@/hooks/useTranslation';
 import {
-  LineChart,
-  Line,
+  AreaChart,
+  Area,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -21,62 +20,64 @@ interface PipelineChartProps {
   data: ChartDataPoint[];
 }
 
-export function PipelineChart({ data }: PipelineChartProps) {
-  const { t } = useTranslation();
-
-  return (
-    <div className="bg-card text-card-foreground p-6 rounded-2xl border border-border shadow-sm flex flex-col transition-colors duration-300 w-full">
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-lg font-bold">{t.dashboard.pipelineGrowth}</h2>
-        <div className="flex gap-2">
-          <button className="px-3 py-1 text-sm bg-primary/10 text-primary font-medium rounded-md">
-            {t.dashboard.weekly}
-          </button>
-          <button className="px-3 py-1 text-sm text-muted-foreground hover:bg-muted font-medium rounded-md transition-colors">
-            {t.dashboard.monthly}
-          </button>
+const CustomTooltip = ({ active, payload, label }: any) => {
+  if (active && payload && payload.length) {
+    return (
+      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-3 rounded-lg shadow-lg">
+        <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">{label}</p>
+        <div className="flex items-center gap-2">
+          <div className="w-2 h-2 rounded-full bg-blue-600"></div>
+          <p className="text-sm font-bold text-slate-900 dark:text-slate-100">{payload[0].value} <span className="font-medium text-slate-500">Pelamar</span></p>
         </div>
       </div>
+    );
+  }
+  return null;
+};
 
-      <div className="w-full h-[280px] sm:h-[320px]">
+export function PipelineChart({ data }: PipelineChartProps) {
+  return (
+    <div className="bg-white dark:bg-slate-950 p-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col w-full h-[220px]">
+      <div className="mb-4">
+        <h3 className="text-xs font-bold text-slate-800 dark:text-slate-200">Tren Pertumbuhan Pelamar</h3>
+      </div>
+      <div className="w-full flex-1">
         <ResponsiveContainer width="100%" height="100%">
-          <LineChart data={data} margin={{ top: 5, right: 10, left: -20, bottom: 0 }}>
+          <AreaChart data={data} margin={{ top: 5, right: 10, left: -25, bottom: 0 }}>
             <defs>
               <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="#1A4B9F" stopOpacity={0.15} />
-                <stop offset="95%" stopColor="#1A4B9F" stopOpacity={0} />
+                <stop offset="5%" stopColor="#2563EB" stopOpacity={0.25} />
+                <stop offset="95%" stopColor="#2563EB" stopOpacity={0} />
               </linearGradient>
             </defs>
-            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--color-border)" />
+            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="currentColor" className="text-slate-200 dark:text-slate-800/80" />
             <XAxis
               dataKey="name"
               axisLine={false}
               tickLine={false}
-              tick={{ fill: 'var(--color-muted-foreground)', fontSize: 12 }}
+              tick={{ fill: 'currentColor', fontSize: 10, fontWeight: 500 }}
+              className="text-slate-400 dark:text-slate-500"
               dy={10}
             />
             <YAxis
               axisLine={false}
               tickLine={false}
-              tick={{ fill: 'var(--color-muted-foreground)', fontSize: 12 }}
-              tickFormatter={(value) => value === 0 ? '0' : `${value / 1000}k`}
+              tick={{ fill: 'currentColor', fontSize: 10, fontWeight: 500 }}
+              className="text-slate-400 dark:text-slate-500"
+              tickFormatter={(value) => value === 0 ? '0' : value >= 1000 ? `${(value / 1000).toFixed(1)}k` : value}
+              dx={-5}
             />
-            <Tooltip
-              contentStyle={{
-                backgroundColor: 'var(--color-card)',
-                borderColor: 'var(--color-border)',
-                color: 'var(--color-card-foreground)'
-              }}
-            />
-            <Line
+            <Tooltip content={<CustomTooltip />} cursor={{ stroke: '#2563EB', strokeWidth: 1, strokeDasharray: '4 4' }} />
+            <Area
               type="monotone"
               dataKey="value"
-              stroke="#1A4B9F"
-              strokeWidth={4}
-              dot={{ r: 6, fill: 'var(--color-card)', stroke: '#1A4B9F', strokeWidth: 3 }}
-              activeDot={{ r: 8 }}
+              stroke="#2563EB"
+              strokeWidth={2}
+              fillOpacity={1}
+              fill="url(#colorValue)"
+              activeDot={{ r: 4, fill: '#2563EB', stroke: '#fff', strokeWidth: 2, className: "shadow-sm" }}
             />
-          </LineChart>
+          </AreaChart>
         </ResponsiveContainer>
       </div>
     </div>

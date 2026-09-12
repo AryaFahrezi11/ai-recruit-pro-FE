@@ -133,10 +133,10 @@ export function CandidateModal({ candidate, onClose, onStatusUpdated }: Candidat
     return d.toISOString().split('T')[0];
   };
   const [intvType, setIntvType] = useState<'online' | 'offline'>(interviewData?.tipe || 'online');
-  const [intvDate, setIntvDate] = useState<string>(interviewData?.tanggal || getDefaultDate());
-  const [intvTime, setIntvTime] = useState(interviewData?.waktu || '14:00');
-  const [intvLocationUrl, setIntvLocationUrl] = useState(interviewData?.lokasi_atau_link || 'https://meet.google.com/');
-  const [intvNotes, setIntvNotes] = useState(interviewData?.catatan || 'Mohon hadir tepat waktu dan siapkan resume portofolio.');
+  const [intvDate, setIntvDate] = useState<string>(interviewData?.tanggal || '');
+  const [intvTime, setIntvTime] = useState(interviewData?.waktu || '');
+  const [intvLocationUrl, setIntvLocationUrl] = useState(interviewData?.lokasi_atau_link || '');
+  const [intvNotes, setIntvNotes] = useState(interviewData?.catatan || '');
   const [rejectReason, setRejectReason] = useState('Kualifikasi profil belum memenuhi kebutuhan posisi saat ini.');
   const [expandedQs, setExpandedQs] = useState<Record<number, boolean>>({});
   const [expandedObservasi, setExpandedObservasi] = useState(false);
@@ -149,16 +149,18 @@ export function CandidateModal({ candidate, onClose, onStatusUpdated }: Candidat
   useEffect(() => {
     if (candidate.interviewDetails) {
       setIntvType(candidate.interviewDetails.tipe || 'online');
-      setIntvDate(candidate.interviewDetails.tanggal || getDefaultDate());
-      setIntvTime(candidate.interviewDetails.waktu || '14:00');
-      setIntvLocationUrl(candidate.interviewDetails.lokasi_atau_link || 'https://meet.google.com/');
-      setIntvNotes(candidate.interviewDetails.catatan || 'Mohon hadir tepat waktu dan siapkan resume portofolio.');
+      setIntvDate(candidate.interviewDetails.tanggal || '');
+      setIntvTime(candidate.interviewDetails.waktu || '');
+      setIntvLocationUrl(candidate.interviewDetails.lokasi_atau_link || '');
+      setIntvNotes(candidate.interviewDetails.catatan || '');
     }
   }, [candidate.interviewDetails]);
 
   // Tolak form
   const [rejectReasonPreset, setRejectReasonPreset] = useState('Kualifikasi pengalaman teknis belum memenuhi kriteria minimum yang dibutuhkan saat ini.');
   const [rejectReasonCustom, setRejectReasonCustom] = useState('');
+  
+  const [isPinging, setIsPinging] = useState(false);
 
   // Terima form
   const [hireOfferingNotes, setHireOfferingNotes] = useState('Selamat! Kandidat dinyatakan lolos seluruh tahapan seleksi dan menerima penawaran kerja.');
@@ -1246,7 +1248,41 @@ export function CandidateModal({ candidate, onClose, onStatusUpdated }: Candidat
                       </p>
                     </div>
                   </div>
-                  <div className="flex items-center gap-2 self-end sm:self-auto shrink-0">
+                  <div className="flex items-center gap-2 self-end sm:self-auto shrink-0 flex-wrap">
+                    {(() => {
+                      if (!interviewData?.tanggal || !interviewData?.waktu) return null;
+                      const intvDateTime = new Date(`${interviewData.tanggal}T${interviewData.waktu}:00`);
+                      const now = new Date();
+                      if (now >= intvDateTime) {
+                        return (
+                          <button
+                            type="button"
+                            disabled={isPinging}
+                            onClick={async () => {
+                              setIsPinging(true);
+                              try {
+                                const res = await fetchAuth(`/api/applications/${targetAppId}/ping-interview`, { method: 'POST' });
+                                if (res.ok) toast.success('Peringatan keterlambatan berhasil dikirim ke pelamar via Email!');
+                                else toast.error('Gagal mengirim peringatan.');
+                              } catch {
+                                toast.error('Terjadi kesalahan saat memproses peringatan.');
+                              } finally {
+                                setIsPinging(false);
+                              }
+                            }}
+                            className="px-3.5 py-2 bg-amber-100 hover:bg-amber-200 text-amber-800 dark:bg-amber-900/60 dark:text-amber-200 dark:border-amber-700 dark:hover:bg-amber-900/80 font-extrabold text-xs rounded-xl transition-all shadow-xs flex items-center gap-1.5 active:scale-95 cursor-pointer border border-amber-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                          >
+                            {isPinging ? (
+                              <div className="w-3.5 h-3.5 border-2 border-amber-800/30 dark:border-amber-200/30 border-t-amber-800 dark:border-t-amber-200 rounded-full animate-spin shrink-0" />
+                            ) : (
+                              <AlertCircle size={14} />
+                            )}
+                            {isPinging ? 'Mengirim...' : 'Ping (Pelamar Terlambat)'}
+                          </button>
+                        );
+                      }
+                      return null;
+                    })()}
                     <button
                       type="button"
                       onClick={() => setDecisionModal('hire')}
@@ -1764,10 +1800,7 @@ export function CandidateModal({ candidate, onClose, onStatusUpdated }: Candidat
                     <div className="grid grid-cols-2 gap-2">
                       <button
                         type="button"
-                        onClick={() => {
-                          setIntvType('online');
-                          setIntvLocationUrl('https://meet.google.com/');
-                        }}
+                        onClick={() => setIntvType('online')}
                         className={`py-2 rounded-xl font-bold border transition-all cursor-pointer ${intvType === 'online'
                             ? 'bg-indigo-50 dark:bg-indigo-950/50 border-indigo-500 text-indigo-700 dark:text-indigo-300'
                             : 'bg-muted/40 border-border text-muted-foreground'
@@ -1777,10 +1810,7 @@ export function CandidateModal({ candidate, onClose, onStatusUpdated }: Candidat
                       </button>
                       <button
                         type="button"
-                        onClick={() => {
-                          setIntvType('offline');
-                          setIntvLocationUrl('Kantor Pusat Perusahaan, Lantai 3 Ruang Meeting A');
-                        }}
+                        onClick={() => setIntvType('offline')}
                         className={`py-2 rounded-xl font-bold border transition-all cursor-pointer ${intvType === 'offline'
                             ? 'bg-indigo-50 dark:bg-indigo-950/50 border-indigo-500 text-indigo-700 dark:text-indigo-300'
                             : 'bg-muted/40 border-border text-muted-foreground'
@@ -1831,6 +1861,7 @@ export function CandidateModal({ candidate, onClose, onStatusUpdated }: Candidat
                       rows={2}
                       value={intvNotes}
                       onChange={(e) => setIntvNotes(e.target.value)}
+                      placeholder="Contoh: Mohon hadir tepat waktu, persiapkan portfolio yang dicetak, NB: berikan contact person jika perlu"
                       className="w-full p-2.5 bg-muted/40 border border-border rounded-xl text-xs text-foreground focus:ring-2 focus:ring-indigo-500/20 outline-none resize-none font-medium"
                     />
                   </div>
@@ -1848,8 +1879,8 @@ export function CandidateModal({ candidate, onClose, onStatusUpdated }: Candidat
                     type="button"
                     disabled={isSubmitting}
                     onClick={() => {
-                      if (!intvDate) {
-                        toast.error('Silakan tentukan tanggal wawancara terlebih dahulu');
+                      if (!intvDate || !intvTime || !intvLocationUrl.trim() || !intvNotes.trim()) {
+                        toast.error('Harap lengkapi semua kolom informasi jadwal wawancara');
                         return;
                       }
                       executeDecision('interview_lanjutan', {

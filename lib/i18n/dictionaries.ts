@@ -219,7 +219,7 @@ export const dictionaries = {
       loadingArchive: 'Memuat data arsip...',
       emptyArchive: 'Belum ada kandidat di arsip.',
       candidate: 'KANDIDAT',
-      role: 'PERAN',
+      role: 'Posisi',
       department: 'DEPARTEMEN',
       dateClosed: 'TANGGAL DITUTUP',
       actions: 'AKSI',

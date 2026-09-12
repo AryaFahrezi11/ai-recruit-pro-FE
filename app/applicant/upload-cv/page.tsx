@@ -1277,6 +1277,7 @@ export default function AtsCvBuilderPage() {
         onClose={() => setShowReviewModal(false)}
         defaultName={fullName}
         defaultRole={jobTitle}
+        contextEvent="application"
       />
 
     </div>

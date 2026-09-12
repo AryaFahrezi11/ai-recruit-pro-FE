@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useTranslation } from '@/hooks/useTranslation';
 import { fetchAuth } from '@/lib/api/auth';
 import { getApiUrl, getMediaUrl } from '@/lib/api';
@@ -12,6 +13,7 @@ import {
   CheckCircle2,
   Upload,
   Video,
+  AlertCircle,
   Calendar,
   XCircle,
   Eye,
@@ -35,66 +37,75 @@ interface TemplateConfig {
 }
 
 const DEFAULT_COMPANY_TEMPLATES: Record<string, string> = {
-  email_invitation_subject: "[AI Recruit Pro] Undangan Wawancara Video Virtual - {{job_title}}",
-  email_invitation_body: `Halo {{candidate_name}},
+  email_invitation_subject: "[Pemberitahuan Resmi] Undangan Wawancara Video - {{job_title}} di {{company_name}}",
+  email_invitation_body: `Yth. {{candidate_name}},
 
-Selamat! CV Anda telah lolos tahap seleksi awal (CV Screening).
+Selamat! Kami menyampaikan bahwa profil dan kualifikasi Anda telah berhasil melewati tahap seleksi awal (CV Screening) untuk posisi {{job_title}} di {{company_name}}.
 
-Kami mengundang Anda untuk mengikuti tahapan Wawancara Video AI (Virtual Interview) berdurasi singkat. Silakan masuk ke dashboard Riwayat Lamaran Anda melalui tautan berikut:
+Sebagai tahapan selanjutnya, kami mengundang Anda untuk mengikuti sesi Wawancara Video AI (Virtual Interview). Sesi ini dirancang secara terstruktur dan dapat Anda akses melalui portal resmi kami berikut:
 {{interview_link}}
 
-Harap selesaikan perekaman video sebelum batas waktu yang ditentukan.
+Mohon pastikan Anda menyelesaikan perekaman wawancara video ini sebelum tenggat waktu yang telah ditentukan pada sistem.
 
-Salam sukses,
-Tim Rekrutmen {{company_name}}`,
+Kami sangat menghargai ketertarikan Anda untuk bergabung dengan {{company_name}} dan menantikan partisipasi Anda.
 
-  email_interview_user_subject: "[AI Recruit Pro] Undangan Wawancara Lanjutan - {{job_title}} di {{company_name}}",
-  email_interview_user_body: `Halo {{candidate_name}},
+Hormat kami,
+Tim Akuisisi Talenta (Talent Acquisition)
+{{company_name}}`,
 
-Selamat! Berdasarkan hasil evaluasi tahapan wawancara video AI sebelumnya, kami mengundang Anda untuk mengikuti tahapan Wawancara Lanjutan bersama Tim User/HR:
+  email_interview_user_subject: "[Pemberitahuan Resmi] Undangan Wawancara Lanjutan - {{job_title}} di {{company_name}}",
+  email_interview_user_body: `Yth. {{candidate_name}},
 
+Selamat! Berdasarkan hasil peninjauan menyeluruh terhadap tahapan wawancara sebelumnya, kami dengan senang hati mengundang Anda untuk melanjutkan ke tahapan Wawancara Lanjutan bersama Tim User/Manajemen kami.
+
+Detail jadwal wawancara Anda adalah sebagai berikut:
 Posisi: {{job_title}}
 Jadwal: {{jadwal_wawancara}}
 Lokasi / Tautan Meeting: {{lokasi_atau_link}}
 
-Instruksi / Catatan:
+Instruksi tambahan dari Tim HR:
 {{catatan_hr}}
 
-Mohon konfirmasi kesediaan kehadiran Anda dengan membalas pesan email ini.
+Untuk keperluan kelancaran jadwal, kami memohon kesediaan Anda untuk mengonfirmasi kehadiran dengan membalas email ini secara langsung.
 
-Salam hormat,
-Tim Rekrutmen {{company_name}}`,
+Terima kasih atas dedikasi dan antusiasme Anda.
 
-  email_hire_subject: "[AI Recruit Pro] Selamat! Anda Diterima di {{company_name}}",
-  email_hire_body: `Halo {{candidate_name}},
+Hormat kami,
+Tim Akuisisi Talenta (Talent Acquisition)
+{{company_name}}`,
 
-Kabar gembira! Kami sangat terkesan dengan kualifikasi dan performa Anda selama rangkaian proses seleksi.
+  email_hire_subject: "[Pemberitahuan Resmi] Penawaran Pekerjaan: Selamat Bergabung di {{company_name}}",
+  email_hire_body: `Yth. {{candidate_name}},
 
-Dengan senang hati kami menawarkan Anda posisi {{job_title}} di {{company_name}}.
+Kami membawa kabar gembira! Menindaklanjuti seluruh rangkaian proses rekrutmen yang telah Anda jalani, kami sangat terkesan dengan kualifikasi, pengalaman, dan potensi yang Anda tunjukkan.
 
-Tim HR kami akan segera menghubungi Anda kembali mengenai dokumen penawaran resmi (Offering Letter) dan tahapan administrasi onboarding selanjutnya.
+Dengan ini, kami bermaksud menawarkan Anda posisi {{job_title}} di {{company_name}}.
 
-Selamat bergabung di tim kami!
+Tim HR kami akan segera menghubungi Anda melalui email terpisah atau telepon untuk menyampaikan Dokumen Penawaran Resmi (Offering Letter) serta panduan proses administrasi (Onboarding) selanjutnya.
 
-Salam hangat,
-Tim Manajemen {{company_name}}`,
+Kami sangat antusias menyambut Anda sebagai bagian dari tim kami.
 
-  email_reject_subject: "[AI Recruit Pro] Update Riwayat Lamaran: {{job_title}}",
-  email_reject_body: `Halo {{candidate_name}},
+Hormat kami,
+Tim Manajemen & HR
+{{company_name}}`,
 
-Terima kasih atas waktu, antusiasme, dan ketertarikan Anda untuk melamar posisi {{job_title}} di {{company_name}}.
+  email_reject_subject: "[Pemberitahuan Resmi] Pembaruan Status Lamaran - {{job_title}} di {{company_name}}",
+  email_reject_body: `Yth. {{candidate_name}},
 
-Setelah melalui pertimbangan yang mendalam, saat ini kami memutuskan untuk belum dapat melanjutkan proses lamaran Anda ke tahapan berikutnya.
+Terima kasih atas waktu, usaha, dan antusiasme yang telah Anda berikan selama proses seleksi untuk posisi {{job_title}} di {{company_name}}.
+
+Setelah melalui serangkaian pertimbangan yang matang dari tim kami, dengan berat hati kami menyampaikan bahwa saat ini kami belum dapat melanjutkan proses pencalonan Anda ke tahapan berikutnya. Keputusan ini didasarkan pada penyesuaian kualifikasi dengan kebutuhan posisi saat ini.
 
 Catatan Evaluasi Tim HR:
 "{{alasan_penolakan}}"
 
-Kami sangat mengapresiasi profil Anda dan data Anda akan tetap tersimpan di database talenta kami untuk peluang yang relevan di masa mendatang.
+Kami sangat mengapresiasi minat Anda terhadap {{company_name}}. Profil Anda akan tetap tersimpan dalam sistem basis data talenta kami, dan kami akan menghubungi Anda kembali apabila terdapat peluang karir lain yang lebih sesuai dengan kualifikasi Anda di masa mendatang.
 
-Semoga sukses dalam perjalanan karier Anda selanjutnya.
+Kami senantiasa mendoakan kesuksesan untuk perjalanan karir Anda selanjutnya.
 
-Salam hormat,
-Tim Rekrutmen {{company_name}}`
+Hormat kami,
+Tim Akuisisi Talenta (Talent Acquisition)
+{{company_name}}`
 };
 
 const COMPANY_TEMPLATE_CONFIGS: TemplateConfig[] = [
@@ -161,8 +172,13 @@ const COMPANY_TEMPLATE_CONFIGS: TemplateConfig[] = [
   }
 ];
 
-export default function SettingsPage() {
+function SettingsPageContent() {
   const { t } = useTranslation();
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  
+  const isOnboarding = searchParams.get('onboarding') === 'true';
+
   const [activeTab, setActiveTab] = useState<'profile' | 'email'>('profile');
   const [selectedTemplateId, setSelectedTemplateId] = useState<string>('invitation');
   const [showPreview, setShowPreview] = useState<boolean>(true);
@@ -323,6 +339,14 @@ export default function SettingsPage() {
 
   const handleSave = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
+    
+    if (isOnboarding) {
+      if (!companyDesc.trim() || !kota.trim() || !provinsi.trim() || !noTelepon.trim() || !tahunBerdiri || !logoUrl) {
+        toast.error('Mohon lengkapi semua kolom yang wajib diisi (termasuk logo) untuk melanjutkan.');
+        return;
+      }
+    }
+
     setIsSaving(true);
     try {
       const payload = {
@@ -349,7 +373,10 @@ export default function SettingsPage() {
       });
 
       if (res.ok) {
-        toast.success(t.settings?.settingsSaved || 'Pengaturan perusahaan dan template email berhasil disimpan!');
+        toast.success(t.settings?.settingsSaved || 'Pengaturan perusahaan berhasil disimpan!');
+        if (isOnboarding) {
+          router.push('/jobs');
+        }
       } else {
         toast.error("Gagal menyimpan pengaturan.");
       }
@@ -480,6 +507,15 @@ export default function SettingsPage() {
         <form onSubmit={handleSave} className="space-y-8 animate-in fade-in duration-200">
           <div className="bg-card p-6 sm:p-8 rounded-2xl border border-border shadow-xs space-y-6">
             <h3 className="font-extrabold text-base text-foreground">Informasi Dasar Perusahaan</h3>
+            {isOnboarding && (
+              <div className="bg-rose-50 border border-rose-200 text-rose-800 p-4 rounded-xl text-sm font-medium flex items-start gap-3">
+                <AlertCircle className="w-5 h-5 text-rose-600 shrink-0 mt-0.5" />
+                <p>
+                  <strong>Aksi Diperlukan:</strong> Mohon lengkapi profil perusahaan Anda di bawah ini agar dapat mengakses Dashboard dan fitur lainnya. 
+                  Data yang sudah Anda isi saat registrasi tidak dapat diubah di sini.
+                </p>
+              </div>
+            )}
 
             {/* Logo Upload */}
             <div className="flex items-center gap-6">
@@ -492,6 +528,9 @@ export default function SettingsPage() {
               </div>
               <div className="space-y-2">
                 <div className="flex items-center gap-3">
+                  <span className="text-xs font-bold text-foreground">
+                    Logo Perusahaan {isOnboarding && <span className="text-rose-500">*</span>}
+                  </span>
                   <input
                     type="file"
                     ref={fileInputRef}
@@ -528,7 +567,8 @@ export default function SettingsPage() {
                   type="text"
                   value={companyName}
                   onChange={(e) => setCompanyName(e.target.value)}
-                  className="w-full px-4 py-2.5 bg-muted/30 border border-border rounded-xl text-xs text-foreground focus:ring-2 focus:ring-primary/20 outline-none font-medium"
+                  disabled={isOnboarding}
+                  className="w-full px-4 py-2.5 bg-muted/30 border border-border rounded-xl text-xs text-foreground focus:ring-2 focus:ring-primary/20 outline-none font-medium disabled:opacity-60 disabled:cursor-not-allowed"
                 />
               </div>
 
@@ -538,8 +578,9 @@ export default function SettingsPage() {
                   type="text"
                   value={industry}
                   onChange={(e) => setIndustry(e.target.value)}
+                  disabled={isOnboarding}
                   placeholder="e.g. Teknologi Informasi, Keuangan"
-                  className="w-full px-4 py-2.5 bg-muted/30 border border-border rounded-xl text-xs text-foreground focus:ring-2 focus:ring-primary/20 outline-none font-medium"
+                  className="w-full px-4 py-2.5 bg-muted/30 border border-border rounded-xl text-xs text-foreground focus:ring-2 focus:ring-primary/20 outline-none font-medium disabled:opacity-60 disabled:cursor-not-allowed"
                 />
               </div>
 
@@ -548,7 +589,8 @@ export default function SettingsPage() {
                 <select
                   value={companySize}
                   onChange={(e) => setCompanySize(e.target.value)}
-                  className="w-full px-4 py-2.5 bg-muted/30 border border-border rounded-xl text-xs text-foreground focus:ring-2 focus:ring-primary/20 outline-none font-medium"
+                  disabled={isOnboarding}
+                  className="w-full px-4 py-2.5 bg-muted/30 border border-border rounded-xl text-xs text-foreground focus:ring-2 focus:ring-primary/20 outline-none font-medium disabled:opacity-60 disabled:cursor-not-allowed"
                 >
                   <option value="1 - 10 Employees">1 - 10 Karyawan</option>
                   <option value="11 - 50 Employees">11 - 50 Karyawan</option>
@@ -559,11 +601,14 @@ export default function SettingsPage() {
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-foreground mb-1.5">Tahun Berdiri</label>
+                <label className="block text-xs font-bold text-foreground mb-1.5">
+                  Tahun Berdiri {isOnboarding && <span className="text-rose-500">*</span>}
+                </label>
                 <input
                   type="number"
                   value={tahunBerdiri}
                   onChange={(e) => setTahunBerdiri(e.target.value ? parseInt(e.target.value) : '')}
+                  required={isOnboarding}
                   placeholder="e.g. 2018"
                   className="w-full px-4 py-2.5 bg-muted/30 border border-border rounded-xl text-xs text-foreground focus:ring-2 focus:ring-primary/20 outline-none font-medium"
                 />
@@ -575,28 +620,35 @@ export default function SettingsPage() {
                   type="url"
                   value={website}
                   onChange={(e) => setWebsite(e.target.value)}
+                  disabled={isOnboarding}
                   placeholder="https://company.com"
-                  className="w-full px-4 py-2.5 bg-muted/30 border border-border rounded-xl text-xs text-foreground focus:ring-2 focus:ring-primary/20 outline-none font-medium"
+                  className="w-full px-4 py-2.5 bg-muted/30 border border-border rounded-xl text-xs text-foreground focus:ring-2 focus:ring-primary/20 outline-none font-medium disabled:opacity-60 disabled:cursor-not-allowed"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-foreground mb-1.5">Nomor Telepon Resmi Kantor</label>
+                <label className="block text-xs font-bold text-foreground mb-1.5">
+                  Nomor Telepon Resmi Kantor {isOnboarding && <span className="text-rose-500">*</span>}
+                </label>
                 <input
                   type="tel"
                   value={noTelepon}
                   onChange={(e) => setNoTelepon(e.target.value)}
+                  required={isOnboarding}
                   placeholder="+62 21 555 1234"
                   className="w-full px-4 py-2.5 bg-muted/30 border border-border rounded-xl text-xs text-foreground focus:ring-2 focus:ring-primary/20 outline-none font-medium"
                 />
               </div>
 
               <div className="md:col-span-2">
-                <label className="block text-xs font-bold text-foreground mb-1.5">Deskripsi Perusahaan</label>
+                <label className="block text-xs font-bold text-foreground mb-1.5">
+                  Deskripsi Perusahaan {isOnboarding && <span className="text-rose-500">*</span>}
+                </label>
                 <textarea
                   rows={3}
                   value={companyDesc}
                   onChange={(e) => setCompanyDesc(e.target.value)}
+                  required={isOnboarding}
                   placeholder="Jelaskan visi, misi, dan profil singkat perusahaan Anda..."
                   className="w-full p-4 bg-muted/30 border border-border rounded-xl text-xs text-foreground focus:ring-2 focus:ring-primary/20 outline-none resize-none font-medium"
                 />
@@ -613,27 +665,34 @@ export default function SettingsPage() {
                   type="text"
                   value={alamat}
                   onChange={(e) => setAlamat(e.target.value)}
+                  disabled={isOnboarding}
                   placeholder="Jl. Sudirman No. 123, Gedung Plaza Lantai 5"
-                  className="w-full px-4 py-2.5 bg-muted/30 border border-border rounded-xl text-xs text-foreground focus:ring-2 focus:ring-primary/20 outline-none font-medium"
+                  className="w-full px-4 py-2.5 bg-muted/30 border border-border rounded-xl text-xs text-foreground focus:ring-2 focus:ring-primary/20 outline-none font-medium disabled:opacity-60 disabled:cursor-not-allowed"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-foreground mb-1.5">Kota / Kabupaten</label>
+                <label className="block text-xs font-bold text-foreground mb-1.5">
+                  Kota / Kabupaten {isOnboarding && <span className="text-rose-500">*</span>}
+                </label>
                 <input
                   type="text"
                   value={kota}
                   onChange={(e) => setKota(e.target.value)}
+                  required={isOnboarding}
                   className="w-full px-4 py-2.5 bg-muted/30 border border-border rounded-xl text-xs text-foreground focus:ring-2 focus:ring-primary/20 outline-none font-medium"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-foreground mb-1.5">Provinsi</label>
+                <label className="block text-xs font-bold text-foreground mb-1.5">
+                  Provinsi {isOnboarding && <span className="text-rose-500">*</span>}
+                </label>
                 <input
                   type="text"
                   value={provinsi}
                   onChange={(e) => setProvinsi(e.target.value)}
+                  required={isOnboarding}
                   className="w-full px-4 py-2.5 bg-muted/30 border border-border rounded-xl text-xs text-foreground focus:ring-2 focus:ring-primary/20 outline-none font-medium"
                 />
               </div>
@@ -650,7 +709,8 @@ export default function SettingsPage() {
                   type="text"
                   value={hrName}
                   onChange={(e) => setHrName(e.target.value)}
-                  className="w-full px-4 py-2.5 bg-muted/30 border border-border rounded-xl text-xs text-foreground focus:ring-2 focus:ring-primary/20 outline-none font-medium"
+                  disabled={isOnboarding}
+                  className="w-full px-4 py-2.5 bg-muted/30 border border-border rounded-xl text-xs text-foreground focus:ring-2 focus:ring-primary/20 outline-none font-medium disabled:opacity-60 disabled:cursor-not-allowed"
                 />
               </div>
 
@@ -660,8 +720,9 @@ export default function SettingsPage() {
                   type="text"
                   value={hrPosition}
                   onChange={(e) => setHrPosition(e.target.value)}
+                  disabled={isOnboarding}
                   placeholder="e.g. HR Manager / Talent Acquisition"
-                  className="w-full px-4 py-2.5 bg-muted/30 border border-border rounded-xl text-xs text-foreground focus:ring-2 focus:ring-primary/20 outline-none font-medium"
+                  className="w-full px-4 py-2.5 bg-muted/30 border border-border rounded-xl text-xs text-foreground focus:ring-2 focus:ring-primary/20 outline-none font-medium disabled:opacity-60 disabled:cursor-not-allowed"
                 />
               </div>
 
@@ -671,8 +732,9 @@ export default function SettingsPage() {
                   type="text"
                   value={hrWhatsapp}
                   onChange={(e) => setHrWhatsapp(e.target.value.replace(/\D/g, '').slice(0, 15))}
+                  disabled={isOnboarding}
                   placeholder="08123456789"
-                  className="w-full px-4 py-2.5 bg-muted/30 border border-border rounded-xl text-xs text-foreground focus:ring-2 focus:ring-primary/20 outline-none font-medium"
+                  className="w-full px-4 py-2.5 bg-muted/30 border border-border rounded-xl text-xs text-foreground focus:ring-2 focus:ring-primary/20 outline-none font-medium disabled:opacity-60 disabled:cursor-not-allowed"
                 />
               </div>
             </div>
@@ -959,5 +1021,13 @@ export default function SettingsPage() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function SettingsPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center bg-background"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div></div>}>
+      <SettingsPageContent />
+    </Suspense>
   );
 }

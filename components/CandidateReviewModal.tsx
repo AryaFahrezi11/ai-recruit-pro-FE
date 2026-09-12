@@ -54,11 +54,16 @@ export function CandidateReviewModal({
           // ignore
         }
       }
-      const userEmail = localStorage.getItem('user_email');
-      if (!name && userEmail) {
-        const nameFromEmail = userEmail.split('@')[0].replace(/[._-]/g, ' ');
-        setName(nameFromEmail.charAt(0).toUpperCase() + nameFromEmail.slice(1));
-      }
+      // Fetch real name from backend profile
+      api.get('/users/profile').then((res: any) => {
+        if (res.profil) {
+          if (res.role === 'pelamar' && res.profil.nama_lengkap) {
+            setName(res.profil.nama_lengkap);
+          } else if (res.role === 'perusahaan' && res.profil.nama_perusahaan) {
+            setName(res.profil.nama_perusahaan);
+          }
+        }
+      }).catch(() => {});
     }
   }, [isOpen]);
 
@@ -87,10 +92,7 @@ export function CandidateReviewModal({
       return;
     }
 
-    if (!name.trim()) {
-      toast.error('Harap isi nama Anda.');
-      return;
-    }
+
 
     setIsSubmitting(true);
 
@@ -106,7 +108,7 @@ export function CandidateReviewModal({
 
       const res = await api.post('/reviews/', payload);
 
-      toast.success('Terima kasih! Ulasan Anda berhasil dikirim dan akan tampil di Landing Page (jika memenuhi syarat).');
+      toast.success('Terima kasih telah memberikan ulasan');
 
       if (onSubmitSuccess) {
         onSubmitSuccess(res);
@@ -114,11 +116,7 @@ export function CandidateReviewModal({
 
       onClose();
     } catch (err: any) {
-      if (err.status === 400 && err.message?.includes('sudah memberikan ulasan')) {
-        toast.error('Anda sudah memberikan ulasan untuk tahap ini.');
-      } else {
-        toast.error('Gagal menyimpan ulasan. Silakan coba lagi.');
-      }
+      toast.error('Gagal menyimpan ulasan. Silakan coba lagi.');
     } finally {
       setIsSubmitting(false);
     }
@@ -242,9 +240,9 @@ export function CandidateReviewModal({
                   id="reviewer-name"
                   type="text"
                   value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  placeholder="Nama Lengkap"
-                  className="w-full pl-9 pr-3 py-2.5 bg-white dark:bg-slate-950 text-slate-900 dark:text-white border border-slate-200 dark:border-slate-700 focus:border-[#1A4B9F] rounded-xl text-xs outline-none transition-all"
+                  disabled
+                  placeholder="Memuat nama..."
+                  className="w-full pl-9 pr-3 py-2.5 bg-slate-100 dark:bg-slate-900 text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-slate-700 rounded-xl text-xs outline-none cursor-not-allowed"
                 />
               </div>
             </div>
@@ -277,7 +275,7 @@ export function CandidateReviewModal({
               className="w-4 h-4 rounded border-slate-300 text-[#1A4B9F] focus:ring-[#1A4B9F]"
             />
             <label htmlFor="reviewer-anonymous" className="text-xs font-medium text-slate-600 dark:text-slate-400 cursor-pointer">
-              Sembunyikan nama saya saat ditampilkan (Anonim)
+              Sembunyikan nama saya saat ditampilkan
             </label>
           </div>
 

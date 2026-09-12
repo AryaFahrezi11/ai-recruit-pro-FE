@@ -41,6 +41,25 @@ function CompanyRegistrationInner() {
   const [showConfirm, setShowConfirm] = useState(false);
   const [agreedConsent, setAgreedConsent] = useState(false);
 
+  const handleEnterToNext = (e: React.KeyboardEvent<HTMLFormElement>) => {
+    if (e.key === 'Enter') {
+      const target = e.target as HTMLElement;
+      if (target.tagName === 'TEXTAREA' || target.tagName === 'BUTTON') return;
+      e.preventDefault();
+      const form = e.currentTarget;
+      const inputs = Array.from(
+        form.querySelectorAll('input:not([type="hidden"]):not([disabled]), select:not([disabled]), textarea:not([disabled])')
+      ) as HTMLElement[];
+      const index = inputs.indexOf(target);
+      if (index > -1 && index < inputs.length - 1) {
+        inputs[index + 1].focus();
+      } else if (index === inputs.length - 1) {
+        const submitBtn = form.querySelector('button[type="submit"]') as HTMLElement;
+        if (submitBtn) submitBtn.click();
+      }
+    }
+  };
+
   const checkPasswordStrength = (pwd: string) => ({
     length: pwd.length >= 8,
     uppercase: /[A-Z]/.test(pwd),
@@ -800,7 +819,7 @@ function CompanyRegistrationInner() {
               </div>
             ) : null}
 
-            <form onSubmit={handleStep3Submit} className="space-y-8">
+            <form onSubmit={handleStep3Submit} onKeyDown={handleEnterToNext} className="space-y-8">
 
               {/* Data Perusahaan */}
               <div className={sectionBox}>

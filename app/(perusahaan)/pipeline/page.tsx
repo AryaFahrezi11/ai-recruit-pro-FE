@@ -358,15 +358,11 @@ export default function PipelinePage() {
       className: 'min-w-[220px]',
       render: (app) => {
         const name = app.pelamar?.nama_lengkap || 'Kandidat';
-        const initials = name.split(' ').map((n: string) => n[0]).slice(0, 2).join('').toUpperCase();
         const edu = (app as any).cv_document?.pendidikan_tertinggi || app.pelamar?.pendidikan_terakhir || 'Pendidikan';
         const uni = app.pelamar?.institusi_pendidikan || '';
 
         return (
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-100 font-extrabold text-xs flex items-center justify-center shrink-0 border border-slate-200 dark:border-slate-700 shadow-2xs">
-              {initials || 'KD'}
-            </div>
             <div className="min-w-0">
               <span className="font-extrabold text-xs text-foreground block truncate hover:underline cursor-pointer" onClick={() => openCandidateModal(app)}>
                 {name}
@@ -420,7 +416,7 @@ export default function PipelinePage() {
           return (
             <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-bold bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
               <span className="w-1.5 h-1.5 rounded-full bg-blue-500" />
-              1. Upload CV
+              Upload CV
             </span>
           );
         }
@@ -428,7 +424,7 @@ export default function PipelinePage() {
           return (
             <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-bold bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-300 border border-amber-200 dark:border-amber-800">
               <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
-              2. CV Screening
+              CV Screening
             </span>
           );
         }
@@ -436,7 +432,7 @@ export default function PipelinePage() {
           return (
             <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-bold bg-purple-50 text-purple-700 dark:bg-purple-950/40 dark:text-purple-300 border border-purple-200 dark:border-purple-800">
               <Video size={12} className="text-purple-600 dark:text-purple-400" />
-              3. Wawancara Video
+              Wawancara Video
             </span>
           );
         }
@@ -444,7 +440,7 @@ export default function PipelinePage() {
           return (
             <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-bold bg-indigo-50 text-indigo-700 dark:bg-indigo-950/40 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800">
               <span className="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-ping" />
-              4. Analisis AI Video
+              Analisis AI Video
             </span>
           );
         }
@@ -454,7 +450,7 @@ export default function PipelinePage() {
             <div className="space-y-1">
               <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-bold bg-indigo-100 text-indigo-800 dark:bg-indigo-900/60 dark:text-indigo-200 border border-indigo-300 dark:border-indigo-700">
                 <Calendar size={12} className="text-indigo-600 dark:text-indigo-400" />
-                5. Validasi HR (Wawancara Lanjutan)
+                Validasi HR (Wawancara Lanjutan)
               </span>
               {intv?.tanggal && (
                 <div className="text-[10px] text-muted-foreground flex items-center gap-1 pl-1">
@@ -689,9 +685,9 @@ export default function PipelinePage() {
               <select
                 value={jobFilter}
                 onChange={(e) => setJobFilter(e.target.value)}
-                className="w-full px-3 py-2 bg-muted/40 border border-border rounded-xl text-xs text-foreground focus:ring-2 focus:ring-primary/20 outline-none font-medium cursor-pointer"
+                className="w-full px-2 py-1 bg-muted/40 border border-border rounded-xl text-xs text-foreground focus:ring-2 focus:ring-primary/20 outline-none font-medium cursor-pointer"
               >
-                <option value="all">Semua Kategori Pekerjaan</option>
+                <option value="all">Semua Lowongan </option>
                 {distinctCategories.map(c => (
                   <option key={c} value={c}>{c}</option>
                 ))}
@@ -705,15 +701,12 @@ export default function PipelinePage() {
                 onChange={(e) => setStageFilter(e.target.value)}
                 className="w-full px-3 py-2 bg-muted/40 border border-border rounded-xl text-xs text-foreground focus:ring-2 focus:ring-primary/20 outline-none font-bold cursor-pointer text-indigo-600 dark:text-indigo-400"
               >
-                <option value="human_validation">5. Validasi HR (Semua: Sebelum & Wawancara)</option>
-                <option value="interview_lanjutan">5. Validasi HR (Wawancara Lanjutan Saja)</option>
-                <option value="all">Semua Tahapan Seleksi (1 s/d 5)</option>
-                <option value="upload_cv">1. Upload CV</option>
-                <option value="cv_screening">2. CV Screening AI</option>
-                <option value="virtual_interview">3. Wawancara Video</option>
-                <option value="video_analysis">4. Analisis AI Video</option>
-                <option value="hired">Diterima (Hired)</option>
-                <option value="rejected">Ditolak (Rejected)</option>
+                <option value="human_validation">Validasi HR</option>
+                <option value="all">Semua Tahapan Seleksi</option>
+                <option value="upload_cv">Upload CV</option>
+                <option value="cv_screening">CV Screening AI</option>
+                <option value="virtual_interview">Wawancara Video</option>
+                <option value="video_analysis">Analisis AI Video</option>
               </select>
             </div>
           </div>

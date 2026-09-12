@@ -716,9 +716,8 @@ function JobDetailView() {
 
                 className="w-full px-4 py-2.5 bg-muted/30 border border-border rounded-lg text-sm text-foreground focus:outline-none focus:border-primary"
               >
-                <option value="Public">Publik di Portal Rekrutmen</option>
-                <option value="Internal">Khusus Undangan Internal</option>
-                <option value="Draft">Simpan Draf Saja</option>
+                <option value="Public">Publik</option>
+                <option value="Draft">Draf</option>
               </select>
             </div>
           </div>

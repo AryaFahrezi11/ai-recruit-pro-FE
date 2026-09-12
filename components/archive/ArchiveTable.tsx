@@ -6,7 +6,7 @@ import { FileText, Trash2, AlertTriangle, X } from 'lucide-react';
 import { fetchAuth } from '@/lib/api/auth';
 import toast from 'react-hot-toast';
 
-export function ArchiveTable({ search, jobFilter, date }: any) {
+export function ArchiveTable({ search, jobFilter, hasilFilter, date, onJobsExtracted }: any) {
   const { t } = useTranslation();
   
   const [applications, setApplications] = useState<any[]>([]);
@@ -21,9 +21,20 @@ export function ArchiveTable({ search, jobFilter, date }: any) {
       if (res.ok) {
         const data = await res.json();
         const archivedApps = (data.data || []).filter((a: any) => 
-          ['Lolos', 'ditolak', 'Tidak Lolos', 'ditolak_sistem', 'rejected'].includes(a.status)
+          ['Lolos', 'hired', 'ditolak', 'Tidak Lolos', 'ditolak_sistem', 'rejected'].includes(a.status)
         );
         setApplications(archivedApps);
+
+        if (onJobsExtracted) {
+          const uniqueMap = new Map();
+          archivedApps.forEach((app: any) => {
+            if (app.job) {
+              uniqueMap.set(app.job.id, app.job.judul_posisi);
+            }
+          });
+          const uniqueJobsList = Array.from(uniqueMap.entries()).map(([id, title]) => ({ id, title }));
+          onJobsExtracted(uniqueJobsList);
+        }
       }
     } catch (e) {
       toast.error('Gagal memuat data arsip');
@@ -88,16 +99,16 @@ export function ArchiveTable({ search, jobFilter, date }: any) {
       if (appYearMonth !== currentYearMonth) return false;
     }
 
+    if (hasilFilter) {
+      if (hasilFilter === 'hired') {
+        if (!['Lolos', 'hired'].includes(app.status)) return false;
+      } else if (hasilFilter === 'rejected') {
+        if (!['ditolak', 'Tidak Lolos', 'ditolak_sistem', 'rejected'].includes(app.status)) return false;
+      }
+    }
+
     if (jobFilter) {
-      const appCategory = (app.job?.kategori?.nama_kategori || '').toLowerCase();
-      const appJobTitle = (app.job?.judul_posisi || '').toLowerCase();
-      const filterLower = jobFilter.toLowerCase();
-
-      const matchCategory = appCategory.includes(filterLower);
-      const matchTitle = appJobTitle.includes(filterLower);
-      const matchId = app.job?.id === jobFilter;
-
-      if (!matchCategory && !matchTitle && !matchId) return false;
+      if (app.job?.id !== jobFilter) return false;
     }
 
     if (search) {
@@ -115,21 +126,21 @@ export function ArchiveTable({ search, jobFilter, date }: any) {
   });
 
   return (
-    <div className="bg-card text-card-foreground border border-border border-t-0 rounded-b-xl overflow-hidden shadow-sm relative">
+    <div className="bg-card rounded-xl border border-border shadow-sm overflow-hidden relative">
       <div className="overflow-x-auto">
-        <table className="w-full text-left text-sm">
-          <thead className="bg-muted/50 text-muted-foreground font-semibold text-xs uppercase tracking-wider border-b border-border">
+        <table className="w-full text-xs text-left">
+          <thead className="bg-slate-50 dark:bg-slate-950/60 text-slate-500 dark:text-slate-400 font-bold border-b border-slate-200 dark:border-slate-800 uppercase tracking-wider text-[10px]">
             <tr>
-              <th className="px-4 py-4 w-12 text-center">NO.</th>
-              <th className="px-6 py-4">{t.archive?.candidate || 'CANDIDATE'}</th>
-              <th className="px-6 py-4">{t.archive?.role || 'KATEGORI / PEKERJAAN'}</th>
-              <th className="px-6 py-4">PENDIDIKAN</th>
-              <th className="px-6 py-4">{t.archive?.dateClosed || 'DATE CLOSED'}</th>
-              <th className="px-6 py-4">{t.archive?.outcome || 'OUTCOME'}</th>
-              <th className="px-6 py-4 text-center">AKSI</th>
+              <th className="px-5 py-3.5 w-12 text-center">NO.</th>
+              <th className="px-5 py-3.5">{t.archive?.candidate || 'CANDIDATE'}</th>
+              <th className="px-5 py-3.5">{t.archive?.role || 'KATEGORI / PEKERJAAN'}</th>
+              <th className="px-5 py-3.5">PENDIDIKAN</th>
+              <th className="px-5 py-3.5">{t.archive?.dateClosed || 'DATE CLOSED'}</th>
+              <th className="px-5 py-3.5">{t.archive?.outcome || 'OUTCOME'}</th>
+              <th className="px-5 py-3.5 text-center">AKSI</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-border">
+          <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
             {loading ? (
               <tr>
                 <td colSpan={7} className="px-6 py-12 text-center text-muted-foreground">
@@ -179,7 +190,7 @@ export function ArchiveTable({ search, jobFilter, date }: any) {
                   </td>
                   <td className="px-6 py-4 text-muted-foreground">{formatDate(row.updated_at || row.applied_at)}</td>
                   <td className="px-6 py-4">
-                    {row.status === 'Lolos' ? (
+                    {row.status === 'Lolos' || row.status === 'hired' ? (
                       <span className="px-3 py-1 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 text-xs font-semibold rounded-full border border-emerald-200 dark:border-emerald-800/50">
                         {t.archive?.hired || 'Hired / Diterima'}
                       </span>

@@ -47,8 +47,8 @@ interface ApplicationItem {
   kegiatan: string;
   tahapRekrutmen: string;
   currentStageIndex: number; // 1 to 5
-  status: 'Dalam Proses' | 'Lolos' | 'Tidak Lolos' | 'Lowongan Telah Ditutup';
-  statusMessage: string;
+  status: 'Dalam Proses' | 'Lolos' | 'Tidak Lolos' | 'Lowongan Telah Ditutup' | 'Tahap Akhir';
+  statusMessage?: string;
   rawStatus?: string;
   catatanPerusahaan?: string;
   interviewDetails?: {
@@ -378,6 +378,7 @@ function StatusValidasiContent() {
   const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
   const [reviewContextEvent, setReviewContextEvent] = useState('general');
   const [isLoading, setIsLoading] = useState(false);
+  const [isUploadingVideo, setIsUploadingVideo] = useState(false);
 
   useEffect(() => {
     if (searchParams.get('showReview') === 'true') {
@@ -412,7 +413,7 @@ function StatusValidasiContent() {
             const threshold = item.analisis_cv?.threshold_digunakan || item.job?.cv_threshold || 60;
 
             let stageIndex = 1;
-            let statusLabel: 'Dalam Proses' | 'Lolos' | 'Tidak Lolos' | 'Lowongan Telah Ditutup' = 'Dalam Proses';
+            let statusLabel: 'Dalam Proses' | 'Lolos' | 'Tidak Lolos' | 'Lowongan Telah Ditutup' | 'Tahap Akhir' = 'Dalam Proses';
             let tahapName = 'Stage 1: UPLOAD CV';
             let msg = 'Profil CV Anda telah masuk pipeline. Menunggu proses seleksi AI.';
 
@@ -458,8 +459,8 @@ function StatusValidasiContent() {
             } else if (s === 'interview_lanjutan' || s === 'interview_scheduled' || s === 'interview') {
               stageIndex = 5;
               tahapName = 'Stage 5: WAWANCARA LANJUTAN';
-              statusLabel = 'Lolos';
-              msg = 'Selamat! Anda dinyatakan lolos tahap evaluasi AI dan diundang ke tahap Wawancara Lanjutan bersama Tim HR/User.';
+              statusLabel = 'Tahap Akhir';
+              msg = 'Anda telah lolos evaluasi awal dan diundang ke tahap Wawancara Lanjutan bersama Tim HR/User.';
             } else if (s === 'hired' || s === 'accepted' || s === 'Lolos') {
               stageIndex = 5;
               tahapName = 'Stage 5: DITERIMA (HIRED)';
@@ -659,6 +660,7 @@ function StatusValidasiContent() {
       className: 'text-center',
       render: (item) => {
         const isPassed = item.status === 'Lolos';
+        const isTahapAkhir = item.status === 'Tahap Akhir';
         const isInProgress = item.status === 'Dalam Proses';
         const isFailed = item.status === 'Tidak Lolos' || item.status === 'Lowongan Telah Ditutup';
         const isActionRequired = item.currentStageIndex === 3 && isInProgress;
@@ -668,6 +670,8 @@ function StatusValidasiContent() {
           <span
             className={`font-bold px-3 py-1 rounded-full text-xs inline-flex items-center gap-1.5 whitespace-nowrap ${isPassed
                 ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800'
+                : isTahapAkhir
+                  ? 'bg-indigo-100 text-indigo-800 dark:bg-indigo-950/60 dark:text-indigo-300 border border-indigo-300 dark:border-indigo-800'
                 : isActionRequired
                   ? 'bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300 border border-amber-300 dark:border-amber-800'
                   : isInProgress
@@ -677,6 +681,8 @@ function StatusValidasiContent() {
           >
             {isPassed ? (
               <CheckCircle2 size={13} />
+            ) : isTahapAkhir ? (
+              <Sparkles size={13} />
             ) : isFailed ? (
               <XCircle size={13} />
             ) : isActionRequired ? (
@@ -879,6 +885,33 @@ function StatusValidasiContent() {
                 })}
               </div>
             </div>
+            {/* Applicant Interview Reminder Banner (Hari H) */}
+            {(() => {
+              const todayIso = new Date();
+              // Adjust to local date string easily to avoid timezone bugs
+              const localDate = new Date(todayIso.getTime() - (todayIso.getTimezoneOffset() * 60000)).toISOString().split('T')[0];
+              const interviewDate = selectedDetailApp.interviewDetails?.tanggal;
+              
+              if (selectedDetailApp.status === 'Tahap Akhir' && interviewDate === localDate) {
+                return (
+                  <div className="p-4 rounded-2xl bg-gradient-to-r from-indigo-600 to-indigo-800 border border-indigo-400 text-white shadow-lg">
+                    <div className="flex items-start gap-3">
+                      <div className="p-2 bg-white/20 rounded-full shrink-0 animate-pulse">
+                        <AlertCircle size={20} className="text-white" />
+                      </div>
+                      <div>
+                        <h4 className="font-black text-sm">PENGINGAT: Jadwal Wawancara Anda Hari Ini!</h4>
+                        <p className="text-xs text-indigo-100 font-medium mt-1 leading-relaxed">
+                          Wawancara Anda dijadwalkan hari ini pada pukul <strong>{selectedDetailApp.interviewDetails?.waktu || '-'} WIB</strong>. 
+                          Mohon pastikan Anda sudah bersiap dan bergabung tepat waktu melalui tautan pada detail di bawah.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                );
+              }
+              return null;
+            })()}
 
             {/* Status Alert Banner */}
             <div
@@ -886,6 +919,8 @@ function StatusValidasiContent() {
                   ? 'bg-rose-50/80 dark:bg-rose-950/20 border-rose-200 dark:border-rose-900/50 text-rose-900 dark:text-rose-200'
                   : selectedDetailApp.status === 'Lolos'
                     ? 'bg-emerald-50/80 dark:bg-emerald-950/20 border-emerald-200 dark:border-emerald-900/50 text-emerald-900 dark:text-emerald-200'
+                  : selectedDetailApp.status === 'Tahap Akhir'
+                    ? 'bg-indigo-50/80 dark:bg-indigo-950/20 border-indigo-200 dark:border-indigo-900/50 text-indigo-900 dark:text-indigo-200'
                     : selectedDetailApp.currentStageIndex === 3 && selectedDetailApp.status === 'Dalam Proses'
                       ? 'bg-amber-50/80 dark:bg-amber-950/20 border-amber-300 dark:border-amber-800/50 text-amber-900 dark:text-amber-200'
                       : 'bg-blue-50/80 dark:bg-blue-950/20 border-blue-200 dark:border-blue-900/50 text-[#1A4B9F] dark:text-blue-300'
@@ -900,7 +935,12 @@ function StatusValidasiContent() {
                 ) : selectedDetailApp.status === 'Lolos' ? (
                   <>
                     <CheckCircle2 size={17} className="text-emerald-600 shrink-0" />
-                    <span>Selamat! Anda Dinyatakan Lolos</span>
+                    <span>Selamat! Anda Resmi Diterima (Lolos)</span>
+                  </>
+                ) : selectedDetailApp.status === 'Tahap Akhir' ? (
+                  <>
+                    <Sparkles size={17} className="text-indigo-600 dark:text-indigo-400 shrink-0" />
+                    <span>Status Seleksi: Tahap Akhir (Wawancara)</span>
                   </>
                 ) : selectedDetailApp.currentStageIndex === 3 && selectedDetailApp.status === 'Dalam Proses' ? (
                   <>
@@ -956,8 +996,9 @@ function StatusValidasiContent() {
                   {selectedDetailApp.cvScore > 0 && (
                     <button
                       type="button"
+                      disabled={isUploadingVideo}
                       onClick={() => setActiveCvModalJob(selectedDetailApp)}
-                      className="px-3 py-1.5 rounded-xl bg-white dark:bg-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800 text-[#1A4B9F] dark:text-blue-400 font-bold text-xs border border-slate-200 dark:border-slate-700 transition-colors cursor-pointer shadow-2xs"
+                      className="px-3 py-1.5 rounded-xl bg-white dark:bg-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800 text-[#1A4B9F] dark:text-blue-400 font-bold text-xs border border-slate-200 dark:border-slate-700 transition-colors cursor-pointer shadow-2xs disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       Detail CV
                     </button>
@@ -965,8 +1006,9 @@ function StatusValidasiContent() {
                   {selectedDetailApp.currentStageIndex >= 5 && selectedDetailApp.rawStatus !== 'ditolak_sistem' && (
                     <button
                       type="button"
+                      disabled={isUploadingVideo}
                       onClick={() => setActiveHumanModalJob(selectedDetailApp)}
-                      className="px-3 py-1.5 rounded-xl bg-[#1A4B9F] hover:bg-[#133878] text-white font-bold text-xs transition-colors cursor-pointer shadow-2xs"
+                      className="px-3 py-1.5 rounded-xl bg-[#1A4B9F] hover:bg-[#133878] text-white font-bold text-xs transition-colors cursor-pointer shadow-2xs disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       Detail AI
                     </button>
@@ -1035,14 +1077,16 @@ function StatusValidasiContent() {
                 </div>
                 <div className="pt-2">
                   <div className="flex items-center gap-3">
-                    <label className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs cursor-pointer shadow-xs transition-colors">
+                    <label className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs cursor-pointer shadow-xs transition-colors ${isUploadingVideo ? 'opacity-50 pointer-events-none' : ''}`}>
                       <input
                         type="file"
                         accept="video/*"
                         className="hidden"
+                        disabled={isUploadingVideo}
                         onChange={(e) => {
                           const file = e.target.files?.[0];
                           if (file) {
+                            setIsUploadingVideo(true);
                             const video = document.createElement('video');
                             video.preload = 'metadata';
                             video.onloadedmetadata = () => {
@@ -1050,6 +1094,7 @@ function StatusValidasiContent() {
                               if (video.duration > 240) {
                                 toast.error('Durasi video maksimal adalah 4 menit. Silakan persingkat video Anda.');
                                 e.target.value = '';
+                                setIsUploadingVideo(false);
                                 return;
                               }
                               const formData = new FormData();
@@ -1063,14 +1108,24 @@ function StatusValidasiContent() {
                                 setTimeout(() => {
                                   window.location.href = window.location.pathname + '?showReview=true&context=uploaded_video';
                                 }, 1500);
-                              }).catch(() => { });
+                              }).catch(() => {
+                                setIsUploadingVideo(false);
+                              });
+                            };
+                            video.onerror = () => {
+                              toast.error('Gagal memproses file video.');
+                              setIsUploadingVideo(false);
                             };
                             video.src = URL.createObjectURL(file);
                           }
                         }}
                       />
-                      <Video size={14} />
-                      <span>Upload Video Wawancara</span>
+                      {isUploadingVideo ? (
+                        <div className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin shrink-0" />
+                      ) : (
+                        <Video size={14} />
+                      )}
+                      <span>{isUploadingVideo ? 'Mengunggah...' : 'Upload Video Wawancara'}</span>
                     </label>
                     <span className="text-[10px] text-slate-500 font-medium">*Durasi maksimal: 4 menit</span>
                   </div>
@@ -1084,8 +1139,9 @@ function StatusValidasiContent() {
             <div className="p-4 sm:p-5 border-t border-slate-100 dark:border-slate-800 flex justify-end shrink-0 bg-slate-50/50 dark:bg-slate-800/30">
               <button
                 type="button"
+                disabled={isUploadingVideo}
                 onClick={() => setSelectedDetailApp(null)}
-                className="px-6 py-2 rounded-xl bg-slate-200/80 dark:bg-slate-800 hover:bg-slate-300/80 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-bold text-xs cursor-pointer transition-colors"
+                className="px-6 py-2 rounded-xl bg-slate-200/80 dark:bg-slate-800 hover:bg-slate-300/80 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-bold text-xs cursor-pointer transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Tutup
               </button>

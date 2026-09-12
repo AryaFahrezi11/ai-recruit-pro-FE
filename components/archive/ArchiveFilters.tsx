@@ -6,99 +6,87 @@ import { Calendar as CalendarIcon, Download, Search, FilterX } from 'lucide-reac
 import { fetchAuth } from '@/lib/api/auth';
 
 export function ArchiveFilters({ 
-  search, setSearch, 
-  jobFilter, setJobFilter, 
-  date, setDate 
+  search, 
+  jobFilter, 
+  hasilFilter,
+  date,
+  updateUrl,
+  availableJobs 
 }: any) {
   const { t } = useTranslation();
   
-  const [categories, setCategories] = useState<string[]>([]);
+  const [localSearch, setLocalSearch] = useState(search);
 
   useEffect(() => {
-    const fetchCategories = async () => {
-      try {
-        const [catRes, jobRes] = await Promise.all([
-          fetchAuth('/api/jobs/categories'),
-          fetchAuth('/api/jobs/my-jobs')
-        ]);
+    setLocalSearch(search);
+  }, [search]);
 
-        const categorySet = new Set<string>();
+  const handleSearch = () => {
+    updateUrl({ search: localSearch });
+  };
 
-        if (catRes.ok) {
-          const catsData = await catRes.json();
-          if (Array.isArray(catsData)) {
-            catsData.forEach((c: any) => {
-              if (c.nama_kategori && c.nama_kategori.trim()) {
-                categorySet.add(c.nama_kategori.trim());
-              }
-            });
-          }
-        }
-
-        if (jobRes.ok) {
-          const jobsData = await jobRes.json();
-          if (Array.isArray(jobsData)) {
-            jobsData.forEach((j: any) => {
-              const catName = j.kategori?.nama_kategori || j.kategori_nama || j.kategori;
-              if (catName && typeof catName === 'string' && catName.trim()) {
-                categorySet.add(catName.trim());
-              }
-            });
-          }
-        }
-
-        const normalizedMap = new Map<string, string>();
-        Array.from(categorySet).forEach(cat => {
-          const lower = cat.toLowerCase();
-          if (!normalizedMap.has(lower)) {
-            normalizedMap.set(lower, cat);
-          }
-        });
-
-        const sortedCategories = Array.from(normalizedMap.values()).sort((a, b) => a.localeCompare(b));
-        setCategories(sortedCategories);
-      } catch (err) {
-        console.error('Failed to load job categories:', err);
-      }
-    };
-
-    fetchCategories();
-  }, []);
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      handleSearch();
+    }
+  };
 
   const currentMonthName = new Intl.DateTimeFormat('id-ID', { month: 'long', year: 'numeric' }).format(new Date());
-  const hasActiveFilter = Boolean(search || jobFilter || date);
+  const hasActiveFilter = Boolean(search || jobFilter || date || hasilFilter);
 
   return (
-    <div className="flex flex-col gap-3 bg-card p-4 rounded-t-xl border border-border border-b-0">
+    <div className="flex flex-col gap-3">
       
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div className="flex flex-wrap items-center gap-3 flex-1 w-full">
           
-          {/* Candidate Search Input */}
-          <div className="relative min-w-[220px] flex-1 sm:flex-initial">
-            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-            <input 
-              type="text" 
-              placeholder={t.archive?.searchCandidate || "Cari nama, email, kampus..."}
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="w-full pl-9 pr-4 py-2 bg-background border border-border rounded-lg text-xs font-medium text-foreground outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all"
-            />
+          {/* Candidate Search Input & Button */}
+          <div className="flex relative min-w-[220px] flex-1 sm:flex-initial">
+            <div className="relative flex-1">
+              <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+              <input 
+                type="text" 
+                placeholder={t.archive?.searchCandidate || "Cari nama, email, kampus..."}
+                value={localSearch}
+                onChange={(e) => setLocalSearch(e.target.value)}
+                onKeyDown={handleKeyDown}
+                className="w-full pl-9 pr-4 py-2 bg-background border border-border rounded-l-lg text-xs font-medium text-foreground outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all"
+              />
+            </div>
+            <button
+              onClick={handleSearch}
+              className="px-4 py-2 bg-primary hover:bg-primary/90 text-primary-foreground text-xs font-semibold rounded-r-lg transition-colors cursor-pointer border border-primary border-l-0"
+            >
+              Cari
+            </button>
           </div>
 
-          {/* Kategori Pekerjaan Dropdown */}
+          {/* Job Filter Dropdown */}
           <div className="relative min-w-[200px]">
             <select 
               value={jobFilter}
-              onChange={(e) => setJobFilter(e.target.value)}
+              onChange={(e) => updateUrl({ job: e.target.value })}
               className="w-full px-3 py-2 bg-background border border-border rounded-lg text-xs text-foreground hover:bg-muted transition-colors font-medium outline-none cursor-pointer"
             >
-              <option value="">Semua Kategori Pekerjaan</option>
-              {categories.map((cat, idx) => (
-                <option key={idx} value={cat}>
-                  {cat}
+              <option value="">Semua Lowongan</option>
+              {availableJobs.map((job: any, idx: number) => (
+                <option key={idx} value={job.id}>
+                  {job.title}
                 </option>
               ))}
+            </select>
+          </div>
+
+          {/* Hasil Filter Dropdown */}
+          <div className="relative min-w-[150px]">
+            <select 
+              value={hasilFilter}
+              onChange={(e) => updateUrl({ hasil: e.target.value })}
+              className="w-full px-3 py-2 bg-background border border-border rounded-lg text-xs text-foreground hover:bg-muted transition-colors font-medium outline-none cursor-pointer"
+            >
+              <option value="">Semua Hasil</option>
+              <option value="hired">Diterima (Hired)</option>
+              <option value="rejected">Ditolak</option>
             </select>
           </div>
 
@@ -107,7 +95,7 @@ export function ArchiveFilters({
             <input 
               type="date" 
               value={date}
-              onChange={(e) => setDate(e.target.value)}
+              onChange={(e) => updateUrl({ date: e.target.value })}
               className="w-[145px] px-3 py-2 bg-background border border-border rounded-lg text-xs font-medium text-foreground outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all [&::-webkit-calendar-picker-indicator]:opacity-60 cursor-pointer"
               title="Pilih tanggal spesifik untuk melihat data lama"
             />
@@ -116,7 +104,7 @@ export function ArchiveFilters({
           {/* Reset Filter Button */}
           {hasActiveFilter && (
             <button
-              onClick={() => { setSearch(''); setJobFilter(''); setDate(''); }}
+              onClick={() => { setLocalSearch(''); updateUrl({ search: '', job: '', date: '', hasil: '' }); }}
               className="flex items-center gap-1.5 px-3 py-2 bg-muted hover:bg-muted/80 text-muted-foreground hover:text-foreground text-xs font-semibold rounded-lg transition-colors cursor-pointer"
               title="Reset semua filter"
             >
@@ -137,7 +125,7 @@ export function ArchiveFilters({
       </div>
 
       {/* Active Mode Banner / Notice */}
-      <div className="flex items-center justify-between pt-1 border-t border-border/40 text-[11px] text-muted-foreground">
+      <div className="flex items-center justify-between pt-1 text-[11px] text-muted-foreground">
         <div className="flex items-center gap-1.5 font-medium">
           <CalendarIcon size={13} className="text-primary" />
           <span>

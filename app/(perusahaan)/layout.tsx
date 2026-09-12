@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { toast } from 'react-hot-toast';
 import { Sidebar } from '@/components/dashboard/Sidebar';
 import { useAppStore } from '@/lib/store/useAppStore';
@@ -19,6 +19,7 @@ export default function PerusahaanLayout({
   children: React.ReactNode;
 }) {
   const router = useRouter();
+  const pathname = usePathname();
   const { toggleMobileSidebar, logout } = useAppStore();
   const { t } = useTranslation();
   const [mounted, setMounted] = useState(false);
@@ -90,6 +91,14 @@ export default function PerusahaanLayout({
               router.push('/pending-approval');
               return;
             }
+            
+            // Check if settings profile is completed
+            const hasCompletedSettings = profil.deskripsi && profil.kota && profil.provinsi && profil.no_telepon && profil.tahun_berdiri && profil.logo_url;
+            if (!hasCompletedSettings && pathname !== '/settings') {
+              toast.error('Mohon lengkapi profil perusahaan Anda terlebih dahulu.', { id: 'incomplete-settings' });
+              router.push('/settings?onboarding=true');
+              return;
+            }
           }
         }
       } catch (err) {
@@ -98,7 +107,7 @@ export default function PerusahaanLayout({
     };
 
     checkCompanyStatus();
-  }, [router]);
+  }, [router, pathname]);
 
   const markAllRead = () => {
     setUnreadCount(0);
