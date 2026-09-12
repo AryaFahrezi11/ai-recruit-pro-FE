@@ -516,10 +516,12 @@ function LandingPageContent() {
               className="flex items-center gap-3 group"
             >
               <Image
-                src="/Logo Ai Recruit Pro..png"
+                src="/logo_hd.png"
                 alt="AI-RecruitPro Logo"
-                width={70}
-                height={70}
+                width={280}
+                height={280}
+                quality={100}
+                unoptimized
                 className="h-13 sm:h-15 w-auto object-contain shrink-0 transition-transform group-hover:scale-105"
                 priority
               />

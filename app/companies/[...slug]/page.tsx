@@ -248,10 +248,11 @@ export default function GlintsCleanCompanyDetailPage({ params }: { params: Promi
           <div className="max-w-[1600px] mx-auto px-6 sm:px-10 lg:px-16 h-20 flex items-center justify-between">
             <Link href="/" className="flex items-center gap-3 group">
               <Image
-                src="/Logo Ai Recruit Pro..png"
+                src="/logo_hd.png"
                 alt="AI-RecruitPro Logo"
                 width={70}
                 height={70}
+                unoptimized
                 className="h-13 sm:h-15 w-auto object-contain shrink-0 transition-transform group-hover:scale-105"
                 priority
               />

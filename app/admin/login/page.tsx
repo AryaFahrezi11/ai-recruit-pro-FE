@@ -48,10 +48,11 @@ export default function AdminLoginPage() {
       <div className="max-w-md w-full bg-white dark:bg-slate-900 rounded-2xl p-8 border border-slate-200 dark:border-slate-800 shadow-xl space-y-6">
         <div className="flex flex-col items-center text-center">
           <Image
-            src="/Logo Ai Recruit Pro..png"
+            src="/logo_hd.png"
             alt="AI-RecruitPro Logo"
             width={70}
             height={70}
+            unoptimized
             className="h-14 w-auto object-contain mb-3"
             priority
           />

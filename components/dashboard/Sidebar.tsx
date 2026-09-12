@@ -66,10 +66,11 @@ export function Sidebar() {
           
           <div className="flex items-center gap-2.5 mb-2 px-1 cursor-default">
             <Image
-              src="/Logo Ai Recruit Pro..png"
+              src="/logo_hd.png"
               alt="AI-RecruitPro Logo"
               width={44}
               height={44}
+              unoptimized
               className="h-10 w-auto object-contain shrink-0"
             />
             <span className="font-bold text-lg tracking-tight text-[#0D3880] dark:text-white leading-none">

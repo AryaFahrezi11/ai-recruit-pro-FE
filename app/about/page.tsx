@@ -41,10 +41,12 @@ export default function AboutPage() {
               className="flex items-center gap-3 group"
             >
               <Image
-                src="/Logo Ai Recruit Pro..png"
+                src="/logo_hd.png"
                 alt="AI-RecruitPro Logo"
-                width={70}
-                height={70}
+                width={280}
+                height={280}
+                quality={100}
+                unoptimized
                 className="h-13 sm:h-15 w-auto object-contain shrink-0 transition-transform group-hover:scale-105"
                 priority
               />
@@ -200,10 +202,12 @@ export default function AboutPage() {
                 {/* Model Cutout PNG - BALANCED MEDIUM SIZE */}
                 <div className="relative z-10 w-full h-full flex items-end justify-center">
                   <Image
-                    src="/model_tentang_kami_transparent.png"
+                    src="/model_tentang_kami_hd.png"
                     alt="Model Utama AI-RecruitPro"
-                    width={480}
-                    height={540}
+                    width={1024}
+                    height={1024}
+                    quality={100}
+                    unoptimized
                     className="w-auto h-[100%] sm:h-[105%] object-contain drop-shadow-xl scale-100 sm:scale-105 origin-bottom"
                     priority
                   />
