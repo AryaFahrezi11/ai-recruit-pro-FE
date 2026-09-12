@@ -442,7 +442,7 @@ function CreateJobForm() {
                     type="text"
                     value={customCategoryName}
                     onChange={(e) => { setCustomCategoryName(e.target.value); setValidationErrors(prev => ({...prev, customCategoryName: ''})); }}
-                    placeholder="Contoh: Blockchain, AI Engineering, Legal & Compliance..."
+                    placeholder="Contoh: Manajemen Proyek, Komunikasi Bisnis, Legal & Compliance..."
                     className={`w-full px-4 py-2.5 bg-background border rounded-lg text-sm font-medium text-foreground outline-none focus:ring-1 transition-all ${validationErrors.customCategoryName ? 'border-rose-500 focus:border-rose-500 focus:ring-rose-500' : 'border-border focus:border-primary focus:ring-primary'}`}
                   />
                   {validationErrors.customCategoryName && <p className="text-rose-500 text-[10px] mt-1 font-medium">{validationErrors.customCategoryName}</p>}
@@ -627,7 +627,7 @@ function CreateJobForm() {
                   type="text"
                   value={newResp}
                   onChange={(e) => { setNewResp(e.target.value); if (validationErrors.responsibilities) setValidationErrors(prev => ({...prev, responsibilities: ''})); }}
-                  placeholder="Misal: Merancang dan mengimplementasikan arsitektur web aplikasi (min. 20 karakter)"
+                  placeholder="Misal: Mengelola operasional harian dan koordinasi tim kerja (min. 20 karakter)"
                   className={`w-full px-4 py-2 bg-muted/30 border rounded-lg text-xs text-foreground focus:outline-none transition-all ${
                     newResp.trim().length > 0 && newResp.trim().length < 20
                       ? 'border-amber-400 focus:border-amber-500'

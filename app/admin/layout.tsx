@@ -6,7 +6,7 @@ import { useAppStore } from '@/lib/store/useAppStore';
 import Link from 'next/link';
 import Image from 'next/image';
 import { 
-  LayoutDashboard, Users, ShieldCheck, LogOut, Settings, Bell, Search, Menu, X, Briefcase, Database, LineChart, FileText
+  LayoutDashboard, Users, ShieldCheck, LogOut, Settings, Bell, Search, Menu, X, Briefcase, Database, LineChart, FileText, MessageSquareQuote
 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 
@@ -50,6 +50,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     { label: 'Manajemen Lowongan', icon: Briefcase, href: '/admin/jobs' },
     { label: 'Manajemen Pengguna', icon: Users, href: '/admin/users' },
     { label: 'Verifikasi Perusahaan', icon: ShieldCheck, href: '/admin/verifikasi' },
+    { label: 'Ulasan & Feedback', icon: MessageSquareQuote, href: '/admin/reviews' },
     { label: 'Master Data', icon: Database, href: '/admin/master-data' },
   ];
 

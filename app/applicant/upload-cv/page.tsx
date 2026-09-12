@@ -618,7 +618,7 @@ export default function AtsCvBuilderPage() {
                       type="text"
                       value={jobTitle}
                       onChange={(e) => setJobTitle(e.target.value)}
-                      placeholder="Frontend Engineer / Staff Marketing"
+                      placeholder="Manajer Operasional / Staff Marketing"
                       required
                       className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 focus:border-[#1A4B9F] dark:focus:border-blue-400 rounded-xl text-xs font-bold outline-none dark:text-white"
                     />
@@ -818,7 +818,7 @@ export default function AtsCvBuilderPage() {
                         type="text"
                         value={exp.role}
                         onChange={(e) => handleExperienceChange(idx, 'role', e.target.value)}
-                        placeholder="Senior Frontend Engineer"
+                        placeholder="Spesialis Komunikasi / Manajer Proyek"
                         required
                         className="px-3.5 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 focus:border-[#1A4B9F] dark:focus:border-blue-400 rounded-xl text-xs font-bold outline-none dark:text-white"
                       />

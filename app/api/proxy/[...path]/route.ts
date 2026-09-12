@@ -1,40 +1,30 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getBaseUrl } from '@/lib/api';
-
-/**
- * Catch-all API proxy route.
- * Forwards all requests from the browser to the backend API server,
- * avoiding CORS preflight issues entirely.
- *
- * Example: POST /api/proxy/applications/ → POST http://localhost:8000/api/applications/
- */
 
 const BACKEND_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000/api';
 
 export const dynamic = 'force-dynamic';
 
-async function proxyRequest(req: NextRequest, { params }: { params: Promise<{ path: string[] }> }) {
-  const { path } = await params;
-  const targetPath = '/' + (path || []).join('/');
-  const url = new URL(req.url);
-  const queryString = url.search;
-  const backendUrl = `${BACKEND_BASE}${targetPath}${queryString}`;
-
-  // Forward headers, removing host-related ones
-  const headers: Record<string, string> = {};
-  req.headers.forEach((value, key) => {
-    if (!['host', 'connection', 'transfer-encoding'].includes(key.toLowerCase())) {
-      headers[key] = value;
-    }
-  });
-
+async function proxyRequest(req: NextRequest, context: any) {
   try {
+    const params = context?.params ? await context.params : {};
+    const pathArray = params?.path || [];
+    const targetPath = '/' + (Array.isArray(pathArray) ? pathArray.join('/') : pathArray);
+    const url = new URL(req.url);
+    const queryString = url.search;
+    const backendUrl = BACKEND_BASE + targetPath + queryString;
+
+    const headers: Record<string, string> = {};
+    req.headers.forEach((value, key) => {
+      if (!['host', 'connection', 'transfer-encoding'].includes(key.toLowerCase())) {
+        headers[key] = value;
+      }
+    });
+
     const fetchOptions: RequestInit = {
       method: req.method,
       headers,
     };
 
-    // Forward body for methods that have one
     if (req.method !== 'GET' && req.method !== 'HEAD') {
       const contentType = req.headers.get('content-type') || '';
       if (contentType.includes('multipart/form-data')) {
@@ -46,7 +36,6 @@ async function proxyRequest(req: NextRequest, { params }: { params: Promise<{ pa
 
     const backendRes = await fetch(backendUrl, fetchOptions);
 
-    // Forward backend response headers
     const responseHeaders = new Headers();
     backendRes.headers.forEach((value, key) => {
       if (!['transfer-encoding', 'content-encoding'].includes(key.toLowerCase())) {

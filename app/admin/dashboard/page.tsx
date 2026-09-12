@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { Users, Building2, GraduationCap, AlertCircle, Calendar, ArrowRight, UserPlus, Clock, Server, Activity, Cpu, Database, Briefcase, Archive, FileText } from 'lucide-react';
+import { Zap, Users, Building2, GraduationCap, AlertCircle, Calendar, ArrowRight, UserPlus, Clock, Server, Activity, Cpu, Database, Briefcase, Archive, FileText } from 'lucide-react';
 import { fetchAuth } from '@/lib/api/auth';
 import { toast } from 'react-hot-toast';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, BarChart, Bar, Legend, LineChart, Line } from 'recharts';
@@ -490,19 +490,19 @@ export default function AdminDashboard() {
             </div>
             <div className="bg-slate-50 dark:bg-slate-800/40 rounded-xl p-4 border border-slate-200 dark:border-slate-800">
               <div className="flex items-center gap-2 text-slate-500 dark:text-slate-400 mb-1 text-xs font-bold">
-                <Activity size={15} className="text-black dark:text-white" /> API Latency
+                <Activity size={15} className="text-black dark:text-white" /> Beban Server
               </div>
               <div className="text-xl font-extrabold text-slate-900 dark:text-white">{aiStats.latency}</div>
             </div>
             <div className="bg-slate-50 dark:bg-slate-800/40 rounded-xl p-4 border border-slate-200 dark:border-slate-800">
               <div className="flex items-center gap-2 text-slate-500 dark:text-slate-400 mb-1 text-xs font-bold">
-                <Cpu size={15} className="text-black dark:text-white" /> Engine Tokens
+                <Zap size={15} className="text-black dark:text-white" /> Kecepatan Screening AI
               </div>
               <div className="text-xl font-extrabold text-slate-900 dark:text-white">{aiStats.tokenUsage}</div>
             </div>
             <div className="bg-slate-50 dark:bg-slate-800/40 rounded-xl p-4 border border-slate-200 dark:border-slate-800">
               <div className="flex items-center gap-2 text-slate-500 dark:text-slate-400 mb-1 text-xs font-bold">
-                <Database size={15} className="text-black dark:text-white" /> Parsed CVs
+                <Database size={15} className="text-black dark:text-white" /> CV Ekstraksi (AI)
               </div>
               <div className="text-xl font-extrabold text-slate-900 dark:text-white">{aiStats.parsedCVs}</div>
             </div>
