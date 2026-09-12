@@ -284,11 +284,44 @@ export default function AtsCvBuilderPage() {
   const handleSaveAtsCv = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    // Validasi Kelengkapan Data
+    if (!fullName.trim()) {
+      toast.error('Nama lengkap wajib diisi!');
+      return;
+    }
+    if (!jobTitle.trim()) {
+      toast.error('Posisi/Jabatan yang diminati wajib diisi!');
+      return;
+    }
+    if (!summary.trim()) {
+      toast.error('Ringkasan profesional (Executive Summary) wajib diisi!');
+      return;
+    }
+    if (summary.trim().length < 150) {
+      toast.error(`Ringkasan profesional minimal 150 karakter agar AI dapat membaca dan menganalisis profil Anda secara akurat (saat ini ${summary.trim().length} karakter).`);
+      return;
+    }
+
     // Validasi Keahlian
     for (const skill of categorizedSkills) {
       if (skill.category.trim() !== '' && skill.items.trim() === '') {
         toast.error(`Poin keahlian untuk kategori "${skill.category}" wajib diisi!`);
         return;
+      }
+    }
+
+    // Validasi Deskripsi Pengalaman Kerja (minimal 30 karakter)
+    for (let i = 0; i < experiences.length; i++) {
+      const exp = experiences[i];
+      if (exp.company.trim() || exp.role.trim() || exp.description.trim()) {
+        if (!exp.description.trim()) {
+          toast.error(`Deskripsi pada Pengalaman #${i + 1} wajib diisi!`);
+          return;
+        }
+        if (exp.description.trim().length < 30) {
+          toast.error(`Deskripsi Pengalaman #${i + 1} minimal 30 karakter agar AI dapat menganalisis kompetensi dan rekam jejak Anda (saat ini ${exp.description.trim().length} karakter).`);
+          return;
+        }
       }
     }
 
@@ -350,6 +383,34 @@ export default function AtsCvBuilderPage() {
       if (skill.category.trim() !== '' && skill.items.trim() === '') {
         toast.error(`Poin keahlian untuk kategori "${skill.category}" wajib diisi!`);
         return;
+      }
+    }
+
+    if (!rawPdfFile) {
+      if (!fullName.trim()) {
+        toast.error('Nama lengkap wajib diisi!');
+        return;
+      }
+      if (!summary.trim()) {
+        toast.error('Ringkasan profesional (Executive Summary) wajib diisi!');
+        return;
+      }
+      if (summary.trim().length < 150) {
+        toast.error(`Ringkasan profesional minimal 150 karakter agar AI dapat membaca dan menganalisis profil Anda secara akurat (saat ini ${summary.trim().length} karakter).`);
+        return;
+      }
+      for (let i = 0; i < experiences.length; i++) {
+        const exp = experiences[i];
+        if (exp.company.trim() || exp.role.trim() || exp.description.trim()) {
+          if (!exp.description.trim()) {
+            toast.error(`Deskripsi pada Pengalaman #${i + 1} wajib diisi!`);
+            return;
+          }
+          if (exp.description.trim().length < 30) {
+            toast.error(`Deskripsi Pengalaman #${i + 1} minimal 30 karakter agar AI dapat menganalisis kompetensi dan rekam jejak Anda (saat ini ${exp.description.trim().length} karakter).`);
+            return;
+          }
+        }
       }
     }
 
@@ -540,7 +601,7 @@ export default function AtsCvBuilderPage() {
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">{t.pelamar.uploadCv.fullName}</label>
+                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">{t.pelamar.uploadCv.fullName} <span className="text-rose-500">*</span></label>
                     <input
                       type="text"
                       value={fullName}
@@ -552,7 +613,7 @@ export default function AtsCvBuilderPage() {
                   </div>
 
                   <div>
-                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Judul Posisi / Peran</label>
+                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Judul Posisi / Peran <span className="text-rose-500">*</span></label>
                     <input
                       type="text"
                       value={jobTitle}
@@ -566,7 +627,7 @@ export default function AtsCvBuilderPage() {
 
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   <div>
-                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">{t.pelamar.uploadCv.email}</label>
+                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">{t.pelamar.uploadCv.email} <span className="text-rose-500">*</span></label>
                     <input
                       type="email"
                       value={email}
@@ -577,7 +638,7 @@ export default function AtsCvBuilderPage() {
                     />
                   </div>
                   <div>
-                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">{t.pelamar.uploadCv.phone}</label>
+                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">{t.pelamar.uploadCv.phone} <span className="text-rose-500">*</span></label>
                     <input
                       type="text"
                       value={phone}
@@ -588,7 +649,7 @@ export default function AtsCvBuilderPage() {
                     />
                   </div>
                   <div>
-                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">{t.pelamar.uploadCv.location}</label>
+                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">{t.pelamar.uploadCv.location} <span className="text-rose-500">*</span></label>
                     <input
                       type="text"
                       value={location}
@@ -604,7 +665,7 @@ export default function AtsCvBuilderPage() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
                   <div>
                     <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
-                      🔗 Tautan Profile LinkedIn
+                      🔗 Tautan Profile LinkedIn <span className="text-rose-500">*</span>
                     </label>
                     <input
                       type="text"
@@ -625,7 +686,6 @@ export default function AtsCvBuilderPage() {
                       value={portfolioUrl}
                       onChange={(e) => setPortfolioUrl(e.target.value)}
                       placeholder="github.com/username atau portfolio.com"
-                      required
                       className="w-full px-3.5 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 focus:border-[#1A4B9F] dark:focus:border-blue-400 rounded-xl text-xs font-bold outline-none dark:text-white"
                     />
                   </div>
@@ -675,17 +735,43 @@ export default function AtsCvBuilderPage() {
 
               {/* Section 2: Ringkasan Profesional */}
               <div className="space-y-2">
-                <h3 className="text-xs font-bold uppercase tracking-wider text-slate-900 dark:text-white flex items-center gap-2">
-                  <FileText size={16} /> 2. Ringkasan Profesional (Executive Summary)
-                </h3>
+                <div className="flex items-center justify-between">
+                  <h3 className="text-xs font-bold uppercase tracking-wider text-slate-900 dark:text-white flex items-center gap-2">
+                    <FileText size={16} /> 2. Ringkasan Profesional (Executive Summary) <span className="text-rose-500">*</span>
+                  </h3>
+                  <span className={`text-[11px] font-mono ${
+                    summary.trim().length >= 150 
+                      ? 'text-emerald-600 dark:text-emerald-400 font-bold' 
+                      : 'text-amber-600 dark:text-amber-400'
+                  }`}>
+                    {summary.trim().length} / Min. 150 karakter
+                  </span>
+                </div>
                 <textarea
-                  rows={3}
+                  rows={4}
                   value={summary}
                   onChange={(e) => setSummary(e.target.value)}
-                  placeholder="Tuliskan ringkasan singkat mengenai latar belakang profesional, pencapaian utama, serta keahlian utama Anda di sini..."
+                  placeholder="Tuliskan ringkasan mendalam mengenai latar belakang profesional, pencapaian utama, keahlian unggulan, serta nilai tambah yang Anda bawa (minimal 150 karakter agar sistem AI dapat menganalisis kompetensi Anda secara komprehensif)..."
                   required
-                  className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 focus:border-[#1A4B9F] dark:focus:border-blue-400 rounded-xl text-xs outline-none leading-relaxed dark:text-white"
+                  className={`w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border rounded-xl text-xs outline-none leading-relaxed dark:text-white transition-all ${
+                    summary.trim().length > 0 && summary.trim().length < 150
+                      ? 'border-amber-400 focus:border-amber-500'
+                      : 'border-slate-200 dark:border-slate-700 focus:border-[#1A4B9F] dark:focus:border-blue-400'
+                  }`}
                 />
+                {summary.trim().length > 0 && summary.trim().length < 150 ? (
+                  <p className="text-amber-600 dark:text-amber-400 text-[10px] font-medium flex items-center gap-1">
+                    ⚠️ Tambahkan setidaknya {150 - summary.trim().length} karakter lagi agar ringkasan profesional Anda dapat dibaca dan dicocokkan secara optimal oleh AI.
+                  </p>
+                ) : summary.trim().length >= 150 ? (
+                  <p className="text-emerald-600 dark:text-emerald-400 text-[10px] font-medium flex items-center gap-1">
+                    ✓ Panjang ringkasan profesional memenuhi standar optimal untuk analisis kecocokan AI.
+                  </p>
+                ) : (
+                  <p className="text-slate-500 text-[10px]">
+                    💡 Minimal 150 karakter. Ringkasan yang komprehensif meningkatkan akurasi skor pencocokan AI ATS dengan lowongan pekerjaan.
+                  </p>
+                )}
               </div>
 
               {/* Section 3: Pengalaman Kerja */}
@@ -749,14 +835,41 @@ export default function AtsCvBuilderPage() {
                       />
                     </div>
 
-                    <textarea
-                      rows={2}
-                      value={exp.description}
-                      onChange={(e) => handleExperienceChange(idx, 'description', e.target.value)}
-                      placeholder="Deskripsi pencapaian & tanggung jawab utama..."
-                      required
-                      className="w-full px-3.5 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 focus:border-[#1A4B9F] dark:focus:border-blue-400 rounded-xl text-xs outline-none leading-relaxed dark:text-white"
-                    />
+                    <div className="space-y-1">
+                      <div className="flex items-center justify-between">
+                        <label className="text-[11px] font-semibold text-slate-700 dark:text-slate-300">
+                          Deskripsi Tanggung Jawab & Pencapaian <span className="text-rose-500">*</span>
+                        </label>
+                        <span className={`text-[10px] font-mono ${
+                          exp.description.trim().length >= 30 
+                            ? 'text-emerald-600 dark:text-emerald-400 font-bold' 
+                            : 'text-amber-600 dark:text-amber-400'
+                        }`}>
+                          {exp.description.trim().length} / Min. 30 karakter
+                        </span>
+                      </div>
+                      <textarea
+                        rows={2}
+                        value={exp.description}
+                        onChange={(e) => handleExperienceChange(idx, 'description', e.target.value)}
+                        placeholder="Uraikan tugas, peran, serta pencapaian kerja Anda di sini (minimal 30 karakter agar terbaca jelas oleh AI)..."
+                        required
+                        className={`w-full px-3.5 py-2 bg-white dark:bg-slate-900 border rounded-xl text-xs outline-none leading-relaxed dark:text-white transition-all ${
+                          exp.description.trim().length > 0 && exp.description.trim().length < 30
+                            ? 'border-amber-400 focus:border-amber-500'
+                            : 'border-slate-200 dark:border-slate-700 focus:border-[#1A4B9F] dark:focus:border-blue-400'
+                        }`}
+                      />
+                      {exp.description.trim().length > 0 && exp.description.trim().length < 30 ? (
+                        <p className="text-amber-600 dark:text-amber-400 text-[10px] font-medium">
+                          ⚠️ Tambahkan setidaknya {30 - exp.description.trim().length} karakter lagi agar AI dapat menganalisis kompetensi Anda.
+                        </p>
+                      ) : exp.description.trim().length >= 30 ? (
+                        <p className="text-emerald-600 dark:text-emerald-400 text-[10px] font-medium">
+                          ✓ Memenuhi standar analisis AI.
+                        </p>
+                      ) : null}
+                    </div>
                   </div>
                 ))}
               </div>

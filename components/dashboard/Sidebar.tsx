@@ -20,7 +20,7 @@ import {
   LogOut
 } from 'lucide-react';
 
-export function Sidebar() {
+export function Sidebar({ isBlocked = false }: { isBlocked?: boolean }) {
   const { t } = useTranslation();
   const pathname = usePathname();
   const router = useRouter();
@@ -80,18 +80,42 @@ export function Sidebar() {
 
 
 
-          <Link 
-            href="/jobs/new" 
-            onClick={handleLinkClick}
-            className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-bold py-2.5 px-4 rounded-xl flex items-center justify-center gap-2 transition-colors shadow-sm text-xs active:scale-95"
-          >
-            <Plus size={18} />
-            {t.sidebar.createNewJob}
-          </Link>
+          {isBlocked ? (
+            <div 
+              className="w-full bg-primary/50 text-primary-foreground/70 font-bold py-2.5 px-4 rounded-xl flex items-center justify-center gap-2 shadow-sm text-xs cursor-not-allowed opacity-50"
+            >
+              <Plus size={18} />
+              {t.sidebar.createNewJob}
+            </div>
+          ) : (
+            <Link 
+              href="/jobs/new" 
+              onClick={handleLinkClick}
+              className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-bold py-2.5 px-4 rounded-xl flex items-center justify-center gap-2 transition-colors shadow-sm text-xs active:scale-95"
+            >
+              <Plus size={18} />
+              {t.sidebar.createNewJob}
+            </Link>
+          )}
 
           <nav className="space-y-1">
             {navItems.map((item) => {
               const isActive = pathname.startsWith(item.href);
+              if (isBlocked) {
+                return (
+                  <div
+                    key={item.name}
+                    className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-bold transition-colors cursor-not-allowed opacity-50 ${
+                      isActive
+                        ? 'bg-primary/15 text-primary'
+                        : 'text-sidebar-foreground'
+                    }`}
+                  >
+                    <item.icon size={18} className={isActive ? 'text-primary' : 'text-muted-foreground'} />
+                    {item.name}
+                  </div>
+                );
+              }
               return (
                 <Link
                   key={item.name}
@@ -115,6 +139,21 @@ export function Sidebar() {
           <nav className="space-y-1">
             {bottomItems.map((item) => {
               const isActive = pathname.startsWith(item.href);
+              if (isBlocked && item.href !== '/settings') {
+                return (
+                  <div
+                    key={item.name}
+                    className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-bold transition-colors cursor-not-allowed opacity-50 ${
+                      isActive
+                        ? 'bg-primary/15 text-primary'
+                        : 'text-sidebar-foreground'
+                    }`}
+                  >
+                    <item.icon size={18} className={isActive ? 'text-primary' : 'text-muted-foreground'} />
+                    {item.name}
+                  </div>
+                );
+              }
               return (
                 <Link
                   key={item.name}

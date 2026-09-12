@@ -397,6 +397,42 @@ export default function SystemSettingsPage() {
                   </div>
                 </div>
               </div>
+              
+              <div>
+                <h2 className="text-base font-extrabold text-slate-900 dark:text-white mb-4">Informasi Kontak & Support</h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Email Layanan</label>
+                    <input 
+                      type="email" 
+                      value={settings.admin_email || ''}
+                      onChange={(e) => handleChange('admin_email', e.target.value)}
+                      placeholder="support@airecruitpro.id"
+                      className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-slate-400 outline-none font-medium"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">WhatsApp / Hotline</label>
+                    <input 
+                      type="text" 
+                      value={settings.support_whatsapp || ''}
+                      onChange={(e) => handleChange('support_whatsapp', e.target.value)}
+                      placeholder="+62 812-3456-7890"
+                      className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-slate-400 outline-none font-medium"
+                    />
+                  </div>
+                  <div className="md:col-span-2">
+                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Lokasi Kantor Pusat</label>
+                    <input 
+                      type="text" 
+                      value={settings.lokasi_kantor_pusat || ''}
+                      onChange={(e) => handleChange('lokasi_kantor_pusat', e.target.value)}
+                      placeholder="Jakarta, Indonesia"
+                      className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-slate-400 outline-none font-medium"
+                    />
+                  </div>
+                </div>
+              </div>
             </div>
           )}
 

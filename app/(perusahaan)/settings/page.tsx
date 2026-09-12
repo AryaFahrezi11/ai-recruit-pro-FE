@@ -37,74 +37,88 @@ interface TemplateConfig {
 }
 
 const DEFAULT_COMPANY_TEMPLATES: Record<string, string> = {
-  email_invitation_subject: "[Pemberitahuan Resmi] Undangan Wawancara Video - {{job_title}} di {{company_name}}",
+  email_invitation_subject: "Pemberitahuan Seleksi: Undangan Wawancara Video (AI) - {{job_title}} | {{company_name}}",
   email_invitation_body: `Yth. {{candidate_name}},
 
-Selamat! Kami menyampaikan bahwa profil dan kualifikasi Anda telah berhasil melewati tahap seleksi awal (CV Screening) untuk posisi {{job_title}} di {{company_name}}.
+Mewakili tim rekrutmen {{company_name}}, kami mengucapkan terima kasih atas ketertarikan Anda untuk bergabung bersama kami. Kami telah meninjau profil dan kualifikasi Anda, dan dengan senang hati kami sampaikan bahwa Anda berhasil melangkah ke tahapan seleksi berikutnya untuk posisi {{job_title}}.
 
-Sebagai tahapan selanjutnya, kami mengundang Anda untuk mengikuti sesi Wawancara Video AI (Virtual Interview). Sesi ini dirancang secara terstruktur dan dapat Anda akses melalui portal resmi kami berikut:
+Sebagai bagian dari proses seleksi standar di {{company_name}}, tahapan selanjutnya adalah Wawancara Video Asinkron (berbasis AI). Sesi ini bertujuan untuk mengenal lebih jauh potensi, kompetensi, dan kecocokan Anda dengan nilai-nilai perusahaan kami.
+
+Anda dapat mengakses dan memulai sesi wawancara video melalui tautan aman berikut:
 {{interview_link}}
 
-Mohon pastikan Anda menyelesaikan perekaman wawancara video ini sebelum tenggat waktu yang telah ditentukan pada sistem.
+Mohon perhatikan panduan berikut sebelum memulai:
+1. Pastikan Anda berada di ruangan yang tenang dengan pencahayaan yang memadai.
+2. Periksa kembali koneksi internet, kamera, dan mikrofon perangkat Anda.
+3. Wawancara ini memiliki batasan waktu untuk setiap pertanyaan. Kami sarankan Anda membaca instruksi di layar dengan saksama.
+4. Selesaikan perekaman wawancara ini selambat-lambatnya dalam waktu 2x24 jam sejak email ini diterima.
 
-Kami sangat menghargai ketertarikan Anda untuk bergabung dengan {{company_name}} dan menantikan partisipasi Anda.
+Apabila Anda mengalami kendala teknis dalam mengakses tautan tersebut, silakan membalas email ini agar tim dukungan kami dapat membantu Anda.
+
+Kami mengapresiasi waktu dan dedikasi Anda dalam mengikuti proses seleksi ini, dan kami menantikan partisipasi Anda.
 
 Hormat kami,
-Tim Akuisisi Talenta (Talent Acquisition)
+
+Tim Talent Acquisition
 {{company_name}}`,
 
-  email_interview_user_subject: "[Pemberitahuan Resmi] Undangan Wawancara Lanjutan - {{job_title}} di {{company_name}}",
+  email_interview_user_subject: "Undangan Wawancara Lanjutan (User Interview) - {{job_title}} | {{company_name}}",
   email_interview_user_body: `Yth. {{candidate_name}},
 
-Selamat! Berdasarkan hasil peninjauan menyeluruh terhadap tahapan wawancara sebelumnya, kami dengan senang hati mengundang Anda untuk melanjutkan ke tahapan Wawancara Lanjutan bersama Tim User/Manajemen kami.
+Terima kasih telah berpartisipasi dalam tahapan wawancara sebelumnya. Berdasarkan hasil evaluasi yang komprehensif, kami sangat terkesan dengan kualifikasi Anda dan dengan senang hati mengundang Anda untuk mengikuti tahapan Wawancara Lanjutan bersama Tim Manajemen/User kami.
 
-Detail jadwal wawancara Anda adalah sebagai berikut:
-Posisi: {{job_title}}
-Jadwal: {{jadwal_wawancara}}
-Lokasi / Tautan Meeting: {{lokasi_atau_link}}
+Sesi wawancara ini akan mendiskusikan lebih dalam mengenai pengalaman teknis Anda serta ekspektasi peran untuk posisi {{job_title}}.
 
-Instruksi tambahan dari Tim HR:
+Rincian jadwal wawancara Anda adalah sebagai berikut:
+• Posisi: {{job_title}}
+• Jadwal Wawancara: {{jadwal_wawancara}}
+• Lokasi / Tautan Akses: {{lokasi_atau_link}}
+
+Catatan Tambahan dari Tim HR:
 {{catatan_hr}}
 
-Untuk keperluan kelancaran jadwal, kami memohon kesediaan Anda untuk mengonfirmasi kehadiran dengan membalas email ini secara langsung.
+Untuk memastikan kelancaran penjadwalan, mohon konfirmasi kehadiran Anda dengan membalas email ini paling lambat 1x24 jam sebelum jadwal yang telah ditentukan. Jika Anda membutuhkan penyesuaian jadwal, harap segera menginformasikan kepada kami.
 
-Terima kasih atas dedikasi dan antusiasme Anda.
+Kami menantikan diskusi yang bermakna bersama Anda.
 
 Hormat kami,
-Tim Akuisisi Talenta (Talent Acquisition)
+
+Tim Talent Acquisition
 {{company_name}}`,
 
-  email_hire_subject: "[Pemberitahuan Resmi] Penawaran Pekerjaan: Selamat Bergabung di {{company_name}}",
+  email_hire_subject: "Penawaran Pekerjaan (Letter of Offer) - {{job_title}} | {{company_name}}",
   email_hire_body: `Yth. {{candidate_name}},
 
-Kami membawa kabar gembira! Menindaklanjuti seluruh rangkaian proses rekrutmen yang telah Anda jalani, kami sangat terkesan dengan kualifikasi, pengalaman, dan potensi yang Anda tunjukkan.
+Menindaklanjuti seluruh rangkaian proses rekrutmen yang telah Anda jalani, kami mengucapkan terima kasih atas dedikasi dan waktu yang Anda luangkan. Kami sangat terkesan dengan rekam jejak, kompetensi, dan visi yang Anda tunjukkan selama tahapan wawancara.
 
-Dengan ini, kami bermaksud menawarkan Anda posisi {{job_title}} di {{company_name}}.
+Oleh karena itu, kami dengan bangga menawarkan kepada Anda posisi {{job_title}} di {{company_name}}. Kami yakin bahwa keahlian Anda akan memberikan kontribusi yang signifikan bagi pencapaian strategis perusahaan.
 
-Tim HR kami akan segera menghubungi Anda melalui email terpisah atau telepon untuk menyampaikan Dokumen Penawaran Resmi (Offering Letter) serta panduan proses administrasi (Onboarding) selanjutnya.
+Dalam waktu dekat, Tim HR kami akan menghubungi Anda (melalui email terpisah atau telepon) untuk mengirimkan Dokumen Penawaran Kerja Resmi (Offering Letter) yang memuat rincian kompensasi, benefit, serta prosedur administrasi (Onboarding) yang perlu Anda selesaikan.
 
-Kami sangat antusias menyambut Anda sebagai bagian dari tim kami.
+Sekali lagi, selamat! Kami sangat antusias menyambut Anda sebagai bagian dari keluarga besar {{company_name}}.
 
 Hormat kami,
-Tim Manajemen & HR
+
+Tim Manajemen & Human Resources
 {{company_name}}`,
 
-  email_reject_subject: "[Pemberitahuan Resmi] Pembaruan Status Lamaran - {{job_title}} di {{company_name}}",
+  email_reject_subject: "Pembaruan Status Proses Seleksi - {{job_title}} | {{company_name}}",
   email_reject_body: `Yth. {{candidate_name}},
 
-Terima kasih atas waktu, usaha, dan antusiasme yang telah Anda berikan selama proses seleksi untuk posisi {{job_title}} di {{company_name}}.
+Kami mengucapkan terima kasih yang sebesar-besarnya atas minat dan antusiasme Anda untuk bergabung dengan {{company_name}} dalam mengisi posisi {{job_title}}. Kami juga sangat menghargai waktu dan usaha yang telah Anda investasikan selama mengikuti proses seleksi.
 
-Setelah melalui serangkaian pertimbangan yang matang dari tim kami, dengan berat hati kami menyampaikan bahwa saat ini kami belum dapat melanjutkan proses pencalonan Anda ke tahapan berikutnya. Keputusan ini didasarkan pada penyesuaian kualifikasi dengan kebutuhan posisi saat ini.
+Setelah melalui proses evaluasi dan diskusi yang mendalam, dengan berat hati kami sampaikan bahwa kami belum dapat melanjutkan pencalonan Anda ke tahapan berikutnya pada kesempatan kali ini. Keputusan ini diambil berdasarkan kesesuaian kualifikasi dan kebutuhan spesifik peran kami saat ini.
 
-Catatan Evaluasi Tim HR:
+Catatan Evaluasi:
 "{{alasan_penolakan}}"
 
-Kami sangat mengapresiasi minat Anda terhadap {{company_name}}. Profil Anda akan tetap tersimpan dalam sistem basis data talenta kami, dan kami akan menghubungi Anda kembali apabila terdapat peluang karir lain yang lebih sesuai dengan kualifikasi Anda di masa mendatang.
+Mohon dipahami bahwa keputusan ini tidak mencerminkan kekurangan pada kemampuan Anda, melainkan seberapa dekat kualifikasi kandidat dengan kriteria spesifik yang kami butuhkan saat ini. Profil Anda akan tetap tersimpan secara konfidensial di dalam basis data talenta kami. Apabila di masa mendatang terdapat peluang karir lain yang selaras dengan profil Anda, tim kami tidak akan ragu untuk menghubungi Anda kembali.
 
-Kami senantiasa mendoakan kesuksesan untuk perjalanan karir Anda selanjutnya.
+Kami senantiasa mengharapkan yang terbaik untuk perjalanan karir profesional Anda selanjutnya.
 
 Hormat kami,
-Tim Akuisisi Talenta (Talent Acquisition)
+
+Tim Talent Acquisition
 {{company_name}}`
 };
 
@@ -567,7 +581,7 @@ function SettingsPageContent() {
                   type="text"
                   value={companyName}
                   onChange={(e) => setCompanyName(e.target.value)}
-                  disabled={isOnboarding}
+                  disabled
                   className="w-full px-4 py-2.5 bg-muted/30 border border-border rounded-xl text-xs text-foreground focus:ring-2 focus:ring-primary/20 outline-none font-medium disabled:opacity-60 disabled:cursor-not-allowed"
                 />
               </div>
@@ -578,7 +592,7 @@ function SettingsPageContent() {
                   type="text"
                   value={industry}
                   onChange={(e) => setIndustry(e.target.value)}
-                  disabled={isOnboarding}
+                  disabled
                   placeholder="e.g. Teknologi Informasi, Keuangan"
                   className="w-full px-4 py-2.5 bg-muted/30 border border-border rounded-xl text-xs text-foreground focus:ring-2 focus:ring-primary/20 outline-none font-medium disabled:opacity-60 disabled:cursor-not-allowed"
                 />
@@ -589,7 +603,7 @@ function SettingsPageContent() {
                 <select
                   value={companySize}
                   onChange={(e) => setCompanySize(e.target.value)}
-                  disabled={isOnboarding}
+                  disabled
                   className="w-full px-4 py-2.5 bg-muted/30 border border-border rounded-xl text-xs text-foreground focus:ring-2 focus:ring-primary/20 outline-none font-medium disabled:opacity-60 disabled:cursor-not-allowed"
                 >
                   <option value="1 - 10 Employees">1 - 10 Karyawan</option>
@@ -620,7 +634,7 @@ function SettingsPageContent() {
                   type="url"
                   value={website}
                   onChange={(e) => setWebsite(e.target.value)}
-                  disabled={isOnboarding}
+                  disabled
                   placeholder="https://company.com"
                   className="w-full px-4 py-2.5 bg-muted/30 border border-border rounded-xl text-xs text-foreground focus:ring-2 focus:ring-primary/20 outline-none font-medium disabled:opacity-60 disabled:cursor-not-allowed"
                 />
@@ -665,7 +679,7 @@ function SettingsPageContent() {
                   type="text"
                   value={alamat}
                   onChange={(e) => setAlamat(e.target.value)}
-                  disabled={isOnboarding}
+                  disabled
                   placeholder="Jl. Sudirman No. 123, Gedung Plaza Lantai 5"
                   className="w-full px-4 py-2.5 bg-muted/30 border border-border rounded-xl text-xs text-foreground focus:ring-2 focus:ring-primary/20 outline-none font-medium disabled:opacity-60 disabled:cursor-not-allowed"
                 />
@@ -709,7 +723,7 @@ function SettingsPageContent() {
                   type="text"
                   value={hrName}
                   onChange={(e) => setHrName(e.target.value)}
-                  disabled={isOnboarding}
+                  disabled
                   className="w-full px-4 py-2.5 bg-muted/30 border border-border rounded-xl text-xs text-foreground focus:ring-2 focus:ring-primary/20 outline-none font-medium disabled:opacity-60 disabled:cursor-not-allowed"
                 />
               </div>
@@ -720,7 +734,7 @@ function SettingsPageContent() {
                   type="text"
                   value={hrPosition}
                   onChange={(e) => setHrPosition(e.target.value)}
-                  disabled={isOnboarding}
+                  disabled
                   placeholder="e.g. HR Manager / Talent Acquisition"
                   className="w-full px-4 py-2.5 bg-muted/30 border border-border rounded-xl text-xs text-foreground focus:ring-2 focus:ring-primary/20 outline-none font-medium disabled:opacity-60 disabled:cursor-not-allowed"
                 />
@@ -732,7 +746,7 @@ function SettingsPageContent() {
                   type="text"
                   value={hrWhatsapp}
                   onChange={(e) => setHrWhatsapp(e.target.value.replace(/\D/g, '').slice(0, 15))}
-                  disabled={isOnboarding}
+                  disabled
                   placeholder="08123456789"
                   className="w-full px-4 py-2.5 bg-muted/30 border border-border rounded-xl text-xs text-foreground focus:ring-2 focus:ring-primary/20 outline-none font-medium disabled:opacity-60 disabled:cursor-not-allowed"
                 />

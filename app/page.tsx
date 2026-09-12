@@ -291,6 +291,11 @@ function LandingPageContent() {
   const [selectedWorkType, setSelectedWorkType] = useState(searchParams.get('workType') || 'Semua');
   const [selectedStatusKerja, setSelectedStatusKerja] = useState(searchParams.get('statusKerja') || searchParams.get('expLevel') || 'Semua');
 
+  // Local states for inputs before submitting
+  const [searchInput, setSearchInput] = useState(searchParams.get('keyword') || '');
+  const [workTypeInput, setWorkTypeInput] = useState(searchParams.get('workType') || 'Semua');
+  const [statusKerjaInput, setStatusKerjaInput] = useState(searchParams.get('statusKerja') || searchParams.get('expLevel') || 'Semua');
+
   const updateUrlParams = (updates: Record<string, string>) => {
     if (typeof window !== 'undefined' && window.location.search) {
       window.history.replaceState(null, '', window.location.pathname);
@@ -494,8 +499,8 @@ function LandingPageContent() {
         <div className="max-w-[1440px] mx-auto px-6 sm:px-10 lg:px-14 h-20 flex items-center justify-between">
           {/* Brand Logo & Tag */}
           <div className="flex items-center gap-4">
-            <Link 
-              href="/" 
+            <Link
+              href="/"
               onClick={(e) => {
                 if (window.location.pathname === '/') {
                   e.preventDefault();
@@ -601,18 +606,18 @@ function LandingPageContent() {
           </div>
         )}
       </header>
-      
+
       {/* Hero Section */}
       <section id="hero-search" className="relative bg-[#F4F9FF] dark:bg-slate-900 text-slate-900 dark:text-slate-100 overflow-hidden min-h-[260px] sm:min-h-[400px] lg:min-h-[480px] flex items-stretch border-b border-[#E2EFFF] dark:border-slate-800">
-        
+
         {/* Decorative Background Bubbles (Gelembung) */}
         <div className="absolute inset-0 pointer-events-none overflow-hidden z-0">
           {/* Top Right Light Blue Gelembung */}
           <div className="absolute -top-[15%] -right-[5%] w-[60%] h-[80%] bg-[#E4F0FF] dark:bg-blue-900/20 rounded-[100px] rotate-[25deg] opacity-80"></div>
-          
+
           {/* Center Light Blue Gelembung */}
           <div className="absolute top-[30%] -right-[10%] w-[70%] h-[70%] bg-[#EAF3FF] dark:bg-blue-900/10 rounded-[150px] -rotate-12 opacity-90"></div>
-          
+
           {/* Bottom Left Solid Blue Gelembung */}
           <div className="absolute -bottom-[20%] -left-[10%] w-[35%] max-w-[450px] aspect-square bg-[#3886F6] dark:bg-[#1A4B9F]/60 rounded-full shadow-lg"></div>
 
@@ -622,13 +627,13 @@ function LandingPageContent() {
 
         {/* Desktop Right Photo Cutout */}
         <div className="absolute inset-y-0 right-0 w-full lg:w-[62%] xl:w-[58%] z-0 pointer-events-none hidden lg:block opacity-90 mix-blend-multiply dark:mix-blend-normal">
-          <div 
+          <div
             className="w-full h-full"
             style={{ clipPath: 'ellipse(95% 120% at 100% 50%)' }}
           >
-            <img 
-              src="/hero-corporate.jpg" 
-              alt="Corporate Professionals" 
+            <img
+              src="/hero-corporate.jpg"
+              alt="Corporate Professionals"
               className="w-full h-full object-cover object-[20%_center]"
             />
           </div>
@@ -637,11 +642,11 @@ function LandingPageContent() {
         {/* Main Content Container */}
         <div className="max-w-[1440px] mx-auto w-full px-6 sm:px-10 lg:px-14 relative z-10 pt-9 pb-10 sm:py-12 lg:py-16 flex items-center">
           <div className="w-full max-w-[620px] lg:max-w-[480px] xl:max-w-[540px] 2xl:max-w-[600px] space-y-5">
-            
+
             {/* Header Title & Subtitle */}
             <div className="space-y-3">
               <h1 className="text-3xl sm:text-4xl lg:text-[42px] xl:text-[45px] font-bold tracking-tighter leading-[1.08] text-slate-900 dark:text-white">
-                {lang.heroTitleLine1} <br/>
+                {lang.heroTitleLine1} <br />
                 <span className="text-[#1A4B9F] dark:text-blue-400">{lang.heroTitleLine2}</span>
               </h1>
               <p className="text-sm sm:text-base text-slate-600 dark:text-slate-400 font-normal leading-relaxed max-w-md">
@@ -673,7 +678,7 @@ function LandingPageContent() {
       {/* Top Employers Banner (Infinite Marquee Auto-Scroll) */}
       <section className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 py-6 sm:py-8 transition-colors overflow-hidden">
         <div className="max-w-[1440px] mx-auto px-6 sm:px-10 lg:px-14 space-y-4">
-          
+
           <div className="flex items-center justify-between">
             <div>
               <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold tracking-tighter leading-tight text-slate-900 dark:text-white">
@@ -690,8 +695,8 @@ function LandingPageContent() {
             <div className="relative w-full overflow-hidden py-1 [mask-image:linear-gradient(to_right,transparent,black_4%,black_96%,transparent)]">
               <div className="animate-marquee flex gap-3">
                 {marqueeCompanies.map((emp, idx) => (
-                  <div 
-                    key={idx} 
+                  <div
+                    key={idx}
                     onClick={() => {
                       const compSlug = slugify(emp.name);
                       const targetUrl = compSlug && emp.id ? `/companies/${compSlug}/${emp.id}` : '/companies';
@@ -702,7 +707,15 @@ function LandingPageContent() {
                     <div className="space-y-2">
                       <div className="h-7 flex items-center">
                         {emp.logo ? (
-                          <img src={emp.logo} alt={emp.name} className="max-w-[85px] max-h-7 object-contain rounded-md group-hover:scale-105 transition-transform" />
+                          <img
+                            src={emp.logo}
+                            alt={emp.name}
+                            className="max-w-[85px] max-h-7 object-contain rounded-md group-hover:scale-105 transition-transform"
+                            onError={(e) => {
+                              e.currentTarget.onerror = null;
+                              e.currentTarget.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 22V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18Z'/%3E%3Cpath d='M6 12H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2'/%3E%3Cpath d='M18 9h2a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-2'/%3E%3Cpath d='M10 6h4'/%3E%3Cpath d='M10 10h4'/%3E%3Cpath d='M10 14h4'/%3E%3Cpath d='M10 18h4'/%3E%3C/svg%3E";
+                            }}
+                          />
                         ) : (
                           <div className="w-7 h-7 rounded-md bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-center text-slate-800 dark:text-slate-200 group-hover:scale-110 transition-transform">
                             <Building2 size={15} />
@@ -734,15 +747,15 @@ function LandingPageContent() {
       <section id="features-pillars" className="py-10 sm:py-14 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 transition-colors">
         <div className="max-w-[1440px] mx-auto px-6 sm:px-10 lg:px-14">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-center">
-            
+
             {/* Left Image / Model */}
             <div className="relative flex justify-center items-center order-2 lg:order-1">
               <div className="relative w-full max-w-[280px] sm:max-w-sm lg:max-w-[380px]">
                 {/* Decorative blob shadow */}
                 <div className="absolute inset-0 bg-[#1A4B9F]/10 blur-2xl rounded-full transform -translate-y-2 scale-105"></div>
-                <img 
-                  src="/feature_model.jpg" 
-                  alt="AI-Recruit Professional" 
+                <img
+                  src="/feature_model.jpg"
+                  alt="AI-Recruit Professional"
                   className="relative z-10 w-full h-auto hover:scale-105 transition-transform duration-500 mix-blend-multiply"
                 />
               </div>
@@ -825,7 +838,7 @@ function LandingPageContent() {
                   selectedCategory !== 'Semua' &&
                   selectedCategory !== 'All' &&
                   (selectedCategory.toLowerCase().trim() === cat.name.toLowerCase().trim() ||
-                   slugify(selectedCategory) === slugify(cat.name));
+                    slugify(selectedCategory) === slugify(cat.name));
                 return (
                   <div
                     key={idx}
@@ -838,15 +851,13 @@ function LandingPageContent() {
                       const feedElem = document.getElementById('job-feed-section');
                       if (feedElem) feedElem.scrollIntoView({ behavior: 'smooth' });
                     }}
-                    className={`shrink-0 w-[145px] sm:w-[175px] p-2.5 sm:p-3 rounded-xl border text-left flex flex-col justify-between space-y-2.5 transition-all duration-300 cursor-pointer group ${
-                      isSelected
+                    className={`shrink-0 w-[145px] sm:w-[175px] p-2.5 sm:p-3 rounded-xl border text-left flex flex-col justify-between space-y-2.5 transition-all duration-300 cursor-pointer group ${isSelected
                         ? 'bg-white dark:bg-slate-900 border-slate-900 dark:border-white ring-2 ring-slate-900/20 shadow-md'
                         : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 hover:border-slate-400 hover:shadow-md'
-                    }`}
+                      }`}
                   >
-                    <div className={`w-7 h-7 rounded-md flex items-center justify-center font-bold shrink-0 ${
-                      isSelected ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900' : 'bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 group-hover:scale-110 transition-transform'
-                    }`}>
+                    <div className={`w-7 h-7 rounded-md flex items-center justify-center font-bold shrink-0 ${isSelected ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900' : 'bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 group-hover:scale-110 transition-transform'
+                      }`}>
                       <Icon size={15} />
                     </div>
 
@@ -913,6 +924,9 @@ function LandingPageContent() {
                 setSelectedCategory('Semua');
                 setSelectedWorkType('Semua');
                 setSelectedStatusKerja('Semua');
+                setSearchInput('');
+                setWorkTypeInput('Semua');
+                setStatusKerjaInput('Semua');
                 fetchRealData();
                 if (window.location.search) {
                   window.history.replaceState(null, '', window.location.pathname);
@@ -926,21 +940,39 @@ function LandingPageContent() {
             </button>
           </div>
 
-          {/* Controls Row */}
-          <div className="grid grid-cols-1 md:grid-cols-12 gap-2.5 items-center">
+          {/* Controls Row (Form GET) */}
+          {/* Controls Row (Form Intercepted to Prevent Scroll) */}
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              setKeyword(searchInput);
+              setSelectedWorkType(workTypeInput);
+              setSelectedStatusKerja(statusKerjaInput);
+
+              // Update URL silently so it can be shared, without scrolling to top
+              const params = new URLSearchParams(window.location.search);
+              if (searchInput) params.set('keyword', searchInput); else params.delete('keyword');
+              if (workTypeInput !== 'Semua') params.set('workType', workTypeInput); else params.delete('workType');
+              if (statusKerjaInput !== 'Semua') params.set('statusKerja', statusKerjaInput); else params.delete('statusKerja');
+              window.history.replaceState(null, '', `${window.location.pathname}?${params.toString()}`);
+            }}
+            className="grid grid-cols-1 md:grid-cols-12 gap-2.5 items-center"
+          >
             {/* Search Input */}
-            <div className="md:col-span-6 relative">
+            <div className="md:col-span-5 relative">
               <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
               <input
                 type="text"
-                value={keyword}
-                onChange={(e) => setKeyword(e.target.value)}
+                name="keyword"
+                value={searchInput}
+                onChange={(e) => setSearchInput(e.target.value)}
                 placeholder="Cari judul posisi, keahlian, atau perusahaan..."
                 className="w-full pl-9 pr-8 py-2 bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-medium text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#1A4B9F] transition-all"
               />
-              {keyword && (
+              {searchInput && (
                 <button
-                  onClick={() => setKeyword('')}
+                  type="button"
+                  onClick={() => setSearchInput('')}
                   className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
                 >
                   <X size={13} />
@@ -949,40 +981,49 @@ function LandingPageContent() {
             </div>
 
             {/* Dropdown: Sistem Kerja */}
-            <div className="md:col-span-3">
-              <div className="relative">
-                <select
-                  value={selectedWorkType}
-                  onChange={(e) => setSelectedWorkType(e.target.value)}
-                  className="w-full appearance-none px-3 py-2 pr-8 bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-[#1A4B9F] cursor-pointer"
-                >
-                  <option value="Semua">Sistem Kerja: Semua</option>
-                  <option value="Remote">Sistem Kerja: Remote</option>
-                  <option value="Hybrid">Sistem Kerja: Hybrid</option>
-                  <option value="On-site">Sistem Kerja: On-site</option>
-                </select>
-                <ChevronDown size={14} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
-              </div>
+            <div className="md:col-span-3 relative">
+              <select
+                name="workType"
+                value={workTypeInput}
+                onChange={(e) => setWorkTypeInput(e.target.value)}
+                className="w-full appearance-none px-3 py-2 pr-8 bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-[#1A4B9F] cursor-pointer"
+              >
+                <option value="Semua">Semua Sistem Kerja</option>
+                <option value="Remote">Remote</option>
+                <option value="Hybrid">Hybrid</option>
+                <option value="On-site">On-site</option>
+              </select>
+              <ChevronDown size={14} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
             </div>
 
             {/* Dropdown: Status Kerja */}
-            <div className="md:col-span-3">
-              <div className="relative">
-                <select
-                  value={selectedStatusKerja}
-                  onChange={(e) => setSelectedStatusKerja(e.target.value)}
-                  className="w-full appearance-none px-3 py-2 pr-8 bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-[#1A4B9F] cursor-pointer"
-                >
-                  <option value="Semua">Status Kerja: Semua</option>
-                  <option value="Full Time">Status Kerja: Full Time</option>
-                  <option value="Part Time">Status Kerja: Part Time</option>
-                  <option value="Kontrak">Status Kerja: Kontrak</option>
-                  <option value="Magang">Status Kerja: Magang</option>
-                </select>
-                <ChevronDown size={14} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
-              </div>
+            <div className="md:col-span-2 relative">
+              <select
+                name="statusKerja"
+                value={statusKerjaInput}
+                onChange={(e) => setStatusKerjaInput(e.target.value)}
+                className="w-full appearance-none px-3 py-2 pr-8 bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-[#1A4B9F] cursor-pointer"
+              >
+                <option value="Semua">Semua Status</option>
+                <option value="Full Time">Full Time</option>
+                <option value="Part Time">Part Time</option>
+                <option value="Kontrak">Kontrak</option>
+                <option value="Magang">Magang</option>
+              </select>
+              <ChevronDown size={14} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
             </div>
-          </div>
+
+            {/* Submit Button */}
+            <div className="md:col-span-2">
+              <button
+                type="submit"
+                className="w-full py-2 bg-[#1A4B9F] hover:bg-[#133878] text-white rounded-xl text-xs font-bold transition-colors shadow-2xs cursor-pointer flex items-center justify-center gap-2"
+              >
+                <Search size={14} />
+                Cari
+              </button>
+            </div>
+          </form>
         </div>
 
         {/* Split Feed Grid */}
@@ -991,7 +1032,7 @@ function LandingPageContent() {
           {/* Left Feed List (7 cols) */}
           <div className="lg:col-span-7 space-y-4">
             {filteredJobs.length > 0 ? (
-              filteredJobs.map((job) => {
+              filteredJobs.slice(0, 10).map((job) => {
                 const isSaved = savedJobs.includes(job.id);
                 const isSelected = previewJobId === job.id;
 
@@ -1011,6 +1052,10 @@ function LandingPageContent() {
                             src={job.logo}
                             alt={job.company}
                             className="w-10 h-10 rounded-lg object-contain border border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800 p-0.5 shrink-0 group-hover:scale-105 transition-transform"
+                            onError={(e) => {
+                              e.currentTarget.onerror = null;
+                              e.currentTarget.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 22V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18Z'/%3E%3Cpath d='M6 12H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2'/%3E%3Cpath d='M18 9h2a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-2'/%3E%3Cpath d='M10 6h4'/%3E%3Cpath d='M10 10h4'/%3E%3Cpath d='M10 14h4'/%3E%3Cpath d='M10 18h4'/%3E%3C/svg%3E";
+                            }}
                           />
                           <div className="space-y-0.5">
                             <div className="flex items-center gap-1.5">
@@ -1083,12 +1128,31 @@ function LandingPageContent() {
                 );
               })
             ) : (
-              <div className="bg-white dark:bg-slate-900 p-8 rounded-2xl border border-slate-200 dark:border-slate-800 text-center space-y-2.5">
-                <Search size={36} className="text-slate-300 mx-auto" />
-                <h3 className="text-sm font-bold text-slate-900 dark:text-slate-200">{lang.noJobsFound}</h3>
+              <div className="bg-white dark:bg-slate-900 p-10 sm:p-14 rounded-2xl border border-slate-200 dark:border-slate-800 text-center space-y-4 shadow-sm flex flex-col items-center justify-center">
+                <div className="w-16 h-16 rounded-2xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center mb-2">
+                  <Search size={32} className="text-slate-400 dark:text-slate-500" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100 mb-1">{lang.noJobsFound}</h3>
+                  <p className="text-sm text-slate-500 dark:text-slate-400 max-w-md mx-auto">
+                    Maaf, kami tidak menemukan lowongan yang sesuai dengan kriteria pencarian Anda. Coba gunakan kata kunci yang lebih umum atau kurangi filter.
+                  </p>
+                </div>
                 <button
-                  onClick={() => { setKeyword(''); setLocation(''); setSelectedCategory('Semua'); setSelectedWorkType('Semua'); setSelectedStatusKerja('Semua'); if (window.location.search) { window.history.replaceState(null, '', window.location.pathname); } }}
-                  className="px-4 py-2 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white text-xs font-bold cursor-pointer"
+                  onClick={() => {
+                    setKeyword('');
+                    setLocation('');
+                    setSelectedCategory('Semua');
+                    setSelectedWorkType('Semua');
+                    setSelectedStatusKerja('Semua');
+                    setSearchInput('');
+                    setWorkTypeInput('Semua');
+                    setStatusKerjaInput('Semua');
+                    if (window.location.search) {
+                      window.history.replaceState(null, '', window.location.pathname);
+                    }
+                  }}
+                  className="mt-2 px-5 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 dark:bg-slate-100 dark:hover:bg-white text-white dark:text-slate-900 text-sm font-bold cursor-pointer transition-colors"
                 >
                   {lang.resetFilterBtn}
                 </button>
@@ -1107,6 +1171,10 @@ function LandingPageContent() {
                       src={selectedPreviewJob.logo}
                       alt={selectedPreviewJob.company}
                       className="w-12 h-12 rounded-xl object-cover border border-slate-200 dark:border-slate-700"
+                      onError={(e) => {
+                        e.currentTarget.onerror = null;
+                        e.currentTarget.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 22V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18Z'/%3E%3Cpath d='M6 12H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2'/%3E%3Cpath d='M18 9h2a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-2'/%3E%3Cpath d='M10 6h4'/%3E%3Cpath d='M10 10h4'/%3E%3Cpath d='M10 14h4'/%3E%3Cpath d='M10 18h4'/%3E%3C/svg%3E";
+                      }}
                     />
                     <div className="space-y-0.5">
                       <span className="text-xs font-bold text-slate-900 dark:text-slate-200 block">{selectedPreviewJob.company}</span>
@@ -1201,7 +1269,7 @@ function LandingPageContent() {
               {language === 'en' ? 'A calmer, clearer job search.' : 'Cari kerja lebih tenang & transparan.'}
             </h2>
             <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 font-normal leading-relaxed">
-              {language === 'en' 
+              {language === 'en'
                 ? 'A few notes from people using AI-RecruitPro to make their next move with more confidence.'
                 : 'Pengalaman dari mereka yang menggunakan AI-RecruitPro untuk melangkah ke karier berikutnya dengan lebih percaya diri.'}
             </p>
@@ -1268,7 +1336,7 @@ function LandingPageContent() {
       <section id="faq" className="bg-white dark:bg-slate-900 py-10 sm:py-14 border-t border-slate-100 dark:border-slate-800 transition-colors">
         <div className="max-w-[1440px] mx-auto px-6 sm:px-10 lg:px-14">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-14 items-start">
-            
+
             {/* Left Column */}
             <div className="lg:col-span-5 space-y-4">
               <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full border border-slate-200/90 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-500 dark:text-slate-400 text-[11px] font-medium tracking-wide shadow-2xs">

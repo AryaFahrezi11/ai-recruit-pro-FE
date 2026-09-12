@@ -34,7 +34,7 @@ import {
   ArrowRight,
   Star
 } from 'lucide-react';
-import { api, parseErrorMessage } from '@/lib/api';
+import { api, parseErrorMessage, getMediaUrl } from '@/lib/api';
 import { CandidateReviewModal } from '@/components/CandidateReviewModal';
 import { DataTable, ColumnDef } from '@/components/ui/DataTable';
 
@@ -171,23 +171,29 @@ const buildGeneralAiDetails = (
       badge: realCvScore !== null
         ? (realCvScore >= 80 ? 'Sangat Relevan' : realCvScore >= 60 ? 'Cukup Sesuai' : 'Perlu Peningkatan')
         : 'Menunggu Evaluasi',
-      desc: hybridDetails?.keywords_total
-        ? `Keahlian wajib terpenuhi (${hybridDetails.keywords_found} dari ${hybridDetails.keywords_total} skill) dengan tingkat kesesuaian pengalaman ${hybridDetails.sbert_score}%.`
-        : realCvScore !== null
-          ? `Tingkat kecocokan profil dan dokumen CV Anda mencapai ${realCvScore}% terhadap kualifikasi posisi.`
-          : 'Data evaluasi CV belum tersedia.'
+      desc: hybridDetails?.keterangan
+        ? hybridDetails.keterangan
+        : hybridDetails?.keywords_total
+          ? `Keahlian wajib terpenuhi (${hybridDetails.keywords_found} dari ${hybridDetails.keywords_total} skill) dengan tingkat kesesuaian pengalaman ${hybridDetails.sbert_score}%.`
+          : realCvScore !== null
+            ? `Tingkat kecocokan profil dan dokumen CV Anda mencapai ${realCvScore}% terhadap kualifikasi posisi.`
+            : 'Data evaluasi CV belum tersedia.'
     },
     {
       title: 'Kelancaran Komunikasi & Berbicara',
       score: abilityVal !== null ? abilityVal : (speechPacing !== null ? speechPacing : 0),
-      badge: abilityVal !== null
-        ? (abilityVal >= 80 ? 'Lancar & Terstruktur' : abilityVal >= 60 ? 'Cukup Teratur' : 'Perlu Peningkatan')
-        : (speechPacing !== null ? (speechPacing >= 80 ? 'Lancar' : 'Wajar') : 'Belum Ada Sesi'),
-      desc: wps !== null
-        ? `Kecepatan bicara teratur (${wps} kata/detik) dengan artikulasi kata yang jelas dan mudah dipahami.`
+      badge: aiResult?.pelafalan?.status === 'Pelafalan Tidak Jelas'
+        ? 'Pelafalan Tidak Jelas'
         : abilityVal !== null
-          ? 'Penyampaian jawaban terstruktur dan penjelasan disampaikan dengan artikulasi yang baik.'
-          : 'Menunggu hasil rekaman wawancara video.'
+          ? (abilityVal >= 80 ? 'Lancar & Terstruktur' : abilityVal >= 60 ? 'Cukup Teratur' : 'Perlu Peningkatan')
+          : (speechPacing !== null ? (speechPacing >= 80 ? 'Lancar' : 'Wajar') : 'Belum Ada Sesi'),
+      desc: aiResult?.pelafalan?.status === 'Pelafalan Tidak Jelas'
+        ? 'Pelafalan suara tidak jelas atau artikulasi ucapan kurang dapat diidentifikasi secara optimal oleh sistem AI.'
+        : wps !== null
+          ? `Kecepatan bicara teratur (${wps} kata/detik) dengan artikulasi kata yang jelas dan mudah dipahami.`
+          : abilityVal !== null
+            ? 'Penyampaian jawaban terstruktur dan penjelasan disampaikan dengan artikulasi yang baik.'
+            : 'Menunggu hasil rekaman wawancara video.'
     },
     {
       title: 'Kepercayaan Diri & Bahasa Tubuh',
@@ -348,10 +354,15 @@ function StatusValidasiContent() {
   // Table Pagination & Detail Modal State
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedDetailApp, setSelectedDetailApp] = useState<ApplicationItem | null>(null);
+  const [viewedAppForReview, setViewedAppForReview] = useState<ApplicationItem | null>(null);
 
   useEffect(() => {
-    if (selectedDetailApp && selectedDetailApp.rawStatus) {
-      const s = selectedDetailApp.rawStatus;
+    if (selectedDetailApp) {
+      // When they open the detail modal, track it
+      setViewedAppForReview(selectedDetailApp);
+    } else if (!selectedDetailApp && viewedAppForReview && viewedAppForReview.rawStatus) {
+      // When they close the detail modal, check if we should prompt for a review
+      const s = viewedAppForReview.rawStatus;
       if (s === 'hired' || s === 'accepted' || s === 'Lolos' || s === 'rejected' || s === 'ditolak_sistem' || s === 'ditolak' || s === 'Tidak Lolos') {
         const isHired = s === 'hired' || s === 'accepted' || s === 'Lolos';
         const ctx = isHired ? 'status_hired' : 'status_rejected';
@@ -362,10 +373,11 @@ function StatusValidasiContent() {
               setIsReviewModalOpen(true);
             }
           })
-          .catch(() => {});
+          .catch(() => { });
       }
+      setViewedAppForReview(null);
     }
-  }, [selectedDetailApp]);
+  }, [selectedDetailApp, viewedAppForReview]);
 
   // Reset page when search param changes
   useEffect(() => {
@@ -385,7 +397,7 @@ function StatusValidasiContent() {
       const ctx = searchParams.get('context') || 'general';
       setReviewContextEvent(ctx);
       setIsReviewModalOpen(true);
-      
+
       // Clean up URL so it doesn't reopen on refresh
       const newUrl = window.location.pathname;
       window.history.replaceState({}, '', newUrl);
@@ -517,11 +529,14 @@ function StatusValidasiContent() {
               item.analisis_cv?.kategori
             );
 
+            const rawLogo = item.job?.perusahaan?.logo_url || item.perusahaan?.logo_url || item.logo_url || '';
+            const companyLogo = rawLogo ? (rawLogo.startsWith('http') ? rawLogo : getMediaUrl(rawLogo)) : '';
+
             return {
               id: item.id || idx + 1,
               jobTitle: item.job?.judul_posisi || item.judul_posisi || 'Lowongan Pekerjaan',
               companyName: item.job?.perusahaan?.nama_perusahaan || item.nama_perusahaan || 'Perusahaan Partner',
-              logo: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=120&auto=format&fit=crop&q=80',
+              logo: companyLogo,
               applyDate: item.applied_at ? new Date(item.applied_at).toLocaleDateString('id-ID') : 'Baru saja',
               kegiatan: 'WEBCAREER',
               tahapRekrutmen: tahapName,
@@ -558,7 +573,7 @@ function StatusValidasiContent() {
             const savedStatusesStr = localStorage.getItem('seen_statuses');
             let savedStatuses: Record<string, string> = {};
             if (savedStatusesStr) savedStatuses = JSON.parse(savedStatusesStr);
-            
+
             let updated = false;
             for (const app of mapped) {
               if (savedStatuses[app.id] !== app.rawStatus) {
@@ -571,7 +586,7 @@ function StatusValidasiContent() {
               // Dispatch custom event to let layout know
               window.dispatchEvent(new Event('seen_statuses_updated'));
             }
-          } catch (e) {}
+          } catch (e) { }
 
         } else {
           // Fallback mock scenarios if no applications in DB yet
@@ -610,23 +625,41 @@ function StatusValidasiContent() {
       key: 'position_company',
       header: 'Posisi & Perusahaan',
       align: 'left',
-      render: (item) => (
-        <div className="flex items-center gap-3.5 py-1">
-          <img
-            src={item.logo}
-            alt={item.companyName}
-            className="w-11 h-11 rounded-xl object-cover border border-slate-200 dark:border-slate-700 shrink-0 shadow-2xs"
-          />
-          <div className="min-w-0">
-            <span className="font-bold text-slate-900 dark:text-white text-xs sm:text-sm block hover:text-[#1A4B9F] dark:hover:text-blue-400 transition-colors line-clamp-1">
-              {item.jobTitle}
-            </span>
-            <span className="text-xs text-slate-500 dark:text-slate-400 font-medium block truncate">
-              {item.companyName}
-            </span>
+      render: (item) => {
+        const companyInitials = item.companyName
+          ? item.companyName.replace(/^(PT\.|CV\.|PT|CV)\s*/i, '').trim().slice(0, 2).toUpperCase()
+          : 'CO';
+
+        return (
+          <div className="flex items-center gap-3.5 py-1">
+            {item.logo ? (
+              <img
+                src={item.logo}
+                alt={item.companyName}
+                className="w-11 h-11 rounded-xl object-contain border border-slate-200 dark:border-slate-700 shrink-0 shadow-2xs bg-white dark:bg-slate-800 p-1"
+                onError={(e) => {
+                  e.currentTarget.style.display = 'none';
+                  const fallback = e.currentTarget.nextElementSibling as HTMLElement;
+                  if (fallback) fallback.style.display = 'flex';
+                }}
+              />
+            ) : null}
+            <div
+              className={`w-11 h-11 rounded-xl bg-blue-50 dark:bg-blue-950/60 border border-blue-200 dark:border-blue-800 text-[#1A4B9F] dark:text-blue-400 font-extrabold text-xs items-center justify-center shrink-0 shadow-2xs ${item.logo ? 'hidden' : 'flex'}`}
+            >
+              {companyInitials || <Building2 size={20} />}
+            </div>
+            <div className="min-w-0">
+              <span className="font-bold text-slate-900 dark:text-white text-xs sm:text-sm block hover:text-[#1A4B9F] dark:hover:text-blue-400 transition-colors line-clamp-1">
+                {item.jobTitle}
+              </span>
+              <span className="text-xs text-slate-500 dark:text-slate-400 font-medium block truncate">
+                {item.companyName}
+              </span>
+            </div>
           </div>
-        </div>
-      ),
+        );
+      },
     },
     {
       key: 'applyDate',
@@ -669,9 +702,9 @@ function StatusValidasiContent() {
         return (
           <span
             className={`font-bold px-3 py-1 rounded-full text-xs inline-flex items-center gap-1.5 whitespace-nowrap ${isPassed
-                ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800'
-                : isTahapAkhir
-                  ? 'bg-indigo-100 text-indigo-800 dark:bg-indigo-950/60 dark:text-indigo-300 border border-indigo-300 dark:border-indigo-800'
+              ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800'
+              : isTahapAkhir
+                ? 'bg-indigo-100 text-indigo-800 dark:bg-indigo-950/60 dark:text-indigo-300 border border-indigo-300 dark:border-indigo-800'
                 : isActionRequired
                   ? 'bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300 border border-amber-300 dark:border-amber-800'
                   : isInProgress
@@ -806,11 +839,25 @@ function StatusValidasiContent() {
             {/* Header */}
             <div className="flex items-start justify-between border-b border-slate-100 dark:border-slate-800 p-4 sm:p-5 shrink-0 bg-white dark:bg-slate-900 z-10">
               <div className="flex items-center gap-3 min-w-0">
-                <img
-                  src={selectedDetailApp.logo}
-                  alt={selectedDetailApp.companyName}
-                  className="w-10 h-10 rounded-xl object-cover border border-slate-200 dark:border-slate-700 shrink-0 shadow-2xs"
-                />
+                {selectedDetailApp.logo ? (
+                  <img
+                    src={selectedDetailApp.logo}
+                    alt={selectedDetailApp.companyName}
+                    className="w-10 h-10 rounded-xl object-contain border border-slate-200 dark:border-slate-700 shrink-0 shadow-2xs bg-white dark:bg-slate-800 p-1"
+                    onError={(e) => {
+                      e.currentTarget.style.display = 'none';
+                      const fallback = e.currentTarget.nextElementSibling as HTMLElement;
+                      if (fallback) fallback.style.display = 'flex';
+                    }}
+                  />
+                ) : null}
+                <div
+                  className={`w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-950/60 border border-blue-200 dark:border-blue-800 text-[#1A4B9F] dark:text-blue-400 font-extrabold text-xs items-center justify-center shrink-0 shadow-2xs ${selectedDetailApp.logo ? 'hidden' : 'flex'}`}
+                >
+                  {selectedDetailApp.companyName
+                    ? selectedDetailApp.companyName.replace(/^(PT\.|CV\.|PT|CV)\s*/i, '').trim().slice(0, 2).toUpperCase()
+                    : <Building2 size={18} />}
+                </div>
                 <div className="min-w-0">
                   <h3 className="text-base sm:text-lg font-black text-slate-900 dark:text-white leading-tight truncate">
                     {selectedDetailApp.jobTitle}
@@ -836,302 +883,307 @@ function StatusValidasiContent() {
             {/* Scrollable Body */}
             <div className="p-4 sm:p-5 space-y-4 overflow-y-auto flex-1 bg-white dark:bg-slate-900">
               {/* Clean Linear Stepper Timeline */}
-            <div className="p-4 bg-slate-50 dark:bg-slate-800/40 rounded-2xl border border-slate-200/70 dark:border-slate-800">
-              <span className="text-[11px] font-extrabold uppercase tracking-wider text-slate-400 dark:text-slate-500 block mb-3">
-                Linimasa Seleksi
-              </span>
-              <div className="grid grid-cols-5 gap-1 text-center relative">
-                {pipelineStagesList.map((stage, idx) => {
-                  const isCurrent = selectedDetailApp.currentStageIndex === stage.number;
-                  const isPassed = selectedDetailApp.currentStageIndex > stage.number || selectedDetailApp.status === 'Lolos';
-                  const isFailed = (selectedDetailApp.status === 'Tidak Lolos' || selectedDetailApp.status === 'Lowongan Telah Ditutup') && selectedDetailApp.currentStageIndex === stage.number;
+              <div className="p-4 bg-slate-50 dark:bg-slate-800/40 rounded-2xl border border-slate-200/70 dark:border-slate-800">
+                <span className="text-[11px] font-extrabold uppercase tracking-wider text-slate-400 dark:text-slate-500 block mb-3">
+                  Linimasa Seleksi
+                </span>
+                <div className="grid grid-cols-5 gap-1 text-center relative">
+                  {pipelineStagesList.map((stage, idx) => {
+                    const isCurrent = selectedDetailApp.currentStageIndex === stage.number;
+                    const isPassed = selectedDetailApp.currentStageIndex > stage.number || selectedDetailApp.status === 'Lolos';
+                    const isFailed = (selectedDetailApp.status === 'Tidak Lolos' || selectedDetailApp.status === 'Lowongan Telah Ditutup') && selectedDetailApp.currentStageIndex === stage.number;
 
-                  const shortNames = ['Berkas CV', 'Screening AI', 'Wawancara', 'Analisis Video', 'Keputusan'];
+                    const shortNames = ['Berkas CV', 'Screening AI', 'Wawancara', 'Analisis Video', 'Keputusan'];
 
-                  return (
-                    <div key={stage.number} className="flex flex-col items-center gap-1.5 relative z-10">
-                      <div
-                        className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs transition-all shadow-2xs ${isFailed
+                    return (
+                      <div key={stage.number} className="flex flex-col items-center gap-1.5 relative z-10">
+                        <div
+                          className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs transition-all shadow-2xs ${isFailed
                             ? 'bg-rose-500 text-white ring-4 ring-rose-100 dark:ring-rose-950/50'
                             : isPassed
                               ? 'bg-emerald-500 text-white'
                               : isCurrent
                                 ? 'bg-[#1A4B9F] text-white ring-4 ring-blue-100 dark:ring-blue-950/50'
                                 : 'bg-slate-200 dark:bg-slate-700 text-slate-500 dark:text-slate-400'
-                          }`}
-                      >
-                        {isPassed ? (
-                          <CheckCircle2 size={16} />
-                        ) : isFailed ? (
-                          <XCircle size={16} />
-                        ) : (
-                          <span>{stage.number}</span>
-                        )}
-                      </div>
-                      <span
-                        className={`text-[10px] sm:text-[11px] font-bold leading-tight ${isFailed
+                            }`}
+                        >
+                          {isPassed ? (
+                            <CheckCircle2 size={16} />
+                          ) : isFailed ? (
+                            <XCircle size={16} />
+                          ) : (
+                            <span>{stage.number}</span>
+                          )}
+                        </div>
+                        <span
+                          className={`text-[10px] sm:text-[11px] font-bold leading-tight ${isFailed
                             ? 'text-rose-600 dark:text-rose-400'
                             : isCurrent
                               ? 'text-[#1A4B9F] dark:text-blue-400'
                               : isPassed
                                 ? 'text-emerald-600 dark:text-emerald-400'
                                 : 'text-slate-400 dark:text-slate-500'
-                          }`}
-                      >
-                        {shortNames[idx]}
-                      </span>
+                            }`}
+                        >
+                          {shortNames[idx]}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+              {/* Applicant Interview Reminder Banner (Hari H) */}
+              {(() => {
+                const todayIso = new Date();
+                // Adjust to local date string easily to avoid timezone bugs
+                const localDate = new Date(todayIso.getTime() - (todayIso.getTimezoneOffset() * 60000)).toISOString().split('T')[0];
+                const interviewDate = selectedDetailApp.interviewDetails?.tanggal;
+
+                if (selectedDetailApp.status === 'Tahap Akhir' && interviewDate === localDate) {
+                  return (
+                    <div className="p-4 rounded-2xl bg-gradient-to-r from-indigo-600 to-indigo-800 border border-indigo-400 text-white shadow-lg">
+                      <div className="flex items-start gap-3">
+                        <div className="p-2 bg-white/20 rounded-full shrink-0 animate-pulse">
+                          <AlertCircle size={20} className="text-white" />
+                        </div>
+                        <div>
+                          <h4 className="font-black text-sm">PENGINGAT: Jadwal Wawancara Anda Hari Ini!</h4>
+                          <p className="text-xs text-indigo-100 font-medium mt-1 leading-relaxed">
+                            Wawancara Anda dijadwalkan hari ini pada pukul <strong>{selectedDetailApp.interviewDetails?.waktu || '-'} WIB</strong>.
+                            Mohon pastikan Anda sudah bersiap dan bergabung tepat waktu melalui tautan pada detail di bawah.
+                          </p>
+                        </div>
+                      </div>
                     </div>
                   );
-                })}
-              </div>
-            </div>
-            {/* Applicant Interview Reminder Banner (Hari H) */}
-            {(() => {
-              const todayIso = new Date();
-              // Adjust to local date string easily to avoid timezone bugs
-              const localDate = new Date(todayIso.getTime() - (todayIso.getTimezoneOffset() * 60000)).toISOString().split('T')[0];
-              const interviewDate = selectedDetailApp.interviewDetails?.tanggal;
-              
-              if (selectedDetailApp.status === 'Tahap Akhir' && interviewDate === localDate) {
-                return (
-                  <div className="p-4 rounded-2xl bg-gradient-to-r from-indigo-600 to-indigo-800 border border-indigo-400 text-white shadow-lg">
-                    <div className="flex items-start gap-3">
-                      <div className="p-2 bg-white/20 rounded-full shrink-0 animate-pulse">
-                        <AlertCircle size={20} className="text-white" />
-                      </div>
-                      <div>
-                        <h4 className="font-black text-sm">PENGINGAT: Jadwal Wawancara Anda Hari Ini!</h4>
-                        <p className="text-xs text-indigo-100 font-medium mt-1 leading-relaxed">
-                          Wawancara Anda dijadwalkan hari ini pada pukul <strong>{selectedDetailApp.interviewDetails?.waktu || '-'} WIB</strong>. 
-                          Mohon pastikan Anda sudah bersiap dan bergabung tepat waktu melalui tautan pada detail di bawah.
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                );
-              }
-              return null;
-            })()}
+                }
+                return null;
+              })()}
 
-            {/* Status Alert Banner */}
-            <div
-              className={`p-4 rounded-2xl border text-xs sm:text-sm space-y-2 ${selectedDetailApp.status === 'Tidak Lolos' || selectedDetailApp.status === 'Lowongan Telah Ditutup'
+              {/* Status Alert Banner */}
+              <div
+                className={`p-4 rounded-2xl border text-xs sm:text-sm space-y-2 ${selectedDetailApp.status === 'Tidak Lolos' || selectedDetailApp.status === 'Lowongan Telah Ditutup'
                   ? 'bg-rose-50/80 dark:bg-rose-950/20 border-rose-200 dark:border-rose-900/50 text-rose-900 dark:text-rose-200'
                   : selectedDetailApp.status === 'Lolos'
                     ? 'bg-emerald-50/80 dark:bg-emerald-950/20 border-emerald-200 dark:border-emerald-900/50 text-emerald-900 dark:text-emerald-200'
-                  : selectedDetailApp.status === 'Tahap Akhir'
-                    ? 'bg-indigo-50/80 dark:bg-indigo-950/20 border-indigo-200 dark:border-indigo-900/50 text-indigo-900 dark:text-indigo-200'
-                    : selectedDetailApp.currentStageIndex === 3 && selectedDetailApp.status === 'Dalam Proses'
-                      ? 'bg-amber-50/80 dark:bg-amber-950/20 border-amber-300 dark:border-amber-800/50 text-amber-900 dark:text-amber-200'
-                      : 'bg-blue-50/80 dark:bg-blue-950/20 border-blue-200 dark:border-blue-900/50 text-[#1A4B9F] dark:text-blue-300'
-                }`}
-            >
-              <div className="flex items-center gap-2 font-black text-sm">
-                {selectedDetailApp.status === 'Tidak Lolos' || selectedDetailApp.status === 'Lowongan Telah Ditutup' ? (
-                  <>
-                    <XCircle size={17} className="text-rose-600 shrink-0" />
-                    <span>Status Seleksi: Tidak Lolos</span>
-                  </>
-                ) : selectedDetailApp.status === 'Lolos' ? (
-                  <>
-                    <CheckCircle2 size={17} className="text-emerald-600 shrink-0" />
-                    <span>Selamat! Anda Resmi Diterima (Lolos)</span>
-                  </>
-                ) : selectedDetailApp.status === 'Tahap Akhir' ? (
-                  <>
-                    <Sparkles size={17} className="text-indigo-600 dark:text-indigo-400 shrink-0" />
-                    <span>Status Seleksi: Tahap Akhir (Wawancara)</span>
-                  </>
-                ) : selectedDetailApp.currentStageIndex === 3 && selectedDetailApp.status === 'Dalam Proses' ? (
-                  <>
-                    <AlertCircle size={17} className="text-amber-600 dark:text-amber-400 shrink-0" />
-                    <span className="animate-pulse">Tindakan Diperlukan: Segera Upload Video</span>
-                  </>
-                ) : selectedDetailApp.currentStageIndex === 5 && selectedDetailApp.status === 'Dalam Proses' ? (
-                  <>
-                    <Clock size={17} className="text-[#1A4B9F] dark:text-blue-400 shrink-0" />
-                    <span>Status Seleksi: Menunggu Keputusan HR</span>
-                  </>
-                ) : (
-                  <>
-                    <Clock size={17} className="text-[#1A4B9F] dark:text-blue-400 shrink-0" />
-                    <span>Status Seleksi: Dalam Proses</span>
-                  </>
-                )}
-              </div>
-              <p className="text-slate-700 dark:text-slate-300 text-xs leading-relaxed font-medium">
-                {selectedDetailApp.statusMessage}
-              </p>
-              {selectedDetailApp.catatanPerusahaan && (
-                <div className="mt-2 pt-2 border-t border-black/5 dark:border-white/5 text-xs text-slate-600 dark:text-slate-400">
-                  <span className="font-bold">Catatan Perusahaan:</span> "{selectedDetailApp.catatanPerusahaan}"
-                </div>
-              )}
-            </div>
-
-            {/* Skor AI Ringkas & Tombol Lihat Detail AI */}
-            {(selectedDetailApp.cvScore > 0 || selectedDetailApp.videoScore > 0) && (
-              <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-800 flex items-center justify-between gap-4">
-                <div className="flex items-center gap-4 text-xs">
-                  <div>
-                    <span className="text-[10px] text-slate-400 font-bold uppercase block">Skor CV</span>
-                    <span className="text-base font-black text-[#1A4B9F] dark:text-blue-400">
-                      {selectedDetailApp.cvScore}%
-                    </span>
-                  </div>
-                  {selectedDetailApp.videoScore > 0 && (
+                    : selectedDetailApp.status === 'Tahap Akhir'
+                      ? 'bg-indigo-50/80 dark:bg-indigo-950/20 border-indigo-200 dark:border-indigo-900/50 text-indigo-900 dark:text-indigo-200'
+                      : selectedDetailApp.currentStageIndex === 3 && selectedDetailApp.status === 'Dalam Proses'
+                        ? 'bg-amber-50/80 dark:bg-amber-950/20 border-amber-300 dark:border-amber-800/50 text-amber-900 dark:text-amber-200'
+                        : 'bg-blue-50/80 dark:bg-blue-950/20 border-blue-200 dark:border-blue-900/50 text-[#1A4B9F] dark:text-blue-300'
+                  }`}
+              >
+                <div className="flex items-center gap-2 font-black text-sm">
+                  {selectedDetailApp.status === 'Tidak Lolos' || selectedDetailApp.status === 'Lowongan Telah Ditutup' ? (
                     <>
-                      <div className="h-6 w-px bg-slate-200 dark:bg-slate-700" />
-                      <div>
-                        <span className="text-[10px] text-slate-400 font-bold uppercase block">Skor Video</span>
-                        <span className="text-base font-black text-emerald-600 dark:text-emerald-400">
-                          {selectedDetailApp.videoScore}%
-                        </span>
-                      </div>
+                      <XCircle size={17} className="text-rose-600 shrink-0" />
+                      <span>Status Seleksi: Tidak Lolos</span>
+                    </>
+                  ) : selectedDetailApp.status === 'Lolos' ? (
+                    <>
+                      <CheckCircle2 size={17} className="text-emerald-600 shrink-0" />
+                      <span>Selamat! Anda Resmi Diterima (Lolos)</span>
+                    </>
+                  ) : selectedDetailApp.status === 'Tahap Akhir' ? (
+                    <>
+                      <Sparkles size={17} className="text-indigo-600 dark:text-indigo-400 shrink-0" />
+                      <span>Status Seleksi: Tahap Akhir (Wawancara)</span>
+                    </>
+                  ) : selectedDetailApp.currentStageIndex === 3 && selectedDetailApp.status === 'Dalam Proses' ? (
+                    <>
+                      <AlertCircle size={17} className="text-amber-600 dark:text-amber-400 shrink-0" />
+                      <span className="animate-pulse">Tindakan Diperlukan: Segera Upload Video</span>
+                    </>
+                  ) : selectedDetailApp.currentStageIndex === 5 && selectedDetailApp.status === 'Dalam Proses' ? (
+                    <>
+                      <Clock size={17} className="text-[#1A4B9F] dark:text-blue-400 shrink-0" />
+                      <span>Status Seleksi: Menunggu Keputusan HR</span>
+                    </>
+                  ) : (
+                    <>
+                      <Clock size={17} className="text-[#1A4B9F] dark:text-blue-400 shrink-0" />
+                      <span>Status Seleksi: Dalam Proses</span>
                     </>
                   )}
                 </div>
-
-                <div className="flex items-center gap-2">
-                  {selectedDetailApp.cvScore > 0 && (
-                    <button
-                      type="button"
-                      disabled={isUploadingVideo}
-                      onClick={() => setActiveCvModalJob(selectedDetailApp)}
-                      className="px-3 py-1.5 rounded-xl bg-white dark:bg-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800 text-[#1A4B9F] dark:text-blue-400 font-bold text-xs border border-slate-200 dark:border-slate-700 transition-colors cursor-pointer shadow-2xs disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      Detail CV
-                    </button>
-                  )}
-                  {selectedDetailApp.currentStageIndex >= 5 && selectedDetailApp.rawStatus !== 'ditolak_sistem' && (
-                    <button
-                      type="button"
-                      disabled={isUploadingVideo}
-                      onClick={() => setActiveHumanModalJob(selectedDetailApp)}
-                      className="px-3 py-1.5 rounded-xl bg-[#1A4B9F] hover:bg-[#133878] text-white font-bold text-xs transition-colors cursor-pointer shadow-2xs disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      Detail AI
-                    </button>
-                  )}
-                </div>
+                <p className="text-slate-700 dark:text-slate-300 text-xs leading-relaxed font-medium">
+                  {selectedDetailApp.statusMessage}
+                </p>
+                {selectedDetailApp.catatanPerusahaan && (
+                  <div className="mt-2 pt-2 border-t border-black/5 dark:border-white/5 text-xs text-slate-600 dark:text-slate-400">
+                    <span className="font-bold">Catatan Perusahaan:</span> "{selectedDetailApp.catatanPerusahaan}"
+                  </div>
+                )}
               </div>
-            )}
 
-            {/* Jadwal Wawancara Lanjutan (jika ada) */}
-            {selectedDetailApp.interviewDetails && (
-              <div className="p-4 rounded-2xl bg-indigo-50/70 dark:bg-indigo-950/30 border border-indigo-200 dark:border-indigo-800 text-xs space-y-2">
-                <div className="flex items-center justify-between">
-                  <span className="font-extrabold text-indigo-950 dark:text-indigo-200 flex items-center gap-1.5">
-                    <Calendar size={14} className="text-indigo-600 dark:text-indigo-400" />
-                    Jadwal Wawancara Lanjutan
-                  </span>
-                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-indigo-200/60 dark:bg-indigo-900 text-indigo-800 dark:text-indigo-200">
-                    {selectedDetailApp.interviewDetails.tipe === 'offline' ? 'Offline di Kantor' : 'Online Meet'}
-                  </span>
-                </div>
-                <div className="text-slate-700 dark:text-slate-300 space-y-1">
-                  <p>
-                    <span className="font-semibold text-slate-500">Waktu:</span> {selectedDetailApp.interviewDetails.tanggal} {selectedDetailApp.interviewDetails.waktu ? `(${selectedDetailApp.interviewDetails.waktu} WIB)` : ''}
-                  </p>
-                  {selectedDetailApp.interviewDetails.lokasi_atau_link && (
-                    <p>
-                      <span className="font-semibold text-slate-500">Lokasi/Link:</span>{' '}
-                      {selectedDetailApp.interviewDetails.lokasi_atau_link.startsWith('http') ? (
-                        <a
-                          href={selectedDetailApp.interviewDetails.lokasi_atau_link}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-indigo-600 dark:text-indigo-400 font-bold underline inline-flex items-center gap-1"
-                        >
-                          Buka Tautan <ExternalLink size={11} />
-                        </a>
-                      ) : (
-                        selectedDetailApp.interviewDetails.lokasi_atau_link
-                      )}
-                    </p>
-                  )}
-                </div>
-              </div>
-            )}
-
-            {/* Khusus Tahap 3: Upload Video & Pertanyaan */}
-            {selectedDetailApp.currentStageIndex === 3 && selectedDetailApp.status === 'Dalam Proses' && (
-              <div className="p-4 rounded-2xl bg-emerald-50/60 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-800 space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className="font-bold text-xs text-emerald-900 dark:text-emerald-200 flex items-center gap-1.5">
-                    <HelpCircle size={15} /> Pertanyaan Wawancara Video
-                  </span>
-                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800">
-                    {(selectedDetailApp.videoQuestions || DEFAULT_INTERVIEW_QUESTIONS).length} Pertanyaan
-                  </span>
-                </div>
-                <div className="space-y-1.5">
-                  {(selectedDetailApp.videoQuestions || DEFAULT_INTERVIEW_QUESTIONS).map((q, idx) => (
-                    <div key={idx} className="flex items-start gap-2 text-xs text-slate-700 dark:text-slate-300">
-                      <span className="w-4 h-4 rounded-full bg-emerald-600 text-white font-bold text-[10px] flex items-center justify-center shrink-0 mt-0.5">
-                        {idx + 1}
+              {/* Skor AI Ringkas & Tombol Lihat Detail AI */}
+              {(selectedDetailApp.cvScore > 0 || selectedDetailApp.videoScore > 0) && (
+                <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-800 flex items-center justify-between gap-4">
+                  <div className="flex items-center gap-4 text-xs">
+                    <div>
+                      <span className="text-[10px] text-slate-400 font-bold uppercase block">Skor CV</span>
+                      <span className="text-base font-black text-[#1A4B9F] dark:text-blue-400">
+                        {selectedDetailApp.cvScore}%
                       </span>
-                      <p className="leading-snug">{q}</p>
                     </div>
-                  ))}
-                </div>
-                <div className="pt-2">
-                  <div className="flex items-center gap-3">
-                    <label className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs cursor-pointer shadow-xs transition-colors ${isUploadingVideo ? 'opacity-50 pointer-events-none' : ''}`}>
-                      <input
-                        type="file"
-                        accept="video/*"
-                        className="hidden"
+                    {selectedDetailApp.videoScore > 0 && (
+                      <>
+                        <div className="h-6 w-px bg-slate-200 dark:bg-slate-700" />
+                        <div>
+                          <span className="text-[10px] text-slate-400 font-bold uppercase block">Skor Video</span>
+                          <span className="text-base font-black text-emerald-600 dark:text-emerald-400">
+                            {selectedDetailApp.videoScore}%
+                          </span>
+                        </div>
+                      </>
+                    )}
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    {selectedDetailApp.cvScore > 0 && (
+                      <button
+                        type="button"
                         disabled={isUploadingVideo}
-                        onChange={(e) => {
-                          const file = e.target.files?.[0];
-                          if (file) {
-                            setIsUploadingVideo(true);
-                            const video = document.createElement('video');
-                            video.preload = 'metadata';
-                            video.onloadedmetadata = () => {
-                              window.URL.revokeObjectURL(video.src);
-                              if (video.duration > 240) {
-                                toast.error('Durasi video maksimal adalah 4 menit. Silakan persingkat video Anda.');
-                                e.target.value = '';
-                                setIsUploadingVideo(false);
-                                return;
-                              }
-                              const formData = new FormData();
-                              formData.append('video', file);
-                              const uploadPromise = api.post(`/applications/${selectedDetailApp.id}/upload-video`, formData);
-                              toast.promise(uploadPromise, {
-                                loading: 'Mengunggah video wawancara...',
-                                success: (res: any) => res.message || 'Video berhasil diunggah.',
-                                error: (err: any) => parseErrorMessage(err) || 'Gagal mengunggah video.'
-                              }).then(() => {
-                                setTimeout(() => {
-                                  window.location.href = window.location.pathname + '?showReview=true&context=uploaded_video';
-                                }, 1500);
-                              }).catch(() => {
-                                setIsUploadingVideo(false);
-                              });
-                            };
-                            video.onerror = () => {
-                              toast.error('Gagal memproses file video.');
-                              setIsUploadingVideo(false);
-                            };
-                            video.src = URL.createObjectURL(file);
-                          }
-                        }}
-                      />
-                      {isUploadingVideo ? (
-                        <div className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin shrink-0" />
-                      ) : (
-                        <Video size={14} />
-                      )}
-                      <span>{isUploadingVideo ? 'Mengunggah...' : 'Upload Video Wawancara'}</span>
-                    </label>
-                    <span className="text-[10px] text-slate-500 font-medium">*Durasi maksimal: 4 menit</span>
+                        onClick={() => setActiveCvModalJob(selectedDetailApp)}
+                        className="px-3 py-1.5 rounded-xl bg-white dark:bg-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800 text-[#1A4B9F] dark:text-blue-400 font-bold text-xs border border-slate-200 dark:border-slate-700 transition-colors cursor-pointer shadow-2xs disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        Detail CV
+                      </button>
+                    )}
+                    {selectedDetailApp.currentStageIndex >= 5 && selectedDetailApp.rawStatus !== 'ditolak_sistem' && (
+                      <button
+                        type="button"
+                        disabled={isUploadingVideo}
+                        onClick={() => setActiveHumanModalJob(selectedDetailApp)}
+                        className="px-3 py-1.5 rounded-xl bg-[#1A4B9F] hover:bg-[#133878] text-white font-bold text-xs transition-colors cursor-pointer shadow-2xs disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        Detail AI
+                      </button>
+                    )}
                   </div>
                 </div>
-              </div>
-            )}
+              )}
+
+              {/* Jadwal Wawancara Lanjutan (jika ada) */}
+              {selectedDetailApp.interviewDetails && (
+                <div className="p-4 rounded-2xl bg-indigo-50/70 dark:bg-indigo-950/30 border border-indigo-200 dark:border-indigo-800 text-xs space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="font-extrabold text-indigo-950 dark:text-indigo-200 flex items-center gap-1.5">
+                      <Calendar size={14} className="text-indigo-600 dark:text-indigo-400" />
+                      Jadwal Wawancara Lanjutan
+                    </span>
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-indigo-200/60 dark:bg-indigo-900 text-indigo-800 dark:text-indigo-200">
+                      {selectedDetailApp.interviewDetails.tipe === 'offline' ? 'Offline di Kantor' : 'Online Meet'}
+                    </span>
+                  </div>
+                  <div className="text-slate-700 dark:text-slate-300 space-y-1">
+                    <p>
+                      <span className="font-semibold text-slate-500">Waktu:</span> {selectedDetailApp.interviewDetails.tanggal} {selectedDetailApp.interviewDetails.waktu ? `(${selectedDetailApp.interviewDetails.waktu} WIB)` : ''}
+                    </p>
+                    {selectedDetailApp.interviewDetails.lokasi_atau_link && (
+                      <p>
+                        <span className="font-semibold text-slate-500">Lokasi/Link:</span>{' '}
+                        {selectedDetailApp.interviewDetails.lokasi_atau_link.startsWith('http') ? (
+                          <a
+                            href={selectedDetailApp.interviewDetails.lokasi_atau_link}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-indigo-600 dark:text-indigo-400 font-bold underline inline-flex items-center gap-1"
+                          >
+                            Buka Tautan <ExternalLink size={11} />
+                          </a>
+                        ) : (
+                          selectedDetailApp.interviewDetails.lokasi_atau_link
+                        )}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Khusus Tahap 3: Upload Video & Pertanyaan */}
+              {selectedDetailApp.currentStageIndex === 3 && selectedDetailApp.status === 'Dalam Proses' && (
+                <div className="p-4 rounded-2xl bg-emerald-50/60 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-800 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="font-bold text-xs text-emerald-900 dark:text-emerald-200 flex items-center gap-1.5">
+                      <HelpCircle size={15} /> Pertanyaan Wawancara Video
+                    </span>
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800">
+                      {(selectedDetailApp.videoQuestions || DEFAULT_INTERVIEW_QUESTIONS).length} Pertanyaan
+                    </span>
+                  </div>
+                  <div className="space-y-1.5">
+                    {(selectedDetailApp.videoQuestions || DEFAULT_INTERVIEW_QUESTIONS).map((q, idx) => (
+                      <div key={idx} className="flex items-start gap-2 text-xs text-slate-700 dark:text-slate-300">
+                        <span className="w-4 h-4 rounded-full bg-emerald-600 text-white font-bold text-[10px] flex items-center justify-center shrink-0 mt-0.5">
+                          {idx + 1}
+                        </span>
+                        <p className="leading-snug">{q}</p>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="pt-2">
+                    <div className="flex items-center gap-3">
+                      <label className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs cursor-pointer shadow-xs transition-colors ${isUploadingVideo ? 'opacity-50 pointer-events-none' : ''}`}>
+                        <input
+                          type="file"
+                          accept="video/*"
+                          className="hidden"
+                          disabled={isUploadingVideo}
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) {
+                              if (file.size > 100 * 1024 * 1024) {
+                                toast.error('Ukuran video melebihi batas 100 MB. Silakan pilih video dengan ukuran lebih kecil.');
+                                e.target.value = '';
+                                return;
+                              }
+                              setIsUploadingVideo(true);
+                              const video = document.createElement('video');
+                              video.preload = 'metadata';
+                              video.onloadedmetadata = () => {
+                                window.URL.revokeObjectURL(video.src);
+                                if (video.duration > 240) {
+                                  toast.error('Durasi video maksimal adalah 4 menit. Silakan persingkat video Anda.');
+                                  e.target.value = '';
+                                  setIsUploadingVideo(false);
+                                  return;
+                                }
+                                const formData = new FormData();
+                                formData.append('video', file);
+                                const uploadPromise = api.post(`/applications/${selectedDetailApp.id}/upload-video`, formData);
+                                toast.promise(uploadPromise, {
+                                  loading: 'Mengunggah video wawancara...',
+                                  success: (res: any) => res.message || 'Video berhasil diunggah.',
+                                  error: (err: any) => parseErrorMessage(err) || 'Gagal mengunggah video.'
+                                }).then(() => {
+                                  setTimeout(() => {
+                                    window.location.href = window.location.pathname + '?showReview=true&context=uploaded_video';
+                                  }, 1500);
+                                }).catch(() => {
+                                  setIsUploadingVideo(false);
+                                });
+                              };
+                              video.onerror = () => {
+                                toast.error('Gagal memproses file video.');
+                                setIsUploadingVideo(false);
+                              };
+                              video.src = URL.createObjectURL(file);
+                            }
+                          }}
+                        />
+                        {isUploadingVideo ? (
+                          <div className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin shrink-0" />
+                        ) : (
+                          <Video size={14} />
+                        )}
+                        <span>{isUploadingVideo ? 'Mengunggah...' : 'Upload Video Wawancara'}</span>
+                      </label>
+                      <span className="text-[10px] text-slate-500 font-medium">*Durasi maksimal: 4 menit • Ukuran maksimal: 100 MB (.mp4)</span>
+                    </div>
+                  </div>
+                </div>
+              )}
 
             </div>
 
@@ -1180,96 +1232,96 @@ function StatusValidasiContent() {
             <div className="p-4 sm:p-5 space-y-5 overflow-y-auto flex-1 bg-white dark:bg-slate-900">
               {/* Score Banner */}
               {(() => {
-              const isFailedEdu = activeCvModalJob.kategori === 'tidak_memenuhi_syarat_pendidikan';
-              const isPassed = activeCvModalJob.cvScore >= activeCvModalJob.threshold && !isFailedEdu;
+                const isFailedEdu = activeCvModalJob.kategori === 'tidak_memenuhi_syarat_pendidikan';
+                const isPassed = activeCvModalJob.cvScore >= activeCvModalJob.threshold && !isFailedEdu;
 
-              return (
-                <div className="p-6 rounded-3xl bg-[#EFF6FF] dark:bg-slate-800/70 border border-[#DBEAFE] dark:border-slate-700 flex flex-col sm:flex-row items-center gap-6">
-                  {/* Circle Score */}
-                  <div className={`w-24 h-24 rounded-2xl flex flex-col items-center justify-center text-white shrink-0 shadow-md ${isPassed
-                    ? 'bg-gradient-to-br from-emerald-500 to-teal-600 shadow-emerald-500/20'
-                    : 'bg-gradient-to-br from-rose-500 to-red-600 shadow-rose-500/20'
-                    }`}>
-                    <span className="text-3xl font-black">{activeCvModalJob.cvScore}%</span>
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-white/90 mt-0.5">Kecocokan</span>
-                  </div>
-
-                  {/* Verdict Info */}
-                  <div className="space-y-2 text-center sm:text-left flex-1">
-                    <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border">
-                      {isPassed ? <CheckCircle2 size={15} className="text-emerald-600 dark:text-emerald-400" /> : <XCircle size={15} className="text-rose-600 dark:text-rose-400" />}
-                      <span className={isPassed ? 'text-emerald-700 dark:text-emerald-300' : 'text-rose-700 dark:text-rose-300'}>
-                        {isFailedEdu
-                          ? 'Belum Memenuhi Syarat Minimal Pendidikan'
-                          : isPassed
-                            ? `Memenuhi Standar Kelulusan (≥ ${activeCvModalJob.threshold}%)`
-                            : `Di Bawah Standar Kelulusan (< ${activeCvModalJob.threshold}%)`}
-                      </span>
+                return (
+                  <div className="p-6 rounded-3xl bg-[#EFF6FF] dark:bg-slate-800/70 border border-[#DBEAFE] dark:border-slate-700 flex flex-col sm:flex-row items-center gap-6">
+                    {/* Circle Score */}
+                    <div className={`w-24 h-24 rounded-2xl flex flex-col items-center justify-center text-white shrink-0 shadow-md ${isPassed
+                      ? 'bg-gradient-to-br from-emerald-500 to-teal-600 shadow-emerald-500/20'
+                      : 'bg-gradient-to-br from-rose-500 to-red-600 shadow-rose-500/20'
+                      }`}>
+                      <span className="text-3xl font-black">{activeCvModalJob.cvScore}%</span>
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-white/90 mt-0.5">Kecocokan</span>
                     </div>
 
-                    <h4 className="text-lg font-bold text-slate-800 dark:text-slate-100">
-                      {isFailedEdu
-                        ? 'Pendidikan Belum Memenuhi Ketentuan Posisi'
-                        : isPassed
-                          ? 'Profil Anda Sangat Cocok dengan Kriteria Lowongan'
-                          : 'Profil Belum Mencapai Standar Nilai Minimal'}
-                    </h4>
+                    {/* Verdict Info */}
+                    <div className="space-y-2 text-center sm:text-left flex-1">
+                      <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border">
+                        {isPassed ? <CheckCircle2 size={15} className="text-emerald-600 dark:text-emerald-400" /> : <XCircle size={15} className="text-rose-600 dark:text-rose-400" />}
+                        <span className={isPassed ? 'text-emerald-700 dark:text-emerald-300' : 'text-rose-700 dark:text-rose-300'}>
+                          {isFailedEdu
+                            ? 'Belum Memenuhi Syarat Minimal Pendidikan'
+                            : isPassed
+                              ? `Memenuhi Standar Kelulusan (≥ ${activeCvModalJob.threshold}%)`
+                              : `Di Bawah Standar Kelulusan (< ${activeCvModalJob.threshold}%)`}
+                        </span>
+                      </div>
 
-                    <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
-                      {isFailedEdu ? (
-                        <>Tingkat pendidikan pada profil Anda belum memenuhi kualifikasi minimal yang disyaratkan untuk posisi ini.</>
-                      ) : isPassed ? (
-                        <>Kualifikasi profil dan keahlian Anda dinilai <strong>cocok ({activeCvModalJob.cvScore}%)</strong> dengan kriteria lowongan dan telah melampaui batas minimal kelulusan perusahaan (<strong>{activeCvModalJob.threshold}%</strong>).</>
+                      <h4 className="text-lg font-bold text-slate-800 dark:text-slate-100">
+                        {isFailedEdu
+                          ? 'Pendidikan Belum Memenuhi Ketentuan Posisi'
+                          : isPassed
+                            ? 'Profil Anda Sangat Cocok dengan Kriteria Lowongan'
+                            : 'Profil Belum Mencapai Standar Nilai Minimal'}
+                      </h4>
+
+                      <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+                        {isFailedEdu ? (
+                          <>Tingkat pendidikan pada profil Anda belum memenuhi kualifikasi minimal yang disyaratkan untuk posisi ini.</>
+                        ) : isPassed ? (
+                          <>Kualifikasi profil dan keahlian Anda dinilai <strong>cocok ({activeCvModalJob.cvScore}%)</strong> dengan kriteria lowongan dan telah melampaui batas minimal kelulusan perusahaan (<strong>{activeCvModalJob.threshold}%</strong>).</>
+                        ) : (
+                          <>Tingkat kecocokan profil Anda saat ini sebesar <strong>{activeCvModalJob.cvScore}%</strong>, belum mencapai standar nilai kelulusan minimal yang ditentukan perusahaan (<strong>{activeCvModalJob.threshold}%</strong>).</>
+                        )}
+                      </p>
+                    </div>
+                  </div>
+                );
+              })()}
+
+              {/* Informasi Sederhana */}
+              <div className="space-y-4">
+                <h4 className="text-sm font-extrabold text-slate-800 dark:text-slate-100">Rangkuman Penilaian:</h4>
+                <div className="p-5 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm space-y-4 text-sm text-slate-600 dark:text-slate-300">
+                  <div className="flex items-start gap-3">
+                    <div className="p-1.5 bg-blue-100 dark:bg-blue-900/50 text-blue-600 dark:text-blue-400 rounded-lg shrink-0">
+                      <FileText size={18} />
+                    </div>
+                    <div>
+                      <strong className="block text-slate-800 dark:text-slate-200 mb-0.5">Pengalaman Kerja</strong>
+                      <p>Sistem menilai latar belakang dan pengalaman kerja Anda memiliki tingkat kecocokan sekitar <strong>{Math.round(activeCvModalJob.hybridDetails?.sbert_score ?? activeCvModalJob.cvScore)}%</strong> dengan yang dicari oleh perusahaan.</p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-start gap-3">
+                    <div className="p-1.5 bg-emerald-100 dark:bg-emerald-900/50 text-emerald-600 dark:text-emerald-400 rounded-lg shrink-0">
+                      <CheckCircle2 size={18} />
+                    </div>
+                    <div>
+                      <strong className="block text-slate-800 dark:text-slate-200 mb-0.5">Kemampuan (Skill)</strong>
+                      <p>Sistem berhasil mengenali <strong>{activeCvModalJob.hybridDetails?.keywords_found || 0} kemampuan utama</strong> dari profil Anda, yang sesuai dengan kriteria pekerjaan ini.</p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-start gap-3">
+                    <div className="p-1.5 bg-amber-100 dark:bg-amber-900/50 text-amber-600 dark:text-amber-400 rounded-lg shrink-0">
+                      <Sparkles size={18} />
+                    </div>
+                    <div>
+                      <strong className="block text-slate-800 dark:text-slate-200 mb-0.5">Kesimpulan</strong>
+                      {activeCvModalJob.kategori === 'tidak_memenuhi_syarat_pendidikan' ? (
+                        <p className="text-rose-600 dark:text-rose-400 font-medium">Tingkat pendidikan pada profil Anda saat ini belum memenuhi kualifikasi minimal yang disyaratkan untuk posisi ini.</p>
+                      ) : activeCvModalJob.cvScore >= activeCvModalJob.threshold ? (
+                        <p className="text-emerald-600 dark:text-emerald-400 font-medium">Selamat! Secara keseluruhan profil Anda sudah sangat baik dan memenuhi standar perusahaan.</p>
                       ) : (
-                        <>Tingkat kecocokan profil Anda saat ini sebesar <strong>{activeCvModalJob.cvScore}%</strong>, belum mencapai standar nilai kelulusan minimal yang ditentukan perusahaan (<strong>{activeCvModalJob.threshold}%</strong>).</>
+                        <p>Saat ini profil Anda masih butuh peningkatan untuk bisa mencapai standar minimal ({activeCvModalJob.threshold}%). Jangan menyerah dan coba tambahkan pengalaman atau skill yang relevan di CV Anda!</p>
                       )}
-                    </p>
-                  </div>
-                </div>
-              );
-            })()}
-
-            {/* Informasi Sederhana */}
-            <div className="space-y-4">
-              <h4 className="text-sm font-extrabold text-slate-800 dark:text-slate-100">Rangkuman Penilaian:</h4>
-              <div className="p-5 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm space-y-4 text-sm text-slate-600 dark:text-slate-300">
-                <div className="flex items-start gap-3">
-                  <div className="p-1.5 bg-blue-100 dark:bg-blue-900/50 text-blue-600 dark:text-blue-400 rounded-lg shrink-0">
-                    <FileText size={18} />
-                  </div>
-                  <div>
-                    <strong className="block text-slate-800 dark:text-slate-200 mb-0.5">Pengalaman Kerja</strong>
-                    <p>Sistem menilai latar belakang dan pengalaman kerja Anda memiliki tingkat kecocokan sekitar <strong>{Math.round(activeCvModalJob.hybridDetails?.sbert_score ?? activeCvModalJob.cvScore)}%</strong> dengan yang dicari oleh perusahaan.</p>
-                  </div>
-                </div>
-
-                <div className="flex items-start gap-3">
-                  <div className="p-1.5 bg-emerald-100 dark:bg-emerald-900/50 text-emerald-600 dark:text-emerald-400 rounded-lg shrink-0">
-                    <CheckCircle2 size={18} />
-                  </div>
-                  <div>
-                    <strong className="block text-slate-800 dark:text-slate-200 mb-0.5">Kemampuan (Skill)</strong>
-                    <p>Sistem berhasil mengenali <strong>{activeCvModalJob.hybridDetails?.keywords_found || 0} kemampuan utama</strong> dari profil Anda, yang sesuai dengan kriteria pekerjaan ini.</p>
-                  </div>
-                </div>
-
-                <div className="flex items-start gap-3">
-                  <div className="p-1.5 bg-amber-100 dark:bg-amber-900/50 text-amber-600 dark:text-amber-400 rounded-lg shrink-0">
-                    <Sparkles size={18} />
-                  </div>
-                  <div>
-                    <strong className="block text-slate-800 dark:text-slate-200 mb-0.5">Kesimpulan</strong>
-                    {activeCvModalJob.kategori === 'tidak_memenuhi_syarat_pendidikan' ? (
-                      <p className="text-rose-600 dark:text-rose-400 font-medium">Tingkat pendidikan pada profil Anda saat ini belum memenuhi kualifikasi minimal yang disyaratkan untuk posisi ini.</p>
-                    ) : activeCvModalJob.cvScore >= activeCvModalJob.threshold ? (
-                      <p className="text-emerald-600 dark:text-emerald-400 font-medium">Selamat! Secara keseluruhan profil Anda sudah sangat baik dan memenuhi standar perusahaan.</p>
-                    ) : (
-                      <p>Saat ini profil Anda masih butuh peningkatan untuk bisa mencapai standar minimal ({activeCvModalJob.threshold}%). Jangan menyerah dan coba tambahkan pengalaman atau skill yang relevan di CV Anda!</p>
-                    )}
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
 
             </div>
 
@@ -1316,131 +1368,132 @@ function StatusValidasiContent() {
 
             {/* Scrollable Body */}
             <div className="p-4 sm:p-5 space-y-5 overflow-y-auto flex-1 bg-white dark:bg-slate-900">
-              {/* Composite Score Banner */}
-            <div className="p-6 rounded-3xl bg-gradient-to-r from-blue-50 to-indigo-50/70 dark:from-slate-800 dark:to-slate-800/60 border border-[#DBEAFE] dark:border-slate-700 flex flex-col sm:flex-row items-center gap-6">
-              <div className="w-24 h-24 rounded-2xl bg-gradient-to-br from-[#1A4B9F] to-indigo-600 text-white flex flex-col items-center justify-center shrink-0 shadow-lg shadow-blue-500/20">
-                <span className="text-3xl font-black">
-                  {activeHumanModalJob.generalAiDetails?.compositeScore !== undefined
-                    ? `${activeHumanModalJob.generalAiDetails.compositeScore}%`
-                    : `${activeHumanModalJob.cvScore}%`}
-                </span>
-                <span className="text-[9px] font-bold uppercase tracking-wider text-blue-100 mt-0.5">
-                  Skor Gabungan
-                </span>
-              </div>
-
-              <div className="space-y-2 text-center sm:text-left flex-1">
-                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 text-xs font-extrabold border border-emerald-300 dark:border-emerald-800">
-                  <CheckCircle2 size={15} />
-                  <span>{activeHumanModalJob.generalAiDetails?.recommendationLabel || (activeHumanModalJob.aiResult?.kategori_fit || 'Hasil Evaluasi AI Selesai')}</span>
-                </div>
-                <h4 className="text-lg font-bold text-slate-900 dark:text-white">
-                  {activeHumanModalJob.generalAiDetails?.compositeScore && activeHumanModalJob.generalAiDetails.compositeScore >= 75
-                    ? 'Hasil Evaluasi Awal AI Sangat Baik'
-                    : 'Hasil Evaluasi Awal AI Siap Divalidasi'}
-                </h4>
-                <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
-                  Profil CV Anda dinilai memiliki kecocokan <strong>{activeHumanModalJob.cvScore}%</strong>
-                  {activeHumanModalJob.videoScore > 0 || activeHumanModalJob.aiResult?.skor_keseluruhan ? (
-                    <> dan performa wawancara video tercatat <strong>{activeHumanModalJob.videoScore || Math.round(Number(activeHumanModalJob.aiResult?.skor_keseluruhan))}%</strong>.</>
-                  ) : (
-                    <>. Rekaman wawancara video sedang dianalisis.</>
-                  )} Data ini dirangkum oleh AI sebagai bahan pertimbangan objektif tim HR <strong>{activeHumanModalJob.companyName}</strong>.
-                </p>
-              </div>
-            </div>
-
-            {/* Informasi Penilaian Sederhana */}
-            <div className="space-y-4">
-              <h4 className="text-sm font-extrabold text-slate-800 dark:text-slate-100">Rincian Penilaian:</h4>
-              <div className="p-5 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm space-y-4 text-sm text-slate-600 dark:text-slate-300">
-                <div className="flex items-start gap-3">
-                  <div className="p-1.5 bg-blue-100 dark:bg-blue-900/50 text-blue-600 dark:text-blue-400 rounded-lg shrink-0">
-                    <FileText size={18} />
-                  </div>
-                  <div>
-                    <strong className="block text-slate-800 dark:text-slate-200 mb-0.5">Penilaian Berkas (CV)</strong>
-                    <p>Latar belakang dan pengalaman Anda dinilai cocok sekitar <strong>{activeHumanModalJob.cvScore}%</strong>. Sistem juga mengenali kemampuan-kemampuan utama yang dicari oleh perusahaan dari profil Anda.</p>
-                  </div>
-                </div>
-
-                <div className="flex items-start gap-3">
-                  <div className="p-1.5 bg-emerald-100 dark:bg-emerald-900/50 text-emerald-600 dark:text-emerald-400 rounded-lg shrink-0">
-                    <Video size={18} />
-                  </div>
-                  <div>
-                    <strong className="block text-slate-800 dark:text-slate-200 mb-0.5">Penilaian Wawancara Video</strong>
-                    <p>Performa komunikasi dan penyampaian Anda dinilai sebesar <strong>{activeHumanModalJob.videoScore > 0 ? activeHumanModalJob.videoScore : Math.round(Number(activeHumanModalJob.aiResult?.skor_keseluruhan || 0))}%</strong>. Ini sudah mencakup penilaian kejelasan Anda dalam berbicara dan ketenangan saat menjawab.</p>
-                  </div>
-                </div>
-
-                {activeHumanModalJob.generalAiDetails?.realDetails?.ringkasanJawaban && (
-                  <div className="flex items-start gap-3 border-t border-slate-100 dark:border-slate-700 pt-4 mt-2">
-                    <div className="p-1.5 bg-amber-100 dark:bg-amber-900/50 text-amber-600 dark:text-amber-400 rounded-lg shrink-0">
-                      <Sparkles size={18} />
+              {/* Consistent Score Banner */}
+              <div className="p-6 rounded-3xl bg-gradient-to-r from-blue-50 to-indigo-50/70 dark:from-slate-800 dark:to-slate-800/60 border border-[#DBEAFE] dark:border-slate-700 space-y-5">
+                <div className="flex flex-col sm:flex-row items-center gap-4">
+                  {/* CV Score */}
+                  <div className="flex-1 bg-white dark:bg-slate-900 rounded-2xl p-4 border border-slate-200 dark:border-slate-700 flex items-center gap-4 shadow-sm w-full">
+                    <div className="w-12 h-12 rounded-xl bg-emerald-100 text-emerald-600 dark:bg-emerald-900/50 dark:text-emerald-400 flex items-center justify-center font-black text-xl shrink-0">
+                      {activeHumanModalJob.cvScore}%
                     </div>
                     <div>
-                      <strong className="block text-slate-800 dark:text-slate-200 mb-0.5">Catatan Komunikasi Anda</strong>
-                      <p className="italic">"{activeHumanModalJob.generalAiDetails.realDetails.ringkasanJawaban}"</p>
+                      <span className="text-[10px] font-bold uppercase text-slate-500 dark:text-slate-400 block">Kesesuaian Berkas CV</span>
+                      <strong className="text-sm text-slate-800 dark:text-slate-100">{activeHumanModalJob.cvScore}% Cocok</strong>
                     </div>
                   </div>
-                )}
-              </div>
-            </div>
 
-            {/* Rincian Aspek Penilaian Utama (Bahasa Umum) */}
-            <div className="space-y-3">
-              <h4 className="text-xs font-extrabold text-slate-800 dark:text-slate-200 uppercase tracking-wider">
-                Aspek Kemampuan Tambahan Anda
-              </h4>
-
-              <div className="space-y-2.5">
-                {(activeHumanModalJob.generalAiDetails?.competencies || []).map((item, idx) => (
-                  <div key={idx} className="p-4 rounded-2xl bg-slate-50/80 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 space-y-2 text-xs">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2.5">
-                        <span className="w-5 h-5 rounded-full bg-[#1A4B9F] text-white text-[10px] font-extrabold flex items-center justify-center shrink-0">
-                          {idx + 1}
-                        </span>
-                        <span className="font-extrabold text-slate-800 dark:text-slate-100">{item.title}</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <span className="font-black text-[#1A4B9F] dark:text-blue-400">{item.score}%</span>
-                        <span className="px-2.5 py-0.5 rounded-full bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-200 text-[10px] font-bold border border-slate-200 dark:border-slate-600 shadow-2xs">
-                          {item.badge}
-                        </span>
-                      </div>
+                  {/* Video Score */}
+                  <div className="flex-1 bg-white dark:bg-slate-900 rounded-2xl p-4 border border-slate-200 dark:border-slate-700 flex items-center gap-4 shadow-sm w-full">
+                    <div className="w-12 h-12 rounded-xl bg-blue-100 text-blue-600 dark:bg-blue-900/50 dark:text-blue-400 flex items-center justify-center font-black text-xl shrink-0">
+                      {activeHumanModalJob.videoScore > 0 ? activeHumanModalJob.videoScore : Math.round(Number(activeHumanModalJob.aiResult?.skor_keseluruhan || 0))}
                     </div>
-                    <p className="text-slate-600 dark:text-slate-300 leading-relaxed pl-7 text-[11px]">
-                      {item.desc}
-                    </p>
+                    <div>
+                      <span className="text-[10px] font-bold uppercase text-slate-500 dark:text-slate-400 block">Skor Evaluasi Wawancara</span>
+                      <strong className="text-sm text-slate-800 dark:text-slate-100">
+                        {activeHumanModalJob.videoScore > 0 ? activeHumanModalJob.videoScore : Math.round(Number(activeHumanModalJob.aiResult?.skor_keseluruhan || 0))} / 100
+                      </strong>
+                    </div>
                   </div>
-                ))}
-              </div>
-            </div>
+                </div>
 
-            {/* Poin Keunggulan Utama */}
-            <div className="p-5 rounded-2xl bg-emerald-50/60 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-800/50 space-y-2 text-xs text-emerald-900 dark:text-emerald-200">
-              <span className="font-extrabold flex items-center gap-2 text-emerald-800 dark:text-emerald-300">
-                <Sparkles size={15} /> Kelebihan Utama Anda yang Terlihat oleh Sistem:
-              </span>
-              <ul className="space-y-1.5 pl-5 list-disc text-[11px] leading-relaxed">
-                {(activeHumanModalJob.generalAiDetails?.strengths || []).map((strength, sIdx) => (
-                  <li key={sIdx}>{strength}</li>
-                ))}
-              </ul>
-            </div>
-
-            {/* Informasi Tahap Validasi Manusia */}
-            <div className="p-5 rounded-2xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/50 space-y-2 text-xs text-amber-900 dark:text-amber-200">
-              <div className="flex items-center gap-2 font-bold text-amber-900 dark:text-amber-100">
-                <AlertCircle size={16} className="text-amber-600 shrink-0" />
-                <span>Catatan Penting Tahap Validasi Manusia (Human Validation)</span>
+                <div className="space-y-2 text-center sm:text-left border-t border-[#DBEAFE] dark:border-slate-700 pt-5">
+                  <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-100 text-[#1A4B9F] dark:bg-blue-900/50 dark:text-blue-300 text-[11px] font-extrabold border border-blue-200 dark:border-blue-800">
+                    <Sparkles size={13} />
+                    <span>Rekomendasi Evaluasi AI</span>
+                  </div>
+                  <h4 className="text-lg font-bold text-[#1A4B9F] dark:text-blue-400">
+                    {activeHumanModalJob.aiResult?.kategori_fit || 'Siap Divalidasi'}
+                  </h4>
+                  <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+                    Data ini dirangkum secara objektif oleh AI sebagai bahan pertimbangan tim HR <strong>{activeHumanModalJob.companyName}</strong>.
+                    {activeHumanModalJob.aiResult?.ringkasan_jawaban && (
+                      <span className="block mt-1.5 p-3 rounded-xl bg-white/60 dark:bg-slate-900/40 border border-slate-200/50 dark:border-slate-700/50 italic">
+                        "{activeHumanModalJob.aiResult.ringkasan_jawaban}"
+                      </span>
+                    )}
+                  </p>
+                </div>
               </div>
-              <p className="leading-relaxed text-[11px]">
-                Hasil evaluasi di atas dirangkum secara otomatis oleh AI sebagai alat bantu penilaian awal. <strong>Keputusan akhir kelulusan serta jadwal wawancara tatap muka sepenuhnya divalidasi oleh Tim HR {activeHumanModalJob.companyName}.</strong> Mohon pantau Riwayat Lamaran Anda secara berkala.
-              </p>
-            </div>
+
+              {/* Informasi Penilaian Sederhana */}
+              <div className="space-y-4">
+                <h4 className="text-sm font-extrabold text-slate-800 dark:text-slate-100">Rincian Penilaian:</h4>
+                <div className="p-5 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm space-y-4 text-sm text-slate-600 dark:text-slate-300">
+                  <div className="flex items-start gap-3">
+                    <div className="p-1.5 bg-blue-100 dark:bg-blue-900/50 text-blue-600 dark:text-blue-400 rounded-lg shrink-0">
+                      <FileText size={18} />
+                    </div>
+                    <div>
+                      <strong className="block text-slate-800 dark:text-slate-200 mb-0.5">Penilaian Berkas (CV)</strong>
+                      <p>Latar belakang dan pengalaman Anda dinilai cocok sekitar <strong>{activeHumanModalJob.cvScore}%</strong>. Sistem juga mengenali kemampuan-kemampuan utama yang dicari oleh perusahaan dari profil Anda.</p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-start gap-3">
+                    <div className="p-1.5 bg-emerald-100 dark:bg-emerald-900/50 text-emerald-600 dark:text-emerald-400 rounded-lg shrink-0">
+                      <Video size={18} />
+                    </div>
+                    <div>
+                      <strong className="block text-slate-800 dark:text-slate-200 mb-0.5">Penilaian Wawancara Video</strong>
+                      <p>Performa komunikasi dan penyampaian Anda dinilai sebesar <strong>{activeHumanModalJob.videoScore > 0 ? activeHumanModalJob.videoScore : Math.round(Number(activeHumanModalJob.aiResult?.skor_keseluruhan || 0))}%</strong>. Ini sudah mencakup penilaian kejelasan Anda dalam berbicara dan ketenangan saat menjawab.</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Rincian Aspek Penilaian Utama (Bahasa Umum) */}
+              <div className="space-y-3">
+                <h4 className="text-xs font-extrabold text-slate-800 dark:text-slate-200 uppercase tracking-wider">
+                  Aspek Kemampuan Tambahan Anda
+                </h4>
+
+                <div className="space-y-2.5">
+                  {(activeHumanModalJob.generalAiDetails?.competencies || []).map((item, idx) => (
+                    <div key={idx} className="p-4 rounded-2xl bg-slate-50/80 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 space-y-2 text-xs">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2.5">
+                          <span className="w-5 h-5 rounded-full bg-[#1A4B9F] text-white text-[10px] font-extrabold flex items-center justify-center shrink-0">
+                            {idx + 1}
+                          </span>
+                          <span className="font-extrabold text-slate-800 dark:text-slate-100">{item.title}</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="font-black text-[#1A4B9F] dark:text-blue-400">{item.score}%</span>
+                          <span className="px-2.5 py-0.5 rounded-full bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-200 text-[10px] font-bold border border-slate-200 dark:border-slate-600 shadow-2xs">
+                            {item.badge}
+                          </span>
+                        </div>
+                      </div>
+                      <p className="text-slate-600 dark:text-slate-300 leading-relaxed pl-7 text-[11px]">
+                        {item.desc}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Poin Keunggulan Utama */}
+              <div className="p-5 rounded-2xl bg-emerald-50/60 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-800/50 space-y-2 text-xs text-emerald-900 dark:text-emerald-200">
+                <span className="font-extrabold flex items-center gap-2 text-emerald-800 dark:text-emerald-300">
+                  <Sparkles size={15} /> Kelebihan Utama Anda yang Terlihat oleh Sistem:
+                </span>
+                <ul className="space-y-1.5 pl-5 list-disc text-[11px] leading-relaxed">
+                  {(activeHumanModalJob.generalAiDetails?.strengths || []).map((strength, sIdx) => (
+                    <li key={sIdx}>{strength}</li>
+                  ))}
+                </ul>
+              </div>
+
+              {/* Informasi Tahap Validasi Manusia */}
+              <div className="p-5 rounded-2xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/50 space-y-2 text-xs text-amber-900 dark:text-amber-200">
+                <div className="flex items-center gap-2 font-bold text-amber-900 dark:text-amber-100">
+                  <AlertCircle size={16} className="text-amber-600 shrink-0" />
+                  <span>Catatan Penting Tahap Validasi Manusia (Human Validation)</span>
+                </div>
+                <p className="leading-relaxed text-[11px]">
+                  Hasil evaluasi di atas dirangkum secara otomatis oleh AI sebagai alat bantu penilaian awal. <strong>Keputusan akhir kelulusan serta jadwal wawancara tatap muka sepenuhnya divalidasi oleh Tim HR {activeHumanModalJob.companyName}.</strong> Mohon pantau Riwayat Lamaran Anda secara berkala.
+                </p>
+              </div>
 
             </div>
 

@@ -25,11 +25,11 @@ function ArchiveContent() {
     router.push(`?${params.toString()}`);
   }, [searchParams, router]);
 
-  const [availableJobs, setAvailableJobs] = useState<{id: string, title: string}[]>([]);
+  const [availableJobs, setAvailableJobs] = useState<{ id: string, title: string }[]>([]);
 
   return (
     <div className="max-w-7xl mx-auto space-y-8 pb-16 animate-in fade-in duration-300">
-      
+
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-border pb-5">
         <div>
@@ -37,9 +37,9 @@ function ArchiveContent() {
           <p className="text-sm text-muted-foreground">Arsip dari seluruh kandidat yang telah Anda proses</p>
         </div>
       </div>
-      
+
       <div className="space-y-4">
-        <ArchiveFilters 
+        <ArchiveFilters
           search={search}
           jobFilter={jobFilter}
           hasilFilter={hasilFilter}
@@ -47,7 +47,7 @@ function ArchiveContent() {
           updateUrl={updateUrl}
           availableJobs={availableJobs}
         />
-        <ArchiveTable 
+        <ArchiveTable
           search={search}
           jobFilter={jobFilter}
           hasilFilter={hasilFilter}

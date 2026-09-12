@@ -210,7 +210,10 @@ export default function GlintsCleanCompanyDetailPage({ params }: { params: Promi
     setActiveTab(tabId);
     const element = document.getElementById(tabId);
     if (element) {
-      element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      // Offset for sticky navbar (80px) + sticky tabs bar (~60px) + some padding
+      const yOffset = -150; 
+      const y = element.getBoundingClientRect().top + window.pageYOffset + yOffset;
+      window.scrollTo({ top: y, behavior: 'smooth' });
     }
   };
 
@@ -375,6 +378,10 @@ export default function GlintsCleanCompanyDetailPage({ params }: { params: Promi
                       src={company.logo_url}
                       alt={company.nama_perusahaan}
                       className="max-w-full max-h-full object-contain rounded-xl"
+                      onError={(e) => {
+                        e.currentTarget.onerror = null;
+                        e.currentTarget.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 22V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18Z'/%3E%3Cpath d='M6 12H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2'/%3E%3Cpath d='M18 9h2a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-2'/%3E%3Cpath d='M10 6h4'/%3E%3Cpath d='M10 10h4'/%3E%3Cpath d='M10 14h4'/%3E%3Cpath d='M10 18h4'/%3E%3C/svg%3E";
+                      }}
                     />
                   ) : (
                     <div className="w-full h-full rounded-xl bg-blue-50 dark:bg-blue-950/50 border border-blue-100 dark:border-blue-900 flex items-center justify-center text-[#1A4B9F] dark:text-blue-400">
@@ -388,7 +395,7 @@ export default function GlintsCleanCompanyDetailPage({ params }: { params: Promi
 
                   {/* Company Name & Verified Icon */}
                   <div className="flex items-center justify-center sm:justify-start gap-2">
-                    <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">
+                    <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-white tracking-tighter">
                       {company.nama_perusahaan}
                     </h1>
                     <span title="Terverifikasi Legalitas Mitra">
@@ -399,13 +406,13 @@ export default function GlintsCleanCompanyDetailPage({ params }: { params: Promi
                   {/* Location */}
                   <div className="flex items-center justify-center sm:justify-start gap-2 text-sm text-slate-600 dark:text-slate-300 font-medium">
                     <MapPin size={16} className="text-slate-400 shrink-0" />
-                    <span>{company.kota ? `${company.kota}, ${company.provinsi || 'Indonesia'}` : company.alamat || 'Indonesia'}</span>
+                    <span>{company.kota ? `${company.kota}, ${company.provinsi || ''}` : company.alamat || 'Lokasi belum diatur'}</span>
                   </div>
 
                   {/* Industry */}
                   <div className="flex items-center justify-center sm:justify-start gap-2 text-sm text-slate-600 dark:text-slate-300 font-medium">
                     <Building2 size={16} className="text-slate-400 shrink-0" />
-                    <span>{company.industri || 'Teknologi & Informasi'}</span>
+                    <span>{company.industri || 'Industri belum diatur'}</span>
                   </div>
 
                 </div>
@@ -417,7 +424,7 @@ export default function GlintsCleanCompanyDetailPage({ params }: { params: Promi
                 {/* Employee Count */}
                 <div className="flex items-center justify-center md:justify-start gap-2.5 text-sm text-slate-800 dark:text-slate-200 font-semibold">
                   <Users size={16} className="text-slate-500 shrink-0" />
-                  <span>{company.ukuran || '50+ karyawan'}</span>
+                  <span>{company.ukuran || 'Ukuran belum diatur'}</span>
                 </div>
 
                 {/* Verified Status */}
@@ -442,9 +449,9 @@ export default function GlintsCleanCompanyDetailPage({ params }: { params: Promi
             {[
               { id: 'loker-pilihan', label: `Lowongan (${company.jobs?.length || 0})` },
               { id: 'deskripsi', label: 'Deskripsi' },
-              { id: 'kultur', label: 'Kultur Perusahaan' },
+              { id: 'kultur-perusahaan', label: 'Kultur Perusahaan' },
+              { id: 'fasilitas', label: 'Fasilitas & Tunjangan' },
               { id: 'hubungi-kami', label: 'Alamat & Kontak' },
-              { id: 'galeri', label: 'Galeri' },
               { id: 'perusahaan-lainnya', label: 'Perusahaan Lainnya' },
             ].map((tab) => (
               <button
@@ -553,39 +560,51 @@ export default function GlintsCleanCompanyDetailPage({ params }: { params: Promi
           <section id="deskripsi" className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-6 sm:p-8 shadow-xs space-y-4">
             <h2 className="text-xl font-bold text-slate-900 dark:text-white border-b border-slate-100 dark:border-slate-800 pb-4">Deskripsi Perusahaan</h2>
             <p className="text-slate-700 dark:text-slate-300 text-base leading-relaxed font-normal whitespace-pre-wrap">
-              {company.deskripsi || 'Perusahaan terverifikasi mitra AI-RecruitPro yang berkomitmen menghadirkan lingkungan kerja transparan dan profesional.'}
+              {company.deskripsi || 'Deskripsi perusahaan belum ditambahkan.'}
             </p>
           </section>
 
-          {/* -------------------- SECTION 3: KULTUR PERUSAHAAN -------------------- */}
-          <section id="kultur" className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-6 sm:p-8 shadow-xs space-y-6">
-            <h2 className="text-xl font-bold text-slate-900 dark:text-white border-b border-slate-100 dark:border-slate-800 pb-4">Kultur & Manfaat Perusahaan</h2>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
-              <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 space-y-2">
-                <Sparkles className="text-[#1A4B9F] dark:text-blue-400" size={24} />
-                <h3 className="font-bold text-sm text-slate-900 dark:text-white">Fleksibilitas Kerja</h3>
-                <p className="text-xs text-slate-600 dark:text-slate-400">Dukungan sistem kerja transparan dan profesional.</p>
-              </div>
-              <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 space-y-2">
-                <Heart className="text-[#1A4B9F] dark:text-blue-400" size={24} />
-                <h3 className="font-bold text-sm text-slate-900 dark:text-white">Asuransi Kesehatan</h3>
-                <p className="text-xs text-slate-600 dark:text-slate-400">Perlindungan kesehatan bagi anggota tim terdaftar.</p>
-              </div>
-              <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 space-y-2">
-                <Briefcase className="text-[#1A4B9F] dark:text-blue-400" size={24} />
-                <h3 className="font-bold text-sm text-slate-900 dark:text-white">Pengembangan Karir</h3>
-                <p className="text-xs text-slate-600 dark:text-slate-400">Peluang peningkatan jalur karir dan sertifikasi keahlian.</p>
-              </div>
-              <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 space-y-2">
-                <Users className="text-[#1A4B9F] dark:text-blue-400" size={24} />
-                <h3 className="font-bold text-sm text-slate-900 dark:text-white">Tim Kolaboratif</h3>
-                <p className="text-xs text-slate-600 dark:text-slate-400">Lingkungan kerja inovatif, ramah, dan saling mendukung.</p>
-              </div>
+          {/* -------------------- SECTION 3: KULTUR PERUSAHAAN (DUMMY) -------------------- */}
+          <section id="kultur-perusahaan" className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-6 sm:p-8 shadow-xs space-y-6">
+            <h2 className="text-xl font-bold text-slate-900 dark:text-white border-b border-slate-100 dark:border-slate-800 pb-4">Kultur Perusahaan</h2>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+              {[
+                { icon: <Users className="text-indigo-500" size={28} />, title: "Kolaborasi Tim", desc: "Kami mengutamakan kerja sama yang kuat dan saling mendukung antar divisi." },
+                { icon: <Sparkles className="text-amber-500" size={28} />, title: "Inovasi Bebas", desc: "Setiap ide dihargai. Kami mendorong eksplorasi teknologi dan inovasi baru." },
+                { icon: <Heart className="text-rose-500" size={28} />, title: "Work-Life Balance", desc: "Keseimbangan antara kehidupan kerja dan personal adalah prioritas kami." },
+              ].map((k, i) => (
+                <div key={i} className="space-y-3 p-5 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-700/50">
+                  <div className="w-12 h-12 bg-white dark:bg-slate-700 rounded-xl flex items-center justify-center shadow-sm">{k.icon}</div>
+                  <h3 className="font-bold text-slate-800 dark:text-slate-100">{k.title}</h3>
+                  <p className="text-sm text-slate-500 dark:text-slate-400 leading-relaxed">{k.desc}</p>
+                </div>
+              ))}
             </div>
           </section>
 
-          {/* -------------------- SECTION 4: HUBUNGI KAMI -------------------- */}
+          {/* -------------------- SECTION 4: FASILITAS & TUNJANGAN (DUMMY) -------------------- */}
+          <section id="fasilitas" className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-6 sm:p-8 shadow-xs space-y-6">
+            <h2 className="text-xl font-bold text-slate-900 dark:text-white border-b border-slate-100 dark:border-slate-800 pb-4">Fasilitas & Tunjangan</h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              {[
+                "Asuransi Kesehatan",
+                "Laptop & Peralatan Kerja",
+                "Bonus Kinerja Tahunan",
+                "Makan Siang Gratis",
+                "Cuti Berbayar (Paid Leave)",
+                "Jam Kerja Fleksibel",
+                "Program Pelatihan & Workshop",
+                "Tunjangan Hari Raya (THR)"
+              ].map((f, i) => (
+                <div key={i} className="flex items-start gap-3 p-4 rounded-xl border border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 hover:border-slate-300 dark:hover:border-slate-600 transition-colors">
+                  <CheckCircle2 size={20} className="text-emerald-500 shrink-0 mt-0.5" />
+                  <span className="text-sm font-medium text-slate-700 dark:text-slate-300">{f}</span>
+                </div>
+              ))}
+            </div>
+          </section>
+
+          {/* -------------------- SECTION 5: HUBUNGI KAMI -------------------- */}
           <section id="hubungi-kami" className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-6 sm:p-8 shadow-xs space-y-4">
             <h2 className="text-xl font-bold text-slate-900 dark:text-white border-b border-slate-100 dark:border-slate-800 pb-4">Hubungi Kami & Alamat</h2>
 
@@ -608,9 +627,10 @@ export default function GlintsCleanCompanyDetailPage({ params }: { params: Promi
                     href={company.website_url.startsWith('http') ? company.website_url : `https://${company.website_url}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center gap-2 text-sm font-bold text-[#1A4B9F] hover:underline"
+                    className="inline-flex items-start gap-1.5 text-sm font-bold text-[#1A4B9F] hover:underline"
                   >
-                    {company.website_url} <ExternalLink size={14} />
+                    <span className="break-all line-clamp-2">{company.website_url}</span>
+                    <ExternalLink size={14} className="shrink-0 mt-0.5" />
                   </a>
                 ) : (
                   <span className="text-sm text-slate-500 font-medium">Situs resmi dalam proses verifikasi</span>
@@ -619,26 +639,7 @@ export default function GlintsCleanCompanyDetailPage({ params }: { params: Promi
             </div>
           </section>
 
-          {/* -------------------- SECTION 5: GALERI -------------------- */}
-          <section id="galeri" className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-6 sm:p-8 shadow-xs space-y-4">
-            <h2 className="text-xl font-bold text-slate-900 dark:text-white border-b border-slate-100 dark:border-slate-800 pb-4 flex items-center gap-2">
-              <ImageIcon size={22} className="text-[#1A4B9F]" /> Galeri Perusahaan
-            </h2>
-
-            {company.galeri && company.galeri.length > 0 ? (
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-                {company.galeri.map((imgSrc, idx) => (
-                  <div key={idx} className="relative aspect-[4/3] rounded-xl overflow-hidden border border-slate-200 dark:border-slate-800 bg-slate-100">
-                    <img src={imgSrc} alt="Galeri Lingkungan Kerja" className="w-full h-full object-cover hover:scale-105 transition-transform duration-300" />
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <p className="text-slate-500 font-medium text-sm">Galeri foto lingkungan kerja belum diunggah oleh perusahaan ini.</p>
-            )}
-          </section>
-
-          {/* -------------------- SECTION 7: PERUSAHAAN LAINNYA -------------------- */}
+          {/* -------------------- SECTION 4: PERUSAHAAN LAINNYA -------------------- */}
           {similarCompanies.length > 0 && (
             <section id="perusahaan-lainnya" className="space-y-6 pt-4">
               <h2 className="text-xl font-bold text-slate-900 dark:text-white">Perusahaan Lainnya</h2>
@@ -661,6 +662,10 @@ export default function GlintsCleanCompanyDetailPage({ params }: { params: Promi
                           src={comp.logo_url}
                           alt={comp.nama_perusahaan}
                           className="w-16 h-16 rounded-xl object-contain border border-slate-200 dark:border-slate-700 mb-3 group-hover:scale-105 transition-transform"
+                          onError={(e) => {
+                            e.currentTarget.onerror = null;
+                            e.currentTarget.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 22V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18Z'/%3E%3Cpath d='M6 12H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2'/%3E%3Cpath d='M18 9h2a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-2'/%3E%3Cpath d='M10 6h4'/%3E%3Cpath d='M10 10h4'/%3E%3Cpath d='M10 14h4'/%3E%3Cpath d='M10 18h4'/%3E%3C/svg%3E";
+                          }}
                         />
                       ) : (
                         <div className="w-16 h-16 rounded-xl bg-blue-50 dark:bg-blue-950/50 border border-blue-100 dark:border-blue-900 mb-3 flex items-center justify-center text-[#1A4B9F] dark:text-blue-400 group-hover:scale-105 transition-transform">

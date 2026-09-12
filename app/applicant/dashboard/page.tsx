@@ -817,8 +817,8 @@ function DashboardContent() {
             type="button"
             onClick={() => switchTab('recommended')}
             className={`py-2.5 px-3 rounded-lg flex items-center justify-center gap-1.5 transition-all cursor-pointer ${activeTab !== 'companies'
-                ? 'bg-white dark:bg-slate-700 text-[#1A4B9F] dark:text-blue-400 shadow-sm'
-                : 'text-slate-500 dark:text-slate-400 hover:text-slate-700'
+              ? 'bg-white dark:bg-slate-700 text-[#1A4B9F] dark:text-blue-400 shadow-sm'
+              : 'text-slate-500 dark:text-slate-400 hover:text-slate-700'
               }`}
           >
             <Briefcase className="w-4 h-4" />
@@ -829,8 +829,8 @@ function DashboardContent() {
             type="button"
             onClick={() => switchTab('companies')}
             className={`py-2.5 px-3 rounded-lg flex items-center justify-center gap-1.5 transition-all cursor-pointer ${activeTab === 'companies'
-                ? 'bg-white dark:bg-slate-700 text-[#1A4B9F] dark:text-blue-400 shadow-sm'
-                : 'text-slate-500 dark:text-slate-400 hover:text-slate-700'
+              ? 'bg-white dark:bg-slate-700 text-[#1A4B9F] dark:text-blue-400 shadow-sm'
+              : 'text-slate-500 dark:text-slate-400 hover:text-slate-700'
               }`}
           >
             <Building2 className="w-4 h-4" />
@@ -1006,6 +1006,10 @@ function DashboardContent() {
                           src={comp.logo}
                           alt={comp.name}
                           className="w-14 h-14 rounded-2xl object-cover border border-slate-200 dark:border-slate-700"
+                          onError={(e) => {
+                            e.currentTarget.onerror = null;
+                            e.currentTarget.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 22V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18Z'/%3E%3Cpath d='M6 12H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2'/%3E%3Cpath d='M18 9h2a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-2'/%3E%3Cpath d='M10 6h4'/%3E%3Cpath d='M10 10h4'/%3E%3Cpath d='M10 14h4'/%3E%3Cpath d='M10 18h4'/%3E%3C/svg%3E";
+                          }}
                         />
                         <span className="px-3 py-1 rounded-full bg-[#EFF6FF] dark:bg-slate-800 text-slate-900 dark:text-white font-bold text-xs border border-[#DBEAFE] dark:border-slate-700">
                           {comp.openJobsCount} {language === 'id' ? 'Lowongan Buka' : 'Open Jobs'}
@@ -1283,8 +1287,8 @@ function DashboardContent() {
                       id={`job-card-${job.id}`}
                       onClick={() => setSelectedJobId(job.id)}
                       className={`p-5 rounded-2xl border transition-all cursor-pointer relative space-y-3 ${isSelected
-                          ? 'bg-white dark:bg-slate-900 border-2 border-[#1A4B9F] ring-1 ring-[#1A4B9F]/20 shadow-md shadow-md ring-2 ring-[#1A4B9F]/20'
-                          : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 shadow-2xs'
+                        ? 'bg-white dark:bg-slate-900 border-2 border-[#1A4B9F] ring-1 ring-[#1A4B9F]/20 shadow-md shadow-md ring-2 ring-[#1A4B9F]/20'
+                        : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 shadow-2xs'
                         }`}
                     >
                       {/* Top Header Card */}
@@ -1294,6 +1298,10 @@ function DashboardContent() {
                             src={job.logo}
                             alt={job.company}
                             className="w-12 h-12 rounded-2xl object-cover border border-slate-200 dark:border-slate-700 shrink-0"
+                            onError={(e) => {
+                              e.currentTarget.onerror = null;
+                              e.currentTarget.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 22V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18Z'/%3E%3Cpath d='M6 12H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2'/%3E%3Cpath d='M18 9h2a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-2'/%3E%3Cpath d='M10 6h4'/%3E%3Cpath d='M10 10h4'/%3E%3Cpath d='M10 14h4'/%3E%3Cpath d='M10 18h4'/%3E%3C/svg%3E";
+                            }}
                           />
                           <div>
                             <div className="flex flex-wrap items-center gap-1.5 mb-1">
@@ -1413,6 +1421,10 @@ function DashboardContent() {
                       src={selectedJob.logo}
                       alt={selectedJob.company}
                       className="w-16 h-16 rounded-2xl object-cover border border-slate-200 dark:border-slate-700 shrink-0"
+                      onError={(e) => {
+                        e.currentTarget.onerror = null;
+                        e.currentTarget.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 22V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18Z'/%3E%3Cpath d='M6 12H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2'/%3E%3Cpath d='M18 9h2a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-2'/%3E%3Cpath d='M10 6h4'/%3E%3Cpath d='M10 10h4'/%3E%3Cpath d='M10 14h4'/%3E%3Cpath d='M10 18h4'/%3E%3C/svg%3E";
+                      }}
                     />
                     <div className="space-y-1.5">
                       <div className="flex flex-wrap items-center gap-2">
@@ -1579,8 +1591,8 @@ function DashboardContent() {
                     <button
                       onClick={() => toggleSaveJob(selectedJob.id)}
                       className={`p-3 rounded-2xl border transition-colors cursor-pointer ${savedJobIds.some(id => String(id) === String(selectedJob.id))
-                          ? 'bg-cyan-50 border-[#1A4B9F] text-slate-900 dark:bg-slate-800'
-                          : 'border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50'
+                        ? 'bg-cyan-50 border-[#1A4B9F] text-slate-900 dark:bg-slate-800'
+                        : 'border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50'
                         }`}
                       title="Save Job"
                     >

@@ -2,17 +2,19 @@
 
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from '@/hooks/useTranslation';
-import { FileText, Trash2, AlertTriangle, X } from 'lucide-react';
+import { FileText, Trash2, AlertTriangle, X, Eye } from 'lucide-react';
 import { fetchAuth } from '@/lib/api/auth';
 import toast from 'react-hot-toast';
+import { CandidateModal } from '@/components/pipeline/CandidateModal';
 
 export function ArchiveTable({ search, jobFilter, hasilFilter, date, onJobsExtracted }: any) {
   const { t } = useTranslation();
-  
+
   const [applications, setApplications] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [selectedForDelete, setSelectedForDelete] = useState<any | null>(null);
+  const [selectedCandidate, setSelectedCandidate] = useState<any>(null);
 
   const loadApplications = async () => {
     try {
@@ -20,7 +22,7 @@ export function ArchiveTable({ search, jobFilter, hasilFilter, date, onJobsExtra
       const res = await fetchAuth('/api/applications/');
       if (res.ok) {
         const data = await res.json();
-        const archivedApps = (data.data || []).filter((a: any) => 
+        const archivedApps = (data.data || []).filter((a: any) =>
           ['Lolos', 'hired', 'ditolak', 'Tidak Lolos', 'ditolak_sistem', 'rejected'].includes(a.status)
         );
         setApplications(archivedApps);
@@ -125,6 +127,54 @@ export function ArchiveTable({ search, jobFilter, hasilFilter, date, onJobsExtra
     return true;
   });
 
+  const openCandidateModal = (app: any) => {
+    const cvScore = Math.round(app.analisis_cv?.skor_kecocokan || 0);
+    const parsePct = (val: any) => typeof val === 'string' ? parseFloat(val.replace('%', '')) : (typeof val === 'number' ? val : 0);
+    const appAi = app.ai_result;
+    const dynamicVideoScores = appAi?.dimensi_psikologis ? {
+      ability: Math.round(parsePct(appAi.dimensi_psikologis.Ability)),
+      intelligent: Math.round(parsePct(appAi.dimensi_psikologis.Intelligent)),
+      personality: Math.round(parsePct(appAi.dimensi_psikologis.Personality)),
+      attitude: Math.round(parsePct(appAi.dimensi_psikologis.Attitude)),
+      emotionalIntelligence: Math.round(parsePct(appAi.dimensi_psikologis['Emotional Intelligent'])),
+    } : undefined;
+
+    let currentStage = 'human_validation';
+    if (app.status === 'Lolos' || app.status === 'hired') currentStage = 'human_validation';
+    else if (app.status === 'ditolak_sistem') currentStage = 'cv_screening';
+    else if (app.status === 'rejected') {
+      if (app.analisis_cv?.hasil === 'ditolak' || app.analisis_cv?.hasil === 'tidak_memenuhi_syarat') {
+        currentStage = 'cv_screening';
+      } else {
+        currentStage = 'human_validation';
+      }
+    }
+
+    setSelectedCandidate({
+      id: app.id,
+      applicationId: app.id,
+      name: app.pelamar?.nama_lengkap || 'Kandidat',
+      role: app.cvData?.jobTitle || app.job?.judul_posisi || 'Posisi',
+      stage: currentStage,
+      status: app.status === 'Lolos' ? 'hired' : app.status,
+      cvScore: cvScore,
+      education: app.cv_document?.pendidikan_tertinggi || app.pelamar?.pendidikan_terakhir,
+      university: app.pelamar?.institusi_pendidikan,
+      cvData: app.cvData,
+      cvDocument: app.cv_document,
+      jobData: app.job,
+      analisisCv: app.analisis_cv,
+      aiResult: app.ai_result,
+      videoUrl: app.video_url,
+      videoScores: dynamicVideoScores,
+      interviewDetails: app.interview_details,
+      catatanPerusahaan: app.catatan_perusahaan,
+      pelamar: app.pelamar,
+      phone: app.pelamar?.no_telepon || app.cvData?.phone || app.cv_document?.phone,
+      companyName: app.job?.perusahaan?.nama_perusahaan || app.job?.nama_perusahaan || '',
+    });
+  };
+
   return (
     <div className="bg-card rounded-xl border border-border shadow-sm overflow-hidden relative">
       <div className="overflow-x-auto">
@@ -200,22 +250,31 @@ export function ArchiveTable({ search, jobFilter, hasilFilter, date, onJobsExtra
                           {row.status === 'ditolak_sistem' || (row.status === 'rejected' && (row.analisis_cv?.hasil === 'ditolak' || row.analisis_cv?.hasil === 'tidak_memenuhi_syarat')) ? 'Ditolak (CV Screening)' : 'Ditolak (Tahap Akhir)'}
                         </span>
                         {row.catatan_perusahaan && (
-                           <span className="text-[10px] text-muted-foreground line-clamp-2 max-w-[220px]" title={row.catatan_perusahaan}>
-                             {row.catatan_perusahaan}
-                           </span>
+                          <span className="text-[10px] text-muted-foreground line-clamp-2 max-w-[220px]" title={row.catatan_perusahaan}>
+                            {row.catatan_perusahaan}
+                          </span>
                         )}
                       </div>
                     )}
                   </td>
                   <td className="px-6 py-4 text-center">
-                    <button
-                      onClick={() => setSelectedForDelete(row)}
-                      disabled={deletingId === row.id}
-                      className="p-2 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors cursor-pointer disabled:opacity-40"
-                      title="Hapus dari Arsip"
-                    >
-                      <Trash2 size={16} />
-                    </button>
+                    <div className="flex justify-center gap-1">
+                      <button
+                        onClick={() => openCandidateModal(row)}
+                        className="p-2 rounded-lg text-slate-400 hover:text-primary hover:bg-primary/10 transition-colors cursor-pointer"
+                        title="Lihat Detail Evaluasi"
+                      >
+                        <Eye size={16} />
+                      </button>
+                      <button
+                        onClick={() => setSelectedForDelete(row)}
+                        disabled={deletingId === row.id}
+                        className="p-2 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors cursor-pointer disabled:opacity-40"
+                        title="Hapus dari Arsip"
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))
@@ -277,6 +336,13 @@ export function ArchiveTable({ search, jobFilter, hasilFilter, date, onJobsExtra
             </div>
           </div>
         </div>
+      )}
+
+      {selectedCandidate && (
+        <CandidateModal
+          candidate={selectedCandidate}
+          onClose={() => setSelectedCandidate(null)}
+        />
       )}
     </div>
   );

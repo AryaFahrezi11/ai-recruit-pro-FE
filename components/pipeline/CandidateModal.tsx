@@ -24,6 +24,9 @@ interface CandidateModalProps {
     applicationId?: string;
     name: string;
     role: string;
+    phone?: string;
+    pelamar?: any;
+    companyName?: string;
     education?: string;
     university?: string;
     stage?: 'upload_cv' | 'cv_screening' | 'interview' | 'ai_analysis' | 'human_validation' | string;
@@ -159,11 +162,159 @@ export function CandidateModal({ candidate, onClose, onStatusUpdated }: Candidat
   // Tolak form
   const [rejectReasonPreset, setRejectReasonPreset] = useState('Kualifikasi pengalaman teknis belum memenuhi kriteria minimum yang dibutuhkan saat ini.');
   const [rejectReasonCustom, setRejectReasonCustom] = useState('');
-  
+
   const [isPinging, setIsPinging] = useState(false);
 
   // Terima form
   const [hireOfferingNotes, setHireOfferingNotes] = useState('Selamat! Kandidat dinyatakan lolos seluruh tahapan seleksi dan menerima penawaran kerja.');
+
+  // WhatsApp Helpers & Handling
+  const formatWhatsAppNumber = (phoneStr?: string): string | null => {
+    if (!phoneStr) return null;
+    let clean = phoneStr.replace(/\D/g, '');
+    if (clean.startsWith('0')) {
+      clean = '62' + clean.slice(1);
+    } else if (clean.startsWith('8')) {
+      clean = '62' + clean;
+    }
+    if (clean.length < 9) return null;
+    return clean;
+  };
+
+  const candidatePhone = candidate.phone
+    || candidate.pelamar?.no_telepon
+    || candidate.cvData?.phone
+    || candidate.cvData?.no_telepon
+    || candidate.cvDocument?.phone
+    || candidate.cvDocument?.no_telepon
+    || '';
+
+  const formattedPhone = formatWhatsAppNumber(candidatePhone);
+
+  const [companyName, setCompanyName] = useState<string>(() => {
+    return (
+      candidate.companyName ||
+      candidate.jobData?.perusahaan?.nama_perusahaan ||
+      candidate.jobData?.nama_perusahaan ||
+      candidate.jobData?.company ||
+      (typeof candidate.jobData?.perusahaan === 'string' ? candidate.jobData.perusahaan : '') ||
+      ''
+    );
+  });
+
+  useEffect(() => {
+    const existing =
+      candidate.companyName ||
+      candidate.jobData?.perusahaan?.nama_perusahaan ||
+      candidate.jobData?.nama_perusahaan ||
+      candidate.jobData?.company ||
+      (typeof candidate.jobData?.perusahaan === 'string' ? candidate.jobData.perusahaan : '');
+
+    if (existing) {
+      setCompanyName(existing);
+    } else {
+      // Ambil nama perusahaan dari profil perusahaan yang sedang login
+      fetchAuth('/api/perusahaan/settings')
+        .then((res) => (res.ok ? res.json() : null))
+        .then((data) => {
+          if (data?.profile?.nama_perusahaan) {
+            setCompanyName(data.profile.nama_perusahaan);
+          }
+        })
+        .catch(() => { });
+    }
+  }, [candidate]);
+
+  const generateHiredWhatsAppMessage = (
+    candidateName: string,
+    role: string,
+    company: string,
+    notes: string
+  ) => {
+    const resolvedCompany = company || 'Perusahaan';
+    return `Halo Rekan *${candidateName}*,
+
+Selamat! Kami dari *${resolvedCompany}* dengan senang hati menginformasikan bahwa Anda dinyatakan *LOLOS* seluruh tahapan seleksi dan secara resmi diterima (*Hired*) untuk bergabung bersama kami pada posisi:
+
+📌 *Posisi:* ${role}
+🏢 *Perusahaan:* ${resolvedCompany}
+
+*Pesan / Instruksi Penawaran Kerja:*
+${notes || 'Selamat bergabung! Rincian offering letter resmi dan dokumen onboarding telah kami kirimkan ke email terdaftar Anda.'}
+
+Silakan periksa kotak masuk (atau folder spam/promosi) email Anda untuk meninjau Surat Penawaran Kerja (Offering Letter) resmi beserta langkah-langkah onboarding selanjutnya.
+
+Jika ada hal yang ingin dikonfirmasikan atau ditanyakan lebih lanjut, silakan balas pesan ini.
+
+Terima kasih atas antusiasme dan dedikasi Anda selama proses rekrutmen. Selamat bergabung bersama keluarga besar *${resolvedCompany}*!
+
+Salam hangat,
+*Tim Rekrutmen & HR*
+*${resolvedCompany}*`;
+  };
+
+  const handleConfirmHireAndOpenWhatsApp = async () => {
+    let waWindow: Window | null = null;
+    let waUrl = '';
+
+    if (formattedPhone) {
+      const message = generateHiredWhatsAppMessage(
+        candidate.name,
+        candidate.role,
+        companyName,
+        hireOfferingNotes
+      );
+      waUrl = `https://wa.me/${formattedPhone}?text=${encodeURIComponent(message)}`;
+      // Buka window terlebih dahulu secara sinkron untuk menghindari popup blocker browser
+      waWindow = window.open('about:blank', '_blank');
+    }
+
+    try {
+      if (!targetAppId) {
+        if (waWindow) waWindow.close();
+        toast.error('ID Lamaran tidak ditemukan');
+        return;
+      }
+
+      setIsSubmitting(true);
+      const res = await fetchAuth(`/api/applications/${targetAppId}/status`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          status: 'hired',
+          catatan_perusahaan: hireOfferingNotes
+        })
+      });
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.detail || 'Gagal memperbarui status kandidat');
+      }
+
+      if (waWindow && waUrl) {
+        waWindow.location.href = waUrl;
+      } else if (!formattedPhone) {
+        toast('Nomor telepon kandidat tidak ditemukan di profil pelamar, pesan WhatsApp tidak dapat dibuka otomatis.', { icon: 'ℹ️' });
+      }
+
+      setDecisionModal('none');
+      setArchiveStatus('hired');
+      toast.success('Kandidat berhasil diterima (Hired)! Membuka WhatsApp...');
+
+      onStatusUpdated?.();
+
+      setTimeout(() => {
+        onClose();
+        router.push('/archive');
+      }, 1500);
+
+    } catch (err: any) {
+      if (waWindow) waWindow.close();
+      toast.error(err.message || 'Gagal memproses keputusan');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   const targetAppId = candidate.id || candidate.applicationId;
 
@@ -306,6 +457,8 @@ export function CandidateModal({ candidate, onClose, onStatusUpdated }: Candidat
   const speechVal = aiResult?.parameter_analisis?.word_per_second_percent !== undefined ? Math.round(aiResult.parameter_analisis.word_per_second_percent) : 82;
   const gestureVal = aiResult?.parameter_analisis?.gerakan_tangan !== undefined ? Math.round(aiResult.parameter_analisis.gerakan_tangan) : 78;
   const headVal = aiResult?.parameter_analisis?.gerakan_kepala !== undefined ? Math.round(aiResult.parameter_analisis.gerakan_kepala) : 72;
+  const pelafalanStatus = aiResult?.pelafalan?.status || aiResult?.parameter_analisis?.kejelasan_pelafalan || (speechVal >= 70 ? 'Jelas & Fasih' : 'Cukup Jelas');
+  const isPelafalanUnclear = pelafalanStatus === 'Pelafalan Tidak Jelas';
 
   const videoObservations = [
     {
@@ -328,6 +481,19 @@ export function CandidateModal({ candidate, onClose, onStatusUpdated }: Candidat
       value: speechVal,
       badgeColor: speechVal >= 70 ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20' : 'bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20',
       dotColor: speechVal >= 70 ? 'bg-emerald-500' : 'bg-blue-500'
+    },
+    {
+      label: 'Kejelasan Pelafalan & Artikulasi',
+      statusText: isPelafalanUnclear
+        ? 'Pelafalan Tidak Jelas'
+        : pelafalanStatus === 'Cukup Jelas'
+          ? 'Cukup Jelas'
+          : 'Jelas & Mudah Dipahami',
+      value: isPelafalanUnclear ? 30 : (pelafalanStatus === 'Cukup Jelas' ? 65 : 92),
+      badgeColor: isPelafalanUnclear
+        ? 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/30'
+        : 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20',
+      dotColor: isPelafalanUnclear ? 'bg-rose-500' : 'bg-emerald-500'
     },
     {
       label: 'Gestur Tangan & Keaktifan',
@@ -391,10 +557,10 @@ export function CandidateModal({ candidate, onClose, onStatusUpdated }: Candidat
         {archiveStatus !== 'idle' && (
           <div className="absolute inset-0 z-50 bg-background/95 backdrop-blur-md flex flex-col items-center justify-center p-6 text-center animate-in fade-in zoom-in-95 duration-300">
             <div className={`w-16 h-16 rounded-full flex items-center justify-center mb-4 ${archiveStatus === 'hired'
-                ? 'bg-emerald-500/10 text-emerald-500'
-                : archiveStatus === 'interview_lanjutan'
-                  ? 'bg-indigo-500/10 text-indigo-500'
-                  : 'bg-rose-500/10 text-rose-500'
+              ? 'bg-emerald-500/10 text-emerald-500'
+              : archiveStatus === 'interview_lanjutan'
+                ? 'bg-indigo-500/10 text-indigo-500'
+                : 'bg-rose-500/10 text-rose-500'
               }`}>
               {archiveStatus === 'hired' && <CheckCircle2 size={36} />}
               {archiveStatus === 'rejected' && <XCircle size={36} />}
@@ -444,20 +610,20 @@ export function CandidateModal({ candidate, onClose, onStatusUpdated }: Candidat
               const isActive = activeTab === tab.id;
 
               return (
-                  <button
+                <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
                   className={`flex items-center gap-1.5 px-2 py-3 font-semibold text-[11px] sm:text-xs transition-all border-b-2 whitespace-nowrap shrink-0 cursor-pointer ${isActive
-                      ? 'border-primary text-primary'
-                      : 'border-transparent text-muted-foreground hover:text-foreground hover:border-border/60'
+                    ? 'border-primary text-primary'
+                    : 'border-transparent text-muted-foreground hover:text-foreground hover:border-border/60'
                     }`}
                 >
                   {tab.icon}
                   <span>{tab.label}</span>
                   {tab.badge && (
                     <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-bold transition-colors ${isActive
-                        ? 'bg-primary/15 text-primary'
-                        : 'bg-muted text-muted-foreground'
+                      ? 'bg-primary/15 text-primary'
+                      : 'bg-muted text-muted-foreground'
                       }`}>
                       {tab.badge}
                     </span>
@@ -972,6 +1138,27 @@ export function CandidateModal({ candidate, onClose, onStatusUpdated }: Candidat
                     Sistem membandingkan dokumen CV kandidat dengan uraian kualifikasi pekerjaan. Tingkat kesesuaian keseluruhan kandidat adalah <strong>{candidate.cvScore || 0}%</strong> terhadap batas ambang kelulusan <strong>{threshold}%</strong>.
                   </div>
                 )}
+
+                {/* Catatan Keterangan Kelengkapan Data AI */}
+                {candidate.analisisCv?.hybrid_details?.keterangan && (
+                  <div className={`mt-3 p-3 rounded-xl border text-xs leading-relaxed flex items-start gap-2.5 ${candidate.analisisCv.hybrid_details.status_kelengkapan === 'kurang_lengkap'
+                    ? 'bg-amber-500/10 border-amber-500/30 text-amber-900 dark:text-amber-200'
+                    : 'bg-primary/5 border-primary/20 text-muted-foreground'
+                    }`}>
+                    <AlertCircle size={15} className={`shrink-0 mt-0.5 ${candidate.analisisCv.hybrid_details.status_kelengkapan === 'kurang_lengkap'
+                      ? 'text-amber-600 dark:text-amber-400'
+                      : 'text-primary'
+                      }`} />
+                    <div>
+                      <span className="font-bold text-foreground block mb-0.5">
+                        {candidate.analisisCv.hybrid_details.status_kelengkapan === 'kurang_lengkap'
+                          ? 'Catatan Kelengkapan Data Dokumen/Lowongan'
+                          : 'Catatan Evaluasi AI'}
+                      </span>
+                      <span>{candidate.analisisCv.hybrid_details.keterangan}</span>
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Action Bar for CV Screening / Tahap Awal */}
@@ -1349,6 +1536,15 @@ export function CandidateModal({ candidate, onClose, onStatusUpdated }: Candidat
                       <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-primary/15 text-primary border border-primary/25">
                         Rekomendasi Evaluasi
                       </span>
+                      {isPelafalanUnclear ? (
+                        <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/30">
+                          ⚠️ Pelafalan Tidak Jelas
+                        </span>
+                      ) : (
+                        <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+                          ✓ {pelafalanStatus}
+                        </span>
+                      )}
                     </div>
                     <p className="text-xs text-foreground/85 leading-relaxed whitespace-pre-line">
                       {aiResult.ringkasan_jawaban || "Kandidat menunjukkan profil kompetensi yang solid dan memenuhi kriteria awal posisi ini."}
@@ -1409,43 +1605,60 @@ export function CandidateModal({ candidate, onClose, onStatusUpdated }: Candidat
                             const isAnswered = status === "Terjawab";
                             const isPartial = status === "Terjawab Sebagian";
                             const isUnanswered = status === "Tidak Terjawab";
+                            const cleanedQuestion = q.replace(/\s+([?,!.])/g, '$1').trim();
 
                             return (
                               <div
                                 key={idx}
                                 onClick={() => toggleQuestion(idx)}
-                                className={`p-3 rounded-lg border text-xs transition-all cursor-pointer select-none ${isAnswered
-                                    ? "bg-card border-border/80 hover:border-emerald-500/40"
-                                    : isPartial
-                                      ? "bg-amber-500/5 border-amber-500/30"
-                                      : isUnanswered
-                                        ? "bg-rose-500/5 border-rose-500/30"
-                                        : "bg-muted/30 border-border/50"
+                                className={`p-3.5 rounded-xl border text-xs transition-all cursor-pointer select-none hover:shadow-xs ${isAnswered
+                                  ? "bg-card border-border hover:border-emerald-500/40"
+                                  : isPartial
+                                    ? "bg-amber-500/5 border-amber-500/30"
+                                    : isUnanswered
+                                      ? "bg-rose-500/5 border-rose-500/30"
+                                      : "bg-muted/30 border-border/50"
                                   }`}
                               >
-                                <div className="flex items-start justify-between gap-2">
-                                  <div className="flex items-start gap-2 flex-1">
+                                <div className="flex items-start justify-between gap-3">
+                                  {/* Nomor & Teks Pertanyaan */}
+                                  <div className="flex items-start gap-2.5 flex-1 min-w-0">
                                     <span className="w-5 h-5 rounded-full bg-primary text-primary-foreground font-bold text-[10px] flex items-center justify-center shrink-0 mt-0.5 shadow-2xs">
                                       {idx + 1}
                                     </span>
-                                    <span className="text-foreground font-semibold leading-relaxed">
-                                      {q}
-                                    </span>
+                                    <div className="flex-1 min-w-0">
+                                      <h5 className="text-foreground font-semibold leading-relaxed text-xs">
+                                        {cleanedQuestion}
+                                      </h5>
+
+                                      {/* Baris Badge Indikator Khusus: Pelafalan & Skor Relevansi */}
+                                      {(detail?.pelafalan === 'Pelafalan Tidak Jelas' || (detail?.skor_relevansi !== undefined && detail.skor_relevansi > 0)) && (
+                                        <div className="flex items-center gap-1.5 mt-2 flex-wrap">
+                                          {detail?.pelafalan === 'Pelafalan Tidak Jelas' && (
+                                            <span className="inline-flex items-center text-[9px] font-bold px-2 py-0.5 rounded-md bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/30">
+                                              Pelafalan Tidak Jelas
+                                            </span>
+                                          )}
+                                          {detail?.skor_relevansi !== undefined && detail.skor_relevansi > 0 && (
+                                            <span className="inline-flex items-center text-[9px] font-bold px-2 py-0.5 rounded-md bg-muted text-muted-foreground border border-border">
+                                              {detail.skor_relevansi}% Relevan
+                                            </span>
+                                          )}
+                                        </div>
+                                      )}
+                                    </div>
                                   </div>
-                                  <div className="flex items-center gap-1.5 shrink-0">
-                                    {detail?.skor_relevansi !== undefined && detail.skor_relevansi > 0 && (
-                                      <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-muted text-muted-foreground border border-border">
-                                        {detail.skor_relevansi}% Relevan
-                                      </span>
-                                    )}
+
+                                  {/* Status Jawaban & Tombol Expand */}
+                                  <div className="flex items-center gap-2 shrink-0 pt-0.5">
                                     <span
-                                      className={`text-[10px] font-bold px-2 py-0.5 rounded-full border flex items-center gap-1 ${isAnswered
-                                          ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/30 dark:text-emerald-400"
-                                          : isPartial
-                                            ? "bg-amber-500/10 text-amber-600 border-amber-500/30 dark:text-amber-400"
-                                            : isUnanswered
-                                              ? "bg-rose-500/10 text-rose-600 border-rose-500/30 dark:text-rose-400"
-                                              : "bg-muted text-muted-foreground border-border"
+                                      className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full border flex items-center gap-1 ${isAnswered
+                                        ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/30 dark:text-emerald-400"
+                                        : isPartial
+                                          ? "bg-amber-500/10 text-amber-600 border-amber-500/30 dark:text-amber-400"
+                                          : isUnanswered
+                                            ? "bg-rose-500/10 text-rose-600 border-rose-500/30 dark:text-rose-400"
+                                            : "bg-muted text-muted-foreground border-border"
                                         }`}
                                     >
                                       {isAnswered ? (
@@ -1467,8 +1680,8 @@ export function CandidateModal({ candidate, onClose, onStatusUpdated }: Candidat
                                         status
                                       )}
                                     </span>
-                                    <div className={`p-0.5 rounded-md transition-transform duration-200 ${expandedQs[idx] ? "rotate-180" : ""}`}>
-                                      <ChevronDown size={14} className="text-muted-foreground" />
+                                    <div className={`p-0.5 rounded-md text-muted-foreground transition-transform duration-200 ${expandedQs[idx] ? "rotate-180" : ""}`}>
+                                      <ChevronDown size={14} />
                                     </div>
                                   </div>
                                 </div>
@@ -1504,8 +1717,8 @@ export function CandidateModal({ candidate, onClose, onStatusUpdated }: Candidat
                 <div className="space-y-4">
                   {/* Observasi Perilaku & Gaya Komunikasi */}
                   <div className="p-4 bg-card rounded-xl border border-border shadow-sm space-y-3 transition-all">
-                    <div 
-                      className="cursor-pointer flex items-center justify-between select-none" 
+                    <div
+                      className="cursor-pointer flex items-center justify-between select-none"
                       onClick={() => setExpandedObservasi(!expandedObservasi)}
                     >
                       <div>
@@ -1546,7 +1759,7 @@ export function CandidateModal({ candidate, onClose, onStatusUpdated }: Candidat
 
                   {/* Evaluasi Kompetensi & Keputusan HR (Gabungan Radar Chart & Bar) */}
                   <div className="p-5 bg-card rounded-xl border border-border shadow-sm space-y-5 transition-all">
-                    <div 
+                    <div
                       className="flex items-center justify-between cursor-pointer select-none"
                       onClick={() => setExpandedKompetensi(!expandedKompetensi)}
                     >
@@ -1605,7 +1818,41 @@ export function CandidateModal({ candidate, onClose, onStatusUpdated }: Candidat
 
                     {/* Keputusan Akhir HR & Detail Wawancara Lanjutan */}
                     <div className="space-y-3 pt-4 border-t border-border/70">
-                      {isInterviewLanjutan ? (
+                      {(candidate.status === 'hired' || archiveStatus === 'hired') ? (
+                        <div className="p-4 bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800 rounded-xl space-y-3 mt-4">
+                          <h4 className="font-extrabold text-sm text-emerald-900 dark:text-emerald-300 flex items-center gap-2">
+                            <CheckCircle2 size={18} />
+                            Kandidat Telah Diterima (Hired)
+                          </h4>
+                          <p className="text-[11.5px] text-emerald-800 dark:text-emerald-400 leading-relaxed font-medium">
+                            Silakan hubungi <strong>{candidate.name}</strong> secara langsung melalui jalur komunikasi di bawah ini untuk menginformasikan proses offering dan onboarding lebih lanjut:
+                          </p>
+                          <div className="flex flex-col sm:flex-row gap-2.5 pt-1">
+                            <a
+                              href={`https://wa.me/${(candidate.cvData?.phone || '').replace(/\D/g, '')}?text=Halo%20${encodeURIComponent(candidate.name)},%20selamat!%20Anda%20dinyatakan%20lolos%20seleksi%20untuk%20posisi%20${encodeURIComponent(candidate.role)}.`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-lg transition-colors shadow-xs"
+                            >
+                              <Phone size={14} /> Hubungi via WhatsApp
+                            </a>
+                            <a
+                              href={`mailto:${candidate.cvData?.email}?subject=Penawaran Pekerjaan: ${candidate.role}&body=Halo ${candidate.name},%0D%0A%0D%0ASelamat! Anda dinyatakan lolos seleksi untuk posisi ${candidate.role}.`}
+                              className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-lg transition-colors shadow-xs"
+                            >
+                              <Mail size={14} /> Kirim Email Offering
+                            </a>
+                          </div>
+                        </div>
+                      ) : (candidate.status === 'rejected' || archiveStatus === 'rejected') ? (
+                        <div className="p-4 bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-800 rounded-xl mt-4 flex items-center gap-3">
+                          <XCircle className="text-rose-600 shrink-0" size={24} />
+                          <div>
+                            <h4 className="font-extrabold text-xs text-rose-900 dark:text-rose-300">Lamaran Ditolak</h4>
+                            <p className="text-[11px] text-rose-700 dark:text-rose-400 mt-0.5">Kandidat ini telah ditolak dan dipindahkan ke riwayat Arsip.</p>
+                          </div>
+                        </div>
+                      ) : isInterviewLanjutan ? (
                         /* DETAIL KHUSUS: WAWANCARA LANJUTAN TERJADWAL */
                         <div className="p-4 bg-indigo-50/70 dark:bg-indigo-950/40 border border-indigo-200 dark:border-indigo-800 rounded-xl space-y-3">
                           <div className="flex items-center justify-between">
@@ -1802,8 +2049,8 @@ export function CandidateModal({ candidate, onClose, onStatusUpdated }: Candidat
                         type="button"
                         onClick={() => setIntvType('online')}
                         className={`py-2 rounded-xl font-bold border transition-all cursor-pointer ${intvType === 'online'
-                            ? 'bg-indigo-50 dark:bg-indigo-950/50 border-indigo-500 text-indigo-700 dark:text-indigo-300'
-                            : 'bg-muted/40 border-border text-muted-foreground'
+                          ? 'bg-indigo-50 dark:bg-indigo-950/50 border-indigo-500 text-indigo-700 dark:text-indigo-300'
+                          : 'bg-muted/40 border-border text-muted-foreground'
                           }`}
                       >
                         🌐 Online (Google Meet / Zoom)
@@ -1812,8 +2059,8 @@ export function CandidateModal({ candidate, onClose, onStatusUpdated }: Candidat
                         type="button"
                         onClick={() => setIntvType('offline')}
                         className={`py-2 rounded-xl font-bold border transition-all cursor-pointer ${intvType === 'offline'
-                            ? 'bg-indigo-50 dark:bg-indigo-950/50 border-indigo-500 text-indigo-700 dark:text-indigo-300'
-                            : 'bg-muted/40 border-border text-muted-foreground'
+                          ? 'bg-indigo-50 dark:bg-indigo-950/50 border-indigo-500 text-indigo-700 dark:text-indigo-300'
+                          : 'bg-muted/40 border-border text-muted-foreground'
                           }`}
                       >
                         🏢 Tatap Muka (Offline di Kantor)
@@ -1949,8 +2196,8 @@ export function CandidateModal({ candidate, onClose, onStatusUpdated }: Candidat
                         key={reasonText}
                         onClick={() => setRejectReasonPreset(reasonText)}
                         className={`w-full text-left p-2.5 rounded-xl border text-[11px] font-medium transition-all cursor-pointer ${rejectReasonPreset === reasonText
-                            ? 'bg-rose-50 dark:bg-rose-950/40 border-rose-400 text-rose-800 dark:text-rose-200 font-bold'
-                            : 'bg-muted/30 border-border text-muted-foreground hover:text-foreground'
+                          ? 'bg-rose-50 dark:bg-rose-950/40 border-rose-400 text-rose-800 dark:text-rose-200 font-bold'
+                          : 'bg-muted/30 border-border text-muted-foreground hover:text-foreground'
                           }`}
                       >
                         • {reasonText}
@@ -1989,7 +2236,7 @@ export function CandidateModal({ candidate, onClose, onStatusUpdated }: Candidat
                     }}
                     className="px-5 py-2 rounded-xl text-xs font-extrabold bg-rose-600 hover:bg-rose-700 text-white shadow-xs flex items-center gap-2 cursor-pointer disabled:opacity-50"
                   >
-                    {isSubmitting ? 'Memproses...' : 'Tolak & Kirim Email'}
+                    {isSubmitting ? 'Memproses...' : 'Tolak'}
                   </button>
                 </div>
               </div>
@@ -2015,8 +2262,33 @@ export function CandidateModal({ candidate, onClose, onStatusUpdated }: Candidat
                 </div>
 
                 <p className="text-xs text-muted-foreground leading-relaxed">
-                  Selamat! Anda akan menerima <strong>{candidate.name}</strong> untuk posisi <strong>{candidate.role}</strong>. Riwayat Lamaran akan berubah menjadi <strong>Hired</strong> dan email penawaran akan dikirimkan.
+                  Selamat! Anda akan menerima <strong>{candidate.name}</strong> untuk posisi <strong>{candidate.role}</strong>. Riwayat Lamaran akan berubah menjadi <strong>Hired</strong>, email penawaran akan dikirimkan, dan pesan WhatsApp offering akan langsung diarahkan ke pelamar.
                 </p>
+
+                {/* Info WhatsApp Tujuan */}
+                <div className="flex items-center gap-2.5 p-3 rounded-xl bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800/50 text-xs">
+                  <div className="w-8 h-8 rounded-lg bg-emerald-500/20 text-emerald-600 flex items-center justify-center shrink-0">
+                    <Phone size={16} />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="font-bold text-emerald-800 dark:text-emerald-300 flex items-center gap-1.5">
+                      <span>Direct WhatsApp Pelamar</span>
+                      <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-emerald-200 dark:bg-emerald-900/60 font-semibold">Otomatis Terhubung</span>
+                    </div>
+                    <div className="text-[11px] text-muted-foreground mt-0.5 space-y-0.5">
+                      <div>
+                        {formattedPhone ? (
+                          <span>Nomor tujuan: <strong className="text-foreground">+{formattedPhone}</strong></span>
+                        ) : (
+                          <span className="text-amber-600 dark:text-amber-400 font-medium">Nomor WhatsApp belum tersedia di data profil pelamar</span>
+                        )}
+                      </div>
+                      <div className="text-[10px] text-muted-foreground">
+                        Atas nama perusahaan: <strong className="text-foreground">{companyName || 'Perusahaan'}</strong>
+                      </div>
+                    </div>
+                  </div>
+                </div>
 
                 <div className="space-y-3 text-xs">
                   <div>
@@ -2025,6 +2297,7 @@ export function CandidateModal({ candidate, onClose, onStatusUpdated }: Candidat
                       rows={3}
                       value={hireOfferingNotes}
                       onChange={(e) => setHireOfferingNotes(e.target.value)}
+                      placeholder="Masukkan catatan penawaran atau instruksi onboarding..."
                       className="w-full p-2.5 bg-muted/40 border border-border rounded-xl text-xs text-foreground focus:ring-2 focus:ring-emerald-500/20 outline-none resize-none font-medium"
                     />
                   </div>
@@ -2041,10 +2314,20 @@ export function CandidateModal({ candidate, onClose, onStatusUpdated }: Candidat
                   <button
                     type="button"
                     disabled={isSubmitting}
-                    onClick={() => executeDecision('hired', { catatan_perusahaan: hireOfferingNotes })}
-                    className="px-5 py-2 rounded-xl text-xs font-extrabold bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs flex items-center gap-2 cursor-pointer disabled:opacity-50"
+                    onClick={handleConfirmHireAndOpenWhatsApp}
+                    className="px-5 py-2.5 rounded-xl text-xs font-extrabold bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs flex items-center gap-2 cursor-pointer disabled:opacity-50 active:scale-95 transition-all"
                   >
-                    {isSubmitting ? 'Memproses...' : 'Terima & Kirim Offering'}
+                    {isSubmitting ? (
+                      <>
+                        <div className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                        <span>Memproses...</span>
+                      </>
+                    ) : (
+                      <>
+                        <CheckCircle2 size={14} />
+                        <span>Terima</span>
+                      </>
+                    )}
                   </button>
                 </div>
               </div>

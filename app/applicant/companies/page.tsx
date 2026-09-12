@@ -127,16 +127,16 @@ function CompaniesPageContent() {
             id: c.id,
             nama_perusahaan: c.nama_perusahaan,
             logo_url: c.logo_url ? (c.logo_url.startsWith('http') ? c.logo_url : getMediaUrl(c.logo_url)) : '',
-            industri: c.industri || 'Computer Software',
-            ukuran: c.ukuran || '51 - 200 Karyawan',
+            industri: c.industri || 'Industri belum diatur',
+            ukuran: c.ukuran || 'Ukuran belum diatur',
             website_url: c.website_url || '',
             deskripsi: c.deskripsi || '',
             alamat: c.alamat || '',
-            kota: c.alamat || c.kota || 'Indonesia',
+            kota: c.alamat || c.kota || 'Lokasi belum diatur',
             provinsi: c.provinsi || '',
             rating: c.rating || 5.0,
             jobs_count: c.jobs_count || (c.jobs ? c.jobs.length : 0),
-            last_active: c.last_active || 'Baru saja',
+            last_active: c.last_active || 'Aktif',
             jobs: c.jobs || []
           }));
           setCompanies(mapped);
@@ -524,6 +524,10 @@ function CompaniesPageContent() {
                           src={comp.logo_url}
                           alt={comp.nama_perusahaan}
                           className="max-w-full max-h-full object-contain rounded-md"
+                          onError={(e) => {
+                            e.currentTarget.onerror = null;
+                            e.currentTarget.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 22V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18Z'/%3E%3Cpath d='M6 12H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2'/%3E%3Cpath d='M18 9h2a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-2'/%3E%3Cpath d='M10 6h4'/%3E%3Cpath d='M10 10h4'/%3E%3Cpath d='M10 14h4'/%3E%3Cpath d='M10 18h4'/%3E%3C/svg%3E";
+                          }}
                         />
                       ) : (
                         <Building2 size={24} className="text-slate-400" />

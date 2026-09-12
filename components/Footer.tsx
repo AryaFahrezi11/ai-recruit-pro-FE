@@ -114,28 +114,28 @@ export default function Footer() {
             <h4 className="font-bold text-white text-xs tracking-wider uppercase">Bantuan & Legal</h4>
             <ul className="space-y-2.5 text-xs text-slate-400">
               <li>
-                <button
-                  onClick={() => setActiveModal('contact')}
-                  className="hover:text-white transition-colors text-left cursor-pointer"
+                <Link
+                  href="/contact"
+                  className="hover:text-white transition-colors text-left cursor-pointer inline-block"
                 >
                   Kontak & Support
-                </button>
+                </Link>
               </li>
               <li>
-                <button
-                  onClick={() => setActiveModal('privacy')}
-                  className="hover:text-white transition-colors text-left cursor-pointer"
+                <Link
+                  href="/privacy"
+                  className="hover:text-white transition-colors text-left cursor-pointer inline-block"
                 >
                   Kebijakan Privasi
-                </button>
+                </Link>
               </li>
               <li>
-                <button
-                  onClick={() => setActiveModal('terms')}
-                  className="hover:text-white transition-colors text-left cursor-pointer"
+                <Link
+                  href="/terms"
+                  className="hover:text-white transition-colors text-left cursor-pointer inline-block"
                 >
                   Syarat & Ketentuan
-                </button>
+                </Link>
               </li>
             </ul>
           </div>
@@ -147,134 +147,11 @@ export default function Footer() {
           <p>&copy; {new Date().getFullYear()} AI-RecruitPro. Hak Cipta Dilindungi.</p>
           
           <div className="flex items-center gap-6">
-            <div className="flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-              <span className="text-slate-300 font-medium">Sistem Normal</span>
-            </div>
-            <span className="text-slate-700">|</span>
             <span>Indonesia (ID)</span>
           </div>
         </div>
 
       </div>
-
-      {/* Interactive Modals (Privacy, Terms, Contact) */}
-      {activeModal && (
-        <div className="fixed inset-0 z-[100] bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-200">
-          <div className="bg-slate-900 text-slate-100 rounded-2xl max-w-xl w-full p-6 sm:p-8 shadow-2xl border border-slate-800 relative space-y-5 max-h-[85vh] overflow-y-auto">
-            
-            <button
-              onClick={() => setActiveModal(null)}
-              className="absolute top-5 right-5 p-2 text-slate-400 hover:text-white rounded-xl bg-slate-800/60 hover:bg-slate-800 transition-colors cursor-pointer"
-            >
-              <X size={18} />
-            </button>
-
-            {/* Privacy Modal */}
-            {activeModal === 'privacy' && (
-              <div className="space-y-4">
-                <div className="flex items-center gap-3 text-blue-400">
-                  <div className="p-2 rounded-xl bg-blue-500/10 border border-blue-500/20">
-                    <Lock size={20} />
-                  </div>
-                  <h3 className="text-lg font-bold text-white">Kebijakan Privasi</h3>
-                </div>
-                <div className="text-xs text-slate-300 space-y-3 leading-relaxed">
-                  <p>
-                    AI-RecruitPro menjamin kerahasiaan dan keamanan data pribadi pelamar serta perusahaan secara menyeluruh.
-                  </p>
-                  <div className="bg-slate-950/60 p-4 rounded-xl border border-slate-800 space-y-2">
-                    <div className="flex items-start gap-2">
-                      <CheckCircle2 size={14} className="text-emerald-400 shrink-0 mt-0.5" />
-                      <span>Data dokumen (CV, Transkrip) hanya diakses oleh perekrut resmi pada posisi yang Anda lamar.</span>
-                    </div>
-                    <div className="flex items-start gap-2">
-                      <CheckCircle2 size={14} className="text-emerald-400 shrink-0 mt-0.5" />
-                      <span>Analisis AI berjalan obyektif dan independen tanpa memproses identitas pribadi sensitif.</span>
-                    </div>
-                    <div className="flex items-start gap-2">
-                      <CheckCircle2 size={14} className="text-emerald-400 shrink-0 mt-0.5" />
-                      <span>Anda memiliki kendali penuh untuk memperbarui atau menghapus akun kapan saja.</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Terms Modal */}
-            {activeModal === 'terms' && (
-              <div className="space-y-4">
-                <div className="flex items-center gap-3 text-indigo-400">
-                  <div className="p-2 rounded-xl bg-indigo-500/10 border border-indigo-500/20">
-                    <FileText size={20} />
-                  </div>
-                  <h3 className="text-lg font-bold text-white">Syarat & Ketentuan Penggunaan</h3>
-                </div>
-                <div className="text-xs text-slate-300 space-y-3 leading-relaxed">
-                  <p>
-                    Penggunaan layanan AI-RecruitPro tunduk pada prinsip transparansi dan integritas profesional:
-                  </p>
-                  <div className="bg-slate-950/60 p-4 rounded-xl border border-slate-800 space-y-2 text-slate-300">
-                    <p>1. <strong>Keabsahan Informasi:</strong> Pengguna menjamin kebenaran seluruh dokumen dan data yang diunggah.</p>
-                    <p>2. <strong>Kerahasiaan Perusahaan:</strong> Informasi mengenai proses seleksi dan soal wawancara bersifat rahasia.</p>
-                    <p>3. <strong>Penggunaan Wajar:</strong> Dilarang keras melakukan manipulasi sistem atau aktivitas yang merugikan pengguna lain.</p>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Contact Modal */}
-            {activeModal === 'contact' && (
-              <div className="space-y-4">
-                <div className="flex items-center gap-3 text-emerald-400">
-                  <div className="p-2 rounded-xl bg-emerald-500/10 border border-emerald-500/20">
-                    <HelpCircle size={20} />
-                  </div>
-                  <h3 className="text-lg font-bold text-white">Hubungi Tim Bantuan</h3>
-                </div>
-                <div className="text-xs text-slate-300 space-y-3 leading-relaxed">
-                  <p>
-                    Memiliki pertanyaan atau kendala saat mengunggah CV / video wawancara? Tim layanan pelanggan kami siap membantu Anda.
-                  </p>
-                  <div className="space-y-3 bg-slate-950 p-4 rounded-xl border border-slate-800">
-                    <div className="flex items-center gap-3">
-                      <Mail size={16} className="text-blue-400 shrink-0" />
-                      <div>
-                        <div className="text-[10px] text-slate-500 uppercase font-semibold">Email Layanan</div>
-                        <div className="text-white font-medium">support@airecruitpro.id</div>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <Phone size={16} className="text-emerald-400 shrink-0" />
-                      <div>
-                        <div className="text-[10px] text-slate-500 uppercase font-semibold">Hotline WhatsApp</div>
-                        <div className="text-white font-medium">+62 812-3456-7890</div>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <MapPin size={16} className="text-purple-400 shrink-0" />
-                      <div>
-                        <div className="text-[10px] text-slate-500 uppercase font-semibold">Lokasi</div>
-                        <div className="text-white font-medium">Jakarta, Indonesia</div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            <div className="pt-2 flex justify-end">
-              <button
-                onClick={() => setActiveModal(null)}
-                className="px-5 py-2.5 bg-slate-800 hover:bg-slate-700 text-white rounded-xl text-xs font-semibold transition-colors cursor-pointer"
-              >
-                Tutup Informasi
-              </button>
-            </div>
-
-          </div>
-        </div>
-      )}
     </footer>
   );
 }

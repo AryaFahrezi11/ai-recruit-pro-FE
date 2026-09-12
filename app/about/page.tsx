@@ -148,7 +148,7 @@ export default function AboutPage() {
                 Tentang Kami
               </span>
 
-              <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight leading-tight text-slate-900 dark:text-white">
+              <h1 className="text-3xl sm:text-4xl lg:text-[42px] xl:text-[45px] font-bold tracking-tighter leading-[1.08] text-slate-900 dark:text-white">
                 Menghubungkan Talenta Terbaik dengan Peluang Karir Masa Depan
               </h1>
 
@@ -277,7 +277,7 @@ export default function AboutPage() {
                 Visi & Misi
               </span>
 
-              <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold tracking-tight text-slate-900 dark:text-white leading-tight">
+              <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tighter text-slate-900 dark:text-white leading-tight">
                 Mentransformasi Rekrutmen Menjadi Lebih Transparan & Tanpa Bias
               </h2>
 
@@ -316,7 +316,7 @@ export default function AboutPage() {
             <span className="text-sm sm:text-base font-extrabold uppercase tracking-widest text-slate-900 dark:text-white block">
               Keunggulan Utama
             </span>
-            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold tracking-tight text-slate-900 dark:text-white leading-tight">
+            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tighter text-slate-900 dark:text-white leading-tight">
               Mengapa AI-RecruitPro Berbeda?
             </h2>
             <p className="text-sm sm:text-base text-slate-600 dark:text-slate-300 font-normal leading-relaxed">
@@ -370,7 +370,7 @@ export default function AboutPage() {
               <span className="text-sm sm:text-base font-extrabold uppercase tracking-widest text-slate-900 dark:text-white block">
                 Nilai Utama
               </span>
-              <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold tracking-tight text-slate-900 dark:text-white leading-tight">
+              <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tighter text-slate-900 dark:text-white leading-tight">
                 Prinsip Kerja & Nilai Utama Kami
               </h2>
               <p className="text-sm sm:text-base text-slate-600 dark:text-slate-300 leading-relaxed font-normal">
@@ -434,7 +434,7 @@ export default function AboutPage() {
             <div className="absolute inset-0 opacity-[0.12] bg-[linear-gradient(to_right,#e2e8f0_1px,transparent_1px),linear-gradient(to_bottom,#e2e8f0_1px,transparent_1px)] bg-[size:2rem_2rem] pointer-events-none" />
             
             <div className="relative z-10 space-y-4 max-w-2xl mx-auto">
-              <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold tracking-tight leading-tight text-white">
+              <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tighter leading-tight text-white">
                 Siap Memulai Langkah Karir Berikutnya?
               </h2>
               <p className="text-sm sm:text-base text-slate-300 font-normal leading-relaxed">

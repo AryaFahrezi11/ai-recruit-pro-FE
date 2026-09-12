@@ -689,7 +689,7 @@ function CompanyRegistrationInner() {
 
             {/* Header & Email */}
             <div className="space-y-2">
-              <h2 className="text-2xl font-extrabold text-slate-900 dark:text-white tracking-tight">
+              <h2 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tighter">
                 Verifikasi Email
               </h2>
               <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed max-w-xs mx-auto">
@@ -704,7 +704,6 @@ function CompanyRegistrationInner() {
                 </button>
               </p>
             </div>
-
             <form onSubmit={handleStep2Submit} className="space-y-6">
               {/* 3 x 3 Split OTP Inputs */}
               <div className="flex justify-center items-center gap-2">

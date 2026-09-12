@@ -38,6 +38,7 @@ interface CandidateCardProps {
   avatar?: string;
   progressBar?: boolean;
   progressText?: string;
+  progressPercent?: number;
   onClick?: () => void;
   // Custom Action Button
   actionLabel?: string;
@@ -51,6 +52,7 @@ interface CandidateCardProps {
   threshold?: number;
   videoUploaded?: boolean;
   videoScores?: VideoScores;
+  overallVideoScore?: number;
 }
 
 const stageAccents: Record<CandidateStage, { border: string; avatarBg: string; text: string }> = {
@@ -91,6 +93,9 @@ export function CandidateCard({
   timeInfo,
   variant = 'default',
   onClick,
+  progressBar,
+  progressText,
+  progressPercent,
   actionLabel,
   actionLoading,
   onActionClick,
@@ -100,6 +105,7 @@ export function CandidateCard({
   cvScore,
   threshold = 60,
   videoScores,
+  overallVideoScore,
 }: CandidateCardProps) {
   const { t } = useTranslation();
 
@@ -147,16 +153,18 @@ export function CandidateCard({
     }
   };
 
-  // Video average score
-  const avgVideoScore = videoScores 
-    ? Math.round(
-        (videoScores.ability + 
-         videoScores.intelligent + 
-         videoScores.personality + 
-         videoScores.attitude + 
-         videoScores.emotionalIntelligence) / 5
-      )
-    : null;
+  // Video average score (prioritize official overallVideoScore from AI)
+  const avgVideoScore = overallVideoScore !== undefined && overallVideoScore !== null
+    ? Math.round(overallVideoScore)
+    : videoScores 
+      ? Math.round(
+          (videoScores.ability + 
+           videoScores.intelligent + 
+           videoScores.personality + 
+           videoScores.attitude + 
+           videoScores.emotionalIntelligence) / 5
+        )
+      : null;
 
   const isCvPassed = cvScore !== undefined ? cvScore >= threshold : false;
 
@@ -223,6 +231,24 @@ export function CandidateCard({
         </div>
       )}
 
+      {/* Active AI Processing Progress Bar */}
+      {progressBar && (
+        <div className="mt-2.5 pt-2 border-t border-border/50 space-y-1">
+          <div className="flex items-center justify-between text-[10px] font-semibold text-primary">
+            <span className="truncate">{progressText || 'Memproses analisis...'}</span>
+            {progressPercent !== undefined && (
+              <span className="font-mono shrink-0 ml-1.5">{Math.round(progressPercent)}%</span>
+            )}
+          </div>
+          <div className="w-full bg-primary/15 rounded-full h-1.5 overflow-hidden">
+            <div
+              className="bg-primary h-full transition-all duration-300 rounded-full"
+              style={{ width: `${Math.min(Math.max(progressPercent ?? 0, 5), 100)}%` }}
+            />
+          </div>
+        </div>
+      )}
+
       {/* Footer: Date / Time & Quick Action */}
       <div className="flex items-center justify-between gap-2 pt-2.5 border-t border-border/50 mt-2.5 text-[10px] text-muted-foreground">
         <div className="flex items-center gap-1 truncate font-medium">
@@ -243,7 +269,7 @@ export function CandidateCard({
               className="px-2.5 py-1 bg-primary hover:bg-primary/90 text-primary-foreground text-[10px] font-bold rounded-lg transition-colors flex items-center gap-1 shadow-2xs active:scale-95 disabled:opacity-60 cursor-pointer"
             >
               {actionLoading ? <Loader2 size={10} className="animate-spin" /> : <Brain size={10} />}
-              <span>{actionLoading ? 'Memproses...' : actionLabel}</span>
+              <span>{actionLabel}</span>
             </button>
           )}
         </div>

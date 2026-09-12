@@ -302,7 +302,7 @@ export default function PelamarRegisterPage() {
               <div className="w-12 h-12 rounded-2xl bg-[#1A4B9F]/10 dark:bg-slate-800 border border-[#1A4B9F]/20 dark:border-slate-700 flex items-center justify-center text-[#1A4B9F] dark:text-blue-400 mx-auto">
                 <User size={24} />
               </div>
-              <h1 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white tracking-tight">
+              <h1 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white tracking-tighter">
                 {t.pelamar.auth.registerTitle}
               </h1>
               <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400">

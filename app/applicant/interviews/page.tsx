@@ -281,37 +281,53 @@ export default function WawancaraVideoPage() {
               </div>
 
               {/* Opsi 2: Fitur Upload Alternatif */}
-              <div className="flex items-center gap-2 pl-1">
+              <div className="flex flex-wrap items-center gap-2 pl-1">
                 <input
                   type="file"
                   accept="video/mp4"
                   className="hidden"
                   ref={fileInputRef}
-                  onChange={(e) => setSelectedVideo(e.target.files?.[0] || null)}
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) {
+                      if (file.size > 100 * 1024 * 1024) {
+                        alert("Ukuran video melebihi batas maksimal 100 MB. Silakan pilih video dengan ukuran lebih kecil.");
+                        e.target.value = '';
+                        setSelectedVideo(null);
+                        return;
+                      }
+                      setSelectedVideo(file);
+                    } else {
+                      setSelectedVideo(null);
+                    }
+                  }}
                 />
-                <button
-                  onClick={() => fileInputRef.current?.click()}
-                  disabled={isUploading}
-                  className="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-4 py-3 rounded-full border border-slate-300 dark:border-slate-600 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 text-xs sm:text-sm font-bold shadow-sm transition-all cursor-pointer"
-                >
-                  <Video className="w-4 h-4" />
-                  Pilih Video (.mp4)
-                </button>
-
-                {selectedVideo && (
+                <div className="flex items-center gap-2">
                   <button
-                    onClick={handleUploadSubmit}
+                    onClick={() => fileInputRef.current?.click()}
                     disabled={isUploading}
-                    className="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-6 py-3 rounded-full bg-[#1A4B9F] hover:bg-[#133878] text-white text-xs sm:text-sm font-bold shadow-md transition-all cursor-pointer disabled:opacity-50"
+                    className="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-4 py-3 rounded-full border border-slate-300 dark:border-slate-600 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 text-xs sm:text-sm font-bold shadow-sm transition-all cursor-pointer"
                   >
-                    {isUploading ? (
-                      <Sparkles className="w-4 h-4 animate-spin text-white" />
-                    ) : (
-                      <Send className="w-4 h-4 text-white" />
-                    )}
-                    {isUploading ? "Mengunggah..." : "Submit Upload"}
+                    <Video className="w-4 h-4" />
+                    {selectedVideo ? `Ganti Video (${(selectedVideo.size / (1024 * 1024)).toFixed(1)} MB)` : "Pilih Video (.mp4)"}
                   </button>
-                )}
+
+                  {selectedVideo && (
+                    <button
+                      onClick={handleUploadSubmit}
+                      disabled={isUploading}
+                      className="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-6 py-3 rounded-full bg-[#1A4B9F] hover:bg-[#133878] text-white text-xs sm:text-sm font-bold shadow-md transition-all cursor-pointer disabled:opacity-50"
+                    >
+                      {isUploading ? (
+                        <Sparkles className="w-4 h-4 animate-spin text-white" />
+                      ) : (
+                        <Send className="w-4 h-4 text-white" />
+                      )}
+                      {isUploading ? "Mengunggah..." : "Submit Upload"}
+                    </button>
+                  )}
+                </div>
+                <span className="text-[10px] text-slate-500 font-medium block w-full sm:w-auto">*Format .mp4, Maksimal 100 MB</span>
               </div>
             </div>
           </div>

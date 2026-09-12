@@ -79,10 +79,14 @@ function CreateJobForm() {
 
   // Add Item Handlers
   const handleAddResponsibility = () => {
-    if (newResp.trim()) {
-      setResponsibilities([...responsibilities, newResp.trim()]);
-      setNewResp('');
+    if (!newResp.trim()) return;
+    if (newResp.trim().length < 20) {
+      setValidationErrors(prev => ({...prev, responsibilities: `Poin tanggung jawab minimal 20 karakter agar terbaca jelas oleh AI (saat ini ${newResp.trim().length} karakter).`}));
+      return;
     }
+    setResponsibilities([...responsibilities, newResp.trim()]);
+    setNewResp('');
+    setValidationErrors(prev => ({...prev, responsibilities: ''}));
   };
 
   const handleRemoveResponsibility = (index: number) => {
@@ -90,10 +94,14 @@ function CreateJobForm() {
   };
 
   const handleAddRequirement = () => {
-    if (newReq.trim()) {
-      setRequirements([...requirements, newReq.trim()]);
-      setNewReq('');
+    if (!newReq.trim()) return;
+    if (newReq.trim().length < 20) {
+      setValidationErrors(prev => ({...prev, requirements: `Poin kualifikasi minimal 20 karakter agar terbaca jelas oleh AI (saat ini ${newReq.trim().length} karakter).`}));
+      return;
     }
+    setRequirements([...requirements, newReq.trim()]);
+    setNewReq('');
+    setValidationErrors(prev => ({...prev, requirements: ''}));
   };
 
   const handleRemoveRequirement = (index: number) => {
@@ -115,10 +123,15 @@ function CreateJobForm() {
   };
 
   const handleAddQuestion = () => {
-    if (newQuestion.trim() && videoQuestions.length < 5) {
-      setVideoQuestions([...videoQuestions, newQuestion.trim()]);
-      setNewQuestion('');
+    if (!newQuestion.trim()) return;
+    if (newQuestion.trim().length < 15) {
+      setValidationErrors(prev => ({...prev, videoQuestions: `Pertanyaan wawancara minimal 15 karakter agar pertanyaan jelas dijawab (saat ini ${newQuestion.trim().length} karakter).`}));
+      return;
     }
+    if (videoQuestions.length >= 5) return;
+    setVideoQuestions([...videoQuestions, newQuestion.trim()]);
+    setNewQuestion('');
+    setValidationErrors(prev => ({...prev, videoQuestions: ''}));
   };
 
   const handleRemoveQuestion = (index: number) => {
@@ -215,12 +228,30 @@ function CreateJobForm() {
     if (!workMode) newErrors.workMode = 'Sistem kerja wajib dipilih';
     if (!location.trim()) newErrors.location = 'Lokasi wajib diisi';
     if (!experienceLevel) newErrors.experienceLevel = 'Pengalaman wajib dipilih';
-    if (!pendidikanMin) newErrors.pendidikanMin = 'Minimal pendidikan wajib dipilih';
-    if (!summary.trim()) newErrors.summary = 'Deskripsi pekerjaan wajib diisi';
-    if (responsibilities.length === 0) newErrors.responsibilities = 'Minimal 1 tanggung jawab wajib ditambahkan';
-    if (requirements.length === 0) newErrors.requirements = 'Minimal 1 kualifikasi wajib ditambahkan';
+    if (!summary.trim()) {
+      newErrors.summary = 'Deskripsi pekerjaan wajib diisi';
+    } else if (summary.trim().length < 150) {
+      newErrors.summary = `Deskripsi pekerjaan minimal 150 karakter agar AI dapat membaca dan menganalisis kualifikasi secara optimal (saat ini ${summary.trim().length} karakter).`;
+    }
+    if (responsibilities.length === 0) {
+      newErrors.responsibilities = 'Minimal 1 butir tanggung jawab wajib ditambahkan';
+    } else if (responsibilities.some(r => r.trim().length < 20)) {
+      newErrors.responsibilities = 'Setiap butir tanggung jawab minimal 20 karakter agar terbaca jelas oleh AI';
+    }
+
+    if (requirements.length === 0) {
+      newErrors.requirements = 'Minimal 1 kualifikasi wajib ditambahkan';
+    } else if (requirements.some(r => r.trim().length < 20)) {
+      newErrors.requirements = 'Setiap butir kualifikasi minimal 20 karakter agar terbaca jelas oleh AI';
+    }
+
     if (aiKeywords.length === 0) newErrors.aiKeywords = 'Minimal 1 kata kunci AI wajib ditambahkan';
-    if (videoQuestions.length === 0) newErrors.videoQuestions = 'Minimal 1 pertanyaan AI wajib ditambahkan';
+
+    if (videoQuestions.length < 3) {
+      newErrors.videoQuestions = `Minimal 3 pertanyaan wawancara wajib ditambahkan agar evaluasi AI akurat (saat ini ${videoQuestions.length} pertanyaan)`;
+    } else if (videoQuestions.some(q => q.trim().length < 15)) {
+      newErrors.videoQuestions = 'Setiap pertanyaan wawancara minimal 15 karakter agar pertanyaan jelas dijawab';
+    }
     if (!salaryMin) newErrors.salaryMin = 'Gaji minimum wajib diisi';
     if (!salaryMax) newErrors.salaryMax = 'Gaji maksimum wajib diisi';
     if (!deadline) newErrors.deadline = 'Batas lamaran wajib diisi';
@@ -521,24 +552,58 @@ function CreateJobForm() {
 
           {/* Role Summary */}
           <div>
-            <label className="block text-xs font-semibold text-foreground mb-2">
-              {t.jobs.roleSummary} <span className="text-rose-500">*</span>
-            </label>
+            <div className="flex items-center justify-between mb-2">
+              <label className="block text-xs font-semibold text-foreground">
+                {t.jobs.roleSummary} <span className="text-rose-500">*</span>
+              </label>
+              <span className={`text-[11px] font-mono ${
+                summary.trim().length >= 150 
+                  ? 'text-emerald-600 dark:text-emerald-400 font-bold' 
+                  : 'text-amber-600 dark:text-amber-400'
+              }`}>
+                {summary.trim().length} / Min. 150 karakter
+              </span>
+            </div>
             <textarea
-              rows={4}
+              rows={5}
               value={summary}
               onChange={(e) => { setSummary(e.target.value); setValidationErrors(prev => ({...prev, summary: ''})); }}
-              placeholder={t.jobs.roleSummaryPlaceholder}
-              className={`w-full p-4 bg-muted/30 border rounded-lg text-sm text-foreground focus:outline-none focus:ring-1 transition-all resize-none ${validationErrors.summary ? 'border-rose-500 focus:border-rose-500 focus:ring-rose-500' : 'border-border focus:border-primary focus:ring-primary'}`}
+              placeholder="Jelaskan peran pekerjaan, ekspektasi tanggung jawab, latar belakang proyek, dan profil kandidat ideal secara mendalam (minimal 150 karakter agar algoritma AI dapat membaca dan menganalisis kecocokan CV pelamar secara akurat)..."
+              className={`w-full p-4 bg-muted/30 border rounded-lg text-sm text-foreground focus:outline-none focus:ring-1 transition-all resize-none ${
+                validationErrors.summary 
+                  ? 'border-rose-500 focus:border-rose-500 focus:ring-rose-500' 
+                  : summary.trim().length > 0 && summary.trim().length < 150
+                  ? 'border-amber-400 focus:border-amber-500 focus:ring-amber-500'
+                  : 'border-border focus:border-primary focus:ring-primary'
+              }`}
             ></textarea>
-            {validationErrors.summary && <p className="text-rose-500 text-[10px] mt-1.5 font-medium">{validationErrors.summary}</p>}
+            {validationErrors.summary ? (
+              <p className="text-rose-500 text-[10px] mt-1.5 font-medium">{validationErrors.summary}</p>
+            ) : summary.trim().length > 0 && summary.trim().length < 150 ? (
+              <p className="text-amber-600 dark:text-amber-400 text-[10px] mt-1.5 font-medium flex items-center gap-1">
+                ⚠️ Tambahkan setidaknya {150 - summary.trim().length} karakter lagi agar mesin AI dapat menganalisis kesesuaian profil kandidat secara optimal.
+              </p>
+            ) : summary.trim().length >= 150 ? (
+              <p className="text-emerald-600 dark:text-emerald-400 text-[10px] mt-1.5 font-medium flex items-center gap-1">
+                ✓ Panjang deskripsi pekerjaan memadai untuk dibaca oleh model embedding & screening AI.
+              </p>
+            ) : (
+              <p className="text-muted-foreground text-[10px] mt-1.5">
+                💡 Minimal 150 karakter. Deskripsi yang jelas dan lengkap sangat penting agar sistem AI dapat mengekstrak konteks pekerjaan dan menyaring CV secara komprehensif.
+              </p>
+            )}
           </div>
 
           {/* Key Responsibilities */}
           <div>
-            <label className="block text-xs font-semibold text-foreground mb-2">
-              {t.jobs.keyResponsibilities} <span className="text-rose-500">*</span>
-            </label>
+            <div className="flex items-center justify-between mb-2">
+              <label className="block text-xs font-semibold text-foreground">
+                {t.jobs.keyResponsibilities} <span className="text-rose-500">*</span>
+              </label>
+              <span className="text-[11px] text-muted-foreground font-mono">
+                {responsibilities.length} Poin (Min. 20 karakter/poin)
+              </span>
+            </div>
             <ul className="space-y-2 mb-3">
               {responsibilities.map((resp, i) => (
                 <li key={i} className="flex items-center justify-between p-3 bg-muted/30 border border-border rounded-lg text-xs text-foreground">
@@ -557,18 +622,29 @@ function CreateJobForm() {
               ))}
             </ul>
             <div className="flex gap-2">
-              <input
-                type="text"
-                value={newResp}
-                onChange={(e) => setNewResp(e.target.value)}
-                placeholder="Misal: Merancang arsitektur frontend web aplikasi berskala besar"
-                className="flex-1 px-4 py-2 bg-muted/30 border border-border rounded-lg text-xs text-foreground focus:outline-none focus:border-primary"
-                onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddResponsibility())}
-              />
+              <div className="flex-1 relative">
+                <input
+                  type="text"
+                  value={newResp}
+                  onChange={(e) => { setNewResp(e.target.value); if (validationErrors.responsibilities) setValidationErrors(prev => ({...prev, responsibilities: ''})); }}
+                  placeholder="Misal: Merancang dan mengimplementasikan arsitektur web aplikasi (min. 20 karakter)"
+                  className={`w-full px-4 py-2 bg-muted/30 border rounded-lg text-xs text-foreground focus:outline-none transition-all ${
+                    newResp.trim().length > 0 && newResp.trim().length < 20
+                      ? 'border-amber-400 focus:border-amber-500'
+                      : 'border-border focus:border-primary'
+                  }`}
+                  onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddResponsibility())}
+                />
+                {newResp.trim().length > 0 && (
+                  <span className={`absolute right-3 top-2.5 text-[10px] font-mono ${newResp.trim().length >= 20 ? 'text-emerald-600 dark:text-emerald-400 font-bold' : 'text-amber-600 dark:text-amber-400'}`}>
+                    {newResp.trim().length}/20
+                  </span>
+                )}
+              </div>
               <button
                 type="button"
-                onClick={() => { handleAddResponsibility(); setValidationErrors(prev => ({...prev, responsibilities: ''})); }}
-                className="px-3 py-2 bg-muted hover:bg-muted/80 text-foreground text-xs font-medium rounded-lg transition-colors flex items-center gap-1"
+                onClick={() => handleAddResponsibility()}
+                className="px-3 py-2 bg-muted hover:bg-muted/80 text-foreground text-xs font-medium rounded-lg transition-colors flex items-center gap-1 shrink-0"
               >
                 <Plus size={14} />
                 Tambah
@@ -579,9 +655,14 @@ function CreateJobForm() {
 
           {/* Qualifications & Requirements */}
           <div>
-            <label className="block text-xs font-semibold text-foreground mb-2">
-              {t.jobs.requirements} <span className="text-rose-500">*</span>
-            </label>
+            <div className="flex items-center justify-between mb-2">
+              <label className="block text-xs font-semibold text-foreground">
+                {t.jobs.requirements} <span className="text-rose-500">*</span>
+              </label>
+              <span className="text-[11px] text-muted-foreground font-mono">
+                {requirements.length} Poin (Min. 20 karakter/poin)
+              </span>
+            </div>
             <ul className="space-y-2 mb-3">
               {requirements.map((req, i) => (
                 <li key={i} className="flex items-center justify-between p-3 bg-muted/30 border border-border rounded-lg text-xs text-foreground">
@@ -600,18 +681,29 @@ function CreateJobForm() {
               ))}
             </ul>
             <div className="flex gap-2">
-              <input
-                type="text"
-                value={newReq}
-                onChange={(e) => setNewReq(e.target.value)}
-                placeholder="Misal: Minimal 3 tahun pengalaman di bidang terkait"
-                className="flex-1 px-4 py-2 bg-muted/30 border border-border rounded-lg text-xs text-foreground focus:outline-none focus:border-primary"
-                onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddRequirement())}
-              />
+              <div className="flex-1 relative">
+                <input
+                  type="text"
+                  value={newReq}
+                  onChange={(e) => { setNewReq(e.target.value); if (validationErrors.requirements) setValidationErrors(prev => ({...prev, requirements: ''})); }}
+                  placeholder="Misal: Minimal 3 tahun pengalaman di bidang pengembangan web (min. 20 karakter)"
+                  className={`w-full px-4 py-2 bg-muted/30 border rounded-lg text-xs text-foreground focus:outline-none transition-all ${
+                    newReq.trim().length > 0 && newReq.trim().length < 20
+                      ? 'border-amber-400 focus:border-amber-500'
+                      : 'border-border focus:border-primary'
+                  }`}
+                  onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddRequirement())}
+                />
+                {newReq.trim().length > 0 && (
+                  <span className={`absolute right-3 top-2.5 text-[10px] font-mono ${newReq.trim().length >= 20 ? 'text-emerald-600 dark:text-emerald-400 font-bold' : 'text-amber-600 dark:text-amber-400'}`}>
+                    {newReq.trim().length}/20
+                  </span>
+                )}
+              </div>
               <button
                 type="button"
-                onClick={() => { handleAddRequirement(); setValidationErrors(prev => ({...prev, requirements: ''})); }}
-                className="px-3 py-2 bg-muted hover:bg-muted/80 text-foreground text-xs font-medium rounded-lg transition-colors flex items-center gap-1"
+                onClick={() => handleAddRequirement()}
+                className="px-3 py-2 bg-muted hover:bg-muted/80 text-foreground text-xs font-medium rounded-lg transition-colors flex items-center gap-1 shrink-0"
               >
                 <Plus size={14} />
                 Tambah
@@ -705,10 +797,14 @@ function CreateJobForm() {
             <div className="flex justify-between items-center mb-3">
               <label className="text-xs font-bold text-foreground flex items-center gap-1.5">
                 <Video size={16} className="text-foreground" />
-                {t.jobs.videoQuestions} <span className="text-rose-500">*</span>
+                Pertanyaan Wawancara Video (Minimal 3 Pertanyaan) <span className="text-rose-500">*</span>
               </label>
-              <span className="text-xs text-muted-foreground font-mono">
-                {videoQuestions.length} / 5 Pertanyaan
+              <span className={`text-xs font-mono ${
+                videoQuestions.length >= 3 
+                  ? 'text-emerald-600 dark:text-emerald-400 font-bold' 
+                  : 'text-amber-600 dark:text-amber-400 font-semibold'
+              }`}>
+                {videoQuestions.length} / 5 Pertanyaan {videoQuestions.length < 3 ? `(Kurang ${3 - videoQuestions.length})` : '(Memenuhi Syarat)'}
               </span>
             </div>
 
@@ -732,17 +828,28 @@ function CreateJobForm() {
 
             {videoQuestions.length < 5 && (
               <div className="flex gap-2">
-                <input
-                  type="text"
-                  value={newQuestion}
-                  onChange={(e) => setNewQuestion(e.target.value)}
-                  placeholder="Misal: Ceritakan pengalaman proyek terbesar yang pernah Anda kerjakan"
-                  className="flex-1 px-4 py-2 bg-muted/30 border border-border rounded-lg text-xs text-foreground focus:outline-none focus:border-primary"
-                  onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddQuestion())}
-                />
+                <div className="flex-1 relative">
+                  <input
+                    type="text"
+                    value={newQuestion}
+                    onChange={(e) => { setNewQuestion(e.target.value); if (validationErrors.videoQuestions) setValidationErrors(prev => ({...prev, videoQuestions: ''})); }}
+                    placeholder="Misal: Ceritakan pengalaman proyek terbesar yang pernah Anda kerjakan (min. 15 karakter)"
+                    className={`w-full px-4 py-2 bg-muted/30 border rounded-lg text-xs text-foreground focus:outline-none transition-all ${
+                      newQuestion.trim().length > 0 && newQuestion.trim().length < 15
+                        ? 'border-amber-400 focus:border-amber-500'
+                        : 'border-border focus:border-primary'
+                    }`}
+                    onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddQuestion())}
+                  />
+                  {newQuestion.trim().length > 0 && (
+                    <span className={`absolute right-3 top-2.5 text-[10px] font-mono ${newQuestion.trim().length >= 15 ? 'text-emerald-600 dark:text-emerald-400 font-bold' : 'text-amber-600 dark:text-amber-400'}`}>
+                      {newQuestion.trim().length}/15
+                    </span>
+                  )}
+                </div>
                 <button
                   type="button"
-                  onClick={() => { handleAddQuestion(); setValidationErrors(prev => ({...prev, videoQuestions: ''})); }}
+                  onClick={() => handleAddQuestion()}
                   className="px-4 py-2 bg-primary text-primary-foreground hover:bg-primary/90 text-xs font-medium rounded-lg transition-colors flex items-center gap-1 shrink-0"
                 >
                   <Plus size={14} />
@@ -750,7 +857,13 @@ function CreateJobForm() {
                 </button>
               </div>
             )}
-            {validationErrors.videoQuestions && <p className="text-rose-500 text-[10px] mt-1.5 font-medium">{validationErrors.videoQuestions}</p>}
+            {validationErrors.videoQuestions ? (
+              <p className="text-rose-500 text-[10px] mt-1.5 font-medium">{validationErrors.videoQuestions}</p>
+            ) : (
+              <p className="text-muted-foreground text-[10px] mt-1.5">
+                💡 Minimal 3 pertanyaan (dan maks. 5). Setiap pertanyaan minimal 15 karakter untuk dievaluasi oleh sistem AI video screening.
+              </p>
+            )}
           </div>
         </div>
 

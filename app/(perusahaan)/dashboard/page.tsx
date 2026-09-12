@@ -255,14 +255,25 @@ export default function DashboardPage() {
           }
           return {
             id: a.id,
+            applicationId: a.id,
             name: a.pelamar?.nama_lengkap || "Candidate",
             role: a.job?.judul_posisi || "Role",
-            education: "-",
+            education: a.cv_document?.pendidikan_tertinggi || a.pelamar?.pendidikan_terakhir || "-",
+            university: a.pelamar?.institusi_pendidikan,
             stage: "human_validation",
             status: "needs_approval",
             cvScore: Math.round(a.analisis_cv?.skor_kecocokan || 0),
             videoUploaded: !!a.video_url,
-            videoScores: videoScores
+            videoScores: videoScores,
+            aiResult: a.ai_result,
+            analisisCv: a.analisis_cv,
+            cvDocument: a.cv_document,
+            cvData: a.cvData,
+            jobData: a.job,
+            videoUrl: a.video_url,
+            overallVideoScore: a.ai_result?.skor_keseluruhan !== undefined && a.ai_result?.skor_keseluruhan !== null
+              ? Number(a.ai_result.skor_keseluruhan)
+              : (a.video_score !== undefined && a.video_score !== null ? Number(a.video_score) : undefined),
           };
         });
         setPendingCandidates(pending);
@@ -397,7 +408,7 @@ export default function DashboardPage() {
                     <div className="hidden sm:flex flex-col items-end">
                       <span className="text-[10px] font-bold text-slate-500">CV: {c.cvScore}%</span>
                       <span className="text-[10px] font-bold text-slate-500">
-                        Vid: {typeof c.videoScores === 'string' ? 'N/A' : ((c.videoScores.ability + c.videoScores.intelligent + c.videoScores.personality + c.videoScores.attitude + c.videoScores.emotionalIntelligence) / 5).toFixed(1) + '%'}
+                        Vid: {c.overallVideoScore !== undefined && c.overallVideoScore !== null ? `${Number(c.overallVideoScore).toFixed(1)}/100` : (typeof c.videoScores === 'string' ? 'N/A' : `${((c.videoScores.ability + c.videoScores.intelligent + c.videoScores.personality + c.videoScores.attitude + c.videoScores.emotionalIntelligence) / 5).toFixed(1)}/100`)}
                       </span>
                     </div>
                     <button

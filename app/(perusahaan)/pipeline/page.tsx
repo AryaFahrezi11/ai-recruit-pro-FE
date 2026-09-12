@@ -63,6 +63,9 @@ interface CandidateData {
   pollMessage?: string;
   interviewDetails?: any;
   catatanPerusahaan?: string;
+  pelamar?: any;
+  phone?: string;
+  companyName?: string;
 }
 
 function formatDate(dateStr: string | null | undefined): string {
@@ -275,6 +278,9 @@ export default function PipelinePage() {
       pollMessage: pollingId === app.id ? pollMessage : undefined,
       interviewDetails: app.interview_details || (app as any).interviewDetails,
       catatanPerusahaan: app.catatan_perusahaan || (app as any).catatanPerusahaan,
+      pelamar: app.pelamar,
+      phone: app.pelamar?.no_telepon || (app as any).cvData?.phone || (app as any).cv_document?.phone,
+      companyName: app.job?.perusahaan?.nama_perusahaan || app.job?.nama_perusahaan || '',
     });
   };
 
@@ -529,22 +535,37 @@ export default function PipelinePage() {
         const appAi = (app as any).ai_result;
         const parsePct = (val: any) => typeof val === 'string' ? parseFloat(val.replace('%', '')) : (typeof val === 'number' ? val : 0);
 
-        if (appAi?.dimensi_psikologis) {
-          const avgScore = Math.round(
-            (parsePct(appAi.dimensi_psikologis.Ability) +
-              parsePct(appAi.dimensi_psikologis.Intelligent) +
-              parsePct(appAi.dimensi_psikologis.Personality) +
-              parsePct(appAi.dimensi_psikologis.Attitude) +
-              parsePct(appAi.dimensi_psikologis['Emotional Intelligent'])) / 5
-          );
+        const rawScore = appAi?.skor_keseluruhan !== undefined && appAi?.skor_keseluruhan !== null
+          ? Number(appAi.skor_keseluruhan)
+          : (app.video_score !== undefined && app.video_score !== null
+              ? Number(app.video_score)
+              : (appAi?.dimensi_psikologis
+                  ? (parsePct(appAi.dimensi_psikologis.Ability) +
+                      parsePct(appAi.dimensi_psikologis.Intelligent) +
+                      parsePct(appAi.dimensi_psikologis.Personality) +
+                      parsePct(appAi.dimensi_psikologis.Attitude) +
+                      parsePct(appAi.dimensi_psikologis['Emotional Intelligent'])) / 5
+                  : null));
+
+        if (rawScore !== null) {
+          const displayScore = rawScore % 1 === 0 ? rawScore : rawScore.toFixed(1);
+          const kategori = appAi?.kategori_fit || (rawScore >= 80 ? 'Sangat Cocok' : rawScore >= 60 ? 'Cukup' : 'Kurang');
+          const isHigh = rawScore >= 80;
+          const isMid = rawScore >= 60;
 
           return (
             <div className="flex flex-col items-center">
-              <span className="px-2 py-0.5 rounded-md font-mono text-xs font-bold bg-indigo-50 text-indigo-700 border border-indigo-200 dark:bg-indigo-950/40 dark:text-indigo-300 dark:border-indigo-800">
-                {avgScore} / 100
+              <span className={`px-2 py-0.5 rounded-md font-mono text-xs font-bold border ${
+                isHigh
+                  ? 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800'
+                  : isMid
+                  ? 'bg-indigo-50 text-indigo-700 border-indigo-200 dark:bg-indigo-950/40 dark:text-indigo-300 dark:border-indigo-800'
+                  : 'bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-950/40 dark:text-rose-300 dark:border-rose-800'
+              }`}>
+                {displayScore} / 100
               </span>
-              <span className="text-[10px] text-muted-foreground mt-0.5">
-                5 Aspek Teranalisis
+              <span className="text-[10px] text-muted-foreground mt-0.5 truncate max-w-[120px]" title={kategori}>
+                {kategori}
               </span>
             </div>
           );
@@ -599,13 +620,13 @@ export default function PipelinePage() {
   return (
     <div className="flex flex-col h-full max-w-full space-y-6 font-sans antialiased">
       {/* Header Area & View Switcher */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-2 border-b border-border/60">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-border pb-5">
         <div>
-          <h1 className="text-2xl font-extrabold text-foreground tracking-tight flex items-center gap-2">
+          <h1 className="text-2xl font-bold text-foreground mb-1 flex items-center gap-2">
             <Briefcase size={22} className="text-primary" />
             {t.pipeline?.title || 'Pipeline & Evaluasi Pelamar'}
           </h1>
-          <p className="text-xs text-muted-foreground font-medium mt-1">
+          <p className="text-sm text-muted-foreground">
             Pantau dan kelola seluruh pelamar masuk, hasil penilaian ATS CV, evaluasi video wawancara AI, dan keputusan akhir.
           </p>
         </div>
@@ -617,8 +638,8 @@ export default function PipelinePage() {
             onClick={() => setViewMode('table')}
             title="Tampilan Tabel"
             className={`flex items-center justify-center p-2 rounded-lg transition-all cursor-pointer ${viewMode === 'table'
-              ? 'bg-foreground text-background shadow-xs'
-              : 'text-muted-foreground hover:text-foreground'
+              ? 'bg-primary text-primary-foreground shadow-xs'
+              : 'text-muted-foreground hover:text-primary'
               }`}
           >
             <TableIcon size={16} />
@@ -629,8 +650,8 @@ export default function PipelinePage() {
             onClick={() => setViewMode('kanban')}
             title="Kanban Board"
             className={`flex items-center justify-center p-2 rounded-lg transition-all cursor-pointer ${viewMode === 'kanban'
-              ? 'bg-foreground text-background shadow-xs'
-              : 'text-muted-foreground hover:text-foreground'
+              ? 'bg-primary text-primary-foreground shadow-xs'
+              : 'text-muted-foreground hover:text-primary'
               }`}
           >
             <LayoutGrid size={16} />
@@ -672,7 +693,7 @@ export default function PipelinePage() {
               <button
                 type="submit"
                 disabled={loading}
-                className="bg-black hover:bg-slate-800 dark:bg-white dark:hover:bg-slate-200 dark:text-black text-white px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer shrink-0 shadow-xs flex items-center gap-1.5 active:scale-95 disabled:opacity-50"
+                className="bg-primary hover:bg-primary/90 text-primary-foreground px-5 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer shrink-0 shadow-md shadow-primary/20 flex items-center gap-1.5 active:scale-95 disabled:opacity-50"
                 title="Cari (GET)"
               >
                 <Search size={13} />
@@ -699,14 +720,14 @@ export default function PipelinePage() {
               <select
                 value={stageFilter}
                 onChange={(e) => setStageFilter(e.target.value)}
-                className="w-full px-3 py-2 bg-muted/40 border border-border rounded-xl text-xs text-foreground focus:ring-2 focus:ring-primary/20 outline-none font-bold cursor-pointer text-indigo-600 dark:text-indigo-400"
+                className="w-full px-2 py-1 bg-muted/40 border border-border rounded-xl text-xs text-foreground focus:ring-2 focus:ring-primary/20 outline-none font-medium cursor-pointer"
               >
-                <option value="human_validation">Validasi HR</option>
                 <option value="all">Semua Tahapan Seleksi</option>
                 <option value="upload_cv">Upload CV</option>
                 <option value="cv_screening">CV Screening AI</option>
                 <option value="virtual_interview">Wawancara Video</option>
                 <option value="video_analysis">Analisis AI Video</option>
+                <option value="human_validation">Validasi HR</option>
               </select>
             </div>
           </div>
@@ -884,14 +905,17 @@ export default function PipelinePage() {
                     role={(app as any).cvData?.jobTitle || app.job?.judul_posisi || 'Posisi'}
                     appliedJob={app.job?.judul_posisi}
                     stage="ai_analysis"
-                    status="processing"
+                    status={isCurrentAnalyzing ? 'processing' : 'video_uploaded'}
+                    progressBar={isCurrentPolling}
+                    progressText={pollMessage || 'Memproses Analisis AI...'}
+                    progressPercent={pollProgress}
                     timeInfo={
                       isCurrentPolling
-                        ? (pollMessage ? `${pollMessage} (${Math.round(pollProgress)}%)` : `Memproses AI (${Math.round(pollProgress)}%)...`)
-                        : "Menunggu Analisis AI"
+                        ? (pollMessage ? pollMessage : 'Sedang Memproses AI...')
+                        : (app.video_url ? 'Video Siap Dianalisis' : 'Menunggu Video')
                     }
-                    actionLabel={isCurrentPolling ? `${Math.round(pollProgress)}% Memproses` : "Jalankan Analisis Video"}
-                    actionLoading={isCurrentAnalyzing}
+                    actionLabel={isCurrentAnalyzing ? undefined : "Jalankan Analisis Video"}
+                    actionLoading={false}
                     onActionClick={() => handleAnalyzeVideo(app.id)}
                     onClick={() => openCandidateModal(app)}
                   />
@@ -936,6 +960,7 @@ export default function PipelinePage() {
                       ) : undefined
                     }
                     videoScores={dynamicVideoScores}
+                    overallVideoScore={appAi?.skor_keseluruhan !== undefined && appAi?.skor_keseluruhan !== null ? Number(appAi.skor_keseluruhan) : (app.video_score !== undefined && app.video_score !== null ? Number(app.video_score) : undefined)}
                     onClick={() => openCandidateModal(app)}
                   />
                 );
