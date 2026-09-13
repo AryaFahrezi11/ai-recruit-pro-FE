@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Search, Plus, Edit, Trash2, Database, LayoutTemplate, Briefcase, AlertTriangle } from 'lucide-react';
+import { Search, Plus, Edit, Trash2, Database, LayoutTemplate, AlertTriangle } from 'lucide-react';
 import { fetchAuth } from '@/lib/api/auth';
 import { toast } from 'react-hot-toast';
 

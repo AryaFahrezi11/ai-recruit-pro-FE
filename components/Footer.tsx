@@ -1,12 +1,11 @@
 'use client';
 
-import React, { useState } from 'react';
+import React from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { X, ShieldCheck, FileText, Lock, Mail, Phone, MapPin, HelpCircle, ChevronDown, CheckCircle2 } from 'lucide-react';
+import { ShieldCheck } from 'lucide-react';
 
 export default function Footer() {
-  const [activeModal, setActiveModal] = useState<'privacy' | 'terms' | 'contact' | null>(null);
 
   const handleHomeClick = (e: React.MouseEvent) => {
     if (typeof window !== 'undefined' && window.location.pathname === '/') {

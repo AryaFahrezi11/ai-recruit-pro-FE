@@ -6,8 +6,6 @@ import Image from 'next/image';
 import Footer from '@/components/Footer';
 import {
   Building2,
-  Users,
-  Target,
   ShieldCheck,
   CheckCircle2,
   ArrowRight,
@@ -18,10 +16,7 @@ import {
   User,
   Scale,
   Heart,
-  Award,
-  Lock,
-  TrendingUp,
-  Sparkles
+  Lock
 } from 'lucide-react';
 
 export default function AboutPage() {

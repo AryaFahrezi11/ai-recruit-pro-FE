@@ -4,8 +4,7 @@ import React, { useState, useEffect, useRef, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useTranslation } from '@/hooks/useTranslation';
 import { fetchAuth } from '@/lib/api/auth';
-import { getApiUrl, getMediaUrl } from '@/lib/api';
-import { useAppStore } from '@/lib/store/useAppStore';
+import { getMediaUrl } from '@/lib/api';
 import {
   Building2,
   Mail,
@@ -19,9 +18,7 @@ import {
   Eye,
   RotateCcw,
   Send,
-  Sparkles,
-  Info,
-  UserCheck
+  Sparkles
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 

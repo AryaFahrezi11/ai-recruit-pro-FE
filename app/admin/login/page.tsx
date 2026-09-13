@@ -4,9 +4,9 @@ import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { useAppStore } from '@/lib/store/useAppStore';
-import { Shield, Lock, Mail } from 'lucide-react';
+import { Lock, Mail } from 'lucide-react';
 import { toast } from 'react-hot-toast';
-import { loginUser, fetchAuth } from '@/lib/api/auth';
+import { loginUser } from '@/lib/api/auth';
 
 export default function AdminLoginPage() {
   const router = useRouter();

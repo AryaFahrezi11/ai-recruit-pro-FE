@@ -10,13 +10,10 @@ import {
   Send,
   Briefcase,
   ChevronDown,
-  ChevronUp,
-  Sparkles,
-  Star,
-  User
+  ChevronUp
 } from 'lucide-react';
 import { api, parseErrorMessage } from '@/lib/api';
-import { ParseSkills, renderSkillsText } from '@/components/ui/ParseSkills';
+import { renderSkillsText } from '@/components/ui/ParseSkills';
 import { CandidateReviewModal } from '@/components/CandidateReviewModal';
 
 interface ApplyJobModalProps {
@@ -46,7 +43,6 @@ export function ApplyJobModal({ job, cvData, onClose, onSuccess }: ApplyJobModal
       hasil: string;
     };
   } | null>(null);
-  const [pendingAiResult, setPendingAiResult] = useState<any>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -69,7 +65,6 @@ export function ApplyJobModal({ job, cvData, onClose, onSuccess }: ApplyJobModal
 
       const res = await api.post('/applications/', payload);
       const applicationData = res.data || res;
-      setPendingAiResult(applicationData);
       setShowReviewModal(true);
       setAiResult(applicationData);
     } catch (err: any) {

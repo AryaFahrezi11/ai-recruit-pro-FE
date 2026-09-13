@@ -3,7 +3,6 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from '@/hooks/useTranslation';
 import { Calendar as CalendarIcon, Download, Search, FilterX } from 'lucide-react';
-import { fetchAuth } from '@/lib/api/auth';
 
 export function ArchiveFilters({ 
   search, 

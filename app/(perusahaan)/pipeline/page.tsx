@@ -8,8 +8,6 @@ import { CandidateModal } from '@/components/pipeline/CandidateModal';
 import { DataTable, ColumnDef } from '@/components/ui/DataTable';
 import {
   Filter,
-  ArrowUpDown,
-  Download,
   Loader2,
   LayoutGrid,
   Table as TableIcon,
@@ -19,19 +17,16 @@ import {
   Calendar,
   CheckCircle2,
   XCircle,
-  Sparkles,
   MapPin,
   Briefcase,
-  GraduationCap,
   Clock,
-  ChevronRight,
   UserCheck,
   CornerDownLeft,
   X,
   RotateCcw
 } from 'lucide-react';
 import { fetchAuth } from '@/lib/api/auth';
-import { api, parseErrorMessage } from '@/lib/api';
+import { parseErrorMessage } from '@/lib/api';
 import toast from 'react-hot-toast';
 
 interface CandidateData {

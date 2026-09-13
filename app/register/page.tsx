@@ -17,11 +17,6 @@ import {
   User,
   Eye,
   EyeOff,
-  ShieldCheck,
-  Edit3,
-  RefreshCw,
-  Info,
-  ArrowLeft,
   ArrowRight,
   ShieldBan
 } from 'lucide-react';

@@ -20,9 +20,7 @@ import {
   User,
   Menu,
   X,
-  ArrowRight,
-  RotateCcw,
-  SlidersHorizontal
+  RotateCcw
 } from 'lucide-react';
 
 const slugify = (text: string) => {

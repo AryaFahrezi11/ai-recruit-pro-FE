@@ -9,9 +9,7 @@ import {
   User,
   Menu,
   X,
-  FileText,
-  CheckCircle2,
-  AlertCircle
+  FileText
 } from 'lucide-react';
 
 export default function TermsPage() {

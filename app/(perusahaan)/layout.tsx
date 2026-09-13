@@ -1,17 +1,12 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
 import { toast } from 'react-hot-toast';
 import { Sidebar } from '@/components/dashboard/Sidebar';
 import { useAppStore } from '@/lib/store/useAppStore';
-import { useTranslation } from '@/hooks/useTranslation';
 import { fetchAuth } from '@/lib/api/auth';
-import { 
-  Globe, Search, Bell, HelpCircle, Menu, 
-  CheckCircle2, Video, FileText, User, Settings, LogOut, X, ArrowRight 
-} from 'lucide-react';
+import { Menu } from 'lucide-react';
 
 export default function PerusahaanLayout({
   children,
@@ -20,44 +15,10 @@ export default function PerusahaanLayout({
 }) {
   const router = useRouter();
   const pathname = usePathname();
-  const { toggleMobileSidebar, logout } = useAppStore();
-  const { t } = useTranslation();
+  const { toggleMobileSidebar } = useAppStore();
   const [mounted, setMounted] = useState(false);
   const [isProfileIncomplete, setIsProfileIncomplete] = useState(false);
   const [isChecking, setIsChecking] = useState(true);
-
-  // Popover States
-  const [showNotifications, setShowNotifications] = useState(false);
-  const [showProfileMenu, setShowProfileMenu] = useState(false);
-  const [unreadCount, setUnreadCount] = useState(3);
-
-  // Mock Notifications
-  const notifications = [
-    {
-      id: 1,
-      title: 'David Kim mengunggah video wawancara',
-      time: '10 menit yang lalu',
-      type: 'video',
-      icon: <Video size={14} className="text-violet-500" />,
-      link: '/pipeline'
-    },
-    {
-      id: 2,
-      title: 'Alex Mercer lolos seleksi CV (92%)',
-      time: '1 jam yang lalu',
-      type: 'cv',
-      icon: <FileText size={14} className="text-emerald-500" />,
-      link: '/pipeline'
-    },
-    {
-      id: 3,
-      title: 'Lowongan Frontend Developer menerima pelamar baru',
-      time: '3 jam yang lalu',
-      type: 'applicant',
-      icon: <CheckCircle2 size={14} className="text-blue-500" />,
-      link: '/jobs'
-    }
-  ];
 
   // Prevent hydration mismatch and check auth
   useEffect(() => {
@@ -118,10 +79,6 @@ export default function PerusahaanLayout({
 
     checkCompanyStatus();
   }, [router, pathname]);
-
-  const markAllRead = () => {
-    setUnreadCount(0);
-  };
 
   if (!mounted) return null;
   if (isChecking) {

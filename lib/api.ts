@@ -16,15 +16,12 @@ export const getMediaUrl = (path?: string) => {
 };
 
 /**
- * Returns the correct API base URL depending on context:
- * - Client-side (browser): uses Next.js proxy `/api/proxy` to avoid CORS
- * - Server-side (SSR): calls backend directly
+ * Returns the correct API URL:
+ * Calls backend directly at http://localhost:8000/api (FastAPI has full CORS enabled)
+ * for maximum throughput and zero proxy buffering delay.
  */
 export const getApiUrl = (endpoint: string) => {
   const cleanEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
-  if (typeof window !== 'undefined') {
-    return `/api/proxy${cleanEndpoint}`;
-  }
   return `${getBaseUrl()}${cleanEndpoint}`;
 };
 

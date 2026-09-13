@@ -1,14 +1,12 @@
 'use client';
 
 import React, { useState } from 'react';
-import { useTranslation } from '@/hooks/useTranslation';
 import { 
-  HelpCircle, Sparkles, BookOpen, MessageSquare, Send, CheckCircle2,
-  ChevronDown, ChevronUp, GraduationCap, FileText, Video, ShieldCheck, Headphones, Award
+  HelpCircle, Sparkles, BookOpen, Send, CheckCircle2,
+  ChevronDown, ChevronUp, GraduationCap, Headphones, Award
 } from 'lucide-react';
 
 export default function KampusSupportPage() {
-  const { t } = useTranslation();
   const [openFaq, setOpenFaq] = useState<number | null>(0);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 

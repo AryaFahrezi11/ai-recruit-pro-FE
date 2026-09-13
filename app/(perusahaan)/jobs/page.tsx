@@ -4,12 +4,11 @@ import React, { useState, useEffect, useCallback, Suspense, useMemo } from 'reac
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { useTranslation } from '@/hooks/useTranslation';
-import { useAppStore } from '@/lib/store/useAppStore';
 import { fetchAuth } from '@/lib/api/auth';
 import { 
-  Briefcase, Plus, Search, Filter, Eye, Edit, Trash2, Copy, 
-  CheckCircle2, Clock, AlertCircle, Sparkles, MapPin, Users,
-  ArrowRight, FileText, Check, Loader2, AlertTriangle, X
+  Plus, Search, Eye, Edit, Trash2, Copy, 
+  CheckCircle2, Clock, AlertCircle, MapPin,
+  FileText, Check, AlertTriangle
 } from 'lucide-react';
 import { DataTable, ColumnDef } from '@/components/ui/DataTable';
 
@@ -36,11 +35,6 @@ interface JobItem {
   tanggal_tutup: string | null;
 }
 
-function formatCurrency(value: number | null): string {
-  if (!value) return '-';
-  return 'Rp ' + value.toLocaleString('id-ID');
-}
-
 function formatDate(dateStr: string | null): string {
   if (!dateStr) return '-';
   try {
@@ -64,7 +58,6 @@ function JobOpeningsContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { t } = useTranslation();
-  const token = useAppStore(state => state.token);
   const [activeTab, setActiveTab] = useState<'all' | 'active' | 'draft' | 'closed'>((searchParams.get('tab') as any) || 'all');
   const [searchQuery, setSearchQuery] = useState(searchParams.get('search') || '');
 

@@ -15,8 +15,6 @@ import {
   Settings,
   HelpCircle,
   Plus,
-  GraduationCap,
-  ArrowLeftRight,
   LogOut
 } from 'lucide-react';
 

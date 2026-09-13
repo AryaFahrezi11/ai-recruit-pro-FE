@@ -12,12 +12,10 @@ import {
   CheckCircle2,
   XCircle,
   AlertTriangle,
-  ExternalLink,
   RefreshCw,
   Filter,
   X,
   Clock,
-  Layers,
   Users,
   Calendar
 } from 'lucide-react';

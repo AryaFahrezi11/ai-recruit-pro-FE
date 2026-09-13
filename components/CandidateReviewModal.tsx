@@ -1,9 +1,9 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Star, X, CheckCircle2, Send, Sparkles, User, Briefcase, MessageSquareQuote } from 'lucide-react';
+import { Star, X, Send, User, Briefcase, MessageSquareQuote } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { api, parseErrorMessage } from '@/lib/api';
+import { api } from '@/lib/api';
 
 export interface UserReview {
   id: string;

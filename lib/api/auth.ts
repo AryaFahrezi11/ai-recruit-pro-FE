@@ -1,4 +1,5 @@
 import { getApiUrl } from '@/lib/api';
+import { useAppStore } from '@/lib/store/useAppStore';
 
 export const loginUser = async (email: string, password: string, role?: string) => {
   const bodyData: any = { email, password };
@@ -38,8 +39,6 @@ export const loginUser = async (email: string, password: string, role?: string) 
  * Helper to make authenticated fetch requests.
  * Automatically injects the bearer token from the App Store.
  */
-import { useAppStore } from '@/lib/store/useAppStore';
-
 export const fetchAuth = async (url: string, options: RequestInit = {}) => {
   const token = useAppStore.getState().token || (typeof window !== 'undefined' ? localStorage.getItem('access_token') : null);
   

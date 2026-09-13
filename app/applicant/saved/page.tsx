@@ -14,8 +14,6 @@ import {
   Trash2,
   Send,
   CheckCircle2,
-  Sparkles,
-  ArrowRight,
   ChevronRight,
   X,
   Clock

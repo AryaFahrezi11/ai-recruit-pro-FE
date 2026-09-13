@@ -3,8 +3,8 @@
 import React, { useState } from 'react';
 import { useTranslation } from '@/hooks/useTranslation';
 import {
-  HelpCircle, Sparkles, BookOpen, MessageSquare, Send, CheckCircle2,
-  ChevronDown, ChevronUp, Bot, FileText, Video, ShieldCheck, Mail, Headphones
+  HelpCircle, BookOpen, Send, CheckCircle2,
+  ChevronDown, ChevronUp, FileText, Video, ShieldCheck, Mail
 } from 'lucide-react';
 
 import { api } from '@/lib/api';

@@ -1279,3 +1279,4 @@ export const dictionaries = {
 
 export type LanguageKey = keyof typeof dictionaries;
 export type Dictionary = typeof dictionaries.id;
+

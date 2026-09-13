@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import Link from 'next/link';
 import { toast } from 'react-hot-toast';
 import { useRouter } from 'next/navigation';
 import { useTranslation } from '@/hooks/useTranslation';
@@ -9,21 +8,16 @@ import {
   UploadCloud,
   FileText,
   CheckCircle2,
-  ArrowRight,
   RefreshCw,
   FileCheck2,
-  ChevronLeft,
-  Sparkles,
   Info,
   Download,
-  Edit3,
   Plus,
   Trash2,
   User,
   Briefcase,
   GraduationCap,
   Wrench,
-  Award,
   Printer,
   AlertCircle
 } from 'lucide-react';

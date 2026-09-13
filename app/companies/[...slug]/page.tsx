@@ -20,10 +20,8 @@ import {
   User,
   Menu,
   X,
-  ArrowRight,
   Bookmark,
   ShieldCheck,
-  ImageIcon,
   Sparkles,
   Heart
 } from 'lucide-react';

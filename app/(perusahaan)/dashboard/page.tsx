@@ -5,7 +5,6 @@ import Link from 'next/link';
 import { useTranslation } from '@/hooks/useTranslation';
 import { StatCard } from '@/components/dashboard/StatCard';
 import { PipelineChart } from '@/components/dashboard/PipelineChart';
-import { RecentActivity } from '@/components/dashboard/RecentActivity';
 import { CandidateModal } from '@/components/pipeline/CandidateModal';
 import { fetchAuth } from '@/lib/api/auth';
 import {
@@ -13,23 +12,7 @@ import {
   Calendar,
   BrainCircuit,
   Clock,
-  CalendarDays,
-  Download,
-  AlertCircle,
-  UserCheck,
-  Briefcase,
-  Sparkles,
-  ArrowRight,
-  Zap,
-  CheckCircle2,
-  ChevronRight,
-  TrendingUp,
-  FileText,
-  GraduationCap,
-  Activity,
-  Check,
-  UserPlus,
-  MessageSquare
+  CheckCircle2
 } from 'lucide-react';
 
 export default function DashboardPage() {
@@ -39,7 +22,6 @@ export default function DashboardPage() {
   const [pendingCandidates, setPendingCandidates] = useState<any[]>([]);
   const [activeJobs, setActiveJobs] = useState<any[]>([]);
   const [pipelineData, setPipelineData] = useState<any[]>([]);
-  const [recentActivities, setRecentActivities] = useState<any[]>([]);
   const [trendCv, setTrendCv] = useState('+0');
   const [avgSpeed, setAvgSpeed] = useState('< 2.5');
 
@@ -182,63 +164,6 @@ export default function DashboardPage() {
           avgCosineSimilarity: avgCosineSimilarity as number,
           aiHrAccuracy: hrAccuracy as number
         });
-
-        // Create Recent Activity
-        const sortedApps = [...appsData].sort((a: any, b: any) => new Date(b.updated_at || b.applied_at).getTime() - new Date(a.updated_at || a.applied_at).getTime());
-        const recent = sortedApps.slice(0, 5).map((a: any, index: number) => {
-          const dateObj = new Date(a.updated_at || a.applied_at);
-          
-          let icon = UserPlus;
-          let iconBg = 'bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700';
-          let iconColor = 'text-slate-700 dark:text-slate-200';
-          let actionText = 'melamar posisi';
-          let target = a.job?.judul_posisi || '';
-
-          if (a.status === 'lolos_cv' || a.status === 'video_analysis') {
-            icon = BrainCircuit;
-            iconBg = 'bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700';
-            iconColor = 'text-slate-700 dark:text-slate-200';
-            actionText = 'lolos AI screening untuk';
-          } else if (a.status === 'virtual_interview') {
-             icon = Calendar;
-             iconBg = 'bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700';
-             iconColor = 'text-slate-700 dark:text-slate-200';
-             actionText = 'menunggu interview untuk';
-          } else if (a.status === 'Lolos') {
-             icon = CheckCircle2;
-             iconBg = 'bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700';
-             iconColor = 'text-slate-700 dark:text-slate-200';
-             actionText = 'diterima (Lolos) pada posisi';
-          } else if (a.status === 'ditolak_sistem' || a.status === 'ditolak') {
-             icon = Check;
-             iconBg = 'bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700';
-             iconColor = 'text-slate-700 dark:text-slate-200';
-             actionText = 'ditolak pada posisi';
-          }
-
-          // Format time diff nicely
-          const diffMs = new Date().getTime() - dateObj.getTime();
-          const diffMins = Math.floor(diffMs / 60000);
-          const diffHours = Math.floor(diffMins / 60);
-          const diffDays = Math.floor(diffHours / 24);
-          let timeStr = `${diffMins} mnt lalu`;
-          if (diffDays > 0) timeStr = `${diffDays} hari lalu`;
-          else if (diffHours > 0) timeStr = `${diffHours} jam lalu`;
-          else if (diffMins === 0) timeStr = 'Baru saja';
-
-          return {
-            id: a.id || index,
-            type: a.status,
-            user: a.pelamar?.nama_lengkap || 'Candidate',
-            action: actionText,
-            target: target,
-            time: timeStr,
-            icon: icon,
-            iconBg: iconBg,
-            iconColor: iconColor,
-          };
-        });
-        setRecentActivities(recent);
 
         // Get Pending Candidates (status === 'human_validation')
         const pending = appsData.filter((a: any) => a.status === 'human_validation').map((a: any) => {

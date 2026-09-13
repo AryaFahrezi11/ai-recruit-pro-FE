@@ -14,7 +14,6 @@ import {
   Sliders,
   FileText,
   Check,
-  Globe,
   X,
   Video,
   Calendar,
@@ -22,8 +21,6 @@ import {
   Ban,
   CheckCircle2,
   Users,
-  GraduationCap,
-  Award,
   RefreshCw,
   AlertTriangle
 } from 'lucide-react';
@@ -59,7 +56,6 @@ function AdminJobDetailView() {
   const [videoQuestions, setVideoQuestions] = useState<string[]>([]);
 
   // Compensation & Benefits
-  const [currency, setCurrency] = useState('IDR');
   const [salaryMin, setSalaryMin] = useState('');
   const [salaryMax, setSalaryMax] = useState('');
   const [showSalaryPublic, setShowSalaryPublic] = useState(false);

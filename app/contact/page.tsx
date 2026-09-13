@@ -10,7 +10,6 @@ import {
   User,
   Menu,
   X,
-  HelpCircle,
   Mail,
   Phone,
   MapPin,

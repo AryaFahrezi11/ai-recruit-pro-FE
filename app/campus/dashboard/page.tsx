@@ -5,8 +5,7 @@ import Link from 'next/link';
 import { useTranslation } from '@/hooks/useTranslation';
 import { StatCard } from '@/components/dashboard/StatCard';
 import { 
-  Users, GraduationCap, Building2, CheckCircle2, TrendingUp, 
-  ArrowRight, Briefcase, Sparkles, ChevronRight, Award, BarChart3
+  Users, GraduationCap, Building2, Sparkles, ChevronRight, Award, BarChart3
 } from 'lucide-react';
 
 export default function KampusDashboardPage() {

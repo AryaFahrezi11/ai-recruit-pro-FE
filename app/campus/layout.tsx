@@ -8,8 +8,7 @@ import { useAppStore } from '@/lib/store/useAppStore';
 import { useTranslation } from '@/hooks/useTranslation';
 import { 
   GraduationCap, LayoutDashboard, Users, Settings, HelpCircle, 
-  Globe, Search, Bell, Menu, X, ArrowLeftRight, Building2,
-  CheckCircle2, Video, FileText, ArrowRight, LogOut
+  Search, Bell, Menu, X, LogOut
 } from 'lucide-react';
 
 export default function KampusLayout({

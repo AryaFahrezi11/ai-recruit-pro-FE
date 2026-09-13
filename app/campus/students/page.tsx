@@ -5,9 +5,9 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { toast } from 'react-hot-toast';
 import { useTranslation } from '@/hooks/useTranslation';
 import { 
-  Users, Search, Filter, GraduationCap, CheckCircle2, XCircle, Clock, 
-  Building2, Eye, FileText, ChevronRight, X, Sparkles, Award, ExternalLink, 
-  Download, Video, Play, RefreshCw, FileCheck, Check
+  Users, Search, GraduationCap, CheckCircle2, XCircle, Clock, 
+  Building2, Eye, FileText, X, 
+  Download, Video, Play, RefreshCw, FileCheck
 } from 'lucide-react';
 
 interface ApplicationHistory {

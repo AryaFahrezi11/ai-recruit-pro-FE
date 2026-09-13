@@ -6,7 +6,7 @@ import { useAppStore } from '@/lib/store/useAppStore';
 import Link from 'next/link';
 import Image from 'next/image';
 import { 
-  LayoutDashboard, Users, ShieldCheck, LogOut, Settings, Bell, Search, Menu, X, Briefcase, Database, LineChart, FileText, MessageSquareQuote
+  LayoutDashboard, Users, ShieldCheck, LogOut, Settings, Menu, X, Briefcase, Database, FileText, MessageSquareQuote
 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 

@@ -5,18 +5,18 @@ import { useRouter } from 'next/navigation';
 import { useTranslation } from '@/hooks/useTranslation';
 import toast from 'react-hot-toast';
 import {
-  X, Play, CheckCircle2, XCircle,
-  Check, Lightbulb, FileText, Video, BarChart3,
+  X, CheckCircle2, XCircle,
+  Check, FileText, Video, BarChart3,
   Upload, Brain, UserCheck, Scan, Download, ExternalLink,
-  Clock, AlertCircle, Sparkles, Briefcase, Mail, Phone, Lock, Archive, GraduationCap, Building2, ArrowRight,
-  HelpCircle, Calendar, Send, Edit3, Copy, MapPin
+  Clock, AlertCircle, Sparkles, Briefcase, Mail, Phone, Lock, Archive, GraduationCap,
+  HelpCircle, Calendar, Send, Edit3, Copy,
+  ChevronDown, ChevronUp
 } from 'lucide-react';
 import { fetchAuth } from '@/lib/api/auth';
 import { ParseSkills } from '@/components/ui/ParseSkills';
 import {
   Radar, RadarChart, PolarGrid, PolarAngleAxis, ResponsiveContainer
 } from 'recharts';
-import { ChevronDown, ChevronUp } from 'lucide-react';
 
 interface CandidateModalProps {
   candidate: {

@@ -15,7 +15,6 @@ import {
   XCircle, 
   KeyRound, 
   Send, 
-  Copy, 
   Sparkles,
   Info
 } from 'lucide-react';
@@ -425,29 +424,6 @@ export default function SystemSettingsPage() {
                       placeholder="Temukan talenta terbaik dan lowongan kerja impian dengan analisis CV otomatis, screening video, dan proses transparan di AI Recruit Pro."
                       className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-slate-400 outline-none resize-none font-medium"
                     />
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
-                    <div>
-                      <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Nomor WhatsApp Support / Helpdesk</label>
-                      <input 
-                        type="text" 
-                        value={settings.support_whatsapp || ''}
-                        onChange={(e) => handleChange('support_whatsapp', e.target.value)}
-                        placeholder="+62 812-3456-7890"
-                        className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-slate-400 outline-none font-medium"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Lokasi Kantor Pusat / Kota</label>
-                      <input 
-                        type="text" 
-                        value={settings.lokasi_kantor_pusat || ''}
-                        onChange={(e) => handleChange('lokasi_kantor_pusat', e.target.value)}
-                        placeholder="Jakarta, Indonesia"
-                        className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-slate-400 outline-none font-medium"
-                      />
-                    </div>
                   </div>
                 </div>
               </div>

@@ -6,13 +6,22 @@ import { Wrench, RefreshCw } from 'lucide-react';
 import { usePathname } from 'next/navigation';
 import { getApiUrl } from '@/lib/api';
 
+let lastCheckTime = 0;
+
 export default function MaintenanceProvider({ children }: { children: React.ReactNode }) {
   const [isMaintenance, setIsMaintenance] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const user = useAppStore((state) => state.user);
   const pathname = usePathname();
 
-  const checkMaintenance = async () => {
+  const checkMaintenance = async (force: boolean = false) => {
+    const now = Date.now();
+    // Throttle checks to once every 60 seconds unless forced or initial
+    if (!force && lastCheckTime > 0 && now - lastCheckTime < 60000) {
+      setIsLoading(false);
+      return;
+    }
+
     try {
       const res = await fetch(getApiUrl('/config/public')).catch(() => null);
       if (res && res.ok) {
@@ -22,6 +31,7 @@ export default function MaintenanceProvider({ children }: { children: React.Reac
         } else {
           setIsMaintenance(false);
         }
+        lastCheckTime = Date.now();
       }
     } catch {
       // Silently handle
@@ -91,7 +101,7 @@ export default function MaintenanceProvider({ children }: { children: React.Reac
           {/* Footer Action */}
           <div className="pt-2 flex items-center justify-between gap-3 text-xs">
             <button
-              onClick={() => checkMaintenance()}
+              onClick={() => checkMaintenance(true)}
               className="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 font-semibold transition-colors cursor-pointer inline-flex items-center gap-2"
             >
               <RefreshCw size={13} />

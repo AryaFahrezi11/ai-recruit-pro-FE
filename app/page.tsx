@@ -852,8 +852,8 @@ function LandingPageContent() {
                       if (feedElem) feedElem.scrollIntoView({ behavior: 'smooth' });
                     }}
                     className={`shrink-0 w-[145px] sm:w-[175px] p-2.5 sm:p-3 rounded-xl border text-left flex flex-col justify-between space-y-2.5 transition-all duration-300 cursor-pointer group ${isSelected
-                        ? 'bg-white dark:bg-slate-900 border-slate-900 dark:border-white ring-2 ring-slate-900/20 shadow-md'
-                        : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 hover:border-slate-400 hover:shadow-md'
+                      ? 'bg-white dark:bg-slate-900 border-slate-900 dark:border-white ring-2 ring-slate-900/20 shadow-md'
+                      : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 hover:border-slate-400 hover:shadow-md'
                       }`}
                   >
                     <div className={`w-7 h-7 rounded-md flex items-center justify-center font-bold shrink-0 ${isSelected ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900' : 'bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 group-hover:scale-110 transition-transform'

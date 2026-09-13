@@ -2,15 +2,12 @@ import React from 'react';
 import { 
   Clock, 
   CheckCircle2, 
-  XCircle, 
   Loader2, 
   Video, 
   Brain, 
   UserCheck, 
   GraduationCap, 
-  Building2,
-  Calendar,
-  Sparkles
+  Calendar
 } from 'lucide-react';
 import { useTranslation } from '@/hooks/useTranslation';
 

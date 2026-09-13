@@ -9,21 +9,14 @@ import Image from 'next/image';
 import { toast } from 'react-hot-toast';
 
 import {
-  HelpCircle,
   Building2,
-  Sparkles,
   Mail,
   Lock,
   AlertCircle,
   CheckCircle2,
-  ShieldCheck,
   KeyRound,
   Eye,
   EyeOff,
-  Edit3,
-  RefreshCw,
-  Info,
-  ArrowLeft,
   ArrowRight,
   ShieldBan,
   User

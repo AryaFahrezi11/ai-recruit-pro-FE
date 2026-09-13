@@ -100,20 +100,6 @@ export default function OtpVerificationCard({
       setOtpCode(newOtp);
       return;
     }
-
-    if (e.key === 'ArrowLeft' && index > 0) {
-      e.preventDefault();
-      const prevInput = document.getElementById(`${inputPrefix}-${index - 1}`);
-      if (prevInput) prevInput.focus();
-      return;
-    }
-
-    if (e.key === 'ArrowRight' && index < 5) {
-      e.preventDefault();
-      const nextInput = document.getElementById(`${inputPrefix}-${index + 1}`);
-      if (nextInput) nextInput.focus();
-      return;
-    }
   };
 
   const handleClearAll = () => {

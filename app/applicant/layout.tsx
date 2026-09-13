@@ -5,24 +5,17 @@ import Link from 'next/link';
 import Image from 'next/image';
 import Footer from '@/components/Footer';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
-import { useAppStore } from '@/lib/store/useAppStore';
 import { useTranslation } from '@/hooks/useTranslation';
 
 import {
   Search,
   Building2,
-  Info,
-  Globe,
   User,
   Bookmark,
   ClockCheck,
   LogOut,
   ChevronDown,
-  FileText,
-  Briefcase,
-  Sparkles,
-  BookOpen,
-  CheckCircle2
+  BookOpen
 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { api, removeAuthToken } from '@/lib/api';

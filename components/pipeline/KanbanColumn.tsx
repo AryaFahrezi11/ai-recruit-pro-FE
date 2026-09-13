@@ -5,7 +5,6 @@ interface KanbanColumnProps {
   title: string;
   count: number;
   stageKey?: 'upload_cv' | 'cv_screening' | 'interview' | 'ai_analysis' | 'human_validation' | string;
-  icon?: React.ReactNode;
   children?: React.ReactNode;
 }
 
@@ -17,7 +16,7 @@ const stageAccentColors: Record<string, { dot: string; badge: string }> = {
   human_validation: { dot: 'bg-emerald-500', badge: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300' },
 };
 
-export function KanbanColumn({ title, count, stageKey, icon, children }: KanbanColumnProps) {
+export function KanbanColumn({ title, count, stageKey, children }: KanbanColumnProps) {
   const accent = (stageKey && stageAccentColors[stageKey]) || {
     dot: 'bg-primary',
     badge: 'bg-muted text-muted-foreground'

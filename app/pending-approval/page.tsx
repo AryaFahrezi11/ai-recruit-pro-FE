@@ -24,8 +24,7 @@ import {
   LogOut,
   Edit,
   XCircle,
-  User,
-  ArrowRight
+  User
 } from 'lucide-react';
 
 interface UserProfileData {

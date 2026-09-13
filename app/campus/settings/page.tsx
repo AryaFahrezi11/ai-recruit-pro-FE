@@ -1,14 +1,11 @@
 'use client';
 
 import React, { useState } from 'react';
-import { useTranslation } from '@/hooks/useTranslation';
 import { 
-  GraduationCap, Sliders, Mail, Users, Save, CheckCircle2, 
-  Building2, Globe, Upload, ShieldCheck, Bell, Award
+  GraduationCap, Users, Save, CheckCircle2, Upload, Bell
 } from 'lucide-react';
 
 export default function KampusSettingsPage() {
-  const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState<'profile' | 'notifications' | 'team'>('profile');
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 

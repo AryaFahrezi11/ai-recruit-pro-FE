@@ -10,8 +10,7 @@ import {
   Menu,
   X,
   Lock,
-  CheckCircle2,
-  ShieldCheck
+  CheckCircle2
 } from 'lucide-react';
 
 export default function PrivacyPolicyPage() {

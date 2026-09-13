@@ -20,7 +20,6 @@ import {
   List,
   AlertCircle,
   RefreshCw,
-  CornerDownLeft,
   Users,
   Briefcase,
   XCircle,

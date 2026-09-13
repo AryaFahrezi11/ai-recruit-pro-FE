@@ -2,10 +2,10 @@
 
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { Zap, Users, Building2, GraduationCap, AlertCircle, Calendar, ArrowRight, UserPlus, Clock, Server, Activity, Cpu, Database, Briefcase, Archive, FileText } from 'lucide-react';
+import { Zap, Users, Building2, GraduationCap, AlertCircle, Calendar, UserPlus, Clock, Server, Activity, Database, Briefcase, Archive, FileText } from 'lucide-react';
 import { fetchAuth } from '@/lib/api/auth';
 import { toast } from 'react-hot-toast';
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, BarChart, Bar, Legend, LineChart, Line } from 'recharts';
+import { XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, BarChart, Bar, Legend, LineChart, Line } from 'recharts';
 
 export default function AdminDashboard() {
   const [stats, setStats] = useState({
@@ -16,7 +16,6 @@ export default function AdminDashboard() {
     pendingVerifications: 0,
   });
   const [recentUsers, setRecentUsers] = useState<any[]>([]);
-  const [chartData, setChartData] = useState<any[]>([]);
   const [registrations, setRegistrations] = useState<any[]>([]);
   const [jobsData, setJobsData] = useState<any[]>([]);
   const [roleData, setRoleData] = useState<any[]>([]);
@@ -126,32 +125,6 @@ export default function AdminDashboard() {
           return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
         });
         setRecentUsers(sortedUsers.slice(0, 5));
-
-        // Get chart data (last 6 months)
-        const last6Months = Array.from({length: 6}, (_, i) => {
-            const d = new Date();
-            d.setMonth(d.getMonth() - i);
-            return {
-                month: d.toLocaleString('id-ID', { month: 'short' }),
-                year: d.getFullYear(),
-                count: 0
-            };
-        }).reverse();
-
-        users.forEach((u: any) => {
-            if(!u.created_at) return;
-            const date = new Date(u.created_at);
-            const monthStr = date.toLocaleString('id-ID', { month: 'short' });
-            const year = date.getFullYear();
-            const target = last6Months.find(m => m.month === monthStr && m.year === year);
-            if(target) target.count += 1;
-        });
-
-        setChartData(last6Months.map(d => ({
-            name: `${d.month}`,
-            Pendaftar: d.count
-        })));
-
       } catch (error) {
         toast.error('Gagal mengambil statistik dashboard');
       } finally {

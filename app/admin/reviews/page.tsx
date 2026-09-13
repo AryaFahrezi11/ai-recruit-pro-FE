@@ -6,17 +6,11 @@ import {
   Search,
   Star,
   Trash2,
-  Filter,
   Eye,
   RefreshCw,
   MessageSquareQuote,
   CheckCircle2,
   X,
-  AlertCircle,
-  User,
-  Building2,
-  Calendar,
-  Sparkles,
   ChevronDown
 } from 'lucide-react';
 import { fetchAuth } from '@/lib/api/auth';
