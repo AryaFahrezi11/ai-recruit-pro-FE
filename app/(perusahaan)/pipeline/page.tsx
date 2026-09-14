@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, Suspense } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { useTranslation } from '@/hooks/useTranslation';
 import { KanbanColumn } from '@/components/pipeline/KanbanColumn';
 import { CandidateCard, CandidateStage, CandidateStatus } from '@/components/pipeline/CandidateCard';
@@ -72,23 +73,35 @@ function formatDate(dateStr: string | null | undefined): string {
   }
 }
 
-export default function PipelinePage() {
+function PipelineContent() {
   const { t } = useTranslation();
+  const searchParams = useSearchParams();
+  const urlJobTitle = searchParams.get('jobTitle') || searchParams.get('job') || '';
+  const urlJobId = searchParams.get('jobId') || '';
+  const urlStage = searchParams.get('stage') || '';
+
   const [viewMode, setViewMode] = useState<'table' | 'kanban'>('table');
   const [selectedCandidate, setSelectedCandidate] = useState<CandidateData | null>(null);
 
   const [applications, setApplications] = useState<any[]>([]);
+  const [jobsList, setJobsList] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [pollingId, setPollingId] = useState<string | null>(null);
   const [pollProgress, setPollProgress] = useState<number>(0);
   const [pollMessage, setPollMessage] = useState<string>('');
   const [analyzingId, setAnalyzingId] = useState<string | null>(null);
 
-  // Filter & GET Search States (Default: Validasi HR)
+  // Filter & GET Search States (Default: Validasi HR, atau dari URL)
   const [searchInput, setSearchInput] = useState('');
   const [activeSearch, setActiveSearch] = useState('');
-  const [stageFilter, setStageFilter] = useState('human_validation');
-  const [jobFilter, setJobFilter] = useState('all');
+  const [stageFilter, setStageFilter] = useState(urlStage || 'human_validation');
+  const [jobFilter, setJobFilter] = useState(urlJobTitle || urlJobId || 'all');
+
+  useEffect(() => {
+    if (urlJobTitle) setJobFilter(urlJobTitle);
+    else if (urlJobId) setJobFilter(urlJobId);
+    if (urlStage) setStageFilter(urlStage);
+  }, [urlJobTitle, urlJobId, urlStage]);
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -103,10 +116,17 @@ export default function PipelinePage() {
   const loadApplications = async () => {
     try {
       setLoading(true);
-      const res = await fetchAuth('/api/applications/');
-      if (res.ok) {
-        const data = await res.json();
+      const [appsRes, jobsRes] = await Promise.all([
+        fetchAuth('/api/applications/'),
+        fetchAuth('/api/jobs/my-jobs')
+      ]);
+      if (appsRes.ok) {
+        const data = await appsRes.json();
         setApplications(data.data || []);
+      }
+      if (jobsRes.ok) {
+        const jData = await jobsRes.json();
+        setJobsList(jData || []);
       }
     } catch (e) {
       console.error(e);
@@ -279,9 +299,12 @@ export default function PipelinePage() {
     });
   };
 
-  // Extract distinct job categories for filter dropdown
+  // Extract distinct job categories/titles for filter dropdown
   const distinctCategories = useMemo(() => {
     const categorySet = new Set<string>();
+    jobsList.forEach(j => {
+      if (j.judul_posisi) categorySet.add(j.judul_posisi.trim());
+    });
     applications.forEach(a => {
       const catName = a.job?.kategori?.nama_kategori || a.job?.kategori_nama || a.job?.kategori;
       if (catName && typeof catName === 'string' && catName.trim()) {
@@ -300,7 +323,7 @@ export default function PipelinePage() {
     });
 
     return Array.from(normalizedMap.values()).sort((a, b) => a.localeCompare(b));
-  }, [applications]);
+  }, [applications, jobsList]);
 
   // Filtered applications for Table View
   const filteredApplications = useMemo(() => {
@@ -317,9 +340,10 @@ export default function PipelinePage() {
       if (jobFilter !== 'all') {
         const appCategory = (app.job?.kategori?.nama_kategori || app.job?.kategori_nama || '').toLowerCase();
         const appJobTitle = (app.job?.judul_posisi || '').toLowerCase();
+        const appJobId = (app.job?.id || app.job_id || '').toLowerCase();
         const filterLower = jobFilter.toLowerCase();
 
-        matchJob = appCategory.includes(filterLower) || appJobTitle.includes(filterLower);
+        matchJob = appCategory.includes(filterLower) || appJobTitle.includes(filterLower) || appJobId === filterLower;
       }
 
       // Stage Filter (Default: human_validation matches both before & during interview lanjutan)
@@ -703,14 +727,17 @@ export default function PipelinePage() {
                 onChange={(e) => setJobFilter(e.target.value)}
                 className="w-full px-2 py-1 bg-muted/40 border border-border rounded-xl text-xs text-foreground focus:ring-2 focus:ring-primary/20 outline-none font-medium cursor-pointer"
               >
-                <option value="all">Semua Lowongan </option>
+                <option value="all">Semua Lowongan</option>
                 {distinctCategories.map(c => (
                   <option key={c} value={c}>{c}</option>
                 ))}
+                {jobFilter !== 'all' && !distinctCategories.some(c => c.toLowerCase() === jobFilter.toLowerCase()) && (
+                  <option value={jobFilter}>{jobFilter}</option>
+                )}
               </select>
             </div>
 
-            {/* Filter by Stage / Status (Default: Validasi HR) */}
+            {/* Filter by Stage / Status */}
             <div className="w-full md:w-64">
               <select
                 value={stageFilter}
@@ -723,6 +750,9 @@ export default function PipelinePage() {
                 <option value="virtual_interview">Wawancara Video</option>
                 <option value="video_analysis">Analisis AI Video</option>
                 <option value="human_validation">Validasi HR</option>
+                <option value="interview_lanjutan">Wawancara Lanjutan</option>
+                <option value="hired">Diterima (Hired)</option>
+                <option value="rejected">Ditolak</option>
               </select>
             </div>
           </div>
@@ -975,5 +1005,13 @@ export default function PipelinePage() {
         />
       )}
     </div>
+  );
+}
+
+export default function PipelinePage() {
+  return (
+    <Suspense fallback={<div className="p-8 text-center text-xs text-muted-foreground">Memuat Pipeline...</div>}>
+      <PipelineContent />
+    </Suspense>
   );
 }

@@ -55,7 +55,7 @@ export default function DashboardPage() {
         if (jobsRes.ok) {
           jobsData = await jobsRes.json();
         }
-        
+
         let appsData = [];
         if (appsRes.ok) {
           const appsJson = await appsRes.json();
@@ -69,7 +69,7 @@ export default function DashboardPage() {
         start.setHours(0, 0, 0, 0);
         const end = new Date(endDate);
         end.setHours(23, 59, 59, 999);
-        
+
         // Populate chart map with days in range
         let curr = new Date(start);
         while (curr <= end) {
@@ -78,18 +78,18 @@ export default function DashboardPage() {
           if (rangeDays <= 7) {
             keyStr = days[curr.getDay()];
           } else {
-            keyStr = `${curr.getDate()}/${curr.getMonth()+1}`;
+            keyStr = `${curr.getDate()}/${curr.getMonth() + 1}`;
           }
           if (!chartDataMap[keyStr]) chartDataMap[keyStr] = 0;
           curr.setDate(curr.getDate() + 1);
         }
-        
+
         // Also trend metrics calculations
         const oneWeekAgo = new Date();
         oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
         let cvThisWeek = 0;
         let cvLastWeek = 0;
-        
+
         let avgProcessTimeMs = 0;
         let processTimeCount = 0;
 
@@ -110,7 +110,7 @@ export default function DashboardPage() {
               if (rangeDays <= 7) {
                 keyStr = days[appliedDate.getDay()];
               } else {
-                keyStr = `${appliedDate.getDate()}/${appliedDate.getMonth()+1}`;
+                keyStr = `${appliedDate.getDate()}/${appliedDate.getMonth() + 1}`;
               }
               if (chartDataMap[keyStr] !== undefined) {
                 chartDataMap[keyStr]++;
@@ -127,10 +127,10 @@ export default function DashboardPage() {
             processTimeCount++;
           }
           if (a.status === 'ditolak') {
-             rejectedByHr++;
+            rejectedByHr++;
           }
         });
-        
+
         const chartData = Object.keys(chartDataMap).map(k => ({ name: k, value: chartDataMap[k] }));
         setPipelineData(chartData);
 
@@ -140,21 +140,37 @@ export default function DashboardPage() {
         const trendCvReceived = cvLastWeek === 0 ? `+${cvThisWeek}` : `${cvThisWeek > cvLastWeek ? '+' : ''}${((cvThisWeek - cvLastWeek) / cvLastWeek * 100).toFixed(0)}%`;
         setTrendCv(trendCvReceived);
 
-        // Process Applications Stats to match Pipeline columns
-        const cvReceived = appsData.filter((a: any) => a.status === 'upload_cv' || a.status === 'dikirim').length;
-        
-        const passedScreening = appsData.filter((a: any) => a.status === 'cv_screening' || a.status === 'lolos_cv' || a.status === 'ditolak_sistem').length;
-        
-        const interviewScheduled = appsData.filter((a: any) => a.status === 'virtual_interview' || a.status === 'video_analysis').length;
-        
-        const awaitingValidation = appsData.filter((a: any) => a.status === 'human_validation').length;
+        // Helper deteksi apakah pelamar lolos AI (berdasarkan skor/rekomendasi/tahap lanjutan)
+        const isPassedAi = (a: any) => {
+          const st = (a.status || '').toLowerCase();
+          const isRejected = ['ditolak', 'rejected', 'ditolak_sistem'].includes(st);
+          if (isRejected) return false;
 
-        // Calculate HR accuracy
+          const passedStatuses = ['lolos_cv', 'interview', 'virtual_interview', 'video_analysis', 'human_validation', 'interview_lanjutan', 'hired', 'accepted'];
+          const recPassed = a.analisis_cv?.status_rekomendasi === 'LOLOS' || (a.analisis_cv?.hasil || '').toLowerCase() === 'lolos';
+          return passedStatuses.includes(st) || recPassed;
+        };
+
+        // Process Applications Stats to match real recruitment data
+        const cvReceived = appsData.length;
+        const passedScreening = appsData.filter(isPassedAi).length;
+        const interviewScheduled = appsData.filter((a: any) => {
+          const st = (a.status || '').toLowerCase();
+          return ['virtual_interview', 'video_analysis', 'interview_lanjutan'].includes(st);
+        }).length;
+        const awaitingValidation = appsData.filter((a: any) => (a.status || '').toLowerCase() === 'human_validation').length;
+
+        // Calculate HR accuracy & avg cosine
         const avgCosineSimilarity = cosineCount > 0 ? (totalCosine / cosineCount).toFixed(1) : 0;
-        
-        // For HR Accuracy, compute from total applications that passed screening initially
-        const totalPassed = appsData.filter((a: any) => !['upload_cv', 'dikirim', 'cv_screening', 'ditolak_sistem'].includes(a.status)).length;
-        const hrAccuracy = totalPassed > 0 ? (100 - (rejectedByHr / totalPassed * 100)).toFixed(1) : 0;
+        let rejectedAfterAiPass = 0;
+        appsData.forEach((a: any) => {
+          const st = (a.status || '').toLowerCase();
+          const wasAiPassed = (a.analisis_cv?.hasil || '').toLowerCase() === 'lolos';
+          if (wasAiPassed && (st === 'rejected' || st === 'ditolak')) {
+            rejectedAfterAiPass++;
+          }
+        });
+        const hrAccuracy = passedScreening > 0 ? Math.round(100 - (rejectedAfterAiPass / passedScreening * 100)) : 100;
 
         setStats({
           cvReceived,
@@ -203,23 +219,27 @@ export default function DashboardPage() {
         });
         setPendingCandidates(pending);
 
-        // Process Jobs with correct `passed` count
-        const rejectedStatuses = ['upload_cv', 'dikirim', 'cv_screening', 'ditolak_sistem', 'ditolak'];
-        const mappedJobs = jobsData.slice(0, 3).map((j: any) => {
-          const jobApps = appsData.filter((a: any) => a.job?.id === j.id);
-          const jobPassed = jobApps.filter((a: any) => !rejectedStatuses.includes(a.status)).length;
-          
+        // Process Jobs with real applicants & passed count
+        const mappedJobs = jobsData.map((j: any) => {
+          const jobApps = appsData.filter((a: any) => (a.job?.id === j.id || a.job_id === j.id));
+          const jobPassed = jobApps.filter(isPassedAi).length;
+
           return {
             id: j.id,
             title: j.judul_posisi,
-            department: j.department || 'Engineering',
-            threshold: j.cv_threshold || 80,
+            department: j.department || 'Umum',
+            threshold: j.cv_threshold || 40,
             applicants: jobApps.length,
             passed: jobPassed,
             posted: j.created_at ? new Date(j.created_at).toLocaleDateString('id-ID') : 'Baru',
+            createdAt: j.created_at ? new Date(j.created_at).getTime() : 0,
           };
         });
-        setActiveJobs(mappedJobs);
+
+        // Tampilkan 5 lowongan terbaru berdasarkan tanggal dibuat (created_at desc)
+        mappedJobs.sort((a: any, b: any) => b.createdAt - a.createdAt);
+
+        setActiveJobs(mappedJobs.slice(0, 5));
       } catch (err) {
         console.error('Failed to load company dashboard jobs', err);
       }
@@ -229,7 +249,7 @@ export default function DashboardPage() {
 
   return (
     <div className="max-w-7xl mx-auto space-y-4 pb-16 animate-in fade-in duration-500 font-sans">
-      
+
       {/* Global Header & Date Picker */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-2">
         <div>
@@ -238,8 +258,8 @@ export default function DashboardPage() {
         </div>
         <div className="flex items-center gap-2 bg-white dark:bg-slate-950 p-1.5 rounded-lg border border-slate-200 dark:border-slate-800 shadow-sm">
           <div className="relative">
-            <input 
-              type="date" 
+            <input
+              type="date"
               value={startDate}
               onChange={(e) => setStartDate(e.target.value)}
               className="pl-7 pr-2 py-1.5 text-[11px] font-semibold bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded text-slate-700 dark:text-slate-300 outline-none focus:border-blue-500 transition-all cursor-pointer"
@@ -248,8 +268,8 @@ export default function DashboardPage() {
           </div>
           <span className="text-slate-400 text-xs font-medium px-1">-</span>
           <div className="relative">
-            <input 
-              type="date" 
+            <input
+              type="date"
               value={endDate}
               onChange={(e) => setEndDate(e.target.value)}
               className="pl-7 pr-2 py-1.5 text-[11px] font-semibold bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded text-slate-700 dark:text-slate-300 outline-none focus:border-blue-500 transition-all cursor-pointer"
@@ -294,7 +314,7 @@ export default function DashboardPage() {
 
       {/* Row 2: Action Items (Left 50%) & Pipeline (Right 50%) */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        
+
         {/* Left: Pending Validation List (Dense) */}
         <div className="bg-white dark:bg-slate-950 p-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col min-h-[300px]">
           <div className="flex justify-between items-center mb-4">
@@ -352,17 +372,17 @@ export default function DashboardPage() {
         {/* Right: Chart & AI Speed */}
         <div className="flex flex-col gap-4">
           <PipelineChart data={pipelineData} />
-          
+
           {/* AI Metrics Compact */}
           <div className="grid grid-cols-2 gap-3">
-             <div className="bg-white dark:bg-slate-950 p-3 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col justify-center">
-                <span className="text-[10px] font-bold text-slate-500 uppercase mb-1">Akurasi AI vs HR</span>
-                <span className="text-xl font-black text-emerald-600 dark:text-emerald-400">{stats.aiHrAccuracy}%</span>
-             </div>
-             <div className="bg-white dark:bg-slate-950 p-3 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col justify-center">
-                <span className="text-[10px] font-bold text-slate-500 uppercase mb-1">Rata-rata Waktu</span>
-                <span className="text-xl font-black text-slate-800 dark:text-slate-200">{avgSpeed} <span className="text-[10px] font-semibold text-slate-500">dtk/CV</span></span>
-             </div>
+            <div className="bg-white dark:bg-slate-950 p-3 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col justify-center">
+              <span className="text-[10px] font-bold text-slate-500 uppercase mb-1">Akurasi AI vs HR</span>
+              <span className="text-xl font-black text-emerald-600 dark:text-emerald-400">{stats.aiHrAccuracy}%</span>
+            </div>
+            <div className="bg-white dark:bg-slate-950 p-3 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col justify-center">
+              <span className="text-[10px] font-bold text-slate-500 uppercase mb-1">Rata-rata Waktu</span>
+              <span className="text-xl font-black text-slate-800 dark:text-slate-200">{avgSpeed} <span className="text-[10px] font-semibold text-slate-500">dtk/CV</span></span>
+            </div>
           </div>
         </div>
       </div>
@@ -377,8 +397,8 @@ export default function DashboardPage() {
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
-            <thead>
-              <tr className="bg-slate-50 dark:bg-slate-900/50 border-b border-slate-100 dark:border-slate-800">
+            <thead className="sticky top-0 bg-slate-50 dark:bg-slate-900 border-b border-slate-100 dark:border-slate-800 z-10 shadow-xs">
+              <tr>
                 <th className="py-2.5 px-4 text-[10px] font-bold text-slate-500 uppercase tracking-wider">Posisi</th>
                 <th className="py-2.5 px-4 text-[10px] font-bold text-slate-500 uppercase tracking-wider">Departemen</th>
                 <th className="py-2.5 px-4 text-[10px] font-bold text-slate-500 uppercase tracking-wider">Dibuat</th>
@@ -400,7 +420,10 @@ export default function DashboardPage() {
                   <td className="py-2.5 px-4 text-xs font-bold text-slate-700 dark:text-slate-300 text-right">{job.applicants}</td>
                   <td className="py-2.5 px-4 text-xs font-bold text-emerald-600 dark:text-emerald-400 text-right">{job.passed}</td>
                   <td className="py-2.5 px-4 text-center">
-                    <Link href={`/pipeline`} className="text-[10px] font-bold text-slate-600 hover:text-blue-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700 px-2 py-1 rounded hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
+                    <Link
+                      href={`/pipeline?jobTitle=${encodeURIComponent(job.title)}&stage=all`}
+                      className="text-[10px] font-bold text-slate-600 hover:text-blue-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700 px-2 py-1 rounded hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
+                    >
                       Lihat
                     </Link>
                   </td>

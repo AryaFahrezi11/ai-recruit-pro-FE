@@ -13,6 +13,7 @@ import {
   ChevronDown, ChevronUp
 } from 'lucide-react';
 import { fetchAuth } from '@/lib/api/auth';
+import { getApiUrl } from '@/lib/api';
 import { ParseSkills } from '@/components/ui/ParseSkills';
 import {
   Radar, RadarChart, PolarGrid, PolarAngleAxis, ResponsiveContainer
@@ -1573,7 +1574,15 @@ Salam hangat,
                     {/* Mini Video */}
                     <div className="relative rounded-lg overflow-hidden bg-slate-900 aspect-video border border-border">
                       {candidate.videoUrl ? (
-                        <video controls src={candidate.videoUrl} className="w-full h-full object-contain bg-black" />
+                        <video
+                          controls
+                          src={
+                            candidate.videoUrl.includes('r2.dev') && (candidate.id || candidate.applicationId)
+                              ? getApiUrl(`/applications/${candidate.id || candidate.applicationId}/video`)
+                              : candidate.videoUrl
+                          }
+                          className="w-full h-full object-contain bg-black"
+                        />
                       ) : (
                         <div className="w-full h-full flex flex-col items-center justify-center bg-slate-800 text-slate-400">
                           <Video size={36} className="mb-2 opacity-50" />
