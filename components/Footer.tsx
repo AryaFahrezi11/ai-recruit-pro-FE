@@ -91,6 +91,11 @@ export default function Footer() {
                 </Link>
               </li>
               <li>
+                <Link href="/campus/login" className="hover:text-white transition-colors">
+                  Portal Universitas (CDC)
+                </Link>
+              </li>
+              <li>
                 <a href="/#features-pillars" className="hover:text-white transition-colors">
                   Fitur AI Matching
                 </a>

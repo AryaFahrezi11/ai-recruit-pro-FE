@@ -6,6 +6,7 @@ import Image from 'next/image';
 import { useRouter, usePathname } from 'next/navigation';
 import { getApiUrl, getMediaUrl } from '@/lib/api';
 import Footer from '@/components/Footer';
+import Navbar from '@/components/Navbar';
 import {
   Building2,
   MapPin,
@@ -245,99 +246,7 @@ export default function GlintsCleanCompanyDetailPage({ params }: { params: Promi
 
       {/* -------------------- TOP NAVBAR (ONLY IF NOT IN APPLICANT ROUTE) -------------------- */}
       {!isApplicantRoute && (
-        <header className="sticky top-0 z-50 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 shadow-2xs transition-colors">
-          <div className="max-w-[1600px] mx-auto px-6 sm:px-10 lg:px-16 h-20 flex items-center justify-between">
-            <Link href="/" className="flex items-center gap-3 group">
-              <Image
-                src="/logo_hd.png"
-                alt="AI-RecruitPro Logo"
-                width={70}
-                height={70}
-                unoptimized
-                className="h-13 sm:h-15 w-auto object-contain shrink-0 transition-transform group-hover:scale-105"
-                priority
-              />
-              <span className="font-extrabold text-lg sm:text-xl tracking-tight text-slate-900 dark:text-white leading-none">
-                AI-RecruitPro
-              </span>
-            </Link>
-
-            <nav className="hidden md:flex items-center gap-8 text-sm font-semibold text-slate-900 dark:text-slate-200">
-              <Link href="/#job-feed-section" className="hover:text-[#1A4B9F] transition-colors">
-                Lowongan Terbaru
-              </Link>
-              <Link href="/#categories-section" className="hover:text-[#1A4B9F] transition-colors">
-                Kategori Pekerjaan
-              </Link>
-              <Link href="/companies" className="text-[#1A4B9F] font-bold relative after:content-[''] after:absolute after:bottom-[-29px] after:left-0 after:right-0 after:h-1 after:bg-[#1A4B9F]">
-                Perusahaan
-              </Link>
-              <Link href="/about" className="hover:text-[#1A4B9F] transition-colors">
-                Tentang Kami
-              </Link>
-            </nav>
-
-            <div className="flex items-center gap-2.5 sm:gap-3">
-              <Link
-                href="/perusahaan/login"
-                className="hidden sm:inline-flex px-3.5 py-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 text-xs font-bold rounded-xl transition-all items-center gap-1.5 border border-slate-200 dark:border-slate-700"
-              >
-                <Building2 size={14} />
-                <span>Untuk Perusahaan</span>
-              </Link>
-
-              <Link
-                href="/applicant/login"
-                className="hidden sm:inline-flex px-4 py-2 bg-[#1A4B9F] hover:bg-[#133878] text-white text-xs font-bold rounded-xl transition-all items-center gap-1.5 shadow-2xs"
-              >
-                <User size={14} />
-                <span>Masuk Pelamar</span>
-              </Link>
-
-              <button
-                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                className="md:hidden w-10 h-10 flex items-center justify-center rounded-xl bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-200"
-              >
-                {isMobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
-              </button>
-            </div>
-          </div>
-
-          {/* Mobile Nav Overlay */}
-          {isMobileMenuOpen && (
-            <div className="md:hidden absolute top-full left-0 w-full bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 shadow-lg px-6 py-4 flex flex-col gap-4 max-h-[80vh] overflow-y-auto">
-              <Link href="/#job-feed-section" onClick={() => setIsMobileMenuOpen(false)} className="text-slate-700 dark:text-slate-200 font-bold py-2 border-t border-slate-100 dark:border-slate-800">
-                Lowongan Terbaru
-              </Link>
-              <Link href="/#categories-section" onClick={() => setIsMobileMenuOpen(false)} className="text-slate-700 dark:text-slate-200 font-bold py-2 border-t border-slate-100 dark:border-slate-800">
-                Kategori Pekerjaan
-              </Link>
-              <Link href="/companies" onClick={() => setIsMobileMenuOpen(false)} className="text-slate-700 dark:text-slate-200 font-bold py-2 border-t border-slate-100 dark:border-slate-800">
-                Perusahaan
-              </Link>
-              <Link href="/about" onClick={() => setIsMobileMenuOpen(false)} className="text-slate-700 dark:text-slate-200 font-bold py-2 border-t border-slate-100 dark:border-slate-800">
-                Tentang Kami
-              </Link>
-
-              <div className="pt-4 border-t border-slate-100 dark:border-slate-800 flex flex-col gap-2.5 sm:hidden">
-                <Link
-                  href="/applicant/login"
-                  className="w-full flex justify-center items-center gap-2 px-4 py-2.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 text-sm font-bold border border-slate-200 dark:border-slate-700"
-                >
-                  <User size={16} />
-                  <span>Masuk</span>
-                </Link>
-                <Link
-                  href="/perusahaan/login"
-                  className="w-full flex justify-center items-center gap-2 px-4 py-2.5 rounded-lg bg-[#1A4B9F] hover:bg-[#133878] text-white text-sm font-bold shadow-sm"
-                >
-                  <Building2 size={16} />
-                  <span>Untuk Perusahaan</span>
-                </Link>
-              </div>
-            </div>
-          )}
-        </header>
+        <Navbar activePage="companies" />
       )}
 
       {/* -------------------- COMPANY HEADER CARD SECTION -------------------- */}
