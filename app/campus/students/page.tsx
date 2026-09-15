@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 
 interface ApplicationHistory {
+  id?: string;
   company: string;
   role: string;
   status: 'hired' | 'rejected' | 'in_progress';
@@ -23,6 +24,9 @@ interface ApplicationHistory {
   dateApplied: string;
   video_url?: string;
   videoUrl?: string;
+  video_playback_url?: string;
+  videoPlaybackUrl?: string;
+  ai_result?: any;
 }
 
 interface StudentItem {
@@ -48,6 +52,7 @@ interface StudentItem {
   avgPoFit: number;
   cvFileName: string;
   videoUrl?: string;
+  videoPlaybackUrl?: string;
   videoDuration: string;
   videoScores: {
     ability: number;
@@ -56,8 +61,11 @@ interface StudentItem {
     attitude: number;
     emotionalIntelligence: number;
   };
+  videoTranscript?: string;
+  aiResult?: any;
   applications: ApplicationHistory[];
 }
+
 
 function KampusMahasiswaContent() {
   const router = useRouter();
@@ -403,8 +411,6 @@ function KampusMahasiswaContent() {
             const parsedGpa = parseFloat(matchedEd.gpa || u.profil?.ipk || '0');
             const batchPeriod = matchedEd.period ? matchedEd.period.split('-')[0].trim() : (u.profil?.angkatan || '-');
 
-            const extractedVideoUrl = u.video_url || u.videoUrl || u.video_path || u.profil?.video_url || u.profil?.videoUrl || (Array.isArray(u.applications) ? (u.applications.find((a: any) => a.video_url || a.videoUrl)?.video_url || u.applications.find((a: any) => a.video_url || a.videoUrl)?.videoUrl) : undefined);
-
             const parsedApplications: ApplicationHistory[] = Array.isArray(u.applications) && u.applications.length > 0 ? u.applications.map((app: any) => {
               const rawSt = String(app.status || app.rawStatus || '').toLowerCase().trim();
               const rawTahap = String(app.stageText || app.tahapan || app.tahapRekrutmen || app.statusMessage || '').toLowerCase().trim();
@@ -439,16 +445,67 @@ function KampusMahasiswaContent() {
               }
 
               return {
+                id: app.id || app.applicationId || app.application_id,
                 company: app.company || app.companyName || app.nama_perusahaan || app.perusahaan?.nama_perusahaan || app.perusahaan?.name || app.company_name || u.targetCompany || u.profil?.targetCompany || '-',
                 role: app.role || app.jobTitle || app.posisi || app.job_title || app.lowongan?.posisi || app.lowongan?.judul || app.lowongan?.title || app.job?.title || app.job?.posisi || u.targetRole || u.profil?.jobTitle || '-',
                 status: appStatus,
                 stageText,
                 poFitScore: app.poFitScore || app.score || app.cvScore || 0,
                 dateApplied: app.dateApplied || app.applyDate || app.tanggal_melamar || app.created_at || app.createdAt || app.date || 'Terbaru',
-                video_url: app.video_url || app.videoUrl || app.video_path || extractedVideoUrl,
-                videoUrl: app.videoUrl || app.video_url || app.video_path || extractedVideoUrl,
+                video_url: app.video_url || app.videoUrl || app.video_path,
+                videoUrl: app.videoUrl || app.video_url || app.video_path,
+                video_playback_url: app.video_playback_url || app.videoPlaybackUrl,
+                videoPlaybackUrl: app.video_playback_url || app.videoPlaybackUrl,
+                ai_result: app.ai_result,
               };
             }) : [];
+
+            const appWithVideo = parsedApplications.find(a => a.video_url || a.videoUrl || a.video_playback_url || a.videoPlaybackUrl);
+            const extractedVideoUrl = appWithVideo 
+              ? (appWithVideo.video_playback_url || appWithVideo.video_url || appWithVideo.videoUrl)
+              : (u.video_playback_url || u.video_url || u.videoUrl || u.video_path || u.profil?.video_url || u.profil?.videoUrl);
+            const extractedPlaybackUrl = appWithVideo
+              ? (appWithVideo.video_playback_url || appWithVideo.videoPlaybackUrl)
+              : (u.video_playback_url || u.videoPlaybackUrl);
+            let extractedAiResult = appWithVideo?.ai_result || u.ai_result || (parsedApplications.find(a => a.ai_result)?.ai_result);
+            
+            if (typeof extractedAiResult === 'string') {
+                try {
+                    extractedAiResult = JSON.parse(extractedAiResult);
+                } catch (e) {}
+            }
+            
+            let vScores = { ability: 0, intelligent: 0, personality: 0, attitude: 0, emotionalIntelligence: 0 };
+            let vTranscript = '';
+            let vDuration = '-';
+
+            const parseScore = (val: any): number => {
+              if (val === null || val === undefined) return 0;
+              if (typeof val === 'number') return Math.round(val);
+              if (typeof val === 'string') {
+                const cleaned = parseFloat(val.replace('%', '').trim());
+                return isNaN(cleaned) ? 0 : Math.round(cleaned);
+              }
+              return 0;
+            };
+
+            if (extractedAiResult && typeof extractedAiResult === 'object') {
+                const dp = extractedAiResult.dimensi_psikologis || extractedAiResult.scores || extractedAiResult.parameter_analisis || {};
+                vScores = {
+                    ability: parseScore(dp.Ability ?? dp.ability ?? extractedAiResult.ability ?? extractedAiResult.scores?.ability),
+                    intelligent: parseScore(dp.Intelligent ?? dp.intelligent ?? extractedAiResult.intelligent ?? extractedAiResult.scores?.intelligent),
+                    personality: parseScore(dp.Personality ?? dp.personality ?? extractedAiResult.personality ?? extractedAiResult.scores?.personality),
+                    attitude: parseScore(dp.Attitude ?? dp.attitude ?? extractedAiResult.attitude ?? extractedAiResult.scores?.attitude),
+                    emotionalIntelligence: parseScore(dp['Emotional Intelligent'] ?? dp['Emotional Intelligence'] ?? dp.emotionalIntelligence ?? extractedAiResult.emotionalIntelligence ?? extractedAiResult.scores?.emotionalIntelligence),
+                };
+                vTranscript = extractedAiResult.full_transcript || extractedAiResult.transcript || extractedAiResult.ringkasan_jawaban || extractedAiResult.transkripsi || extractedAiResult.text || extractedAiResult.summary || '';
+                vDuration = extractedAiResult.durasi_formatted || extractedAiResult.durasi_teks || extractedAiResult.duration || extractedAiResult.durasi || (extractedVideoUrl ? '00:59' : '-');
+            } else if (extractedVideoUrl) {
+                vScores = u.videoScores || { ability: 0, intelligent: 0, personality: 0, attitude: 0, emotionalIntelligence: 0 };
+                vDuration = u.videoDuration || '-';
+            }
+
+
 
             const primaryApp = parsedApplications.length > 0 ? parsedApplications[0] : null;
             const resolvedCompany = primaryApp ? primaryApp.company : (u.targetCompany || u.profil?.targetCompany || '-');
@@ -479,23 +536,46 @@ function KampusMahasiswaContent() {
               gpa: isNaN(parsedGpa) ? 0 : parsedGpa,
               batch: batchPeriod,
               email: u.email || u.profil?.email,
-              phone: u.profil?.telepon || u.profil?.phone,
-              location: u.profil?.domisili || u.profil?.lokasi,
-              linkedinUrl: u.profil?.linkedin,
-              portfolioUrl: u.profil?.portfolio,
-              summary: u.profil?.ringkasan || u.profil?.bio,
-              experiences: Array.isArray(u.profil?.pengalaman) ? u.profil.pengalaman : undefined,
-              education: Array.isArray(u.profil?.riwayat_pendidikan) ? u.profil.riwayat_pendidikan : undefined,
-              categorizedSkills: Array.isArray(u.profil?.skills) ? u.profil.skills : undefined,
-              certifications: Array.isArray(u.profil?.sertifikasi) ? u.profil.sertifikasi : undefined,
+              phone: u.profil?.no_telepon || u.profil?.telepon || u.profil?.phone,
+              location: u.profil?.alamat || u.profil?.domisili || u.profil?.lokasi,
+              linkedinUrl: u.profil?.linkedin_url || u.profil?.linkedin,
+              portfolioUrl: u.profil?.portfolio_url || u.profil?.portfolio,
+              summary: u.profil?.ringkasan_diri || u.profil?.ringkasan || u.profil?.bio,
+              experiences: (() => {
+                  const val = u.profil?.pengalaman_kerja || u.profil?.pengalaman;
+                  if (Array.isArray(val)) return val;
+                  if (typeof val === 'string' && val) { try { return JSON.parse(val); } catch(e) { return undefined; } }
+                  return undefined;
+              })(),
+              education: (() => {
+                  const val = u.profil?.riwayat_pendidikan;
+                  if (Array.isArray(val)) return val;
+                  if (typeof val === 'string' && val) { try { return JSON.parse(val); } catch(e) { return undefined; } }
+                  return undefined;
+              })(),
+              categorizedSkills: (() => {
+                  const val = u.profil?.keahlian || u.profil?.skills;
+                  if (Array.isArray(val)) return val;
+                  if (typeof val === 'string' && val) { try { return JSON.parse(val); } catch(e) { return undefined; } }
+                  return undefined;
+              })(),
+              certifications: (() => {
+                  const val = u.profil?.sertifikasi;
+                  if (Array.isArray(val)) return val;
+                  if (typeof val === 'string' && val) { try { return JSON.parse(val); } catch(e) { return undefined; } }
+                  return undefined;
+              })(),
               primaryStatus: computedPrimaryStatus,
               targetCompany: resolvedCompany,
               targetRole: resolvedRole,
               avgPoFit: u.avgPoFit || u.poFitScore || 0,
               cvFileName: u.cv_filename || `CV_${(u.name || 'Pelamar').replace(/\s+/g, '_')}.pdf`,
               videoUrl: extractedVideoUrl,
-              videoDuration: extractedVideoUrl ? (u.videoDuration || '02:15') : '-',
-              videoScores: extractedVideoUrl ? (u.videoScores || { ability: 88, intelligent: 92, personality: 85, attitude: 90, emotionalIntelligence: 87 }) : { ability: 0, intelligent: 0, personality: 0, attitude: 0, emotionalIntelligence: 0 },
+              videoPlaybackUrl: extractedPlaybackUrl,
+              videoDuration: extractedVideoUrl ? vDuration : '-',
+              videoScores: vScores,
+              videoTranscript: vTranscript,
+              aiResult: extractedAiResult,
               applications: parsedApplications.length > 0 ? parsedApplications : [
                 {
                   company: resolvedCompany,
@@ -1453,12 +1533,12 @@ function KampusMahasiswaContent() {
               <div className="space-y-5 animate-in fade-in duration-200">
 
                 {(() => {
-                  const rawVideoUrl = selectedStudent.videoUrl ||
+                  const rawVideoUrl = selectedStudent.videoPlaybackUrl || selectedStudent.videoUrl ||
+                    (selectedStudent.applications && selectedStudent.applications.find(a => a.video_playback_url || a.videoPlaybackUrl)?.video_playback_url) ||
                     (selectedStudent.applications && selectedStudent.applications.find(a => a.video_url || a.videoUrl)?.video_url) ||
-                    (selectedStudent.applications && selectedStudent.applications.find(a => a.video_url || a.videoUrl)?.videoUrl) ||
-                    (typeof window !== 'undefined' ? (localStorage.getItem('candidateVideoUrl') || localStorage.getItem('applicantVideoUrl')) : null);
+                    (selectedStudent.applications && selectedStudent.applications.find(a => a.video_url || a.videoUrl)?.videoUrl);
 
-                  if (!rawVideoUrl) {
+                  if (!rawVideoUrl || rawVideoUrl === 'null' || rawVideoUrl === 'undefined' || !rawVideoUrl.trim()) {
                     return (
                       <div className="relative aspect-video bg-muted/30 rounded-2xl border border-border flex flex-col items-center justify-center p-6 text-center space-y-2">
                         <VideoOff size={32} className="text-muted-foreground/60 mb-1" />
@@ -1473,6 +1553,14 @@ function KampusMahasiswaContent() {
                   }
 
                   const resolveVideoUrl = (url: string): string => {
+                    if (!url) return '';
+                    if (url.includes('r2.dev')) {
+                      const appId = (selectedStudent.applications && selectedStudent.applications.find(a => a.video_url || a.videoUrl)?.id) || selectedStudent.applications?.[0]?.id;
+                      if (appId) {
+                        const apiBase = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+                        return `${apiBase.replace(/\/$/, '')}/api/applications/${appId}/video`;
+                      }
+                    }
                     if (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('data:') || url.startsWith('blob:')) {
                       return url;
                     }
@@ -1486,9 +1574,11 @@ function KampusMahasiswaContent() {
                     <div className="relative aspect-video bg-slate-950 rounded-2xl overflow-hidden border border-border shadow-xl group flex items-center justify-center">
                       {isPlayingVideo ? (
                         <video
+                          key={finalVideoUrl}
                           src={finalVideoUrl}
                           controls
                           autoPlay
+                          playsInline
                           className="w-full h-full object-contain bg-black"
                         />
                       ) : (
@@ -1503,11 +1593,11 @@ function KampusMahasiswaContent() {
                             Putar Rekaman Video Wawancara Virtual
                           </p>
                           <p className="text-xs text-slate-400">
-                            Durasi Rekaman: {selectedStudent.videoDuration || '02:15'} &bull; Klik untuk memutar video
+                            Durasi Rekaman: {selectedStudent.videoDuration} &bull; Klik untuk memutar video
                           </p>
 
                           <div className="absolute bottom-3 left-4 right-4 flex items-center justify-between text-[10px] text-white/80 font-mono bg-black/60 backdrop-blur-xs px-3 py-1.5 rounded-lg">
-                            <span>02:15 / 15:32</span>
+                            <span>00:00 / {selectedStudent.videoDuration}</span>
                             <span>1080p FHD &bull; 48kHz Audio</span>
                           </div>
                         </div>
@@ -1517,12 +1607,14 @@ function KampusMahasiswaContent() {
                 })()}
 
                 {(() => {
-                  const hasVideo = Boolean(
-                    selectedStudent.videoUrl ||
+                  const rawVidCheck = selectedStudent.videoPlaybackUrl || selectedStudent.videoUrl ||
+                    (selectedStudent.applications && selectedStudent.applications.find(a => a.video_playback_url || a.videoPlaybackUrl)?.video_playback_url) ||
                     (selectedStudent.applications && selectedStudent.applications.find(a => a.video_url || a.videoUrl)?.video_url) ||
-                    (selectedStudent.applications && selectedStudent.applications.find(a => a.video_url || a.videoUrl)?.videoUrl) ||
-                    (typeof window !== 'undefined' ? (localStorage.getItem('candidateVideoUrl') || localStorage.getItem('applicantVideoUrl')) : null)
-                  );
+                    (selectedStudent.applications && selectedStudent.applications.find(a => a.video_url || a.videoUrl)?.videoUrl);
+                  const hasVideo = Boolean(rawVidCheck && rawVidCheck !== 'null' && rawVidCheck !== 'undefined' && rawVidCheck.trim() !== '');
+
+                  const gestures = selectedStudent.aiResult?.parameter_analisis;
+                  const questions = selectedStudent.aiResult?.analisis_pertanyaan;
 
                   return (
                     <>
@@ -1541,7 +1633,7 @@ function KampusMahasiswaContent() {
                             <div key={param.key} className="p-2.5 bg-muted/30 border border-border rounded-xl text-center">
                               <p className="text-[10px] font-semibold text-muted-foreground mb-0.5">{param.label}</p>
                               <span className="text-base font-bold text-[#1A4B9F] dark:text-blue-400">
-                                {hasVideo && param.score && param.score > 0 ? param.score : '-'}
+                                {hasVideo && param.score && param.score > 0 ? `${param.score}%` : '-'}
                               </span>
                             </div>
                           ))}
@@ -1553,6 +1645,61 @@ function KampusMahasiswaContent() {
                         )}
                       </div>
 
+                      {/* Gestur Visual Pelamar (Jika Tersedia di AI Result) */}
+                      {hasVideo && gestures && (
+                        <div className="space-y-2 p-3 bg-muted/20 border border-border rounded-xl">
+                          <span className="text-[11px] font-bold text-foreground uppercase tracking-wider block">
+                            Detail Gestur & Gerakan Pelamar
+                          </span>
+                          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                            <div className="p-2 bg-background border border-border rounded-lg text-center">
+                              <span className="text-[10px] text-muted-foreground block">Kontak Mata</span>
+                              <span className="text-xs font-bold text-foreground">{gestures.kontak_mata ? `${gestures.kontak_mata}%` : '-'}</span>
+                            </div>
+                            <div className="p-2 bg-background border border-border rounded-lg text-center">
+                              <span className="text-[10px] text-muted-foreground block">Gerakan Badan</span>
+                              <span className="text-xs font-bold text-foreground">{gestures.gerakan_badan ? `${gestures.gerakan_badan}%` : '-'}</span>
+                            </div>
+                            <div className="p-2 bg-background border border-border rounded-lg text-center">
+                              <span className="text-[10px] text-muted-foreground block">Gerakan Kepala</span>
+                              <span className="text-xs font-bold text-foreground">{gestures.gerakan_kepala ? `${gestures.gerakan_kepala}%` : '-'}</span>
+                            </div>
+                            <div className="p-2 bg-background border border-border rounded-lg text-center">
+                              <span className="text-[10px] text-muted-foreground block">Gerakan Tangan</span>
+                              <span className="text-xs font-bold text-foreground">{gestures.gerakan_tangan ? `${gestures.gerakan_tangan}%` : '-'}</span>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Evaluasi Pertanyaan Wawancara (Jika Tersedia) */}
+                      {hasVideo && Array.isArray(questions) && questions.length > 0 && (
+                        <div className="space-y-2.5">
+                          <h6 className="font-bold text-xs text-foreground uppercase tracking-wider">
+                            Evaluasi Jawaban Tiap Pertanyaan ({questions.length} Pertanyaan)
+                          </h6>
+                          <div className="space-y-2">
+                            {questions.map((q: any, idx: number) => (
+                              <div key={idx} className="p-3 bg-muted/20 border border-border rounded-xl space-y-1">
+                                <div className="flex items-center justify-between text-xs">
+                                  <span className="font-bold text-foreground">{idx + 1}. {q.pertanyaan || `Pertanyaan ${idx + 1}`}</span>
+                                  {q.skor_relevansi && (
+                                    <span className="text-[10px] font-bold px-2 py-0.5 bg-blue-100 dark:bg-blue-950 text-[#1A4B9F] dark:text-blue-300 rounded-full">
+                                      Skor: {q.skor_relevansi}%
+                                    </span>
+                                  )}
+                                </div>
+                                {q.ringkasan && (
+                                  <p className="text-xs text-muted-foreground leading-relaxed">
+                                    {q.ringkasan}
+                                  </p>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
                       {/* Video Transcript Excerpt */}
                       <div className="p-4 bg-muted/30 border border-border rounded-xl space-y-1.5">
                         <h6 className="font-bold text-xs text-foreground flex items-center gap-1.5">
@@ -1561,7 +1708,9 @@ function KampusMahasiswaContent() {
                         </h6>
                         <p className="text-xs text-muted-foreground italic leading-relaxed">
                           {hasVideo
-                            ? `"...dalam proyek akhir perguruan tinggi, saya memimpin 4 rekan mahasiswa untuk merancang sistem rekrutmen AI berbasis Cosine Similarity yang meningkatkan efisiensi screening CV hingga 30%..."`
+                            ? (selectedStudent.videoTranscript 
+                                ? `"${selectedStudent.videoTranscript}"` 
+                                : `Transkrip wawancara sedang diproses atau tidak tersedia untuk video ini.`)
                             : `Belum ada transkrip wawancara. Transkrip akan dibuat otomatis oleh sistem setelah pelamar mengunggah video wawancara.`}
                         </p>
                       </div>
