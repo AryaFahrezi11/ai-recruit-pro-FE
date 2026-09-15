@@ -153,8 +153,9 @@ export async function apiRequest<T = any>(
     if (err instanceof ApiError) {
       throw err;
     }
-    console.error('[apiRequest] Fetch failed:', { endpoint: url, error: err.message, stack: err.stack });
-    throw new ApiError(err.message || 'Gagal terhubung ke server', 0);
+    const msg = err?.message || 'Gagal terhubung ke server';
+    console.warn(`[apiRequest] Notice for ${url}:`, msg);
+    throw new ApiError(msg, 0);
   }
 }
 

@@ -5,7 +5,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import Footer from '@/components/Footer';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { getApiUrl } from '@/lib/api';
+import { getApiUrl, api } from '@/lib/api';
 import {
   Building2,
   Lock,
@@ -18,7 +18,8 @@ import {
   Eye,
   EyeOff,
   ArrowRight,
-  ShieldBan
+  ShieldBan,
+  GraduationCap
 } from 'lucide-react';
 
 function CompanyRegistrationInner() {
@@ -35,6 +36,24 @@ function CompanyRegistrationInner() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [agreedConsent, setAgreedConsent] = useState(false);
+  const [isCheckingEmail, setIsCheckingEmail] = useState(false);
+
+  const handleCheckEmail = async () => {
+    if (!email || !email.includes('@')) return;
+    setIsCheckingEmail(true);
+    try {
+      const res = await api.get(`/auth/check-email?email=${encodeURIComponent(email.trim())}&role=perusahaan`);
+      if (res.exists && res.is_active && (res.role === 'perusahaan' || !res.role)) {
+        setErrorStep1('Alamat email ini sudah terdaftar sebagai akun perusahaan yang aktif. Silakan langsung masuk ke akun Anda.');
+      } else if (errorStep1.toLowerCase().includes('terdaftar')) {
+        setErrorStep1('');
+      }
+    } catch {
+      // ignore network errors on passive check
+    } finally {
+      setIsCheckingEmail(false);
+    }
+  };
 
   const handleEnterToNext = (e: React.KeyboardEvent<HTMLFormElement>) => {
     if (e.key === 'Enter') {
@@ -460,11 +479,11 @@ function CompanyRegistrationInner() {
         </Link>
 
         <Link
-          href="/applicant/register"
+          href="/campus/register"
           className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 hover:text-[#1A4B9F] dark:hover:text-blue-400 hover:border-[#1A4B9F]/40 shadow-xs text-xs font-semibold transition-all group"
         >
-          <User size={15} className="text-[#1A4B9F] dark:text-blue-400" />
-          <span>Portal Pelamar Kerja</span>
+          <GraduationCap size={15} className="text-[#1A4B9F] dark:text-blue-400" />
+          <span>Akun Universitas</span>
           <ArrowRight size={14} className="text-slate-400 group-hover:translate-x-0.5 transition-transform" />
         </Link>
       </header>
@@ -504,7 +523,7 @@ function CompanyRegistrationInner() {
               <div className="w-12 h-12 rounded-2xl bg-[#1A4B9F]/10 dark:bg-slate-800 border border-[#1A4B9F]/20 dark:border-slate-700 flex items-center justify-center text-[#1A4B9F] dark:text-blue-400 mx-auto">
                 <Building2 size={24} />
               </div>
-              <h1 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white tracking-tight">Buat Akun Perusahaan</h1>
+              <h1 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white tracking-tight">Daftar Akun Perusahaan</h1>
               <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400">
                 Gunakan email domain perusahaan Anda untuk memulai proses pendaftaran.
               </p>
@@ -519,11 +538,17 @@ function CompanyRegistrationInner() {
                     type="email"
                     value={email}
                     onChange={(e) => { setEmail(e.target.value); setErrorStep1(''); }}
+                    onBlur={handleCheckEmail}
                     onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); document.getElementById('reg-password')?.focus(); } }}
                     placeholder="contoh: hrd@perusahaan.com"
                     className={inputWithIcon}
                   />
                 </div>
+                {isCheckingEmail && (
+                  <p className="text-[11px] text-slate-400 dark:text-slate-500 mt-1 pl-1">
+                    Memeriksa ketersediaan email...
+                  </p>
+                )}
                 <p className="text-[11px] text-slate-400 mt-1">
                   Gunakan email resmi domain perusahaan Anda (1 perusahaan = 1 akun perwakilan). Email pribadi (Gmail, Yahoo) tidak diperbolehkan.
                 </p>

@@ -116,7 +116,6 @@ export default function PelamarLoginPage() {
       }
     } catch (err: any) {
       const parsed = parseErrorMessage(err);
-      setError(parsed);
 
       const lowerMsg = parsed.toLowerCase();
       const isBanned =
@@ -136,14 +135,51 @@ export default function PelamarLoginPage() {
       const isUnverified =
         !isBanned &&
         (lowerMsg.includes('otp') ||
+          lowerMsg.includes('belum aktif') ||
           lowerMsg.includes('belum diverifikasi') ||
-          (lowerMsg.includes('verifikasi') && !lowerMsg.includes('dinonaktifkan')) ||
-          lowerMsg.includes('memasukkan kode'));
+          lowerMsg.includes('perlu verifikasi') ||
+          lowerMsg.includes('verifikasi kode') ||
+          lowerMsg.includes('memasukkan kode') ||
+          (lowerMsg.includes('verifikasi') && !lowerMsg.includes('dinonaktifkan')));
+
+      if (isBanned) {
+        setError(parsed);
+        return;
+      }
 
       if (isUnverified) {
         setUnverifiedAlert(parsed);
         setMode('unverified_otp');
+        setError('');
         setOtpError('');
+        api.post('/auth/resend-otp', { email }).catch(() => {});
+        return;
+      }
+
+      // Check if email is registered in DB to differentiate unregistered account vs wrong password
+      try {
+        const checkRes = await api.get(`/auth/check-email?email=${encodeURIComponent(email.trim())}&role=pelamar`);
+        if (checkRes && checkRes.exists === false) {
+          setError('Akun pelamar belum terdaftar. Silakan melakukan pendaftaran akun terlebih dahulu.');
+          return;
+        }
+      } catch (_) {}
+
+      const isUnregistered =
+        err?.status === 404 ||
+        lowerMsg.includes('not found') ||
+        lowerMsg.includes('tidak terdaftar') ||
+        lowerMsg.includes('belum terdaftar') ||
+        lowerMsg.includes('tidak ditemukan') ||
+        lowerMsg.includes('unregistered') ||
+        lowerMsg.includes('no user') ||
+        lowerMsg.includes('user not found') ||
+        lowerMsg.includes('account not found');
+
+      if (isUnregistered) {
+        setError('Akun pelamar belum terdaftar. Silakan melakukan pendaftaran akun terlebih dahulu.');
+      } else {
+        setError(parsed);
       }
     } finally {
       setIsLoading(false);
@@ -304,7 +340,7 @@ export default function PelamarLoginPage() {
           className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 hover:text-[#1A4B9F] dark:hover:text-blue-400 hover:border-[#1A4B9F]/40 shadow-xs text-xs font-semibold transition-all group"
         >
           <Building2 size={15} className="text-[#1A4B9F] dark:text-blue-400" />
-          <span>Portal Perusahaan</span>
+          <span>Akun Perusahaan</span>
           <ArrowRight size={14} className="text-slate-400 group-hover:translate-x-0.5 transition-transform" />
         </Link>
       </header>

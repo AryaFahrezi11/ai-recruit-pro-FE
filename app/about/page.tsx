@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import Footer from '@/components/Footer';
+import Navbar from '@/components/Navbar';
 import {
   Building2,
   ShieldCheck,
@@ -26,111 +27,7 @@ export default function AboutPage() {
     <div className="min-h-screen bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-100 font-sans antialiased flex flex-col selection:bg-[#1A4B9F] selection:text-white transition-colors duration-300">
       
       {/* -------------------- TOP NAVBAR -------------------- */}
-      <header className="sticky top-0 z-50 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 shadow-2xs transition-colors duration-300">
-        <div className="max-w-[1440px] mx-auto px-6 sm:px-10 lg:px-14 h-20 flex items-center justify-between">
-          
-          {/* Brand Logo & Tag */}
-          <div className="flex items-center gap-4">
-            <Link 
-              href="/" 
-              className="flex items-center gap-3 group"
-            >
-              <Image
-                src="/logo_hd.png"
-                alt="AI-RecruitPro Logo"
-                width={280}
-                height={280}
-                quality={100}
-                unoptimized
-                className="h-13 sm:h-15 w-auto object-contain shrink-0 transition-transform group-hover:scale-105"
-                priority
-              />
-              <span className="font-extrabold text-lg sm:text-xl tracking-tight text-slate-900 dark:text-white leading-none">
-                AI-RecruitPro
-              </span>
-            </Link>
-          </div>
-
-          {/* Clean Nav Links */}
-          <nav className="hidden md:flex items-center gap-8 text-sm font-semibold text-slate-900 dark:text-slate-200">
-            <Link href="/#job-feed-section" className="transition-colors hover:text-[#1A4B9F]">
-              Lowongan Terbaru
-            </Link>
-            <Link href="/#categories-section" className="transition-colors hover:text-[#1A4B9F]">
-              Kategori Pekerjaan
-            </Link>
-            <Link href="/companies" className="transition-colors hover:text-[#1A4B9F]">
-              Perusahaan
-            </Link>
-            <Link href="/about" className="transition-colors text-[#1A4B9F] font-bold relative after:content-[''] after:absolute after:bottom-[-29px] after:left-0 after:right-0 after:h-1 after:bg-[#1A4B9F]">
-              Tentang Kami
-            </Link>
-          </nav>
-
-          {/* Right Action Controls */}
-          <div className="flex items-center gap-2.5 sm:gap-3 shrink-0">
-            <Link
-              href="/perusahaan/login"
-              className="hidden sm:inline-flex px-3.5 py-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 text-xs font-bold rounded-xl transition-all items-center gap-1.5 border border-slate-200 dark:border-slate-700 shrink-0"
-            >
-              <Building2 size={14} />
-              <span>Untuk Perusahaan</span>
-            </Link>
-
-            <Link
-              href="/applicant/login"
-              className="hidden sm:inline-flex px-4 py-2 bg-[#1A4B9F] hover:bg-[#133878] text-white text-xs font-bold rounded-xl transition-all items-center gap-1.5 shrink-0 shadow-2xs"
-            >
-              <User size={14} />
-              <span>Masuk Pelamar</span>
-            </Link>
-
-            {/* Mobile Menu Toggle */}
-            <button
-              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className="md:hidden w-10 h-10 flex items-center justify-center rounded-xl bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-200"
-            >
-              {isMobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
-            </button>
-          </div>
-
-        </div>
-
-        {/* Mobile Nav Overlay */}
-        {isMobileMenuOpen && (
-          <div className="md:hidden absolute top-full left-0 w-full bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 shadow-lg px-6 py-4 flex flex-col gap-4 max-h-[80vh] overflow-y-auto">
-            <Link href="/#job-feed-section" onClick={() => setIsMobileMenuOpen(false)} className="text-slate-700 dark:text-slate-200 font-bold py-2 border-t border-slate-100 dark:border-slate-800">
-              Lowongan Terbaru
-            </Link>
-            <Link href="/#categories-section" onClick={() => setIsMobileMenuOpen(false)} className="text-slate-700 dark:text-slate-200 font-bold py-2 border-t border-slate-100 dark:border-slate-800">
-              Kategori Pekerjaan
-            </Link>
-            <Link href="/companies" onClick={() => setIsMobileMenuOpen(false)} className="text-slate-700 dark:text-slate-200 font-bold py-2 border-t border-slate-100 dark:border-slate-800">
-              Perusahaan
-            </Link>
-            <Link href="/about" onClick={() => setIsMobileMenuOpen(false)} className="text-[#1A4B9F] font-bold py-2 border-t border-slate-100 dark:border-slate-800">
-              Tentang Kami
-            </Link>
-
-            <div className="pt-4 border-t border-slate-100 dark:border-slate-800 flex flex-col gap-2.5 sm:hidden">
-              <Link
-                href="/applicant/login"
-                className="w-full flex justify-center items-center gap-2 px-4 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 text-xs font-bold border border-slate-200 dark:border-slate-700"
-              >
-                <User size={14} />
-                <span>Masuk Pelamar</span>
-              </Link>
-              <Link
-                href="/perusahaan/login"
-                className="w-full flex justify-center items-center gap-2 px-4 py-2.5 rounded-xl bg-[#1A4B9F] text-white text-xs font-bold shadow-2xs"
-              >
-                <Building2 size={14} />
-                <span>Untuk Perusahaan</span>
-              </Link>
-            </div>
-          </div>
-        )}
-      </header>
+      <Navbar activePage="about" />
 
       {/* -------------------- HERO SECTION -------------------- */}
       <section className="relative pt-10 pb-12 sm:pt-16 sm:pb-20 bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-100 border-b border-slate-100 dark:border-slate-800 transition-colors overflow-hidden">
@@ -194,8 +91,8 @@ export default function AboutPage() {
                   </div>
                 </div>
 
-                {/* Model Cutout PNG - BALANCED MEDIUM SIZE */}
-                <div className="relative z-10 w-full h-full flex items-end justify-center">
+                {/* Model Cutout PNG - BALANCED MEDIUM SIZE WITH HOVER POP-OUT */}
+                <div className="relative z-10 w-full h-full flex items-end justify-center group">
                   <Image
                     src="/model_tentang_kami_hd.png"
                     alt="Model Utama AI-RecruitPro"
@@ -203,7 +100,7 @@ export default function AboutPage() {
                     height={1024}
                     quality={100}
                     unoptimized
-                    className="w-auto h-[100%] sm:h-[105%] object-contain drop-shadow-xl scale-100 sm:scale-105 origin-bottom"
+                    className="w-auto h-[100%] sm:h-[105%] object-contain drop-shadow-xl scale-100 sm:scale-105 group-hover:scale-105 sm:group-hover:scale-110 origin-bottom transition-transform duration-500 cursor-pointer"
                     priority
                   />
                 </div>
@@ -255,12 +152,12 @@ export default function AboutPage() {
             
             {/* Left Column Image */}
             <div className="lg:col-span-5 relative flex justify-center">
-              <div className="relative w-full max-w-[440px] aspect-[4/3] rounded-2xl overflow-hidden shadow-2xs border border-slate-200/80 dark:border-slate-800 bg-slate-50 dark:bg-slate-950">
+              <div className="relative w-full max-w-[440px] aspect-[4/3] rounded-2xl overflow-hidden shadow-2xs border border-slate-200/80 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 group cursor-pointer">
                 <Image
                   src="/team_meeting_model.jpg"
                   alt="Tim AI-RecruitPro Berdiskusi"
                   fill
-                  className="object-cover"
+                  className="object-cover group-hover:scale-105 transition-transform duration-500"
                 />
               </div>
             </div>
@@ -424,21 +321,21 @@ export default function AboutPage() {
       {/* -------------------- CALL TO ACTION BANNER -------------------- */}
       <section className="bg-white dark:bg-slate-950 py-10 sm:py-16 transition-colors">
         <div className="max-w-[1440px] mx-auto px-6 sm:px-10 lg:px-14">
-          <div className="bg-slate-900 dark:bg-slate-950 text-white rounded-3xl p-8 sm:p-14 text-center space-y-5 shadow-2xl border border-slate-800 relative overflow-hidden">
-            {/* Subtle Grid Background Overlay */}
-            <div className="absolute inset-0 opacity-[0.12] bg-[linear-gradient(to_right,#e2e8f0_1px,transparent_1px),linear-gradient(to_bottom,#e2e8f0_1px,transparent_1px)] bg-[size:2rem_2rem] pointer-events-none" />
+          <div className="bg-gradient-to-r from-[#1A4B9F] via-[#163f87] to-[#123470] text-white rounded-3xl p-8 sm:p-14 text-center space-y-5 shadow-2xl border border-blue-600/30 relative overflow-hidden">
+            {/* Subtle White Grid Background Overlay */}
+            <div className="absolute inset-0 opacity-[0.15] bg-[linear-gradient(to_right,#ffffff_1px,transparent_1px),linear-gradient(to_bottom,#ffffff_1px,transparent_1px)] bg-[size:2rem_2rem] pointer-events-none" />
             
             <div className="relative z-10 space-y-4 max-w-2xl mx-auto">
               <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tighter leading-tight text-white">
                 Siap Memulai Langkah Karir Berikutnya?
               </h2>
-              <p className="text-sm sm:text-base text-slate-300 font-normal leading-relaxed">
+              <p className="text-sm sm:text-base text-blue-100/90 font-normal leading-relaxed">
                 Bergabunglah bersama ribuan talenta dan perusahaan yang telah merasakan kemudahan rekrutmen di AI-RecruitPro.
               </p>
               <div className="pt-1">
                 <Link
                   href="/applicant/register"
-                  className="inline-flex items-center gap-2 px-7 py-3.5 rounded-full bg-white hover:bg-slate-100 text-slate-900 font-bold text-sm shadow-lg transition-all cursor-pointer hover:scale-105 active:scale-95"
+                  className="inline-flex items-center gap-2 px-7 py-3.5 rounded-full bg-white hover:bg-slate-100 text-[#1A4B9F] font-bold text-sm shadow-lg transition-all cursor-pointer hover:scale-105 active:scale-95"
                 >
                   <span>Cari Lowongan Kerja</span>
                   <ArrowRight size={16} />

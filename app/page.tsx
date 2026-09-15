@@ -7,6 +7,7 @@ import Image from 'next/image';
 import { useAppStore } from '@/lib/store/useAppStore';
 import { getBaseUrl, getMediaUrl, getApiUrl } from '@/lib/api';
 import Footer from '@/components/Footer';
+import Navbar from '@/components/Navbar';
 import { useTranslation } from '@/hooks/useTranslation';
 
 import {
@@ -47,7 +48,9 @@ import {
   RotateCcw,
   RefreshCw,
   FilterX,
-  Quote
+  Quote,
+  GraduationCap,
+  LogIn
 } from 'lucide-react';
 
 const slugify = (text: string) => {
@@ -91,6 +94,7 @@ function LandingPageContent() {
   const [mounted, setMounted] = useState(false);
   const [activeSection, setActiveSection] = useState('');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isLoginDropdownOpen, setIsLoginDropdownOpen] = useState(false);
 
   const lang = t.landing || {
     findJob: 'Explore Jobs',
@@ -495,117 +499,7 @@ function LandingPageContent() {
     <div className="min-h-screen bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 font-sans antialiased flex flex-col selection:bg-[#1A4B9F] selection:text-white transition-colors duration-300">
 
       {/* Top Navbar */}
-      <header className="sticky top-0 z-50 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 shadow-2xs transition-colors duration-300">
-        <div className="max-w-[1440px] mx-auto px-6 sm:px-10 lg:px-14 h-20 flex items-center justify-between">
-          {/* Brand Logo & Tag */}
-          <div className="flex items-center gap-4">
-            <Link
-              href="/"
-              onClick={(e) => {
-                if (window.location.pathname === '/') {
-                  e.preventDefault();
-                  window.scrollTo({ top: 0, behavior: 'smooth' });
-                }
-              }}
-              className="flex items-center gap-3 group"
-            >
-              <Image
-                src="/logo_hd.png"
-                alt="AI-RecruitPro Logo"
-                width={280}
-                height={280}
-                quality={100}
-                unoptimized
-                className="h-13 sm:h-15 w-auto object-contain shrink-0 transition-transform group-hover:scale-105"
-                priority
-              />
-              <span className="font-extrabold text-lg sm:text-xl tracking-tight text-slate-900 dark:text-white leading-none">
-                AI-RecruitPro
-              </span>
-            </Link>
-          </div>
-
-          {/* Clean Nav Links */}
-          <nav className="hidden md:flex items-center gap-8 text-sm font-semibold text-slate-900 dark:text-slate-200">
-            <a href="#job-feed-section" onClick={() => setActiveSection('job-feed-section')} className={`transition-colors relative ${activeSection === 'job-feed-section' ? 'text-[#1A4B9F] font-bold after:content-[""] after:absolute after:bottom-[-29px] after:left-0 after:right-0 after:h-1 after:bg-[#1A4B9F]' : 'hover:text-[#1A4B9F]'}`}>
-              {lang.poFitJobs || 'Lowongan Terbaru'}
-            </a>
-            <a href="#categories-section" onClick={() => setActiveSection('categories-section')} className={`transition-colors relative ${activeSection === 'categories-section' ? 'text-[#1A4B9F] font-bold after:content-[""] after:absolute after:bottom-[-29px] after:left-0 after:right-0 after:h-1 after:bg-[#1A4B9F]' : 'hover:text-[#1A4B9F]'}`}>
-              {lang.categories || 'Kategori Pekerjaan'}
-            </a>
-            <Link href="/companies" className="transition-colors relative hover:text-[#1A4B9F]">
-              Perusahaan
-            </Link>
-            <Link href="/about" className="transition-colors relative hover:text-[#1A4B9F]">
-              Tentang Kami
-            </Link>
-          </nav>
-
-          {/* Right Action Controls */}
-          <div className="flex items-center gap-2.5 sm:gap-3 shrink-0">
-            <Link
-              href="/perusahaan/login"
-              className="hidden sm:inline-flex px-3.5 py-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 text-xs font-bold rounded-xl transition-all items-center gap-1.5 border border-slate-200 dark:border-slate-700 shrink-0"
-            >
-              <Building2 size={14} />
-              <span>Untuk Perusahaan</span>
-            </Link>
-
-            <Link
-              href="/applicant/login"
-              className="hidden sm:inline-flex px-4 py-2 bg-[#1A4B9F] hover:bg-[#133878] text-white text-xs font-bold rounded-xl transition-all items-center gap-1.5 shrink-0 shadow-2xs"
-            >
-              <User size={14} />
-              <span>Masuk Pelamar</span>
-            </Link>
-
-            {/* Mobile Menu Toggle */}
-            <button
-              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className="md:hidden w-10 h-10 flex items-center justify-center rounded-xl bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-200"
-            >
-              {isMobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
-            </button>
-          </div>
-
-        </div>
-
-        {/* Mobile Nav Overlay */}
-        {isMobileMenuOpen && (
-          <div className="md:hidden absolute top-full left-0 w-full bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 shadow-lg px-6 py-4 flex flex-col gap-4 max-h-[80vh] overflow-y-auto">
-
-            <a href="#job-feed-section" onClick={() => setIsMobileMenuOpen(false)} className="text-slate-700 dark:text-slate-200 font-bold py-2 border-t border-slate-100 dark:border-slate-800">
-              Lowongan Terbaru
-            </a>
-            <a href="#categories-section" onClick={() => setIsMobileMenuOpen(false)} className="text-slate-700 dark:text-slate-200 font-bold py-2 border-t border-slate-100 dark:border-slate-800">
-              Kategori Pekerjaan
-            </a>
-            <Link href="/companies" onClick={() => setIsMobileMenuOpen(false)} className="text-slate-700 dark:text-slate-200 font-bold py-2 border-t border-slate-100 dark:border-slate-800">
-              Perusahaan
-            </Link>
-            <Link href="/about" onClick={() => setIsMobileMenuOpen(false)} className="text-slate-700 dark:text-slate-200 font-bold py-2 border-t border-slate-100 dark:border-slate-800">
-              Tentang Kami
-            </Link>
-
-            <div className="pt-4 border-t border-slate-100 dark:border-slate-800 flex flex-col gap-2.5 sm:hidden">
-              <Link
-                href="/perusahaan/login"
-                className="w-full flex justify-center items-center gap-2 px-4 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 text-xs font-bold border border-slate-200 dark:border-slate-700"
-              >
-                <Building2 size={15} />
-                <span>Untuk Perusahaan</span>
-              </Link>
-              <Link
-                href="/applicant/login"
-                className="w-full flex justify-center items-center gap-2 px-4 py-2.5 rounded-xl bg-[#1A4B9F] hover:bg-[#133878] text-white text-xs font-bold shadow-sm"
-              >
-                <User size={15} />
-                <span>Masuk Pelamar</span>
-              </Link>
-            </div>
-          </div>
-        )}
-      </header>
+      <Navbar activePage="home" />
 
       {/* Hero Section */}
       <section id="hero-search" className="relative bg-[#F4F9FF] dark:bg-slate-900 text-slate-900 dark:text-slate-100 overflow-hidden min-h-[260px] sm:min-h-[400px] lg:min-h-[480px] flex items-stretch border-b border-[#E2EFFF] dark:border-slate-800">
@@ -1237,25 +1131,30 @@ function LandingPageContent() {
 
         </div>
 
-        {/* Minimalist Light Bordered Card */}
-        <div className="mt-6 p-4 sm:p-5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-2xs">
-          <div className="space-y-0.5 text-center sm:text-left">
-            <h3 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white">
+        {/* Blue Grid Call To Action Card */}
+        <div className="mt-8 bg-gradient-to-r from-[#1A4B9F] via-[#163f87] to-[#123470] text-white rounded-3xl p-8 sm:p-12 text-center space-y-4 shadow-2xl border border-blue-600/30 relative overflow-hidden">
+          {/* Subtle White Grid Background Overlay */}
+          <div className="absolute inset-0 opacity-[0.15] bg-[linear-gradient(to_right,#ffffff_1px,transparent_1px),linear-gradient(to_bottom,#ffffff_1px,transparent_1px)] bg-[size:2rem_2rem] pointer-events-none" />
+          
+          <div className="relative z-10 space-y-3 max-w-2xl mx-auto">
+            <h3 className="text-xl sm:text-2xl lg:text-3xl font-bold tracking-tighter leading-tight text-white">
               {language === 'en' ? 'Discover More Dream Career Opportunities' : 'Temukan Lebih Banyak Peluang Karir Impian'}
             </h3>
-            <p className="text-xs text-slate-500 dark:text-slate-400 font-normal">
+            <p className="text-xs sm:text-sm text-blue-100/90 font-normal leading-relaxed">
               {language === 'en'
                 ? 'Access all verified job openings and apply with a transparent AI process.'
                 : 'Akses seluruh lowongan terverifikasi dan lamar pekerjaan dengan proses AI yang transparan.'}
             </p>
+            <div className="pt-2">
+              <Link
+                href="/applicant/login"
+                className="inline-flex items-center gap-2 px-7 py-3.5 rounded-full bg-white hover:bg-slate-100 text-[#1A4B9F] font-bold text-sm shadow-lg transition-all cursor-pointer hover:scale-105 active:scale-95"
+              >
+                <span>{language === 'en' ? 'Log In & Apply Now' : 'Masuk & Lamar Sekarang'}</span>
+                <ArrowRight size={16} />
+              </Link>
+            </div>
           </div>
-
-          <Link
-            href="/applicant/login"
-            className="shrink-0 px-5 py-2 rounded-lg bg-[#1A4B9F] hover:bg-[#133878] text-white font-bold text-xs transition-colors shadow-2xs cursor-pointer"
-          >
-            {language === 'en' ? 'Log In & Apply Now' : 'Masuk & Lamar Sekarang'}
-          </Link>
         </div>
       </section>
 
@@ -1275,58 +1174,106 @@ function LandingPageContent() {
             </p>
           </div>
 
-          {/* Dynamic Review Cards Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 pt-2 max-w-6xl mx-auto">
-            {displayedStories.map((item, idx) => (
-              <div
-                key={item.id || idx}
-                className="bg-slate-50 dark:bg-slate-900/80 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-5 flex flex-col justify-between space-y-4 hover:border-slate-300 dark:hover:border-slate-700 hover:shadow-md transition-all duration-300"
-              >
-                <div className="space-y-3">
-                  {/* Top Bar: Stars + Category */}
-                  <div className="flex items-center justify-between gap-2">
-                    <div className="flex items-center gap-1">
-                      {[1, 2, 3, 4, 5].map((starNum) => (
-                        <Star
-                          key={starNum}
-                          size={15}
-                          className={
-                            starNum <= (item.rating || 5)
-                              ? 'text-amber-400 fill-amber-400'
-                              : 'text-slate-300 dark:text-slate-700'
-                          }
-                        />
-                      ))}
-                      <span className="text-xs font-extrabold text-slate-700 dark:text-slate-300 ml-1">
-                        {(item.rating || 5).toFixed(1)}
-                      </span>
+          {/* Dynamic Review Cards Flex Layout (Clean & Balanced) */}
+          <div className="flex flex-col lg:flex-row items-center justify-center gap-6 lg:gap-8 max-w-6xl mx-auto pt-4">
+            {displayedStories.map((item, idx) => {
+              const isCenter = idx % 3 === 1; // Center card in groups of 3
+
+              if (isCenter) {
+                return (
+                  <div
+                    key={item.id || idx}
+                    className="w-full lg:flex-1 max-w-xl bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-[32px] p-7 sm:p-9 shadow-xl shadow-slate-200/50 dark:shadow-none relative z-10 flex flex-col items-center text-center space-y-4 hover:shadow-2xl transition-all duration-300 transform lg:-translate-y-1"
+                  >
+                    {/* Blue Circular Quote Icon Badge (Consistent Brand Blue #1A4B9F) */}
+                    <div className="w-13 h-13 sm:w-14 sm:h-14 rounded-full bg-[#1A4B9F] dark:bg-[#1A4B9F] text-white flex items-center justify-center shadow-md shadow-[#1A4B9F]/25 shrink-0">
+                      <Quote size={24} className="fill-white text-white" />
                     </div>
 
-                    {item.category && (
-                      <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-blue-50 dark:bg-blue-950/60 text-[#1A4B9F] dark:text-blue-400 border border-blue-100 dark:border-blue-900/60 shrink-0">
-                        {item.category}
-                      </span>
+                    {/* Rating & Category if present */}
+                    {(item.rating || item.category) && (
+                      <div className="flex items-center justify-center gap-2 pt-1">
+                        {item.rating && (
+                          <div className="flex items-center gap-1">
+                            {[1, 2, 3, 4, 5].map((starNum) => (
+                              <Star
+                                key={starNum}
+                                size={14}
+                                className={
+                                  starNum <= (item.rating || 5)
+                                    ? 'text-amber-400 fill-amber-400'
+                                    : 'text-slate-300 dark:text-slate-700'
+                                }
+                              />
+                            ))}
+                          </div>
+                        )}
+                        {item.category && (
+                          <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-blue-50 dark:bg-blue-950/60 text-[#1A4B9F] dark:text-blue-400 border border-blue-100 dark:border-blue-900/60">
+                            {item.category}
+                          </span>
+                        )}
+                      </div>
                     )}
-                  </div>
 
-                  {/* Comment */}
-                  <p className="text-slate-700 dark:text-slate-300 text-xs sm:text-sm leading-relaxed font-medium italic">
+                    {/* Quote Comment */}
+                    <p className="text-[#1F2937] dark:text-slate-200 text-sm sm:text-base lg:text-lg leading-relaxed font-semibold max-w-lg">
+                      &ldquo;{item.comment}&rdquo;
+                    </p>
+
+                    {/* Author Info */}
+                    <div className="pt-2 text-center space-y-0.5">
+                      <h4 className="font-bold text-[#111827] dark:text-white text-sm sm:text-base">{item.name}</h4>
+                      <p className="text-xs text-slate-400 dark:text-slate-500 font-medium">{item.role || 'Pelamar Kerja'}</p>
+                    </div>
+                  </div>
+                );
+              }
+
+              return (
+                <div
+                  key={item.id || idx}
+                  className="w-full lg:w-[320px] lg:shrink-0 bg-[#F8FAFC] dark:bg-slate-900/60 border border-slate-200/70 dark:border-slate-800/80 rounded-[28px] p-6 sm:p-7 flex flex-col justify-between space-y-5 hover:border-slate-300 dark:hover:border-slate-700 hover:shadow-xs transition-all duration-300"
+                >
+                  {/* Rating & Category at top */}
+                  {(item.rating || item.category) && (
+                    <div className="flex items-center justify-between gap-2">
+                      {item.rating && (
+                        <div className="flex items-center gap-1">
+                          {[1, 2, 3, 4, 5].map((starNum) => (
+                            <Star
+                              key={starNum}
+                              size={13}
+                              className={
+                                starNum <= (item.rating || 5)
+                                  ? 'text-amber-400 fill-amber-400'
+                                  : 'text-slate-300 dark:text-slate-700'
+                              }
+                            />
+                          ))}
+                        </div>
+                      )}
+                      {item.category && (
+                        <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-50/80 dark:bg-blue-950/60 text-[#1A4B9F] dark:text-blue-400 border border-blue-100 dark:border-blue-900/60">
+                          {item.category}
+                        </span>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Quote Comment */}
+                  <p className="text-[#334155] dark:text-slate-300 text-xs sm:text-sm leading-relaxed font-medium">
                     &ldquo;{item.comment}&rdquo;
                   </p>
-                </div>
 
-                {/* Author Footer */}
-                <div className="pt-3 border-t border-slate-200/60 dark:border-slate-800/80 flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-full bg-[#1A4B9F]/10 dark:bg-blue-950 text-[#1A4B9F] dark:text-blue-400 font-black flex items-center justify-center text-xs shrink-0 border border-[#1A4B9F]/20">
-                    {item.name ? item.name.charAt(0) : 'P'}
-                  </div>
-                  <div>
-                    <h4 className="font-bold text-slate-900 dark:text-white text-xs sm:text-sm">{item.name}</h4>
-                    <p className="text-[11px] text-slate-500 dark:text-slate-400 font-normal">{item.role || 'Pelamar Kerja'}</p>
+                  {/* Author Info */}
+                  <div className="space-y-0.5 pt-1">
+                    <h4 className="font-bold text-[#111827] dark:text-white text-xs sm:text-sm">{item.name}</h4>
+                    <p className="text-[11px] text-slate-400 dark:text-slate-500 font-normal line-clamp-1">{item.role || 'Pelamar Kerja'}</p>
                   </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
 
         </div>
@@ -1357,9 +1304,10 @@ function LandingPageContent() {
               <div className="pt-1">
                 <a
                   href="mailto:support@airecruitpro.com"
-                  className="inline-flex items-center gap-1.5 text-blue-500 dark:text-blue-400 font-medium text-xs sm:text-sm hover:text-blue-600 dark:hover:text-blue-300 transition-colors group"
+                  className="inline-flex items-center gap-1.5 text-[#1A4B9F] dark:text-blue-400 font-bold text-xs sm:text-sm hover:text-[#133878] dark:hover:text-blue-300 transition-colors group"
                 >
                   <span>{language === 'en' ? 'Contact support' : 'Hubungi tim support'}</span>
+                  <ArrowRight size={14} className="transition-transform group-hover:translate-x-0.5" />
                 </a>
               </div>
             </div>

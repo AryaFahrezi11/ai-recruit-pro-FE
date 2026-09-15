@@ -22,7 +22,8 @@ import {
   X,
   ShieldCheck,
   ShieldBan,
-  User
+  User,
+  GraduationCap
 } from 'lucide-react';
 import { api, parseErrorMessage, setAuthToken } from '@/lib/api';
 import { toast } from 'react-hot-toast';
@@ -143,15 +144,46 @@ export default function CompanyLoginPage() {
         (lowerMsg.includes('otp') ||
         lowerMsg.includes('belum aktif') ||
         lowerMsg.includes('belum diverifikasi') ||
-        lowerMsg.includes('verifikasi') ||
-        lowerMsg.includes('memasukkan kode'));
+        lowerMsg.includes('perlu verifikasi') ||
+        lowerMsg.includes('verifikasi kode') ||
+        lowerMsg.includes('memasukkan kode') ||
+        (lowerMsg.includes('verifikasi') && !lowerMsg.includes('dinonaktifkan')));
 
       if (isBanned) {
         setError(errorMsg || 'Akun Anda telah dibanned/diblokir oleh Admin. Anda tidak dapat masuk atau mendaftar kembali dengan email ini.');
-      } else if (isUnverified) {
+        return;
+      }
+
+      if (isUnverified) {
         setMode('unverified_otp');
         setOtpError(errorMsg);
         setCountdown(60);
+        api.post('/auth/resend-otp', { email }).catch(() => {});
+        return;
+      }
+
+      // Check if email is registered in DB to differentiate unregistered account vs wrong password
+      try {
+        const checkRes = await api.get(`/auth/check-email?email=${encodeURIComponent(email.trim())}&role=perusahaan`);
+        if (checkRes && checkRes.exists === false) {
+          setError('Akun Perusahaan belum terdaftar. Silakan daftarkan perusahaan Anda terlebih dahulu.');
+          return;
+        }
+      } catch (_) {}
+
+      const isUnregistered =
+        err?.status === 404 ||
+        lowerMsg.includes('not found') ||
+        lowerMsg.includes('tidak terdaftar') ||
+        lowerMsg.includes('belum terdaftar') ||
+        lowerMsg.includes('tidak ditemukan') ||
+        lowerMsg.includes('unregistered') ||
+        lowerMsg.includes('no user') ||
+        lowerMsg.includes('user not found') ||
+        lowerMsg.includes('account not found');
+
+      if (isUnregistered) {
+        setError('Akun Perusahaan belum terdaftar. Silakan daftarkan perusahaan Anda terlebih dahulu.');
       } else {
         setError(errorMsg);
       }
@@ -401,11 +433,11 @@ export default function CompanyLoginPage() {
         </Link>
 
         <Link
-          href="/applicant/login"
+          href="/campus/login"
           className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 hover:text-[#1A4B9F] dark:hover:text-blue-400 hover:border-[#1A4B9F]/40 shadow-xs text-xs font-semibold transition-all group"
         >
-          <User size={15} className="text-[#1A4B9F] dark:text-blue-400" />
-          <span>Portal Pelamar Kerja</span>
+          <GraduationCap size={15} className="text-[#1A4B9F] dark:text-blue-400" />
+          <span>Akun Universitas</span>
           <ArrowRight size={14} className="text-slate-400 group-hover:translate-x-0.5 transition-transform" />
         </Link>
       </header>
