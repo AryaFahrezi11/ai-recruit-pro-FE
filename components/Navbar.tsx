@@ -43,7 +43,7 @@ export default function Navbar({ activePage }: NavbarProps) {
                 window.scrollTo({ top: 0, behavior: 'smooth' });
               }
             }}
-            className="flex items-center gap-3 group"
+            className="flex items-center gap-2 sm:gap-2.5 group"
           >
             <Image
               src="/logo_hd.png"
@@ -52,10 +52,10 @@ export default function Navbar({ activePage }: NavbarProps) {
               height={280}
               quality={100}
               unoptimized
-              className="h-13 sm:h-15 w-auto object-contain shrink-0 transition-transform group-hover:scale-105"
+              className="h-7 sm:h-9 md:h-10 w-auto object-contain shrink-0 transition-transform group-hover:scale-105"
               priority
             />
-            <span className="font-extrabold text-lg sm:text-xl tracking-tight text-slate-900 dark:text-white leading-none">
+            <span className="font-extrabold text-xs sm:text-sm md:text-base tracking-tight text-slate-900 dark:text-white leading-none">
               AI-RecruitPro
             </span>
           </Link>
@@ -105,7 +105,7 @@ export default function Navbar({ activePage }: NavbarProps) {
             <button
               type="button"
               onClick={() => setIsLoginDropdownOpen(!isLoginDropdownOpen)}
-              className="px-4 py-2 bg-[#1A4B9F] hover:bg-[#133878] text-white text-xs font-bold rounded-xl transition-all duration-150 flex items-center gap-2 border border-[#1A4B9F] cursor-pointer shadow-xs hover:scale-105 active:scale-95"
+              className="px-4 py-2 bg-[#1A4B9F] hover:bg-[#133878] text-white text-xs font-bold rounded-full transition-all duration-150 flex items-center gap-2 border border-[#1A4B9F] cursor-pointer shadow-xs hover:scale-105 active:scale-95"
             >
               <User size={14} className="text-white" />
               <span>Login</span>
@@ -233,39 +233,43 @@ export default function Navbar({ activePage }: NavbarProps) {
           </Link>
 
           <div className="pt-4 border-t border-slate-100 dark:border-slate-800 flex flex-col gap-2">
-            <div className="text-[10px] font-extrabold uppercase text-slate-400 mb-1">
+            <div className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-1">
               Pilih Akses Login
             </div>
-            <Link
-              href="/applicant/login"
-              onClick={() => setIsMobileMenuOpen(false)}
-              className="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white text-xs font-bold border border-slate-200 dark:border-slate-700 hover:border-[#1A4B9F] transition-all"
-            >
-              <div className="w-7 h-7 rounded-lg bg-slate-200/60 dark:bg-slate-700 text-slate-700 dark:text-slate-200 flex items-center justify-center shrink-0">
-                <User size={15} />
-              </div>
-              <span>Pelamar</span>
-            </Link>
-            <Link
-              href="/perusahaan/login"
-              onClick={() => setIsMobileMenuOpen(false)}
-              className="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white text-xs font-bold border border-slate-200 dark:border-slate-700 hover:border-[#1A4B9F] transition-all"
-            >
-              <div className="w-7 h-7 rounded-lg bg-slate-200/60 dark:bg-slate-700 text-slate-700 dark:text-slate-200 flex items-center justify-center shrink-0">
-                <Building2 size={15} />
-              </div>
-              <span>Perusahaan</span>
-            </Link>
-            <Link
-              href="/campus/login"
-              onClick={() => setIsMobileMenuOpen(false)}
-              className="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white text-xs font-bold border border-slate-200 dark:border-slate-700 hover:border-[#1A4B9F] transition-all"
-            >
-              <div className="w-7 h-7 rounded-lg bg-slate-200/60 dark:bg-slate-700 text-slate-700 dark:text-slate-200 flex items-center justify-center shrink-0">
-                <GraduationCap size={15} />
-              </div>
-              <span>Universitas</span>
-            </Link>
+            <div className="grid grid-cols-3 gap-2">
+              <Link
+                href="/applicant/login"
+                onClick={() => setIsMobileMenuOpen(false)}
+                className="flex flex-col items-center justify-center p-3 rounded-xl bg-slate-50 dark:bg-slate-800/80 text-slate-900 dark:text-white border border-slate-200 dark:border-slate-700/80 hover:border-[#1A4B9F] dark:hover:border-blue-500 active:scale-95 transition-all text-center group"
+              >
+                <div className="w-9 h-9 rounded-lg bg-slate-200/60 dark:bg-slate-700 text-slate-700 dark:text-slate-200 flex items-center justify-center mb-2 group-hover:bg-[#1A4B9F]/10 group-hover:text-[#1A4B9F] transition-colors">
+                  <User size={18} />
+                </div>
+                <span className="text-xs font-bold truncate max-w-full">Pelamar</span>
+              </Link>
+
+              <Link
+                href="/perusahaan/login"
+                onClick={() => setIsMobileMenuOpen(false)}
+                className="flex flex-col items-center justify-center p-3 rounded-xl bg-slate-50 dark:bg-slate-800/80 text-slate-900 dark:text-white border border-slate-200 dark:border-slate-700/80 hover:border-[#1A4B9F] dark:hover:border-blue-500 active:scale-95 transition-all text-center group"
+              >
+                <div className="w-9 h-9 rounded-lg bg-slate-200/60 dark:bg-slate-700 text-slate-700 dark:text-slate-200 flex items-center justify-center mb-2 group-hover:bg-[#1A4B9F]/10 group-hover:text-[#1A4B9F] transition-colors">
+                  <Building2 size={18} />
+                </div>
+                <span className="text-xs font-bold truncate max-w-full">Perusahaan</span>
+              </Link>
+
+              <Link
+                href="/campus/login"
+                onClick={() => setIsMobileMenuOpen(false)}
+                className="flex flex-col items-center justify-center p-3 rounded-xl bg-slate-50 dark:bg-slate-800/80 text-slate-900 dark:text-white border border-slate-200 dark:border-slate-700/80 hover:border-[#1A4B9F] dark:hover:border-blue-500 active:scale-95 transition-all text-center group"
+              >
+                <div className="w-9 h-9 rounded-lg bg-slate-200/60 dark:bg-slate-700 text-slate-700 dark:text-slate-200 flex items-center justify-center mb-2 group-hover:bg-[#1A4B9F]/10 group-hover:text-[#1A4B9F] transition-colors">
+                  <GraduationCap size={18} />
+                </div>
+                <span className="text-xs font-bold truncate max-w-full">Universitas</span>
+              </Link>
+            </div>
           </div>
         </div>
       )}

@@ -262,17 +262,17 @@ export default function PelamarPerfectLayout({
 
           {/* Left Side: Brand & Main Navigation Links */}
           <div className="flex items-center gap-8">
-            <Link href="/applicant/dashboard" className="flex items-center gap-2.5 sm:gap-3 group">
+            <Link href="/applicant/dashboard" className="flex items-center gap-2 sm:gap-2.5 group">
               <Image
                 src="/logo_hd.png"
                 alt="AI-RecruitPro Logo"
                 width={70}
                 height={70}
                 unoptimized
-                className="h-10 sm:h-14 w-auto object-contain shrink-0 transition-transform group-hover:scale-105"
+                className="h-7 sm:h-9 md:h-10 w-auto object-contain shrink-0 transition-transform group-hover:scale-105"
                 priority
               />
-              <span className="font-extrabold text-base sm:text-xl tracking-tight text-slate-900 dark:text-white leading-none">
+              <span className="font-extrabold text-xs sm:text-sm md:text-base tracking-tight text-slate-900 dark:text-white leading-none">
                 AI-RecruitPro
               </span>
             </Link>

@@ -196,6 +196,34 @@ export default function SystemSettingsPage() {
     setSettings(prev => ({ ...prev, [key]: value }));
   };
 
+  const handleToggleMaintenance = async () => {
+    const nextValue = !settings.maintenance_mode;
+    const newSettings = { ...settings, maintenance_mode: nextValue };
+    setSettings(newSettings);
+    setIsSaving(true);
+    try {
+      const res = await fetchAuth('/api/admin/settings', {
+        method: 'PUT',
+        body: JSON.stringify(newSettings)
+      });
+      if (res.ok) {
+        toast.success(
+          nextValue
+            ? 'Maintenance Mode BERHASIL DIAKTIFKAN! Akses publik kini dikunci.'
+            : 'Maintenance Mode BERHASIL DIMATIKAN! Akses publik kembali dibuka.'
+        );
+      } else {
+        toast.error('Gagal menyimpan status Maintenance Mode ke server.');
+        setSettings(settings);
+      }
+    } catch (e) {
+      toast.error('Terjadi kesalahan koneksi ke server.');
+      setSettings(settings);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   const handleResetTemplate = (tpl: TemplateConfig) => {
     if (confirm(`Apakah Anda yakin ingin mengembalikan template "${tpl.title}" ke standar default sistem?`)) {
       setSettings(prev => ({
@@ -779,10 +807,20 @@ export default function SystemSettingsPage() {
                       Saat diaktifkan, seluruh platform tidak akan dapat diakses oleh pelamar maupun perusahaan. Hanya admin yang bisa masuk ke dashboard. Gunakan fitur ini saat Anda melakukan update sistem besar-besaran.
                     </p>
                     <button
-                      onClick={() => handleChange('maintenance_mode', !settings.maintenance_mode)}
-                      className="px-5 py-2.5 rounded-xl text-xs font-extrabold transition-all shadow-xs bg-black hover:bg-slate-800 text-white cursor-pointer"
+                      type="button"
+                      onClick={handleToggleMaintenance}
+                      disabled={isSaving}
+                      className={`px-5 py-2.5 rounded-full text-xs font-bold transition-all shadow-xs cursor-pointer disabled:opacity-50 ${
+                        settings.maintenance_mode
+                          ? 'bg-rose-600 hover:bg-rose-700 text-white'
+                          : 'bg-black hover:bg-slate-800 text-white'
+                      }`}
                     >
-                      {settings.maintenance_mode ? 'Matikan Maintenance Mode' : 'Aktifkan Maintenance Mode'}
+                      {isSaving
+                        ? 'Menyimpan ke Server...'
+                        : settings.maintenance_mode
+                        ? 'Matikan Maintenance Mode'
+                        : 'Aktifkan Maintenance Mode'}
                     </button>
                   </div>
                 </div>

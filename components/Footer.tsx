@@ -3,7 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { ShieldCheck } from 'lucide-react';
+
 
 export default function Footer() {
 
@@ -38,10 +38,6 @@ export default function Footer() {
             <p className="text-slate-400 leading-relaxed text-xs sm:text-sm max-w-md">
               Platform rekrutmen berbasis AI yang menghubungkan talenta terbaik dengan perusahaan teknologi terkemuka secara fair, cepat, dan transparan.
             </p>
-            <div className="pt-1 flex items-center gap-2 text-xs text-slate-400">
-              <ShieldCheck size={16} className="text-emerald-400 shrink-0" />
-              <span>Sistem Terenkripsi & Terverifikasi</span>
-            </div>
           </div>
 
           {/* Column 1: Navigasi Utama (Menu Navbar) */}
@@ -92,7 +88,7 @@ export default function Footer() {
               </li>
               <li>
                 <Link href="/campus/login" className="hover:text-white transition-colors">
-                  Portal Universitas (CDC)
+                  Portal Universitas
                 </Link>
               </li>
               <li>

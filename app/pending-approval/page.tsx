@@ -165,7 +165,7 @@ ${profileData?.profil?.hr_name || companyName}`;
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 flex flex-col justify-between font-sans antialiased transition-colors duration-300">
       {/* Top Header */}
       <header className="py-6 px-6 sm:px-12 max-w-[1600px] w-full mx-auto flex items-center justify-between">
-        <Link href="/" className="flex items-center gap-3 group">
+        <Link href="/" className="flex items-center gap-2 sm:gap-2.5 group shrink-0">
           <Image
             src="/logo_hd.png"
             alt="AI-RecruitPro Logo"
@@ -173,11 +173,11 @@ ${profileData?.profil?.hr_name || companyName}`;
             height={280}
             quality={100}
             unoptimized
-            className="h-10 sm:h-12 w-auto object-contain shrink-0 transition-transform group-hover:scale-105"
+            className="h-7 sm:h-9 md:h-10 w-auto object-contain shrink-0 transition-transform group-hover:scale-105"
             priority
           />
           <div className="flex flex-col">
-            <span className="font-extrabold text-xl tracking-tight text-slate-900 dark:text-white leading-none">
+            <span className="font-extrabold text-xs sm:text-sm md:text-base tracking-tight text-slate-900 dark:text-white leading-none">
               AI-RecruitPro
             </span>
             <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest mt-1">

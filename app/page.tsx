@@ -911,7 +911,7 @@ function LandingPageContent() {
             <div className="md:col-span-2">
               <button
                 type="submit"
-                className="w-full py-2 bg-[#1A4B9F] hover:bg-[#133878] text-white rounded-xl text-xs font-bold transition-colors shadow-2xs cursor-pointer flex items-center justify-center gap-2"
+                className="w-full py-2 bg-[#1A4B9F] hover:bg-[#133878] text-white rounded-full text-xs font-bold transition-colors shadow-2xs cursor-pointer flex items-center justify-center gap-2"
               >
                 <Search size={14} />
                 Cari
@@ -1012,7 +1012,7 @@ function LandingPageContent() {
                       <div className="flex items-center gap-2">
                         <Link
                           href="/applicant/login"
-                          className="inline-flex items-center justify-center px-4 py-1.5 rounded-lg bg-[#1A4B9F] hover:bg-[#133878] text-white font-bold text-xs shadow-2xs transition-colors"
+                          className="inline-flex items-center justify-center px-5 py-2 rounded-full bg-[#1A4B9F] hover:bg-[#133878] active:scale-95 text-white font-semibold text-xs shadow-xs hover:shadow-md transition-all cursor-pointer"
                         >
                           {language === 'en' ? 'Apply Now' : 'Lamar'}
                         </Link>
@@ -1046,7 +1046,7 @@ function LandingPageContent() {
                       window.history.replaceState(null, '', window.location.pathname);
                     }
                   }}
-                  className="mt-2 px-5 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 dark:bg-slate-100 dark:hover:bg-white text-white dark:text-slate-900 text-sm font-bold cursor-pointer transition-colors"
+                  className="mt-2 px-6 py-2.5 rounded-full bg-slate-900 hover:bg-slate-800 dark:bg-slate-100 dark:hover:bg-white text-white dark:text-slate-900 text-sm font-bold cursor-pointer transition-colors"
                 >
                   {lang.resetFilterBtn}
                 </button>
@@ -1114,7 +1114,7 @@ function LandingPageContent() {
                   {/* Action Button */}
                   <Link
                     href="/applicant/login"
-                    className="w-full py-3 rounded-full bg-[#1A4B9F] hover:bg-[#133878] text-white font-bold text-xs shadow-sm transition-all flex items-center justify-center gap-2"
+                    className="w-full py-3 rounded-full bg-[#1A4B9F] hover:bg-[#133878] active:scale-[0.99] text-white font-bold text-xs shadow-sm hover:shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer"
                   >
                     {lang.startPoFitSelection}
                   </Link>
@@ -1183,22 +1183,17 @@ function LandingPageContent() {
                 return (
                   <div
                     key={item.id || idx}
-                    className="w-full lg:flex-1 max-w-xl bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-[32px] p-7 sm:p-9 shadow-xl shadow-slate-200/50 dark:shadow-none relative z-10 flex flex-col items-center text-center space-y-4 hover:shadow-2xl transition-all duration-300 transform lg:-translate-y-1"
+                    className="w-full lg:flex-1 max-w-xl bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-[32px] p-7 sm:p-9 shadow-xl shadow-slate-200/50 dark:shadow-none relative z-10 flex flex-col justify-between space-y-6 hover:shadow-2xl transition-all duration-300 transform lg:-translate-y-1"
                   >
-                    {/* Blue Circular Quote Icon Badge (Consistent Brand Blue #1A4B9F) */}
-                    <div className="w-13 h-13 sm:w-14 sm:h-14 rounded-full bg-[#1A4B9F] dark:bg-[#1A4B9F] text-white flex items-center justify-center shadow-md shadow-[#1A4B9F]/25 shrink-0">
-                      <Quote size={24} className="fill-white text-white" />
-                    </div>
-
-                    {/* Rating & Category if present */}
+                    {/* Top Header Row: Rating Stars (Left) & Category Badge (Right) */}
                     {(item.rating || item.category) && (
-                      <div className="flex items-center justify-center gap-2 pt-1">
+                      <div className="flex items-center justify-between gap-2 border-b border-slate-100 dark:border-slate-800 pb-4">
                         {item.rating && (
                           <div className="flex items-center gap-1">
                             {[1, 2, 3, 4, 5].map((starNum) => (
                               <Star
                                 key={starNum}
-                                size={14}
+                                size={15}
                                 className={
                                   starNum <= (item.rating || 5)
                                     ? 'text-amber-400 fill-amber-400'
@@ -1209,7 +1204,7 @@ function LandingPageContent() {
                           </div>
                         )}
                         {item.category && (
-                          <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-blue-50 dark:bg-blue-950/60 text-[#1A4B9F] dark:text-blue-400 border border-blue-100 dark:border-blue-900/60">
+                          <span className="px-3 py-1 rounded-full text-[11px] font-bold bg-blue-50 dark:bg-blue-950/60 text-[#1A4B9F] dark:text-blue-400 border border-blue-100 dark:border-blue-900/60">
                             {item.category}
                           </span>
                         )}
@@ -1217,12 +1212,14 @@ function LandingPageContent() {
                     )}
 
                     {/* Quote Comment */}
-                    <p className="text-[#1F2937] dark:text-slate-200 text-sm sm:text-base lg:text-lg leading-relaxed font-semibold max-w-lg">
-                      &ldquo;{item.comment}&rdquo;
-                    </p>
+                    <div className="space-y-2 py-1">
+                      <p className="text-[#1F2937] dark:text-slate-200 text-sm sm:text-base lg:text-lg leading-relaxed font-semibold">
+                        &ldquo;{item.comment}&rdquo;
+                      </p>
+                    </div>
 
                     {/* Author Info */}
-                    <div className="pt-2 text-center space-y-0.5">
+                    <div className="pt-2 border-t border-slate-100 dark:border-slate-800/60 space-y-0.5">
                       <h4 className="font-bold text-[#111827] dark:text-white text-sm sm:text-base">{item.name}</h4>
                       <p className="text-xs text-slate-400 dark:text-slate-500 font-medium">{item.role || 'Pelamar Kerja'}</p>
                     </div>

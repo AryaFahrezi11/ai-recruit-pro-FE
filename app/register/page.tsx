@@ -449,8 +449,8 @@ function CompanyRegistrationInner() {
     'w-full pl-12 pr-4 py-3 bg-white dark:bg-slate-950 text-slate-900 dark:text-white border-2 border-slate-300 dark:border-slate-700 focus:border-[#1A4B9F] focus:ring-2 focus:ring-blue-100 dark:focus:ring-blue-900 rounded-2xl text-sm outline-none transition-all';
   const labelBase = 'block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1';
   const sectionBox = 'space-y-5 bg-slate-50 dark:bg-slate-900/50 p-6 rounded-2xl border border-slate-200 dark:border-slate-800';
-  const outlineBtn = 'px-6 py-3 rounded-full border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 font-semibold text-sm hover:bg-slate-50 dark:hover:bg-slate-800 transition-all';
-  const primaryBtnFlex = 'flex-1 py-3 rounded-full bg-[#1A4B9F] hover:bg-[#133878] active:bg-[#0f2a5a] text-white font-semibold text-sm shadow-sm transition-all duration-200 disabled:opacity-60 disabled:cursor-not-allowed';
+  const outlineBtn = 'px-6 py-3 rounded-xl border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 font-semibold text-sm hover:bg-slate-50 dark:hover:bg-slate-800 transition-all';
+  const primaryBtnFlex = 'flex-1 py-3.5 rounded-xl bg-[#1A4B9F] hover:bg-[#133878] active:scale-[0.99] text-white font-bold text-sm shadow-md hover:shadow-lg transition-all duration-200 disabled:opacity-60 disabled:cursor-not-allowed';
 
   const steps = [
     { label: 'Akun & Email' },
@@ -462,29 +462,29 @@ function CompanyRegistrationInner() {
     <div className="min-h-screen bg-[#F8FAFC] dark:bg-slate-950 flex flex-col font-sans antialiased text-slate-900 dark:text-white">
 
       {/* Top Simple Header */}
-      <header className="w-full max-w-[1440px] mx-auto px-6 sm:px-10 lg:px-14 py-5 flex items-center justify-between">
-        <Link href="/" className="flex items-center gap-3 group">
+      <header className="w-full max-w-[1440px] mx-auto px-4 sm:px-10 lg:px-14 py-3.5 sm:py-5 flex items-center justify-between gap-3">
+        <Link href="/" className="flex items-center gap-2 sm:gap-2.5 group shrink-0">
           <Image
             src="/logo_hd.png"
             alt="AI-RecruitPro Logo"
             width={70}
             height={70}
             unoptimized
-            className="h-13 sm:h-15 w-auto object-contain shrink-0 transition-transform group-hover:scale-105"
+            className="h-7 sm:h-9 md:h-10 w-auto object-contain shrink-0 transition-transform group-hover:scale-105"
             priority
           />
-          <span className="font-extrabold text-lg sm:text-xl tracking-tight text-slate-900 dark:text-white leading-none">
+          <span className="font-extrabold text-xs sm:text-sm md:text-base tracking-tight text-slate-900 dark:text-white leading-none">
             AI-RecruitPro
           </span>
         </Link>
 
         <Link
           href="/campus/register"
-          className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 hover:text-[#1A4B9F] dark:hover:text-blue-400 hover:border-[#1A4B9F]/40 shadow-xs text-xs font-semibold transition-all group"
+          className="inline-flex items-center gap-1.5 sm:gap-2 px-3 py-1.5 sm:px-4 sm:py-2 rounded-full border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 hover:text-[#1A4B9F] dark:hover:text-blue-400 hover:border-[#1A4B9F]/40 shadow-xs text-[11px] sm:text-xs font-bold whitespace-nowrap shrink-0 transition-all group"
         >
-          <GraduationCap size={15} className="text-[#1A4B9F] dark:text-blue-400" />
-          <span>Akun Universitas</span>
-          <ArrowRight size={14} className="text-slate-400 group-hover:translate-x-0.5 transition-transform" />
+          <GraduationCap size={14} className="text-[#1A4B9F] dark:text-blue-400 shrink-0" />
+          <span>Daftar Universitas</span>
+          <ArrowRight size={13} className="text-slate-400 group-hover:translate-x-0.5 transition-transform shrink-0" />
         </Link>
       </header>
 
@@ -682,7 +682,7 @@ function CompanyRegistrationInner() {
                 id="reg-submit-btn"
                 type="submit"
                 disabled={isLoading}
-                className="w-full py-3 rounded-full bg-[#1A4B9F] hover:bg-[#133878] active:bg-[#0f2a5a] text-white font-semibold text-sm shadow-sm transition-all duration-200 disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer"
+                className="w-full py-3.5 rounded-full bg-[#1A4B9F] hover:bg-[#133878] active:scale-[0.99] text-white font-bold text-sm shadow-md hover:shadow-lg transition-all duration-200 disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer"
               >
                 {isLoading ? 'Mengirim kode verifikasi...' : 'Lanjutkan'}
               </button>

@@ -191,17 +191,17 @@ export default function CampusRegisterPage() {
     <div className="min-h-screen bg-[#F8FAFC] dark:bg-slate-950 flex flex-col font-sans antialiased text-slate-900 dark:text-white">
       {/* Top Simple Header */}
       <header className="w-full max-w-[1440px] mx-auto px-6 sm:px-10 lg:px-14 py-5 flex items-center justify-between">
-        <Link href="/" className="flex items-center gap-3 group">
+        <Link href="/" className="flex items-center gap-2 sm:gap-2.5 group shrink-0">
           <Image
             src="/logo_hd.png"
             alt="AI-RecruitPro Logo"
             width={70}
             height={70}
             unoptimized
-            className="h-13 sm:h-15 w-auto object-contain shrink-0 transition-transform group-hover:scale-105"
+            className="h-7 sm:h-9 md:h-10 w-auto object-contain shrink-0 transition-transform group-hover:scale-105"
             priority
           />
-          <span className="font-extrabold text-lg sm:text-xl tracking-tight text-slate-900 dark:text-white leading-none">
+          <span className="font-extrabold text-xs sm:text-sm md:text-base tracking-tight text-slate-900 dark:text-white leading-none">
             AI-RecruitPro
           </span>
         </Link>

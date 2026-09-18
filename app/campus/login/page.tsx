@@ -319,29 +319,29 @@ export default function CampusLoginPage() {
   return (
     <div className="min-h-screen bg-[#F8FAFC] dark:bg-slate-950 flex flex-col font-sans antialiased text-slate-900 dark:text-white">
       {/* Top Simple Header */}
-      <header className="w-full max-w-[1440px] mx-auto px-6 sm:px-10 lg:px-14 py-5 flex items-center justify-between">
-        <Link href="/" className="flex items-center gap-3 group">
+      <header className="w-full max-w-[1440px] mx-auto px-4 sm:px-10 lg:px-14 py-3.5 sm:py-5 flex items-center justify-between gap-3">
+        <Link href="/" className="flex items-center gap-2 sm:gap-2.5 group shrink-0">
           <Image
             src="/logo_hd.png"
             alt="AI-RecruitPro Logo"
             width={70}
             height={70}
             unoptimized
-            className="h-13 sm:h-15 w-auto object-contain shrink-0 transition-transform group-hover:scale-105"
+            className="h-7 sm:h-9 md:h-10 w-auto object-contain shrink-0 transition-transform group-hover:scale-105"
             priority
           />
-          <span className="font-extrabold text-lg sm:text-xl tracking-tight text-slate-900 dark:text-white leading-none">
+          <span className="font-extrabold text-xs sm:text-sm md:text-base tracking-tight text-slate-900 dark:text-white leading-none">
             AI-RecruitPro
           </span>
         </Link>
 
         <Link
           href="/applicant/login"
-          className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 hover:text-[#1A4B9F] dark:hover:text-blue-400 hover:border-[#1A4B9F]/40 shadow-xs text-xs font-semibold transition-all group"
+          className="inline-flex items-center gap-1.5 sm:gap-2 px-3 py-1.5 sm:px-4 sm:py-2 rounded-full border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 hover:text-[#1A4B9F] dark:hover:text-blue-400 hover:border-[#1A4B9F]/40 shadow-xs text-[11px] sm:text-xs font-bold whitespace-nowrap shrink-0 transition-all group"
         >
-          <User size={15} className="text-[#1A4B9F] dark:text-blue-400" />
+          <User size={14} className="text-[#1A4B9F] dark:text-blue-400 shrink-0" />
           <span>Akun Pelamar</span>
-          <ArrowRight size={14} className="text-slate-400 group-hover:translate-x-0.5 transition-transform" />
+          <ArrowRight size={13} className="text-slate-400 group-hover:translate-x-0.5 transition-transform shrink-0" />
         </Link>
       </header>
 
