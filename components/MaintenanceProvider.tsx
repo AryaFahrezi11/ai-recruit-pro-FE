@@ -47,44 +47,54 @@ export default function MaintenanceProvider({ children }: { children: React.Reac
     }
 
     return (
-      <div className="fixed inset-0 z-[9999] min-h-screen w-screen bg-[#0A1120] text-slate-100 flex flex-col justify-between font-sans antialiased overflow-hidden selection:bg-[#1A4B9F] selection:text-white">
+      <div className="fixed inset-0 z-[9999] min-h-screen w-screen bg-[#040814] text-slate-100 flex flex-col justify-between font-sans antialiased overflow-hidden selection:bg-[#1A4B9F] selection:text-white">
         
-        {/* Background Layer: Blended Landing Page Colors & Glowing Accent Lines */}
-        <div className="absolute inset-0 pointer-events-none overflow-hidden z-0">
+        {/* Right Side 3D Geometric Prism Artwork (AWS-style geometric facet design in AI-RecruitPro brand colors) */}
+        <div className="absolute top-0 right-0 w-full lg:w-3/5 h-full pointer-events-none overflow-hidden opacity-90">
+          {/* Subtle Ambient Glow Orbs */}
+          <div className="absolute top-1/4 right-10 w-[500px] h-[500px] bg-[#1A4B9F]/30 rounded-full blur-[130px]" />
+          <div className="absolute bottom-0 right-0 w-[400px] h-[400px] bg-cyan-500/20 rounded-full blur-[110px]" />
           
-          {/* Landing Page Gelembung (Top Right) */}
-          <div className="absolute -top-[15%] -right-[5%] w-[60%] h-[85%] bg-[#1A4B9F]/20 rounded-[120px] rotate-[25deg] blur-2xl"></div>
-
-          {/* Landing Page Gelembung (Bottom Left Solid Blue) */}
-          <div className="absolute -bottom-[20%] -left-[10%] w-[45%] max-w-[550px] aspect-square bg-[#3886F6]/25 rounded-full blur-3xl"></div>
-
-          {/* Deep Ambient Center Glow */}
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[700px] bg-[#1A4B9F]/15 rounded-full blur-[140px]"></div>
-
-          {/* Grid Lines Pattern */}
-          <div className="absolute inset-0 bg-[linear-gradient(to_right,#1e293b_1px,transparent_1px),linear-gradient(to_bottom,#1e293b_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_50%,#000_70%,transparent_100%)] opacity-30"></div>
-
-          {/* Perpaduan Garis-Garis Glowing Warna Logo (#1A4B9F & #3886F6) */}
-          <svg className="absolute inset-0 w-full h-full opacity-60" xmlns="http://www.w3.org/2000/svg">
+          {/* SVG 3D Geometric Prism Facets */}
+          <svg
+            className="absolute top-0 right-0 h-full w-full object-cover"
+            viewBox="0 0 1000 1000"
+            preserveAspectRatio="none"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+          >
             <defs>
-              <linearGradient id="logoLineGrad1" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stopColor="#1A4B9F" stopOpacity="0" />
-                <stop offset="50%" stopColor="#3886F6" stopOpacity="0.8" />
-                <stop offset="100%" stopColor="#60A5FA" stopOpacity="0" />
+              <linearGradient id="facet1" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stopColor="#1A4B9F" stopOpacity="0.85" />
+                <stop offset="100%" stopColor="#0284C7" stopOpacity="0.9" />
               </linearGradient>
-              <linearGradient id="logoLineGrad2" x1="100%" y1="0%" x2="0%" y2="100%">
-                <stop offset="0%" stopColor="#3886F6" stopOpacity="0" />
-                <stop offset="50%" stopColor="#1A4B9F" stopOpacity="0.7" />
-                <stop offset="100%" stopColor="#2563EB" stopOpacity="0" />
+              <linearGradient id="facet2" x1="0%" y1="100%" x2="100%" y2="0%">
+                <stop offset="0%" stopColor="#0EA5E9" stopOpacity="0.8" />
+                <stop offset="100%" stopColor="#10B981" stopOpacity="0.85" />
+              </linearGradient>
+              <linearGradient id="facet3" x1="100%" y1="0%" x2="0%" y2="100%">
+                <stop offset="0%" stopColor="#06B6D4" stopOpacity="0.75" />
+                <stop offset="100%" stopColor="#1E3A8A" stopOpacity="0.9" />
+              </linearGradient>
+              <linearGradient id="darkOverlay" x1="0%" y1="0%" x2="100%" y2="0%">
+                <stop offset="0%" stopColor="#040814" stopOpacity="1" />
+                <stop offset="45%" stopColor="#040814" stopOpacity="0.9" />
+                <stop offset="100%" stopColor="#040814" stopOpacity="0.1" />
               </linearGradient>
             </defs>
 
-            {/* Glowing Accent Lines */}
-            <path d="M-100 200 Q 400 100, 900 400 T 2000 600" fill="none" stroke="url(#logoLineGrad1)" strokeWidth="2.5" />
-            <path d="M-100 350 Q 500 250, 1100 500 T 2000 750" fill="none" stroke="url(#logoLineGrad2)" strokeWidth="2" />
-            <path d="M-100 500 Q 600 350, 1200 650 T 2000 900" fill="none" stroke="url(#logoLineGrad1)" strokeWidth="1.5" opacity="0.6" />
+            {/* Geometric Poly Facets */}
+            <path d="M450 0 L1000 0 L1000 1000 L750 1000 Z" fill="url(#facet1)" />
+            <path d="M750 0 L1000 250 L1000 1000 L600 1000 Z" fill="url(#facet2)" opacity="0.9" />
+            <path d="M850 0 L1000 0 L1000 650 Z" fill="url(#facet3)" opacity="0.8" />
+            
+            {/* Split Gradient Overlay blending Left Dark Side to Right Prism */}
+            <rect width="1000" height="1000" fill="url(#darkOverlay)" />
           </svg>
         </div>
+
+        {/* Background Grid Pattern */}
+        <div className="absolute inset-0 bg-[radial-gradient(#1e293b_1px,transparent_1px)] [background-size:32px_32px] opacity-25 pointer-events-none" />
 
         {/* Content Outer Container: Matches Landing Page Grid Margin Exactly */}
         <div className="max-w-[1440px] w-full mx-auto px-6 sm:px-10 lg:px-14 min-h-screen flex flex-col justify-between py-8 sm:py-12 lg:py-14 relative z-10">
