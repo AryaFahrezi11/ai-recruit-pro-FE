@@ -623,7 +623,7 @@ function DashboardContent() {
 
   const handleCopyLink = () => {
     if (!shareJob) return;
-    const url = typeof window !== 'undefined' ? window.location.origin + '/jobs/' + shareJob.id : 'http://localhost:3000/jobs/' + shareJob.id;
+    const url = typeof window !== 'undefined' ? window.location.origin + '/jobs/' + shareJob.id : 'https://airecruit-pro.com/jobs/' + shareJob.id;
     navigator.clipboard.writeText(url);
     toast.success(language === 'id' ? 'Link berhasil disalin ke clipboard!' : 'Link copied to clipboard!');
     setShareJob(null);

@@ -103,7 +103,7 @@ const TEMPLATE_CONFIGS: TemplateConfig[] = [
     variables: [
       { tag: '{nama_perusahaan}', desc: 'Nama instansi/perusahaan', sample: 'PT Inovasi Teknologi Bangsa' },
       { tag: '{email_perusahaan}', desc: 'Alamat email akun perusahaan', sample: 'hr@inovasiteknologi.co.id' },
-      { tag: '{login_url}', desc: 'Tautan ke halaman login dashboard', sample: 'http://localhost:3000/login' }
+      { tag: '{login_url}', desc: 'Tautan ke halaman login dashboard', sample: 'https://airecruit-pro.com/login' }
     ]
   },
   {
@@ -117,7 +117,7 @@ const TEMPLATE_CONFIGS: TemplateConfig[] = [
     variables: [
       { tag: '{nama_perusahaan}', desc: 'Nama instansi/perusahaan', sample: 'PT Maju Terus Semesta' },
       { tag: '{alasan_penolakan}', desc: 'Catatan/alasan penolakan yang ditulis Admin', sample: 'Nomor NIB tidak valid di OSS dan dokumen KTP penanggung jawab buram.' },
-      { tag: '{revisi_url}', desc: 'Tautan langsung ke form perbaikan data', sample: 'http://localhost:3000/login' }
+      { tag: '{revisi_url}', desc: 'Tautan langsung ke form perbaikan data', sample: 'https://airecruit-pro.com/login' }
     ]
   }
 ];

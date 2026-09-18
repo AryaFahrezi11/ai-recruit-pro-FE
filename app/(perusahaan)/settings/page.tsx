@@ -132,7 +132,7 @@ const COMPANY_TEMPLATE_CONFIGS: TemplateConfig[] = [
       { tag: '{{candidate_name}}', desc: 'Nama lengkap pelamar', sample: 'Ahmad Fauzi' },
       { tag: '{{job_title}}', desc: 'Judul posisi lowongan', sample: 'Frontend Engineer' },
       { tag: '{{company_name}}', desc: 'Nama instansi / perusahaan', sample: 'PT Teknologi Inovasi' },
-      { tag: '{{interview_link}}', desc: 'Link ke portal perekaman wawancara', sample: 'http://localhost:3000/applicant/status' }
+      { tag: '{{interview_link}}', desc: 'Link ke portal perekaman wawancara', sample: 'https://airecruit-pro.com/applicant/status' }
     ]
   },
   {
