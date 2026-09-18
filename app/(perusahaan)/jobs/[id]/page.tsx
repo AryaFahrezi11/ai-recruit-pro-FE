@@ -1,758 +1,558 @@
 'use client';
 
-import React, { useState, useEffect, Suspense } from 'react';
+import React, { useState, useEffect, Suspense, useMemo } from 'react';
 import Link from 'next/link';
 import { useRouter, useParams } from 'next/navigation';
 import { useTranslation } from '@/hooks/useTranslation';
 import {
   ArrowLeft, Edit, Briefcase, Building2, MapPin, Clock, DollarSign,
-  Sparkles, Sliders, FileText, Plus, Trash2, CheckCircle2,
-  Calendar, Users, HelpCircle, Save, Send, Layers, Check, Globe, X, Video
+  Sparkles, Sliders, FileText, CheckCircle2,
+  Calendar, Users, Check, Video, BrainCircuit, GraduationCap,
+  Copy, ExternalLink, Share2, Layers, ShieldCheck
 } from 'lucide-react';
-import { useAppStore } from '@/lib/store/useAppStore';
 import { fetchAuth } from '@/lib/api/auth';
 import { getApiUrl } from '@/lib/api';
+import { toast } from 'react-hot-toast';
+
+function formatRupiah(val: string | number | null | undefined): string {
+  if (!val) return '';
+  const num = typeof val === 'string' ? parseFloat(val.replace(/[^0-9.-]+/g, '')) : val;
+  if (isNaN(num)) return '';
+  return new Intl.NumberFormat('id-ID', { maximumFractionDigits: 0 }).format(num);
+}
+
+function formatDate(dateStr: string | null | undefined): string {
+  if (!dateStr) return '-';
+  try {
+    return new Date(dateStr).toLocaleDateString('id-ID', {
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric'
+    });
+  } catch {
+    return dateStr;
+  }
+}
+
+function parseJsonArray(json: any): string[] {
+  if (!json) return [];
+  if (Array.isArray(json)) return json;
+  try {
+    const arr = JSON.parse(json);
+    return Array.isArray(arr) ? arr : [];
+  } catch {
+    return [];
+  }
+}
 
 function JobDetailView() {
   const { t } = useTranslation();
   const router = useRouter();
   const params = useParams();
   const jobId = params.id as string;
-  const token = useAppStore(state => state.token);
 
-  // Form State
-  const [jobTitle, setJobTitle] = useState('');
-  const [categoryId, setCategoryId] = useState('');
-  const [categories, setCategories] = useState<{ id: string, nama_kategori: string }[]>([]);
-  const [employmentType, setEmploymentType] = useState('Full-time');
-  const [workMode, setWorkMode] = useState('hybrid');
-  const [location, setLocation] = useState('');
-  const [experienceLevel, setExperienceLevel] = useState('Entry Level');
-  const [pendidikanMin, setPendidikanMin] = useState('');
-
-  // Job Description & AI Keywords
-  const [summary, setSummary] = useState('');
-
-  // Dynamic Lists
-  const [responsibilities, setResponsibilities] = useState<string[]>([]);
-  const [newResp, setNewResp] = useState('');
-
-  const [requirements, setRequirements] = useState<string[]>([]);
-  const [newReq, setNewReq] = useState('');
-
-  const [aiKeywords, setAiKeywords] = useState<string[]>([]);
-  const [keywordInput, setKeywordInput] = useState('');
-
-  // AI Configuration
-  const [threshold, setThreshold] = useState<number>(60);
-  const [videoQuestions, setVideoQuestions] = useState<string[]>([]);
-  const [newQuestion, setNewQuestion] = useState('');
-
-  // Compensation & Benefits
-  const [currency, setCurrency] = useState('IDR');
-  const [salaryMin, setSalaryMin] = useState('');
-  const [salaryMax, setSalaryMax] = useState('');
-  const [showSalaryPublic, setShowSalaryPublic] = useState(false);
-  const [selectedBenefits, setSelectedBenefits] = useState<string[]>([]);
-
-  // Timelines & Publishing
-  const [deadline, setDeadline] = useState('');
-  const [openingsCount, setOpeningsCount] = useState(1);
-  const [visibility, setVisibility] = useState('Public');
-
-  // Submit State
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [jobData, setJobData] = useState<any>(null);
+  const [categories, setCategories] = useState<{ id: string; nama_kategori: string }[]>([]);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
-  const [isLoadingEdit, setIsLoadingEdit] = useState(false);
-
-  // Add Item Handlers
-  const handleAddResponsibility = () => {
-    if (newResp.trim()) {
-      setResponsibilities([...responsibilities, newResp.trim()]);
-      setNewResp('');
-    }
-  };
-
-  const handleRemoveResponsibility = (index: number) => {
-    setResponsibilities(responsibilities.filter((_, i) => i !== index));
-  };
-
-  const handleAddRequirement = () => {
-    if (newReq.trim()) {
-      setRequirements([...requirements, newReq.trim()]);
-      setNewReq('');
-    }
-  };
-
-  const handleRemoveRequirement = (index: number) => {
-    setRequirements(requirements.filter((_, i) => i !== index));
-  };
-
-  const handleAddKeyword = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && keywordInput.trim()) {
-      e.preventDefault();
-      if (!aiKeywords.includes(keywordInput.trim())) {
-        setAiKeywords([...aiKeywords, keywordInput.trim()]);
-      }
-      setKeywordInput('');
-    }
-  };
-
-  const handleRemoveKeyword = (tag: string) => {
-    setAiKeywords(aiKeywords.filter(t => t !== tag));
-  };
-
-  const handleAddQuestion = () => {
-    if (newQuestion.trim() && videoQuestions.length < 5) {
-      setVideoQuestions([...videoQuestions, newQuestion.trim()]);
-      setNewQuestion('');
-    }
-  };
-
-  const handleRemoveQuestion = (index: number) => {
-    setVideoQuestions(videoQuestions.filter((_, i) => i !== index));
-  };
-
-  const toggleBenefit = (benefit: string) => {
-    if (selectedBenefits.includes(benefit)) {
-      setSelectedBenefits(selectedBenefits.filter(b => b !== benefit));
-    } else {
-      setSelectedBenefits([...selectedBenefits, benefit]);
-    }
-  };
-
-  const parseJsonArray = (json: string | null): string[] => {
-    if (!json) return [];
-    try {
-      const arr = JSON.parse(json);
-      return Array.isArray(arr) ? arr : [];
-    } catch {
-      return [];
-    }
-  };
+  const [isCopied, setIsCopied] = useState<boolean>(false);
 
   useEffect(() => {
-    // Fetch categories
     const fetchCategories = async () => {
       try {
         const res = await fetch(getApiUrl('/jobs/categories'));
         if (res.ok) {
           const data = await res.json();
           setCategories(data);
-          if (!jobId && data.length > 0) {
-            setCategoryId(data[0].id);
-          }
         }
       } catch (err) {
-        console.error("Gagal memuat kategori", err);
+        console.error('Gagal memuat kategori:', err);
       }
     };
     fetchCategories();
-  }, [jobId]);
+  }, []);
 
-  // Load existing job data for edit mode
   useEffect(() => {
     if (!jobId) return;
     const loadJob = async () => {
-      setIsLoadingEdit(true);
+      setIsLoading(true);
+      setErrorMsg(null);
       try {
         const res = await fetchAuth(`/api/jobs/${jobId}`);
-        if (!res.ok) return;
-        const job = await res.json();
-
-        setJobTitle(job.judul_posisi || '');
-        setCategoryId(job.kategori_id || '');
-        setEmploymentType(job.tipe_pekerjaan || 'Full-time');
-        setWorkMode(job.lokasi_kerja || 'hybrid');
-        setLocation(job.kota || '');
-        setExperienceLevel(job.experience_level || 'Entry Level');
-        setPendidikanMin(job.pendidikan_min || '');
-        setSummary(job.deskripsi_pekerjaan || '');
-        setResponsibilities(parseJsonArray(job.tanggung_jawab));
-        setRequirements(parseJsonArray(job.kualifikasi));
-        setAiKeywords(parseJsonArray(job.ai_keywords_json));
-        setThreshold(job.cv_threshold || 60);
-        setVideoQuestions(parseJsonArray(job.video_questions_json));
-        setSalaryMin(job.gaji_min ? String(job.gaji_min) : '');
-        setSalaryMax(job.gaji_max ? String(job.gaji_max) : '');
-        setShowSalaryPublic(job.tampilkan_gaji || false);
-        setSelectedBenefits(parseJsonArray(job.benefits_json));
-        setDeadline(job.tanggal_tutup || '');
-        setOpeningsCount(job.openings_count || 1);
-        setVisibility(job.status === 'draft' ? 'Draft' : 'Public');
-      } catch (err) {
-        console.error("Gagal memuat data lowongan untuk diedit", err);
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({}));
+          throw new Error(err.detail || 'Lowongan pekerjaan tidak ditemukan.');
+        }
+        const data = await res.json();
+        setJobData(data);
+      } catch (err: any) {
+        console.error('Error fetching job details:', err);
+        setErrorMsg(err.message || 'Terjadi kesalahan saat memuat data lowongan.');
       } finally {
-        setIsLoadingEdit(false);
+        setIsLoading(false);
       }
     };
     loadJob();
   }, [jobId]);
 
-  const handlePublish = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsSubmitting(true);
-
-    const payload = {
-      judul_posisi: jobTitle,
-      deskripsi_pekerjaan: summary,
-      kategori_id: categoryId,
-      kualifikasi: JSON.stringify(requirements),
-      tanggung_jawab: JSON.stringify(responsibilities),
-      tipe_pekerjaan: employmentType,
-      lokasi_kerja: workMode,
-      kota: location,
-      gaji_min: parseFloat(salaryMin.replace(/[^0-9.-]+/g, "")),
-      gaji_max: parseFloat(salaryMax.replace(/[^0-9.-]+/g, "")),
-      tampilkan_gaji: showSalaryPublic,
-      pengalaman_min_tahun: parseInt(experienceLevel) || 0, // Simplified for now
-      cv_threshold: threshold,
-      interview_threshold: threshold, // Using same threshold for now
-      tanggal_buka: new Date().toISOString().split('T')[0],
-      tanggal_tutup: deadline,
-      department: "Umum", // Or remove entirely if using category_id
-      experience_level: experienceLevel,
-      pendidikan_min: pendidikanMin,
-      benefits_json: JSON.stringify(selectedBenefits),
-      ai_keywords_json: JSON.stringify(aiKeywords),
-      video_questions_json: JSON.stringify(videoQuestions),
-      openings_count: openingsCount,
-      status: visibility === 'Draft' ? 'draft' : 'active'
-    };
-
-    try {
-      const method = jobId ? 'PUT' : 'POST';
-      const url = jobId
-        ? getApiUrl(`/jobs/${jobId}`)
-        : getApiUrl('/jobs/');
-
-      const res = await fetch(url, {
-        method,
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify(payload)
-      });
-
-      if (res.ok) {
-        setShowSuccessModal(true);
-      } else {
-        const errData = await res.json();
-        setErrorMsg(`Gagal menyimpan loker: ${errData.detail || 'Terjadi kesalahan'}`);
-      }
-    } catch (err) {
-      console.error(err);
-      setErrorMsg("Terjadi kesalahan jaringan saat menyimpan data.");
-    } finally {
-      setIsSubmitting(false);
-    }
+  const handleCopyPublicLink = () => {
+    if (!jobData) return;
+    const url = `${window.location.origin}/applicant/dashboard?search=${encodeURIComponent(jobData.judul_posisi || '')}`;
+    navigator.clipboard.writeText(url);
+    setIsCopied(true);
+    toast.success('Link pencarian lowongan disalin ke clipboard!');
+    setTimeout(() => setIsCopied(false), 2500);
   };
 
-  const handleSuccessClose = () => {
-    setShowSuccessModal(false);
-    router.push('/jobs');
-  };
+  const categoryName = useMemo(() => {
+    if (!jobData) return 'Umum';
+    if (jobData.kategori?.nama_kategori) return jobData.kategori.nama_kategori;
+    const found = categories.find(c => c.id === jobData.kategori_id);
+    return found?.nama_kategori || jobData.department || 'Umum';
+  }, [jobData, categories]);
+
+  if (isLoading) {
+    return (
+      <div className="max-w-6xl mx-auto py-12 px-4 space-y-6 animate-pulse">
+        <div className="h-6 w-36 bg-slate-200 dark:bg-slate-800 rounded-lg"></div>
+        <div className="h-28 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-6 space-y-3">
+          <div className="h-7 w-2/3 bg-slate-200 dark:bg-slate-800 rounded-md"></div>
+          <div className="h-4 w-1/3 bg-slate-200 dark:bg-slate-800 rounded-md"></div>
+        </div>
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          <div className="lg:col-span-8 space-y-6">
+            <div className="h-48 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800"></div>
+            <div className="h-60 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800"></div>
+          </div>
+          <div className="lg:col-span-4 space-y-6">
+            <div className="h-48 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800"></div>
+            <div className="h-40 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800"></div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (errorMsg || !jobData) {
+    return (
+      <div className="max-w-xl mx-auto py-16 px-4 text-center space-y-4">
+        <div className="w-14 h-14 rounded-2xl bg-rose-50 text-rose-500 mx-auto flex items-center justify-center font-bold text-xl">
+          !
+        </div>
+        <h2 className="text-lg font-bold text-slate-900 dark:text-white">Lowongan Tidak Ditemukan</h2>
+        <p className="text-xs text-slate-500">{errorMsg || 'Data lowongan tidak tersedia atau telah dihapus.'}</p>
+        <button
+          type="button"
+          onClick={() => router.push('/jobs')}
+          className="inline-flex items-center gap-2 px-4 py-2 bg-slate-900 text-white rounded-xl text-xs font-bold hover:bg-slate-800 transition-colors"
+        >
+          <ArrowLeft size={14} />
+          Kembali ke Daftar Lowongan
+        </button>
+      </div>
+    );
+  }
+
+  const responsibilities = parseJsonArray(jobData.tanggung_jawab);
+  const requirements = parseJsonArray(jobData.kualifikasi);
+  const aiKeywords = parseJsonArray(jobData.ai_keywords_json);
+  const videoQuestions = parseJsonArray(jobData.video_questions_json);
+  const benefits = parseJsonArray(jobData.benefits_json);
+
+  const isDraft = jobData.status === 'draft';
+  const isClosed = jobData.status === 'closed';
+  const isActive = jobData.status === 'active' || (!isDraft && !isClosed);
+
+  const formattedSalary = (() => {
+    if (!jobData.gaji_min && !jobData.gaji_max) return null;
+    const min = formatRupiah(jobData.gaji_min);
+    const max = formatRupiah(jobData.gaji_max);
+    if (min && max) return `Rp ${min} - Rp ${max}`;
+    if (min) return `Mulai dari Rp ${min}`;
+    if (max) return `Hingga Rp ${max}`;
+    return null;
+  })();
 
   return (
-    <div className="max-w-5xl mx-auto pb-24 animate-in fade-in duration-300">
+    <div className="max-w-6xl mx-auto pb-12 animate-in fade-in duration-300 font-sans space-y-6">
 
-      {/* Top Header */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
-        <div>
-          <button
-            type="button"
-            onClick={() => router.back()}
-            className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors mb-3"
-          >
-            <ArrowLeft size={14} />
-            {t.jobs.backToPrevious}
-          </button>
-          <h1 className="text-2xl font-bold text-foreground mb-1">
-            {jobTitle || "Detail Lowongan"}
-          </h1>
-          <p className="text-sm text-muted-foreground">
-            "Detail lengkap mengenai lowongan pekerjaan ini."
-          </p>
-        </div>
-      </div>
+      {/* Navigation Breadcrumb */}
+      <div className="flex items-center justify-between">
+        <button
+          type="button"
+          onClick={() => router.push('/jobs')}
+          className="inline-flex items-center gap-2 text-xs font-semibold text-slate-500 hover:text-[#1A4B9F] dark:hover:text-blue-400 transition-colors"
+        >
+          <ArrowLeft size={15} />
+          <span>Kembali ke Kelola Lowongan</span>
+        </button>
 
-      <div className="space-y-8">
-
-        {/* ==================== SECTION 1: BASIC INFO ==================== */}
-        <div className="bg-card p-6 sm:p-8 rounded-xl border border-border shadow-sm space-y-6">
-          <div className="flex items-center gap-2 border-b border-border pb-4">
-            <Briefcase size={20} className="text-primary" />
-            <h2 className="text-lg font-bold text-foreground">{t.jobs.basicInfo}</h2>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Job Title */}
-            <div className="col-span-2">
-              <label className="block text-xs font-semibold text-foreground mb-2">
-                {t.jobs.jobTitle} <span className="text-rose-500">*</span>
-              </label>
-              <input disabled
-                type="text"
-                required
-                value={jobTitle}
-
-                placeholder={t.jobs.jobTitlePlaceholder}
-                className="w-full px-4 py-2.5 bg-muted/30 border border-border rounded-lg text-sm text-foreground focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all"
-              />
-            </div>
-
-            {/* Category */}
-            <div>
-              <label className="block text-xs font-semibold text-foreground mb-2">
-                Kategori Pekerjaan <span className="text-rose-500">*</span>
-              </label>
-              <select disabled
-                value={categoryId}
-
-                className="w-full px-4 py-2.5 bg-muted/30 border border-border rounded-lg text-sm text-foreground focus:outline-none focus:border-primary transition-all"
-              >
-                <option value="" disabled>-- Pilih Kategori --</option>
-                {categories.map(cat => (
-                  <option key={cat.id} value={cat.id}>{cat.nama_kategori}</option>
-                ))}
-              </select>
-            </div>
-
-            {/* Employment Type */}
-            <div>
-              <label className="block text-xs font-semibold text-foreground mb-2">
-                {t.jobs.employmentType} <span className="text-rose-500">*</span>
-              </label>
-              <select disabled
-                value={employmentType}
-
-                className="w-full px-4 py-2.5 bg-muted/30 border border-border rounded-lg text-sm text-foreground focus:outline-none focus:border-primary transition-all"
-              >
-                <option value="Full-time">Full-time (Tetap)</option>
-                <option value="Contract">Contract (Kontrak)</option>
-                <option value="Part-time">Part-time (Paruh Waktu)</option>
-                <option value="Internship">Internship (Magang)</option>
-                <option value="Freelance">Freelance</option>
-              </select>
-            </div>
-
-            {/* Work Mode & Location */}
-            <div>
-              <label className="block text-xs font-semibold text-foreground mb-2">
-                {t.jobs.workLocation} <span className="text-rose-500">*</span>
-              </label>
-              <div className="flex gap-2">
-                <select disabled
-                  value={workMode}
-
-                  className="w-1/3 px-3 py-2.5 bg-muted/30 border border-border rounded-lg text-sm text-foreground focus:outline-none focus:border-primary transition-all"
-                >
-                  <option value="hybrid">Hybrid</option>
-                  <option value="remote">Remote</option>
-                  <option value="onsite">On-site</option>
-                </select>
-                <input disabled
-                  type="text"
-                  value={location}
-
-                  placeholder="Misal: Jakarta, Indonesia"
-                  className="w-2/3 px-4 py-2.5 bg-muted/30 border border-border rounded-lg text-sm text-foreground focus:outline-none focus:border-primary transition-all"
-                />
-              </div>
-            </div>
-
-            {/* Experience Level */}
-            <div>
-              <label className="block text-xs font-semibold text-foreground mb-2">
-                {t.jobs.experienceLevel} <span className="text-rose-500">*</span>
-              </label>
-              <select disabled
-                value={experienceLevel}
-
-                className="w-full px-4 py-2.5 bg-muted/30 border border-border rounded-lg text-sm text-foreground focus:outline-none focus:border-primary transition-all"
-              >
-                <option value="Entry Level">Entry Level (0 - 1 Tahun)</option>
-                <option value="Mid Level">Mid Level (2 - 4 Tahun)</option>
-                <option value="Senior Level">Senior Level (5+ Tahun)</option>
-                <option value="Lead / Manager">Lead / Manager (8+ Tahun)</option>
-              </select>
-            </div>
-
-            {/* Minimal Pendidikan */}
-            <div>
-              <label className="block text-xs font-semibold text-foreground mb-2">
-                Minimal Pendidikan
-              </label>
-              <select disabled
-                value={pendidikanMin}
-
-                className="w-full px-4 py-2.5 bg-muted/30 border border-border rounded-lg text-sm text-foreground focus:outline-none focus:border-primary transition-all"
-              >
-                <option value="" disabled>-- Pilih Pendidikan --</option>
-                <option value="SMA/SMK">SMA / SMK Sederajat</option>
-                <option value="D3">D3 (Diploma)</option>
-                <option value="S1">S1 (Sarjana)</option>
-                <option value="S2">S2 (Magister)</option>
-                <option value="S3">S3 (Doktor)</option>
-              </select>
-            </div>
-          </div>
-        </div>
-
-        {/* ==================== SECTION 2: JOB DESCRIPTION & AI KEYWORDS ==================== */}
-        <div className="bg-card p-6 sm:p-8 rounded-xl border border-border shadow-sm space-y-6">
-          <div className="flex items-center justify-between border-b border-border pb-4">
-            <div className="flex items-center gap-2">
-              <FileText size={20} className="text-primary" />
-              <h2 className="text-lg font-bold text-foreground">{t.jobs.roleDescription}</h2>
-            </div>
-          </div>
-
-          {/* Role Summary */}
-          <div>
-            <label className="block text-xs font-semibold text-foreground mb-2">
-              {t.jobs.roleSummary} <span className="text-rose-500">*</span>
-            </label>
-            <textarea disabled
-              rows={4}
-              required
-              value={summary}
-
-              placeholder={t.jobs.roleSummaryPlaceholder}
-              className="w-full p-4 bg-muted/30 border border-border rounded-lg text-sm text-foreground focus:outline-none focus:border-primary transition-all resize-none"
-            ></textarea>
-          </div>
-
-          {/* Key Responsibilities */}
-          <div>
-            <label className="block text-xs font-semibold text-foreground mb-2">
-              {t.jobs.keyResponsibilities}
-            </label>
-            <ul className="space-y-2 mb-3">
-              {responsibilities.map((resp, i) => (
-                <li key={i} className="flex items-center justify-between p-3 bg-muted/30 border border-border rounded-lg text-xs text-foreground">
-                  <span className="flex items-center gap-2">
-                    <span className="w-1.5 h-1.5 rounded-full bg-primary shrink-0"></span>
-                    {resp}
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() => handleRemoveResponsibility(i)}
-                    className="text-muted-foreground hover:text-rose-500 transition-colors p-1"
-                  >
-                    <Trash2 size={14} />
-                  </button>
-                </li>
-              ))}
-            </ul>
-            <div className="flex gap-2">
-
-
-            </div>
-          </div>
-
-          {/* Qualifications & Requirements */}
-          <div>
-            <label className="block text-xs font-semibold text-foreground mb-2">
-              {t.jobs.requirements}
-            </label>
-            <ul className="space-y-2 mb-3">
-              {requirements.map((req, i) => (
-                <li key={i} className="flex items-center justify-between p-3 bg-muted/30 border border-border rounded-lg text-xs text-foreground">
-                  <span className="flex items-center gap-2">
-                    <Check size={14} className="text-emerald-500 shrink-0" />
-                    {req}
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() => handleRemoveRequirement(i)}
-                    className="text-muted-foreground hover:text-rose-500 transition-colors p-1"
-                  >
-                    <Trash2 size={14} />
-                  </button>
-                </li>
-              ))}
-            </ul>
-            <div className="flex gap-2">
-
-
-            </div>
-          </div>
-
-          {/* AI PO-FIT Keywords */}
-          <div>
-            <label className="block text-xs font-semibold text-foreground mb-1">
-              {t.jobs.aiKeywords}
-            </label>
-            <p className="text-[11px] text-muted-foreground mb-3">
-              Keahlian ini akan ditambahkan sebagai bobot utama perhitungan AI saat membandingkan kecocokan dengan CV kandidat.
-            </p>
-
-            <div className="p-3 bg-muted/30 border border-border rounded-lg flex flex-wrap gap-2 items-center min-h-[52px]">
-              {aiKeywords.map((tag) => (
-                <span key={tag} className="inline-flex items-center gap-1 px-2.5 py-1 bg-primary/10 text-primary text-xs font-semibold rounded-md border border-primary/20">
-                  #{tag}
-
-                </span>
-              ))}
-
-            </div>
-          </div>
-        </div>
-
-        {/* ==================== SECTION 3: AI SCREENING & EVALUATION RULES ==================== */}
-        <div className="bg-card p-6 sm:p-8 rounded-xl border border-border shadow-sm space-y-6">
-          <div className="flex items-center gap-2 border-b border-border pb-4">
-            <Sliders size={20} className="text-primary" />
-            <h2 className="text-lg font-bold text-foreground">{t.jobs.aiConfig}</h2>
-          </div>
-
-          {/* Threshold Slider */}
-          <div className="p-5 bg-muted/20 border border-border rounded-xl space-y-3">
-            <div className="flex justify-between items-center">
-              <div>
-                <label className="text-xs font-bold text-foreground flex items-center gap-2">
-                  {t.jobs.thresholdScore}
-                  <span className="px-2 py-0.5 bg-primary/10 text-primary text-xs font-bold rounded">
-                    {threshold}% Standard
-                  </span>
-                </label>
-                <p className="text-[11px] text-muted-foreground mt-0.5">
-                  {t.jobs.thresholdHelp}
-                </p>
-              </div>
-              <span className={`text-2xl font-bold ${threshold >= 60 ? 'text-emerald-500' : 'text-amber-500'}`}>
-                {threshold}%
-              </span>
-            </div>
-
-            <input disabled
-              type="range"
-              min="50"
-              max="95"
-              step="5"
-              value={threshold}
-
-              className="w-full h-2 bg-muted rounded-lg appearance-none cursor-pointer accent-primary"
-            />
-
-            <div className="flex justify-between text-[10px] text-muted-foreground font-mono">
-              <span>30% (Longgar)</span>
-              <span className="font-bold text-emerald-600 dark:text-emerald-400">60% (Rekomendasi AI)</span>
-              <span>80% (Ketat)</span>
-            </div>
-          </div>
-
-          {/* Virtual Video Interview Questions */}
-          <div>
-            <div className="flex justify-between items-center mb-3">
-              <label className="text-xs font-bold text-foreground flex items-center gap-1.5">
-                <Video size={16} className="text-primary" />
-                {t.jobs.videoQuestions}
-              </label>
-              <span className="text-xs text-muted-foreground font-mono">
-                {videoQuestions.length} / 5 Pertanyaan
-              </span>
-            </div>
-
-            <div className="space-y-3 mb-4">
-              {videoQuestions.map((q, i) => (
-                <div key={i} className="flex items-start gap-3 p-3 bg-muted/30 border border-border rounded-lg text-xs">
-                  <span className="w-5 h-5 rounded-full bg-primary/20 text-primary font-bold flex items-center justify-center text-[10px] shrink-0 mt-0.5">
-                    Q{i + 1}
-                  </span>
-                  <p className="flex-1 font-medium text-foreground leading-relaxed">{q}</p>
-                  <button
-                    type="button"
-                    onClick={() => handleRemoveQuestion(i)}
-                    className="text-muted-foreground hover:text-rose-500 p-1 transition-colors shrink-0"
-                  >
-                    <Trash2 size={14} />
-                  </button>
-                </div>
-              ))}
-            </div>
-
-            {videoQuestions.length < 5 && (
-              <div className="flex gap-2">
-
-
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* ==================== SECTION 4: COMPENSATION & BENEFITS ==================== */}
-        <div className="bg-card p-6 sm:p-8 rounded-xl border border-border shadow-sm space-y-6">
-          <div className="flex items-center gap-2 border-b border-border pb-4">
-            <DollarSign size={20} className="text-primary" />
-            <h2 className="text-lg font-bold text-foreground">{t.jobs.compensation}</h2>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Currency & Min Salary */}
-            <div>
-              <label className="block text-xs font-semibold text-foreground mb-2">
-                {t.jobs.salaryMin}
-              </label>
-              <div className="flex gap-2">
-                <select disabled
-                  value={currency}
-
-                  className="w-24 px-3 py-2.5 bg-muted/30 border border-border rounded-lg text-sm text-foreground focus:outline-none focus:border-primary"
-                >
-                  <option value="IDR">IDR (Rp)</option>
-                  <option value="USD">USD ($)</option>
-                </select>
-                <input disabled
-                  type="text"
-                  value={salaryMin}
-
-                  placeholder="Misal: 8.000.000"
-                  className="flex-1 px-4 py-2.5 bg-muted/30 border border-border rounded-lg text-sm text-foreground focus:outline-none focus:border-primary"
-                />
-              </div>
-            </div>
-
-            {/* Max Salary */}
-            <div>
-              <label className="block text-xs font-semibold text-foreground mb-2">
-                {t.jobs.salaryMax}
-              </label>
-              <input disabled
-                type="text"
-                value={salaryMax}
-
-                placeholder="Misal: 15.000.000"
-                className="w-full px-4 py-2.5 bg-muted/30 border border-border rounded-lg text-sm text-foreground focus:outline-none focus:border-primary"
-              />
-            </div>
-
-            <div className="col-span-2 flex items-center gap-2">
-              <input disabled
-                type="checkbox"
-                id="showSalary"
-                checked={showSalaryPublic}
-
-                className="rounded border-border text-primary focus:ring-primary"
-              />
-              <label htmlFor="showSalary" className="text-xs text-foreground font-medium cursor-pointer">
-                Tampilkan rentang gaji pada deskripsi publik di portal pelamar
-              </label>
-            </div>
-          </div>
-
-          {/* Benefits Checkboxes */}
-          <div>
-            <label className="block text-xs font-semibold text-foreground mb-3">
-              {t.jobs.benefits}
-            </label>
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
-              {[
-                'Asuransi Kesehatan Private',
-                'BPJS Kesehatan & Ketenagakerjaan',
-                'Jam Kerja Fleksibel',
-                'Remote Work Allowance',
-                'Tunjangan Belajar & Kursus',
-                'Bonus Kinerja Tahunan',
-                'Laptop & Equipment Office',
-                'Stock Options / ESOP',
-                'Voucher Makan & Transportasi'
-              ].map((benefit) => {
-                const isSelected = selectedBenefits.includes(benefit);
-                return (
-                  <div key={benefit} className={`p-3 rounded-lg border text-left text-xs font-medium transition-all flex items-center justify-between ${isSelected ? "bg-primary/10 border-primary text-primary shadow-sm" : "bg-muted/20 border-border text-muted-foreground"}`}>
-                    <span>{benefit}</span>
-                    {isSelected && <Check size={14} className="shrink-0 ml-1" />}
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        </div>
-
-        {/* ==================== SECTION 5: TIMELINES & PUBLISHING ==================== */}
-        <div className="bg-card p-6 sm:p-8 rounded-xl border border-border shadow-sm space-y-6">
-          <div className="flex items-center gap-2 border-b border-border pb-4">
-            <Calendar size={20} className="text-primary" />
-            <h2 className="text-lg font-bold text-foreground">{t.jobs.timelines}</h2>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div>
-              <label className="block text-xs font-semibold text-foreground mb-2">
-                {t.jobs.deadline}
-              </label>
-              <input disabled
-                type="date"
-                value={deadline}
-
-                className="w-full px-4 py-2.5 bg-muted/30 border border-border rounded-lg text-sm text-foreground focus:outline-none focus:border-primary"
-              />
-            </div>
-
-            <div>
-              <label className="block text-xs font-semibold text-foreground mb-2">
-                {t.jobs.openingsCount}
-              </label>
-              <input disabled
-                type="number"
-                min="1"
-                max="50"
-                value={openingsCount}
-
-                className="w-full px-4 py-2.5 bg-muted/30 border border-border rounded-lg text-sm text-foreground focus:outline-none focus:border-primary"
-              />
-            </div>
-
-            <div>
-              <label className="block text-xs font-semibold text-foreground mb-2">
-                Visibilitas Lowongan
-              </label>
-              <select disabled
-                value={visibility}
-
-                className="w-full px-4 py-2.5 bg-muted/30 border border-border rounded-lg text-sm text-foreground focus:outline-none focus:border-primary"
-              >
-                <option value="Public">Publik</option>
-                <option value="Draft">Draf</option>
-              </select>
-            </div>
-          </div>
-        </div>
-
-        {/* Sticky Action Footer Bar */}
-        <div className="fixed bottom-0 left-0 right-0 z-40 bg-card/90 backdrop-blur-md border-t border-border py-4 px-6 shadow-xl">
-          <div className="max-w-5xl mx-auto flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          {isActive && (
             <button
               type="button"
-              onClick={() => router.push('/jobs')}
-              className="px-4 py-2.5 border border-border hover:bg-muted text-foreground text-xs font-semibold rounded-lg transition-colors flex items-center gap-2"
+              onClick={handleCopyPublicLink}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 hover:bg-slate-50 text-xs font-semibold transition-colors cursor-pointer shadow-2xs"
             >
-              <ArrowLeft size={14} />
-              Kembali
+              {isCopied ? <Check size={14} className="text-emerald-500" /> : <Share2 size={14} />}
+              <span>{isCopied ? 'Tersalin' : 'Salin Link'}</span>
             </button>
+          )}
 
-            <Link
-              href={`/jobs/new?edit=${jobId}`}
-              className="px-6 py-2.5 bg-primary hover:bg-primary/90 text-primary-foreground text-xs font-semibold rounded-lg transition-colors flex items-center gap-2 shadow-md"
-            >
-              <Edit size={16} />
-              Edit Lowongan
-            </Link>
+          <Link
+            href={`/pipeline?jobTitle=${encodeURIComponent(jobData.judul_posisi)}`}
+            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-blue-50 hover:bg-blue-100 dark:bg-blue-950/40 text-[#1A4B9F] dark:text-blue-300 text-xs font-bold transition-colors border border-blue-100 dark:border-blue-800/50"
+          >
+            <Users size={14} />
+            <span>Lihat Pipeline</span>
+          </Link>
+
+          <Link
+            href={`/jobs/new?edit=${jobId}`}
+            className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-lg bg-[#1A4B9F] hover:bg-[#133878] text-white text-xs font-bold transition-colors shadow-sm"
+          >
+            <Edit size={14} />
+            <span>Edit Lowongan</span>
+          </Link>
+        </div>
+      </div>
+
+      {/* Hero Overview Header Card */}
+      <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/90 dark:border-slate-800 p-5 sm:p-7 shadow-xs space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+          <div className="space-y-1.5">
+            <div className="flex items-center gap-2.5 flex-wrap">
+              <h1 className="text-xl sm:text-2xl font-extrabold text-slate-900 dark:text-white tracking-tight">
+                {jobData.judul_posisi}
+              </h1>
+              {isActive && (
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800 text-[11px] font-bold">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                  Dipublikasikan
+                </span>
+              )}
+              {isDraft && (
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-800 text-[11px] font-bold">
+                  Draf
+                </span>
+              )}
+              {isClosed && (
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700 text-[11px] font-bold">
+                  Ditutup
+                </span>
+              )}
+            </div>
+
+            <div className="flex items-center gap-2 text-xs font-semibold text-slate-500 dark:text-slate-400">
+              <span className="text-[#1A4B9F] dark:text-blue-400 font-bold flex items-center gap-1">
+                <Building2 size={14} />
+                {categoryName}
+              </span>
+              <span>•</span>
+              <span>Dibuat: {formatDate(jobData.created_at || jobData.tanggal_buka)}</span>
+            </div>
           </div>
         </div>
 
+        {/* Quick Spec Pills */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2.5 pt-2 border-t border-slate-100 dark:border-slate-800/80">
+          <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-700/60">
+            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Lokasi Kerja</span>
+            <span className="text-xs font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1 mt-0.5 truncate">
+              <MapPin size={13} className="text-[#1A4B9F] shrink-0" />
+              {jobData.kota || 'Indonesia'} ({jobData.lokasi_kerja || 'Hybrid'})
+            </span>
+          </div>
+
+          <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-700/60">
+            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Tipe Pekerjaan</span>
+            <span className="text-xs font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1 mt-0.5 truncate">
+              <Briefcase size={13} className="text-[#1A4B9F] shrink-0" />
+              {jobData.tipe_pekerjaan || 'Full-time'}
+            </span>
+          </div>
+
+          <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-700/60">
+            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Pengalaman</span>
+            <span className="text-xs font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1 mt-0.5 truncate">
+              <Clock size={13} className="text-[#1A4B9F] shrink-0" />
+              {jobData.experience_level || 'Entry Level'}
+            </span>
+          </div>
+
+          <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-700/60">
+            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Min. Pendidikan</span>
+            <span className="text-xs font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1 mt-0.5 truncate">
+              <GraduationCap size={13} className="text-[#1A4B9F] shrink-0" />
+              {jobData.pendidikan_min || 'Semua Jurusan'}
+            </span>
+          </div>
+
+          <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-700/60 col-span-2 sm:col-span-1">
+            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Batas Lamaran</span>
+            <span className="text-xs font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1 mt-0.5 truncate">
+              <Calendar size={13} className="text-[#1A4B9F] shrink-0" />
+              {formatDate(jobData.tanggal_tutup)}
+            </span>
+          </div>
+        </div>
       </div>
+
+      {/* Main 2-Column Split View: Document Style */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+
+        {/* LEFT COLUMN: Clean Job Specification Document */}
+        <div className="lg:col-span-8 space-y-6">
+
+          {/* 1. Deskripsi & Ringkasan Peran */}
+          <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/90 dark:border-slate-800 p-6 sm:p-7 shadow-xs space-y-3.5">
+            <div className="flex items-center gap-2 border-b border-slate-100 dark:border-slate-800 pb-3">
+              <FileText size={18} className="text-[#1A4B9F] dark:text-blue-400 shrink-0" />
+              <h2 className="text-base font-bold text-slate-900 dark:text-white">Deskripsi Pekerjaan</h2>
+            </div>
+            {jobData.deskripsi_pekerjaan ? (
+              <p className="text-xs sm:text-sm text-slate-700 dark:text-slate-300 leading-relaxed whitespace-pre-line">
+                {jobData.deskripsi_pekerjaan}
+              </p>
+            ) : (
+              <p className="text-xs text-slate-400 italic">Tidak ada deskripsi rinci yang dicantumkan.</p>
+            )}
+          </div>
+
+          {/* 2. Tanggung Jawab Utama */}
+          <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/90 dark:border-slate-800 p-6 sm:p-7 shadow-xs space-y-3.5">
+            <div className="flex items-center gap-2 border-b border-slate-100 dark:border-slate-800 pb-3">
+              <Layers size={18} className="text-[#1A4B9F] dark:text-blue-400 shrink-0" />
+              <h2 className="text-base font-bold text-slate-900 dark:text-white">Tanggung Jawab Utama</h2>
+            </div>
+            {responsibilities.length > 0 ? (
+              <ul className="space-y-2.5 pt-1">
+                {responsibilities.map((resp, i) => (
+                  <li key={i} className="flex items-start gap-3 text-xs sm:text-sm text-slate-700 dark:text-slate-300 leading-relaxed">
+                    <span className="w-1.5 h-1.5 rounded-full bg-[#1A4B9F] dark:bg-blue-400 mt-2 shrink-0" />
+                    <span>{resp}</span>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="text-xs text-slate-400 italic">Belum ada daftar tanggung jawab yang ditambahkan.</p>
+            )}
+          </div>
+
+          {/* 3. Kualifikasi & Persyaratan */}
+          <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/90 dark:border-slate-800 p-6 sm:p-7 shadow-xs space-y-3.5">
+            <div className="flex items-center gap-2 border-b border-slate-100 dark:border-slate-800 pb-3">
+              <CheckCircle2 size={18} className="text-emerald-600 dark:text-emerald-400 shrink-0" />
+              <h2 className="text-base font-bold text-slate-900 dark:text-white">Kualifikasi & Persyaratan</h2>
+            </div>
+            {requirements.length > 0 ? (
+              <ul className="space-y-2.5 pt-1">
+                {requirements.map((req, i) => (
+                  <li key={i} className="flex items-start gap-3 text-xs sm:text-sm text-slate-700 dark:text-slate-300 leading-relaxed">
+                    <Check size={15} className="text-emerald-600 dark:text-emerald-400 mt-0.5 shrink-0" />
+                    <span>{req}</span>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="text-xs text-slate-400 italic">Belum ada persyaratan khusus yang dicantumkan.</p>
+            )}
+          </div>
+
+          {/* 4. Keahlian & Kata Kunci AI Matching */}
+          <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/90 dark:border-slate-800 p-6 sm:p-7 shadow-xs space-y-3">
+            <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
+              <div className="flex items-center gap-2">
+                <Sparkles size={18} className="text-[#1A4B9F] dark:text-blue-400 shrink-0" />
+                <h2 className="text-base font-bold text-slate-900 dark:text-white">Keahlian & Kata Kunci AI (PO-Fit)</h2>
+              </div>
+              <span className="text-[11px] font-bold text-slate-400">{aiKeywords.length} Keahlian</span>
+            </div>
+            <p className="text-xs text-slate-500 dark:text-slate-400">
+              Kata kunci ini dianalisis oleh algoritma pencocokan AI untuk mengukur relevansi kualifikasi CV pelamar secara otomatis.
+            </p>
+            {aiKeywords.length > 0 ? (
+              <div className="flex flex-wrap gap-2 pt-1">
+                {aiKeywords.map((tag) => (
+                  <span
+                    key={tag}
+                    className="inline-flex items-center px-3 py-1 bg-blue-50/80 dark:bg-slate-800 text-[#1A4B9F] dark:text-blue-300 font-bold text-xs rounded-lg border border-blue-100 dark:border-slate-700"
+                  >
+                    #{tag}
+                  </span>
+                ))}
+              </div>
+            ) : (
+              <p className="text-xs text-slate-400 italic">Belum ada kata kunci keahlian AI yang dimasukkan.</p>
+            )}
+          </div>
+
+          {/* 5. Pertanyaan Wawancara Video Virtual AI */}
+          <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/90 dark:border-slate-800 p-6 sm:p-7 shadow-xs space-y-3.5">
+            <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
+              <div className="flex items-center gap-2">
+                <Video size={18} className="text-[#1A4B9F] dark:text-blue-400 shrink-0" />
+                <h2 className="text-base font-bold text-slate-900 dark:text-white">Pertanyaan Wawancara Video AI</h2>
+              </div>
+              <span className="text-[11px] font-bold text-slate-400">{videoQuestions.length} / 5 Pertanyaan</span>
+            </div>
+            <p className="text-xs text-slate-500 dark:text-slate-400">
+              Kandidat yang lolos tahap CV akan menjawab pertanyaan-pertanyaan ini secara virtual menggunakan analisis video AI.
+            </p>
+            {videoQuestions.length > 0 ? (
+              <div className="space-y-2.5 pt-1">
+                {videoQuestions.map((q, i) => (
+                  <div
+                    key={i}
+                    className="flex items-start gap-3 p-3.5 bg-slate-50 dark:bg-slate-800/60 rounded-xl border border-slate-100 dark:border-slate-800"
+                  >
+                    <span className="w-6 h-6 rounded-lg bg-[#1A4B9F] text-white font-bold flex items-center justify-center text-[11px] shrink-0 mt-0.5 shadow-2xs">
+                      {i + 1}
+                    </span>
+                    <p className="text-xs sm:text-sm font-medium text-slate-800 dark:text-slate-200 leading-relaxed">
+                      {q}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-xs text-slate-400 italic">Tidak ada pertanyaan wawancara video virtual yang diatur.</p>
+            )}
+          </div>
+
+        </div>
+
+        {/* RIGHT COLUMN: AI Configuration, Salary, & Benefits Widgets */}
+        <div className="lg:col-span-4 space-y-6">
+
+          {/* Card 1: AI Screening Threshold */}
+          <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/90 dark:border-slate-800 p-5 sm:p-6 shadow-xs space-y-4">
+            <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
+              <div className="flex items-center gap-2">
+                <BrainCircuit size={18} className="text-[#1A4B9F] dark:text-blue-400" />
+                <h3 className="text-sm font-bold text-slate-900 dark:text-white">Threshold AI Screening</h3>
+              </div>
+              <span className="px-2 py-0.5 rounded-md bg-blue-50 dark:bg-slate-800 text-[#1A4B9F] dark:text-blue-300 font-bold text-[10px] border border-blue-100 dark:border-slate-700">
+                Otomatis
+              </span>
+            </div>
+
+            <div className="p-4 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-100 dark:border-slate-700/60 space-y-2.5">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-semibold text-slate-500">Nilai Ambang Lolos</span>
+                <span className="text-2xl font-black text-[#1A4B9F] dark:text-blue-400">
+                  {jobData.cv_threshold || 60}%
+                </span>
+              </div>
+              {/* Progress bar */}
+              <div className="w-full bg-slate-200 dark:bg-slate-700 h-2.5 rounded-full overflow-hidden">
+                <div
+                  className="bg-[#1A4B9F] dark:bg-blue-500 h-full rounded-full transition-all"
+                  style={{ width: `${Math.min(jobData.cv_threshold || 60, 100)}%` }}
+                />
+              </div>
+              <p className="text-[11px] text-slate-500 leading-normal pt-1">
+                Kandidat dengan skor kemiripan CV di atas ambang batas ini akan direkomendasikan langsung untuk wawancara.
+              </p>
+            </div>
+          </div>
+
+          {/* Card 2: Kompensasi Gaji */}
+          <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/90 dark:border-slate-800 p-5 sm:p-6 shadow-xs space-y-3.5">
+            <div className="flex items-center gap-2 border-b border-slate-100 dark:border-slate-800 pb-3">
+              <DollarSign size={18} className="text-emerald-600 dark:text-emerald-400" />
+              <h3 className="text-sm font-bold text-slate-900 dark:text-white">Estimasi Gaji</h3>
+            </div>
+
+            <div className="space-y-2">
+              <div className="text-base sm:text-lg font-extrabold text-slate-900 dark:text-white">
+                {formattedSalary ? (
+                  <span>{formattedSalary} <span className="text-xs font-normal text-slate-500">/ bulan</span></span>
+                ) : (
+                  <span className="text-xs font-medium text-slate-400">Gaji dinegosiasikan saat penawaran</span>
+                )}
+              </div>
+
+              <div>
+                {jobData.tampilkan_gaji ? (
+                  <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 px-2 py-0.5 rounded-md border border-emerald-200 dark:border-emerald-800">
+                    <Check size={12} /> Tampil di portal pelamar
+                  </span>
+                ) : (
+                  <span className="inline-flex items-center gap-1 text-[11px] font-medium text-slate-500 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-md border border-slate-200 dark:border-slate-700">
+                    Disembunyikan dari pelamar
+                  </span>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Card 3: Benefit & Tunjangan */}
+          <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/90 dark:border-slate-800 p-5 sm:p-6 shadow-xs space-y-3.5">
+            <div className="flex items-center gap-2 border-b border-slate-100 dark:border-slate-800 pb-3">
+              <Sparkles size={18} className="text-[#1A4B9F] dark:text-blue-400" />
+              <h3 className="text-sm font-bold text-slate-900 dark:text-white">Benefit & Tunjangan</h3>
+            </div>
+
+            {benefits.length > 0 ? (
+              <div className="space-y-2 pt-1">
+                {benefits.map((b, idx) => (
+                  <div
+                    key={idx}
+                    className="flex items-center gap-2 p-2 rounded-lg bg-slate-50 dark:bg-slate-800/60 text-xs font-semibold text-slate-700 dark:text-slate-300 border border-slate-100 dark:border-slate-800"
+                  >
+                    <Check size={14} className="text-emerald-500 shrink-0" />
+                    <span>{b}</span>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-xs text-slate-400 italic">Tidak ada benefit tambahan yang tercatat.</p>
+            )}
+          </div>
+
+          {/* Card 4: Ringkasan Kuota & Publikasi */}
+          <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/90 dark:border-slate-800 p-5 sm:p-6 shadow-xs space-y-3">
+            <div className="flex items-center gap-2 border-b border-slate-100 dark:border-slate-800 pb-3">
+              <Users size={18} className="text-[#1A4B9F] dark:text-blue-400" />
+              <h3 className="text-sm font-bold text-slate-900 dark:text-white">Alokasi & Kuota</h3>
+            </div>
+
+            <div className="space-y-2 text-xs">
+              <div className="flex items-center justify-between py-1 border-b border-slate-50 dark:border-slate-800">
+                <span className="text-slate-500 font-medium">Kuota Posisi</span>
+                <span className="font-bold text-slate-800 dark:text-slate-200">{jobData.openings_count || 1} Orang</span>
+              </div>
+              <div className="flex items-center justify-between py-1 border-b border-slate-50 dark:border-slate-800">
+                <span className="text-slate-500 font-medium">Batas Pendaftaran</span>
+                <span className="font-bold text-slate-800 dark:text-slate-200">{formatDate(jobData.tanggal_tutup)}</span>
+              </div>
+              <div className="flex items-center justify-between py-1">
+                <span className="text-slate-500 font-medium">Status</span>
+                <span className="font-bold text-[#1A4B9F] dark:text-blue-400 capitalize">
+                  {jobData.status || 'Active'}
+                </span>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+
     </div>
   );
 }
 
 export default function JobDetailPage() {
   return (
-    <Suspense fallback={<div className="p-12 text-center text-muted-foreground animate-pulse text-xs">Memuat data form...</div>}>
+    <Suspense
+      fallback={
+        <div className="p-12 text-center text-slate-400 animate-pulse text-xs">
+          Memuat data lowongan...
+        </div>
+      }
+    >
       <JobDetailView />
     </Suspense>
   );

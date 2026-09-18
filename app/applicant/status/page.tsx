@@ -27,7 +27,7 @@ import {
 } from 'lucide-react';
 import { api, parseErrorMessage, getMediaUrl } from '@/lib/api';
 import { CandidateReviewModal } from '@/components/CandidateReviewModal';
-import { DataTable, ColumnDef } from '@/components/ui/DataTable';
+import { DataTable, ColumnDef, Pagination } from '@/components/ui/DataTable';
 
 interface ApplicationItem {
   id: number | string;
@@ -682,42 +682,7 @@ function StatusValidasiContent() {
       align: 'center',
       headerClassName: 'text-center',
       className: 'text-center',
-      render: (item) => {
-        const isPassed = item.status === 'Lolos';
-        const isTahapAkhir = item.status === 'Tahap Akhir';
-        const isInProgress = item.status === 'Dalam Proses';
-        const isFailed = item.status === 'Tidak Lolos' || item.status === 'Lowongan Telah Ditutup';
-        const isActionRequired = item.currentStageIndex === 3 && isInProgress;
-        const isWaitingHR = item.currentStageIndex === 5 && isInProgress;
-
-        return (
-          <span
-            className={`font-bold px-3 py-1 rounded-full text-xs inline-flex items-center gap-1.5 whitespace-nowrap ${isPassed
-              ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800'
-              : isTahapAkhir
-                ? 'bg-indigo-100 text-indigo-800 dark:bg-indigo-950/60 dark:text-indigo-300 border border-indigo-300 dark:border-indigo-800'
-                : isActionRequired
-                  ? 'bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300 border border-amber-300 dark:border-amber-800'
-                  : isInProgress
-                    ? 'bg-blue-50 dark:bg-blue-950/40 text-[#1A4B9F] dark:text-blue-400 border border-blue-200 dark:border-blue-800'
-                    : 'bg-rose-100 text-rose-800 dark:bg-rose-950/60 dark:text-rose-300 border border-rose-300 dark:border-rose-800'
-              }`}
-          >
-            {isPassed ? (
-              <CheckCircle2 size={13} />
-            ) : isTahapAkhir ? (
-              <Sparkles size={13} />
-            ) : isFailed ? (
-              <XCircle size={13} />
-            ) : isActionRequired ? (
-              <AlertCircle size={13} className="animate-pulse" />
-            ) : (
-              <Clock size={13} />
-            )}
-            <span>{isActionRequired ? 'Segera Upload Video' : isWaitingHR ? 'Menunggu Keputusan HR' : item.status}</span>
-          </span>
-        );
-      },
+      render: (item) => renderStatusBadge(item),
     },
     {
       key: 'aksi',
@@ -741,6 +706,44 @@ function StatusValidasiContent() {
     },
   ], []);
 
+  // Status Badge Helper
+  const renderStatusBadge = (item: ApplicationItem) => {
+    const isPassed = item.status === 'Lolos';
+    const isTahapAkhir = item.status === 'Tahap Akhir';
+    const isInProgress = item.status === 'Dalam Proses';
+    const isFailed = item.status === 'Tidak Lolos' || item.status === 'Lowongan Telah Ditutup';
+    const isActionRequired = item.currentStageIndex === 3 && isInProgress;
+    const isWaitingHR = item.currentStageIndex === 5 && isInProgress;
+
+    return (
+      <span
+        className={`font-bold px-3 py-1 rounded-full text-xs inline-flex items-center gap-1.5 whitespace-nowrap ${isPassed
+          ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800'
+          : isTahapAkhir
+            ? 'bg-indigo-100 text-indigo-800 dark:bg-indigo-950/60 dark:text-indigo-300 border border-indigo-300 dark:border-indigo-800'
+            : isActionRequired
+              ? 'bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300 border border-amber-300 dark:border-amber-800'
+              : isInProgress
+                ? 'bg-blue-50 dark:bg-blue-950/40 text-[#1A4B9F] dark:text-blue-400 border border-blue-200 dark:border-blue-800'
+                : 'bg-rose-100 text-rose-800 dark:bg-rose-950/60 dark:text-rose-300 border border-rose-300 dark:border-rose-800'
+          }`}
+      >
+        {isPassed ? (
+          <CheckCircle2 size={13} />
+        ) : isTahapAkhir ? (
+          <Sparkles size={13} />
+        ) : isFailed ? (
+          <XCircle size={13} />
+        ) : isActionRequired ? (
+          <AlertCircle size={13} className="animate-pulse" />
+        ) : (
+          <Clock size={13} />
+        )}
+        <span>{isActionRequired ? 'Segera Upload Video' : isWaitingHR ? 'Menunggu Keputusan HR' : item.status}</span>
+      </span>
+    );
+  };
+
   // Filtered list: uses committed search query from URL GET param (?search=...), NOT while typing
   const committedSearch = (searchParams.get('search') || '').toLowerCase().trim();
 
@@ -753,34 +756,40 @@ function StatusValidasiContent() {
     });
   }, [applications, committedSearch]);
 
-  return (
-    <div className="max-w-[1600px] w-full mx-auto space-y-6">
+  const pageSize = 10;
+  const paginatedApplications = useMemo(() => {
+    const start = (currentPage - 1) * pageSize;
+    return filteredApplications.slice(start, start + pageSize);
+  }, [filteredApplications, currentPage, pageSize]);
 
-      {/* Main Page Title Banner (Matching Enterprise Blue Theme) */}
-      <div className="bg-[#1A4B9F] p-6 sm:p-8 rounded-2xl text-white shadow-md flex flex-col sm:flex-row sm:items-center justify-between gap-4 relative overflow-hidden">
-        <div className="space-y-1.5 relative z-10">
-          <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-white">{t.pelamar.status.title}</h1>
+  return (
+    <div className="max-w-[1600px] w-full mx-auto space-y-4 sm:space-y-6 pb-12 sm:pb-0">
+
+      {/* Main Page Title Banner */}
+      <div className="bg-[#1A4B9F] p-4 sm:p-8 rounded-2xl text-white shadow-md flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 relative overflow-hidden">
+        <div className="space-y-1 sm:space-y-1.5 relative z-10">
+          <h1 className="text-xl sm:text-3xl font-black tracking-tight text-white">{t.pelamar.status.title}</h1>
           <p className="text-white/80 text-xs sm:text-sm leading-relaxed max-w-3xl font-medium">
             {t.pelamar.status.subtitle}
           </p>
         </div>
       </div>
 
-      {/* Search Bar (GET with Search Button, Filters Removed) */}
-      <div className="bg-white dark:bg-slate-900 rounded-2xl p-4 sm:p-5 border border-slate-200 dark:border-slate-800 shadow-xs">
+      {/* Search Bar */}
+      <div className="bg-white dark:bg-slate-900 rounded-2xl p-3 sm:p-5 border border-slate-200 dark:border-slate-800 shadow-xs">
         <form
           onSubmit={handleSearch}
-          className="flex flex-col sm:flex-row items-center gap-3"
+          className="flex flex-col sm:flex-row items-center gap-2.5 sm:gap-3"
         >
           {/* Search Box */}
           <div className="relative flex-1 w-full flex items-center group">
-            <Search size={18} className="absolute left-4 text-slate-400 group-focus-within:text-[#1A4B9F] pointer-events-none transition-colors" />
+            <Search size={18} className="absolute left-3.5 sm:left-4 text-slate-400 group-focus-within:text-[#1A4B9F] pointer-events-none transition-colors" />
             <input
               type="text"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               placeholder={t.pelamar.status.searchPlaceholder || 'Cari posisi atau perusahaan...'}
-              className="w-full pl-11 pr-10 py-3 bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/80 focus:border-[#1A4B9F] focus:ring-2 focus:ring-[#1A4B9F]/10 rounded-xl text-sm font-semibold text-slate-700 dark:text-slate-200 placeholder:text-slate-400 outline-none transition-all"
+              className="w-full pl-10 sm:pl-11 pr-10 py-2.5 sm:py-3 bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/80 focus:border-[#1A4B9F] focus:ring-2 focus:ring-[#1A4B9F]/10 rounded-xl text-xs sm:text-sm font-semibold text-slate-700 dark:text-slate-200 placeholder:text-slate-400 outline-none transition-all"
             />
             {searchTerm && (
               <button
@@ -797,7 +806,7 @@ function StatusValidasiContent() {
           {/* Search Button */}
           <button
             type="submit"
-            className="w-full sm:w-auto px-7 py-3 bg-[#1A4B9F] hover:bg-[#133878] active:scale-[0.99] text-white rounded-xl font-bold text-sm shadow-xs transition-all flex items-center justify-center gap-2 cursor-pointer shrink-0"
+            className="w-full sm:w-auto px-6 sm:px-7 py-2.5 sm:py-3 bg-[#1A4B9F] hover:bg-[#133878] active:scale-[0.99] text-white rounded-xl font-bold text-xs sm:text-sm shadow-xs transition-all flex items-center justify-center gap-2 cursor-pointer shrink-0"
           >
             <Search size={16} />
             <span>{t.pelamar.status.searchButton || 'Cari'}</span>
@@ -805,23 +814,160 @@ function StatusValidasiContent() {
         </form>
       </div>
 
-      {/* APPLICATIONS DATA TABLE */}
-      <DataTable<ApplicationItem>
-        data={filteredApplications}
-        columns={tableColumns}
-        keyExtractor={(item) => item.id}
-        isLoading={isLoading}
-        pageSize={10}
-        currentPage={currentPage}
-        onPageChange={setCurrentPage}
-        onRowClick={(item) => setSelectedDetailApp(item)}
-        emptyTitle={committedSearch ? 'Tidak Ada Lamaran Ditemukan' : 'Belum Ada Lamaran'}
-        emptyDescription={
-          committedSearch
-            ? `Tidak ada data lamaran yang cocok dengan kata kunci "${committedSearch}".`
-            : 'Anda belum memiliki riwayat lamaran pekerjaan saat ini.'
-        }
-      />
+      {/* DESKTOP APPLICATIONS DATA TABLE (Hidden on mobile screens < 768px) */}
+      <div className="hidden md:block">
+        <DataTable<ApplicationItem>
+          data={filteredApplications}
+          columns={tableColumns}
+          keyExtractor={(item) => item.id}
+          isLoading={isLoading}
+          pageSize={pageSize}
+          currentPage={currentPage}
+          onPageChange={setCurrentPage}
+          onRowClick={(item) => setSelectedDetailApp(item)}
+          emptyTitle={committedSearch ? 'Tidak Ada Lamaran Ditemukan' : 'Belum Ada Lamaran'}
+          emptyDescription={
+            committedSearch
+              ? `Tidak ada data lamaran yang cocok dengan kata kunci "${committedSearch}".`
+              : 'Anda belum memiliki riwayat lamaran pekerjaan saat ini.'
+          }
+        />
+      </div>
+
+      {/* MOBILE APPLICATIONS CARDS LIST (Visible on screens < 768px) */}
+      <div className="block md:hidden space-y-3">
+        {isLoading ? (
+          <div className="space-y-3">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 space-y-3 animate-pulse shadow-xs">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-slate-200 dark:bg-slate-800"></div>
+                  <div className="space-y-1.5 flex-1">
+                    <div className="h-4 bg-slate-200 dark:bg-slate-800 rounded w-1/2"></div>
+                    <div className="h-3 bg-slate-200/60 dark:bg-slate-800/60 rounded w-1/3"></div>
+                  </div>
+                </div>
+                <div className="h-10 bg-slate-100 dark:bg-slate-800/40 rounded-xl"></div>
+                <div className="h-9 bg-slate-200/50 dark:bg-slate-800/50 rounded-xl"></div>
+              </div>
+            ))}
+          </div>
+        ) : filteredApplications.length === 0 ? (
+          <div className="p-8 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl text-center space-y-2 shadow-xs">
+            <div className="w-12 h-12 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center mx-auto text-slate-400 mb-1">
+              <FileText size={24} />
+            </div>
+            <p className="font-bold text-sm text-slate-900 dark:text-white">
+              {committedSearch ? 'Tidak Ada Lamaran Ditemukan' : 'Belum Ada Lamaran'}
+            </p>
+            <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+              {committedSearch
+                ? `Tidak ada data lamaran yang cocok dengan kata kunci "${committedSearch}".`
+                : 'Anda belum memiliki riwayat lamaran pekerjaan saat ini.'}
+            </p>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {paginatedApplications.map((item) => (
+              <div
+                key={item.id}
+                onClick={() => setSelectedDetailApp(item)}
+                className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-2xl p-4 shadow-xs hover:border-[#1A4B9F]/40 active:scale-[0.99] transition-all space-y-3 relative overflow-hidden cursor-pointer"
+              >
+                {/* Top Row: Company Logo & Job Title + Status Badge */}
+                <div className="flex items-start justify-between gap-2.5">
+                  <div className="flex items-center gap-3 min-w-0 flex-1">
+                    {item.logo ? (
+                      <img
+                        src={item.logo}
+                        alt={item.companyName}
+                        className="w-10 h-10 rounded-xl object-contain border border-slate-200 dark:border-slate-700 shrink-0 shadow-2xs bg-white dark:bg-slate-800 p-1"
+                        onError={(e) => {
+                          e.currentTarget.style.display = 'none';
+                          const fallback = e.currentTarget.nextElementSibling as HTMLElement;
+                          if (fallback) fallback.style.display = 'flex';
+                        }}
+                      />
+                    ) : null}
+                    <div
+                      className={`w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-950/60 border border-blue-200 dark:border-blue-800 text-[#1A4B9F] dark:text-blue-400 font-extrabold text-xs items-center justify-center shrink-0 shadow-2xs ${item.logo ? 'hidden' : 'flex'}`}
+                    >
+                      {item.companyName
+                        ? item.companyName.replace(/^(PT\.|CV\.|PT|CV)\s*/i, '').trim().slice(0, 2).toUpperCase()
+                        : <Building2 size={18} />}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <h4 className="font-bold text-sm text-slate-900 dark:text-white truncate leading-tight">
+                        {item.jobTitle}
+                      </h4>
+                      <p className="text-xs text-slate-500 dark:text-slate-400 truncate mt-0.5">
+                        {item.companyName}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Status Badge */}
+                  <div className="shrink-0">
+                    {renderStatusBadge(item)}
+                  </div>
+                </div>
+
+                {/* Meta & Stage Details */}
+                <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200/60 dark:border-slate-800 flex items-center justify-between gap-2 text-xs">
+                  <div className="flex items-center gap-1.5 min-w-0">
+                    <Clock size={13} className="text-[#1A4B9F] dark:text-blue-400 shrink-0" />
+                    <span className="font-semibold text-slate-700 dark:text-slate-300 truncate">{item.tahapRekrutmen}</span>
+                  </div>
+                  <div className="flex items-center gap-1 text-[11px] text-slate-500 dark:text-slate-400 shrink-0">
+                    <Calendar size={12} />
+                    <span>{item.applyDate}</span>
+                  </div>
+                </div>
+
+                {/* Urgent Action Banner (Stage 3 Virtual Interview) */}
+                {item.currentStageIndex === 3 && item.status === 'Dalam Proses' && (
+                  <div className="p-2.5 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/70 rounded-xl flex items-center justify-between gap-2 text-xs" onClick={(e) => e.stopPropagation()}>
+                    <div className="flex items-center gap-2 text-amber-800 dark:text-amber-300 font-semibold min-w-0">
+                      <Video size={14} className="shrink-0 animate-pulse text-amber-600" />
+                      <span className="truncate">Wawancara video siap direkam</span>
+                    </div>
+                    <Link
+                      href={`/applicant/interviews?id=${item.id}`}
+                      className="px-3 py-1 bg-amber-500 hover:bg-amber-600 text-white font-bold text-[11px] rounded-lg shrink-0 shadow-xs transition-colors"
+                    >
+                      Rekam
+                    </Link>
+                  </div>
+                )}
+
+                {/* Card Action Button */}
+                <div className="pt-1 border-t border-slate-100 dark:border-slate-800" onClick={(e) => e.stopPropagation()}>
+                  <button
+                    type="button"
+                    onClick={() => setSelectedDetailApp(item)}
+                    className="w-full py-2 px-3 bg-[#1A4B9F]/10 hover:bg-[#1A4B9F]/20 text-[#1A4B9F] dark:text-blue-400 font-bold text-xs rounded-xl flex items-center justify-center gap-1.5 transition-colors cursor-pointer active:scale-95"
+                  >
+                    <Eye size={14} />
+                    <span>Lihat Detail Riwayat & Linimasa</span>
+                  </button>
+                </div>
+              </div>
+            ))}
+
+            {/* Mobile Pagination */}
+            {filteredApplications.length > pageSize && (
+              <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-xs">
+                <Pagination
+                  currentPage={currentPage}
+                  totalItems={filteredApplications.length}
+                  pageSize={pageSize}
+                  onPageChange={setCurrentPage}
+                />
+              </div>
+            )}
+          </div>
+        )}
+      </div>
 
       {/* MODAL DETAIL RIWAYAT LAMARAN (SIMPLE & CLEAN) */}
       {selectedDetailApp && (

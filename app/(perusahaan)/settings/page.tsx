@@ -385,6 +385,9 @@ function SettingsPageContent() {
 
       if (res.ok) {
         toast.success(t.settings?.settingsSaved || 'Pengaturan perusahaan berhasil disimpan!');
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new Event('company_profile_updated'));
+        }
         if (isOnboarding) {
           router.push('/jobs');
         }
@@ -420,6 +423,9 @@ function SettingsPageContent() {
       if (res.ok) {
         const data = await res.json();
         setLogoUrl(data.logo_url);
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new Event('company_profile_updated'));
+        }
         toast.success('Logo perusahaan berhasil diperbarui');
       } else {
         toast.error('Gagal mengunggah logo');

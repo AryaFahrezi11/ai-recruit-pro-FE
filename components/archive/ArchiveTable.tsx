@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from '@/hooks/useTranslation';
-import { FileText, Trash2, AlertTriangle, X, Eye } from 'lucide-react';
+import { FileText, Trash2, AlertTriangle, X, Eye, GraduationCap, Calendar as CalendarIcon } from 'lucide-react';
 import { fetchAuth } from '@/lib/api/auth';
 import toast from 'react-hot-toast';
 import { CandidateModal } from '@/components/pipeline/CandidateModal';
@@ -177,7 +177,8 @@ export function ArchiveTable({ search, jobFilter, hasilFilter, date, onJobsExtra
 
   return (
     <div className="bg-card rounded-xl border border-border shadow-sm overflow-hidden relative">
-      <div className="overflow-x-auto">
+      {/* Desktop Table View (Hidden on mobile) */}
+      <div className="hidden md:block overflow-x-auto">
         <table className="w-full text-xs text-left">
           <thead className="bg-slate-50 dark:bg-slate-950/60 text-slate-500 dark:text-slate-400 font-bold border-b border-slate-200 dark:border-slate-800 uppercase tracking-wider text-[10px]">
             <tr>
@@ -283,8 +284,136 @@ export function ArchiveTable({ search, jobFilter, hasilFilter, date, onJobsExtra
         </table>
       </div>
 
+      {/* Mobile Candidate Archive Cards (Visible on screens < 768px) */}
+      <div className="block md:hidden p-3 sm:p-4 space-y-3">
+        {loading ? (
+          <div className="space-y-3">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="bg-card border border-border rounded-2xl p-4 space-y-3 animate-pulse">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-muted"></div>
+                  <div className="space-y-1.5 flex-1">
+                    <div className="h-4 bg-muted rounded w-1/2"></div>
+                    <div className="h-3 bg-muted/60 rounded w-1/3"></div>
+                  </div>
+                </div>
+                <div className="h-10 bg-muted/30 rounded-xl"></div>
+                <div className="h-8 bg-muted/50 rounded-xl"></div>
+              </div>
+            ))}
+          </div>
+        ) : filteredApplications.length === 0 ? (
+          <div className="p-8 bg-card border border-border rounded-2xl text-center space-y-2">
+            <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center mx-auto text-muted-foreground mb-1">
+              <FileText size={24} />
+            </div>
+            <p className="font-bold text-sm text-foreground">
+              {date ? 'Tidak ada data arsip pada tanggal ini' : 'Belum ada data arsip untuk bulan ini'}
+            </p>
+            <p className="text-xs text-muted-foreground leading-relaxed">
+              {date ? 'Coba ubah atau reset filter tanggal untuk melihat data lain.' : 'Pilih tanggal di atas untuk mencari arsip bulan/tahun sebelumnya.'}
+            </p>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {filteredApplications.map((row) => (
+              <div
+                key={row.id}
+                className="bg-card border border-border rounded-2xl p-4 shadow-xs hover:border-primary/40 active:scale-[0.99] transition-all space-y-3 relative overflow-hidden cursor-pointer"
+                onClick={() => openCandidateModal(row)}
+              >
+                {/* Top Row: Avatar + Candidate Name & Email + Outcome Badge */}
+                <div className="flex items-start justify-between gap-2.5">
+                  <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                    <div className={`w-10 h-10 rounded-full flex items-center justify-center text-xs font-bold shrink-0 shadow-2xs ${getAvatarBg(row.pelamar?.nama_lengkap || '')}`}>
+                      {getInitials(row.pelamar?.nama_lengkap || '')}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <h4 className="font-bold text-sm text-foreground truncate leading-tight">
+                        {row.pelamar?.nama_lengkap || 'Kandidat'}
+                      </h4>
+                      <p className="text-xs text-muted-foreground truncate mt-0.5">
+                        {row.pelamar?.email || '-'}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Outcome Badge */}
+                  <div className="shrink-0">
+                    {row.status === 'Lolos' || row.status === 'hired' ? (
+                      <span className="px-2.5 py-1 bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-400 text-[10px] font-bold rounded-full border border-emerald-200 dark:border-emerald-800 flex items-center gap-1.5">
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                        Diterima
+                      </span>
+                    ) : (
+                      <span className="px-2.5 py-1 bg-rose-50 dark:bg-rose-950/50 text-rose-700 dark:text-rose-400 text-[10px] font-bold rounded-full border border-rose-200 dark:border-rose-800">
+                        {row.status === 'ditolak_sistem' || (row.status === 'rejected' && (row.analisis_cv?.hasil === 'ditolak' || row.analisis_cv?.hasil === 'tidak_memenuhi_syarat')) ? 'Ditolak (CV)' : 'Ditolak'}
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                {/* Job Title & Category */}
+                <div className="p-2.5 rounded-xl bg-muted/30 border border-border/50 flex items-center justify-between gap-2">
+                  <div className="min-w-0">
+                    <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider block">Posisi Lowongan</span>
+                    <span className="font-bold text-xs text-foreground truncate block">
+                      {row.job?.judul_posisi || '-'}
+                    </span>
+                  </div>
+                  <span className="px-2 py-0.5 bg-muted rounded text-[10px] font-semibold text-muted-foreground shrink-0 border border-border/60">
+                    {row.job?.kategori?.nama_kategori || 'Umum'}
+                  </span>
+                </div>
+
+                {/* Meta: Education & Date */}
+                <div className="grid grid-cols-2 gap-2 text-[11px] text-muted-foreground pt-0.5">
+                  <div className="flex items-center gap-1.5 min-w-0">
+                    <GraduationCap size={13} className="text-muted-foreground shrink-0" />
+                    <span className="truncate">{row.pelamar?.institusi_pendidikan || row.cvData?.education?.[0]?.school || '-'}</span>
+                  </div>
+                  <div className="flex items-center gap-1.5 justify-end">
+                    <CalendarIcon size={13} className="text-muted-foreground shrink-0" />
+                    <span className="font-medium text-foreground">{formatDate(row.updated_at || row.applied_at)}</span>
+                  </div>
+                </div>
+
+                {/* Company Note */}
+                {row.catatan_perusahaan && (
+                  <div className="p-2 rounded-xl bg-amber-50/70 dark:bg-amber-950/30 border border-amber-200/60 dark:border-amber-900/40 text-[11px] text-amber-800 dark:text-amber-300 leading-snug">
+                    <span className="font-semibold">Catatan:</span> {row.catatan_perusahaan}
+                  </div>
+                )}
+
+                {/* Actions Row */}
+                <div className="pt-2 border-t border-border/50 flex items-center justify-between gap-2" onClick={(e) => e.stopPropagation()}>
+                  <button
+                    type="button"
+                    onClick={() => openCandidateModal(row)}
+                    className="flex-1 py-2 px-3 bg-primary/10 hover:bg-primary/20 text-primary font-bold text-xs rounded-xl flex items-center justify-center gap-1.5 transition-colors cursor-pointer active:scale-95"
+                  >
+                    <Eye size={14} />
+                    <span>Detail Evaluasi</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setSelectedForDelete(row)}
+                    disabled={deletingId === row.id}
+                    className="py-2 px-3 bg-rose-50 text-rose-600 hover:bg-rose-100 dark:bg-rose-950/50 dark:text-rose-400 font-bold text-xs rounded-xl flex items-center justify-center gap-1.5 transition-colors active:scale-95 cursor-pointer disabled:opacity-40"
+                    title="Hapus dari Arsip"
+                  >
+                    <Trash2 size={14} />
+                    <span>Hapus</span>
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
       {!loading && filteredApplications.length > 0 && (
-        <div className="px-6 py-4 border-t border-border flex items-center justify-between">
+        <div className="px-4 py-3 sm:px-6 sm:py-4 border-t border-border flex items-center justify-between">
           <p className="text-xs text-muted-foreground">
             {t.archive?.showing || 'Menampilkan'} <strong>1</strong> - <strong>{filteredApplications.length}</strong> dari <strong>{filteredApplications.length}</strong> data arsip
           </p>
