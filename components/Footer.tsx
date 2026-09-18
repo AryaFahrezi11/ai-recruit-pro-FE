@@ -2,8 +2,8 @@
 
 import React from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { ShieldCheck } from 'lucide-react';
-import BrandLogo from '@/components/ui/BrandLogo';
 
 export default function Footer() {
 
@@ -23,8 +23,17 @@ export default function Footer() {
           
           {/* Brand & Mission Column (2 Cols on lg) */}
           <div className="lg:col-span-2 space-y-4 pr-0 lg:pr-6">
-            <Link href="/" onClick={handleHomeClick} className="inline-block">
-              <BrandLogo size="md" showBadge={true} href="" />
+            <Link href="/" onClick={handleHomeClick} className="flex items-center gap-3 group">
+              <Image
+                src="/logo_hd.png"
+                alt="AI-RecruitPro Logo"
+                width={160}
+                height={160}
+                quality={100}
+                unoptimized
+                className="h-9 w-auto object-contain shrink-0 transition-transform group-hover:scale-105"
+              />
+              <span className="font-bold text-lg text-white tracking-tight">AI-RecruitPro</span>
             </Link>
             <p className="text-slate-400 leading-relaxed text-xs sm:text-sm max-w-md">
               Platform rekrutmen berbasis AI yang menghubungkan talenta terbaik dengan perusahaan teknologi terkemuka secara fair, cepat, dan transparan.
@@ -150,7 +159,6 @@ export default function Footer() {
     </footer>
   );
 }
-
 
 
 
