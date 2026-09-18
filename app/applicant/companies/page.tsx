@@ -259,7 +259,7 @@ function CompaniesPageContent() {
               Eksplorasi Perusahaan
             </h1>
             <p className="text-[11px] sm:text-sm text-slate-500 dark:text-slate-400 mt-0.5 line-clamp-1 sm:line-clamp-none">
-              Temukan perusahaan terpercaya, budaya kerja, dan lowongan karir terbaik di Indonesia.
+              Temukan perusahaan terpercaya, dan lowongan karir terbaik di Indonesia.
             </p>
           </div>
 
