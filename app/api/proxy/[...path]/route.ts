@@ -1,6 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-const BACKEND_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000/api';
+const getBackendBase = () => {
+  if (process.env.NEXT_PUBLIC_API_URL) {
+    const raw = process.env.NEXT_PUBLIC_API_URL.trim().replace(/\/+$/, '');
+    return raw.endsWith('/api') ? raw : `${raw}/api`;
+  }
+  return 'http://127.0.0.1:8000/api';
+};
+
+const BACKEND_BASE = getBackendBase();
 
 export const dynamic = 'force-dynamic';
 

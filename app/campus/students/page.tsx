@@ -4,7 +4,7 @@ import React, { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { toast } from 'react-hot-toast';
 import { useTranslation } from '@/hooks/useTranslation';
-import { api } from '@/lib/api';
+import { api, getApiUrl, getMediaUrl } from '@/lib/api';
 import { fetchAuth } from '@/lib/api/auth';
 import { normalizeMajorName } from '@/lib/utils/major';
 import { Pagination } from '@/components/ui/DataTable';
@@ -1557,15 +1557,10 @@ function KampusMahasiswaContent() {
                     if (url.includes('r2.dev')) {
                       const appId = (selectedStudent.applications && selectedStudent.applications.find(a => a.video_url || a.videoUrl)?.id) || selectedStudent.applications?.[0]?.id;
                       if (appId) {
-                        const apiBase = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
-                        return `${apiBase.replace(/\/$/, '')}/api/applications/${appId}/video`;
+                        return getApiUrl(`/applications/${appId}/video`);
                       }
                     }
-                    if (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('data:') || url.startsWith('blob:')) {
-                      return url;
-                    }
-                    const apiBase = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
-                    return `${apiBase.replace(/\/$/, '')}/${url.replace(/^\//, '')}`;
+                    return getMediaUrl(url);
                   };
 
                   const finalVideoUrl = resolveVideoUrl(rawVideoUrl);
