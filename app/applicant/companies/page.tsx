@@ -250,31 +250,31 @@ function CompaniesPageContent() {
       {!isApplicantRoute && <Navbar activePage="companies" />}
 
       {/* -------------------- CLEAN NEUTRAL SEARCH BAR & FILTER CHIPS -------------------- */}
-      <section className="pt-8 pb-3 px-4 sm:px-6">
-        <div className="max-w-[1440px] mx-auto space-y-4">
+      <section className="pt-3 sm:pt-8 pb-1.5 sm:pb-3 px-3 sm:px-6">
+        <div className="max-w-[1440px] mx-auto space-y-2 sm:space-y-4">
           
-          {/* Header Context (Clean Minimalist Title - No AI Badges) */}
+          {/* Header Context */}
           <div>
-            <h1 className="text-xl sm:text-2xl font-extrabold text-slate-900 dark:text-white tracking-tight">
+            <h1 className="text-base sm:text-2xl font-extrabold text-slate-900 dark:text-white tracking-tight">
               Eksplorasi Perusahaan
             </h1>
-            <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-0.5">
+            <p className="text-[11px] sm:text-sm text-slate-500 dark:text-slate-400 mt-0.5 line-clamp-1 sm:line-clamp-none">
               Temukan perusahaan terpercaya, budaya kerja, dan lowongan karir terbaik di Indonesia.
             </p>
           </div>
 
           {/* Unified Integrated Search Command Box */}
-          <form onSubmit={handleSearchSubmit} className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-2 sm:p-2.5 shadow-xs relative z-30">
-            <div className="flex flex-col lg:flex-row items-stretch gap-2">
+          <form onSubmit={handleSearchSubmit} className="bg-white dark:bg-slate-900 rounded-xl sm:rounded-2xl border border-slate-200 dark:border-slate-800 p-2 sm:p-2.5 shadow-xs relative z-30">
+            <div className="flex flex-col lg:flex-row items-stretch gap-1.5 sm:gap-2">
               
               {/* Field 1: Keyword Input */}
-              <div className="flex-1 bg-slate-50 dark:bg-slate-800/80 rounded-lg border border-slate-200 dark:border-slate-700 px-3 py-2 flex items-center gap-2 focus-within:bg-white focus-within:border-slate-400 transition-all">
-                <Search size={16} className="text-slate-400 shrink-0" />
+              <div className="flex-1 bg-slate-50 dark:bg-slate-800/80 rounded-lg sm:rounded-xl border border-slate-200 dark:border-slate-700 px-2.5 sm:px-3 py-1.5 sm:py-2 flex items-center gap-2 focus-within:bg-white dark:focus-within:bg-slate-900 focus-within:border-slate-400 transition-all">
+                <Search size={15} className="text-slate-400 shrink-0" />
                 <input
                   type="text"
                   value={searchQuery}
                   onChange={(e) => handleSearchChange(e.target.value)}
-                  placeholder="Cari nama perusahaan atau kata kunci..."
+                  placeholder="Cari nama perusahaan..."
                   className="w-full text-xs sm:text-sm font-semibold text-slate-800 dark:text-slate-100 placeholder-slate-400 bg-transparent focus:outline-none"
                 />
                 {searchQuery && (
@@ -283,106 +283,110 @@ function CompaniesPageContent() {
                     onClick={() => { setSearchQuery(''); handleSearchSubmit(); }}
                     className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-xs p-1 cursor-pointer shrink-0"
                   >
-                    <X size={14} />
+                    <X size={13} />
                   </button>
                 )}
               </div>
 
-              {/* Field 2: Location Search Input */}
-              <div ref={locationContainerRef} className="flex-1 bg-slate-50 dark:bg-slate-800/80 rounded-lg border border-slate-200 dark:border-slate-700 px-3 py-2 flex items-center gap-2 focus-within:bg-white focus-within:border-slate-400 transition-all relative z-40">
-                <MapPin size={16} className="text-slate-400 shrink-0" />
-                <input
-                  type="text"
-                  value={selectedCity === 'Semua' ? '' : selectedCity}
-                  onFocus={() => setShowLocationSuggestions(true)}
-                  onChange={(e) => {
-                    setSelectedCity(e.target.value);
-                    setShowLocationSuggestions(true);
-                  }}
-                  placeholder="Cari lokasi atau kota..."
-                  className="w-full text-xs sm:text-sm font-semibold text-slate-800 dark:text-slate-100 placeholder-slate-400 bg-transparent focus:outline-none"
-                />
-                {selectedCity && selectedCity !== 'Semua' && (
+              {/* Row 2 on Mobile: Location & Industry side-by-side in 2 columns */}
+              <div className="grid grid-cols-2 gap-1.5 sm:gap-2 w-full lg:contents">
+                {/* Field 2: Location Search Input */}
+                <div ref={locationContainerRef} className="bg-slate-50 dark:bg-slate-800/80 rounded-lg sm:rounded-xl border border-slate-200 dark:border-slate-700 px-2.5 sm:px-3 py-1.5 sm:py-2 flex items-center gap-1.5 sm:gap-2 focus-within:bg-white dark:focus-within:bg-slate-900 focus-within:border-slate-400 transition-all relative z-40">
+                  <MapPin size={14} className="text-slate-400 shrink-0" />
+                  <input
+                    type="text"
+                    value={selectedCity === 'Semua' ? '' : selectedCity}
+                    onFocus={() => setShowLocationSuggestions(true)}
+                    onChange={(e) => {
+                      setSelectedCity(e.target.value);
+                      setShowLocationSuggestions(true);
+                    }}
+                    placeholder="Semua Kota..."
+                    className="w-full text-xs sm:text-sm font-semibold text-slate-800 dark:text-slate-100 placeholder-slate-400 bg-transparent focus:outline-none"
+                  />
+                  {selectedCity && selectedCity !== 'Semua' && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSelectedCity('');
+                        setShowLocationSuggestions(false);
+                      }}
+                      className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-xs p-0.5 cursor-pointer shrink-0"
+                    >
+                      <X size={12} />
+                    </button>
+                  )}
+
+                  {/* Location Suggestions Dropdown */}
+                  {showLocationSuggestions && suggestedLocations.length > 0 && (
+                    <div className="absolute top-[calc(100%+6px)] left-0 right-0 sm:right-auto sm:w-64 bg-white dark:bg-slate-900 rounded-xl sm:rounded-2xl shadow-xl border border-slate-100 dark:border-slate-800 py-1.5 z-50 text-slate-800 dark:text-slate-200 max-h-52 overflow-y-auto animate-in fade-in slide-in-from-top-2">
+                      <div className="px-3 py-1 text-[10px] font-bold text-slate-400 uppercase tracking-wider flex items-center justify-between border-b border-slate-50 dark:border-slate-800/50">
+                        <span>Lokasi Sering Dicari</span>
+                        <X className="w-3.5 h-3.5 cursor-pointer hover:text-slate-700 dark:hover:text-slate-300 transition-colors" onClick={() => setShowLocationSuggestions(false)} />
+                      </div>
+                      {suggestedLocations
+                        .filter(loc => !selectedCity || selectedCity === 'Semua' || loc.toLowerCase().includes(selectedCity.toLowerCase()))
+                        .map((loc, idx) => (
+                          <div
+                            key={idx}
+                            onMouseDown={(e) => {
+                              e.preventDefault();
+                              setSelectedCity(loc);
+                              setShowLocationSuggestions(false);
+                            }}
+                            className="px-3.5 py-1.5 hover:bg-[#EFF6FF] dark:hover:bg-slate-800 text-xs font-semibold cursor-pointer flex items-center gap-2 border-b border-slate-50 dark:border-slate-800/50 last:border-0"
+                          >
+                            <MapPin className="w-3.5 h-3.5 text-[#1A4B9F] dark:text-blue-400 shrink-0" />
+                            <span className="truncate">{loc}</span>
+                          </div>
+                        ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Field 3: Industry Selector */}
+                <div className="w-full lg:w-56 bg-slate-50 dark:bg-slate-800/80 rounded-lg sm:rounded-xl border border-slate-200 dark:border-slate-700 px-2.5 sm:px-3 py-1.5 sm:py-2 flex items-center gap-1.5 sm:gap-2 relative hover:border-slate-400 transition-colors">
+                  <Building2 size={14} className="text-slate-400 shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <select
+                      value={selectedIndustry}
+                      onChange={(e) => handleIndustryChange(e.target.value)}
+                      className="w-full appearance-none bg-transparent pr-4 font-bold text-slate-800 dark:text-slate-200 focus:outline-none cursor-pointer text-xs truncate"
+                    >
+                      {industriesList.map(ind => (
+                        <option key={ind} value={ind} className="bg-white dark:bg-slate-900 font-medium">
+                          {ind === 'Semua' ? 'Semua Industri' : ind}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <ChevronDown size={12} className="absolute right-2 text-slate-400 pointer-events-none stroke-[2]" />
+                </div>
+              </div>
+
+              {/* Action Buttons Row */}
+              <div className="flex items-center gap-1.5 sm:gap-2 w-full lg:w-auto">
+                <button
+                  type="submit"
+                  className="flex-1 lg:flex-none h-9 sm:h-10 px-4 sm:px-5 rounded-lg sm:rounded-xl bg-[#1A4B9F] hover:bg-[#133878] active:scale-[0.98] text-white font-bold text-xs flex items-center justify-center gap-1.5 transition-all shrink-0 cursor-pointer shadow-xs"
+                >
+                  <Search size={14} />
+                  <span>Cari</span>
+                </button>
+
+                {/* Reset / Clear Button (if active) */}
+                {(searchQuery || (selectedIndustry && selectedIndustry !== 'Semua') || Boolean(selectedCity && selectedCity !== 'Semua')) && (
                   <button
                     type="button"
-                    onClick={() => {
-                      setSelectedCity('');
-                      setShowLocationSuggestions(false);
-                    }}
-                    className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-xs p-1 cursor-pointer shrink-0"
+                    onClick={handleReset}
+                    title="Reset Filter"
+                    className="h-9 sm:h-10 px-3 rounded-lg sm:rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold text-xs flex items-center justify-center gap-1 border border-slate-200 dark:border-slate-700 transition-colors shrink-0 cursor-pointer"
                   >
-                    <X size={14} />
+                    <RotateCcw size={12} />
+                    <span>Reset</span>
                   </button>
                 )}
-
-                {/* Location Suggestions Dropdown */}
-                {showLocationSuggestions && suggestedLocations.length > 0 && (
-                  <div className="absolute top-[calc(100%+8px)] left-0 right-0 bg-white dark:bg-slate-900 rounded-2xl shadow-xl border border-slate-100 dark:border-slate-800 py-2 z-50 text-slate-800 dark:text-slate-200 max-h-60 overflow-y-auto animate-in fade-in slide-in-from-top-2">
-                    <div className="px-4 py-2 text-[11px] font-bold text-slate-400 uppercase tracking-wider flex items-center justify-between border-b border-slate-50 dark:border-slate-800/50">
-                      <span>Lokasi Sering Dicari</span>
-                      <X className="w-4 h-4 cursor-pointer hover:text-slate-700 dark:hover:text-slate-300 transition-colors" onClick={() => setShowLocationSuggestions(false)} />
-                    </div>
-                    {suggestedLocations
-                      .filter(loc => !selectedCity || selectedCity === 'Semua' || loc.toLowerCase().includes(selectedCity.toLowerCase()))
-                      .map((loc, idx) => (
-                        <div
-                          key={idx}
-                          onMouseDown={(e) => {
-                            e.preventDefault();
-                            setSelectedCity(loc);
-                            setShowLocationSuggestions(false);
-                          }}
-                          className="px-5 py-3 hover:bg-[#EFF6FF] dark:hover:bg-slate-800 text-xs font-semibold cursor-pointer flex items-center gap-3 transition-colors border-b border-slate-50 dark:border-slate-800/50 last:border-0"
-                        >
-                          <MapPin className="w-4 h-4 text-[#1A4B9F] dark:text-blue-400" />
-                          <span>{loc}</span>
-                        </div>
-                      ))}
-                  </div>
-                )}
               </div>
-
-              {/* Field 3: Industry Selector */}
-              <div className="w-full lg:w-56 bg-slate-50 dark:bg-slate-800/80 rounded-lg border border-slate-200 dark:border-slate-700 px-3 py-1.5 flex items-center gap-2 relative hover:border-slate-400 transition-colors">
-                <Building2 size={14} className="text-slate-400 shrink-0" />
-                <div className="flex-1 min-w-0">
-                  <span className="block text-[10px] uppercase tracking-wider font-extrabold text-slate-400 dark:text-slate-500 leading-none mb-0.5">Industri</span>
-                  <select
-                    value={selectedIndustry}
-                    onChange={(e) => handleIndustryChange(e.target.value)}
-                    className="w-full appearance-none bg-transparent pr-4 font-bold text-slate-800 dark:text-slate-200 focus:outline-none cursor-pointer text-xs truncate"
-                  >
-                    {industriesList.map(ind => (
-                      <option key={ind} value={ind} className="bg-white dark:bg-slate-900 font-medium">
-                        {ind === 'Semua' ? 'Semua Industri' : ind}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <ChevronDown size={14} className="absolute right-3 text-slate-400 pointer-events-none stroke-[2]" />
-              </div>
-
-              {/* Search Button */}
-              <button
-                type="submit"
-                className="px-4 py-2 rounded-lg bg-[#1A4B9F] hover:bg-[#133878] text-white font-bold text-xs flex items-center justify-center gap-2 transition-colors shrink-0 cursor-pointer shadow-sm"
-              >
-                <Search size={14} />
-                <span>Cari</span>
-              </button>
-
-              {/* Reset / Clear Button (if active) */}
-              {(searchQuery || (selectedIndustry && selectedIndustry !== 'Semua') || Boolean(selectedCity && selectedCity !== 'Semua')) && (
-                <button
-                  type="button"
-                  onClick={handleReset}
-                  title="Reset Filter"
-                  className="px-3 py-2 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold text-xs flex items-center justify-center gap-1.5 border border-slate-200 dark:border-slate-700 transition-colors shrink-0 cursor-pointer"
-                >
-                  <RotateCcw size={14} />
-                  <span className="hidden sm:inline">Reset</span>
-                </button>
-              )}
 
             </div>
           </form>
@@ -391,11 +395,11 @@ function CompaniesPageContent() {
       </section>
 
       {/* -------------------- MAIN DIRECTORY GRID (3 COLUMNS MAX 15 BOXES) -------------------- */}
-      <main id="company-grid-section" className="w-full max-w-[1440px] mx-auto px-6 sm:px-10 lg:px-14 py-6 flex-1 space-y-6">
+      <main id="company-grid-section" className="w-full max-w-[1440px] mx-auto px-3 sm:px-10 lg:px-14 py-2.5 sm:py-6 flex-1 space-y-3 sm:space-y-6">
         
         {/* Results Counter Sub-header */}
-        <div className="flex items-center justify-between border-b border-slate-200/80 dark:border-slate-800 pb-3">
-          <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 font-medium">
+        <div className="flex items-center justify-between border-b border-slate-200/80 dark:border-slate-800 pb-2 sm:pb-3">
+          <p className="text-[11px] sm:text-sm text-slate-500 dark:text-slate-400 font-medium">
             Menampilkan <strong className="text-slate-900 dark:text-white font-bold">{startIndex} - {endIndex}</strong> dari <strong className="text-slate-900 dark:text-white font-bold">{filteredCompanies.length}</strong> perusahaan terverifikasi
           </p>
         </div>
@@ -406,7 +410,7 @@ function CompaniesPageContent() {
             <p className="text-slate-500 text-xs font-semibold animate-pulse">Memuat daftar perusahaan...</p>
           </div>
         ) : paginatedCompanies.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2.5 sm:gap-5">
             {paginatedCompanies.map((comp) => {
               const compSlug = slugify(comp.nama_perusahaan);
               const compPath = isApplicantRoute
@@ -417,13 +421,13 @@ function CompaniesPageContent() {
                 <div
                   key={comp.id}
                   onClick={() => router.push(compPath)}
-                  className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 hover:border-slate-400 dark:hover:border-slate-600 shadow-2xs hover:shadow-md transition-all duration-300 cursor-pointer flex flex-col justify-between space-y-4 group"
+                  className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-xl sm:rounded-2xl p-3 sm:p-5 hover:border-slate-400 dark:hover:border-slate-600 shadow-2xs hover:shadow-md transition-all duration-200 cursor-pointer flex flex-col justify-between space-y-2 sm:space-y-3.5 group"
                 >
-                <div className="space-y-3">
+                <div className="space-y-1.5 sm:space-y-3">
                   
                   {/* Logo + Verified Title + Location */}
-                  <div className="flex items-start gap-3">
-                    <div className="w-13 h-13 rounded-xl border border-slate-200 dark:border-slate-700 p-1.5 shrink-0 flex items-center justify-center bg-white dark:bg-slate-900 overflow-hidden shadow-2xs group-hover:scale-105 transition-transform">
+                  <div className="flex items-start gap-2.5 sm:gap-3">
+                    <div className="w-11 h-11 sm:w-13 sm:h-13 rounded-xl border border-slate-200 dark:border-slate-700 p-1 shrink-0 flex items-center justify-center bg-white dark:bg-slate-900 overflow-hidden shadow-2xs group-hover:scale-105 transition-transform">
                       {comp.logo_url ? (
                         <img
                           src={comp.logo_url}
@@ -435,48 +439,49 @@ function CompaniesPageContent() {
                           }}
                         />
                       ) : (
-                        <Building2 size={24} className="text-slate-400" />
+                        <Building2 size={22} className="text-slate-400" />
                       )}
                     </div>
 
-                    <div className="space-y-1 min-w-0 flex-1">
+                    <div className="space-y-0.5 sm:space-y-1 min-w-0 flex-1">
                       <div className="flex items-center gap-1.5">
-                        <h3 className="font-bold text-sm text-slate-900 dark:text-white group-hover:text-slate-900 dark:group-hover:text-white group-hover:underline transition-all truncate">
+                        <h3 className="font-bold text-xs sm:text-sm text-slate-900 dark:text-white group-hover:text-[#1A4B9F] dark:group-hover:text-blue-400 transition-colors truncate">
                           {comp.nama_perusahaan}
                         </h3>
                         <span title="Perusahaan Terverifikasi" className="shrink-0">
-                          <ShieldCheck size={16} className="text-emerald-600 dark:text-emerald-400" />
+                          <ShieldCheck size={14} className="text-emerald-600 dark:text-emerald-400" />
                         </span>
                       </div>
-                      <p className="text-xs font-medium text-slate-500 dark:text-slate-400 truncate flex items-center gap-1">
-                        <MapPin size={12} className="text-slate-400 shrink-0" />
+                      <p className="text-[11px] sm:text-xs font-medium text-slate-500 dark:text-slate-400 truncate flex items-center gap-1">
+                        <MapPin size={11} className="text-slate-400 shrink-0" />
                         <span>{comp.alamat || comp.kota || 'Indonesia'}</span>
                       </p>
                     </div>
                   </div>
 
-                  {/* Industry & Vacancies */}
-                  <div className="space-y-2 text-xs text-slate-600 dark:text-slate-400 pt-1">
-                    <div className="flex items-center gap-2">
-                      <Building2 size={14} className="text-slate-400 shrink-0" />
+                  {/* Industry & Vacancies in compact inline layout */}
+                  <div className="flex items-center justify-between gap-2 pt-0.5 sm:pt-1">
+                    <div className="flex items-center gap-1 text-[11px] sm:text-xs text-slate-600 dark:text-slate-400 min-w-0 truncate">
+                      <Building2 size={12} className="text-slate-400 shrink-0" />
                       <span className="truncate font-medium">{comp.industri || 'Teknologi & Informasi'}</span>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-slate-700 dark:text-slate-300 font-semibold bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-2 py-0.5 rounded text-[11px] flex items-center gap-1">
-                        <Briefcase size={12} className="text-slate-500 shrink-0" />
-                        {comp.jobs_count} Lowongan Aktif
-                      </span>
-                    </div>
+                    <span className="shrink-0 text-[#1A4B9F] dark:text-blue-300 font-bold bg-blue-50/90 dark:bg-slate-800 border border-blue-100 dark:border-slate-700 px-2 py-0.5 rounded-md text-[10px] sm:text-[11px] flex items-center gap-1">
+                      <Briefcase size={10} className="text-[#1A4B9F] dark:text-blue-300 shrink-0" />
+                      {comp.jobs_count} Lowongan Aktif
+                    </span>
                   </div>
 
                 </div>
 
                 {/* Footer Status */}
-                <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs text-slate-400 dark:text-slate-500">
-                  <div className="flex items-center gap-1.5">
-                    <Clock size={13} className="shrink-0 text-slate-400" />
-                    <span>Terakhir aktif {comp.last_active || 'sejam yang lalu'}</span>
+                <div className="pt-2 sm:pt-2.5 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-[10px] sm:text-xs text-slate-400 dark:text-slate-500">
+                  <div className="flex items-center gap-1 text-[10px] text-slate-400">
+                    <Clock size={11} className="shrink-0 text-slate-400" />
+                    <span>Terakhir aktif {comp.last_active || 'Aktif'}</span>
                   </div>
+                  <span className="text-[#1A4B9F] dark:text-blue-400 font-bold text-[10px] flex items-center gap-0.5 group-hover:underline">
+                    Lihat Profil <ChevronRight size={11} />
+                  </span>
                 </div>
 
               </div>

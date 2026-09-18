@@ -55,7 +55,7 @@ function PelamarMobileNav({ navItems, pathname }: { navItems: any[]; pathname: s
   const searchParams = useSearchParams();
 
   return (
-    <div className="lg:hidden flex items-center justify-around bg-slate-50 dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 py-2 px-2 overflow-x-auto">
+    <div className="lg:hidden flex items-center border-t border-slate-100 dark:border-slate-800/80 bg-white dark:bg-slate-900 px-3 overflow-x-auto">
       {navItems.map((item) => {
         const Icon = item.icon;
         const itemUrl = new URL(item.href, 'http://localhost');
@@ -69,12 +69,14 @@ function PelamarMobileNav({ navItems, pathname }: { navItems: any[]; pathname: s
           <Link
             key={item.name}
             href={item.href}
-            className={`flex flex-col items-center gap-1 px-3 py-1.5 rounded-xl text-[11px] font-bold whitespace-nowrap ${
-              isActive ? 'text-slate-900 dark:text-white bg-slate-200 dark:bg-slate-800 shadow-2xs' : 'text-slate-500 dark:text-slate-400'
+            className={`flex-1 flex items-center justify-center gap-1.5 py-3 px-2 text-xs whitespace-nowrap relative transition-all ${
+              isActive
+                ? 'text-[#1A4B9F] dark:text-blue-400 font-bold after:content-[""] after:absolute after:bottom-0 after:left-2 after:right-2 after:h-[2.5px] after:bg-[#1A4B9F] dark:after:bg-blue-400 after:rounded-full'
+                : 'text-slate-500 dark:text-slate-400 font-medium hover:text-slate-800 dark:hover:text-slate-200'
             }`}
           >
-            <Icon size={16} />
-            {item.name}
+            <Icon size={15} className={`transition-transform ${isActive ? 'text-[#1A4B9F] dark:text-blue-400 scale-105' : 'text-slate-400 dark:text-slate-500'}`} />
+            <span>{item.name}</span>
           </Link>
         );
       })}
@@ -256,21 +258,21 @@ export default function PelamarPerfectLayout({
     <div className="min-h-screen bg-[#F8FAFC] dark:bg-slate-950 text-slate-800 dark:text-slate-100 flex flex-col font-sans antialiased">
       {/* Top Navbar - JobStreet Inspired Header */}
       <header className="no-print sticky top-0 z-50 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 shadow-2xs">
-        <div className="max-w-[1440px] mx-auto px-6 sm:px-10 lg:px-14 h-20 flex items-center justify-between">
+        <div className="max-w-[1440px] mx-auto px-4 sm:px-10 lg:px-14 h-16 sm:h-20 flex items-center justify-between">
 
           {/* Left Side: Brand & Main Navigation Links */}
           <div className="flex items-center gap-8">
-            <Link href="/applicant/dashboard" className="flex items-center gap-3 group">
+            <Link href="/applicant/dashboard" className="flex items-center gap-2.5 sm:gap-3 group">
               <Image
                 src="/logo_hd.png"
                 alt="AI-RecruitPro Logo"
                 width={70}
                 height={70}
                 unoptimized
-                className="h-13 sm:h-15 w-auto object-contain shrink-0 transition-transform group-hover:scale-105"
+                className="h-10 sm:h-14 w-auto object-contain shrink-0 transition-transform group-hover:scale-105"
                 priority
               />
-              <span className="font-extrabold text-lg sm:text-xl tracking-tight text-slate-900 dark:text-white leading-none">
+              <span className="font-extrabold text-base sm:text-xl tracking-tight text-slate-900 dark:text-white leading-none">
                 AI-RecruitPro
               </span>
             </Link>

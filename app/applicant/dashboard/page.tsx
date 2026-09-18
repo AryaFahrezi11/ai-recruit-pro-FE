@@ -29,7 +29,9 @@ import {
   Mail,
   Globe,
   Loader2,
-  AlertCircle
+  AlertCircle,
+  SlidersHorizontal,
+  ArrowLeft
 } from 'lucide-react';
 import { ApplyJobModal } from '@/components/ApplyJobModal';
 import { api, parseErrorMessage, getMediaUrl } from '@/lib/api';
@@ -87,11 +89,15 @@ function DashboardContent() {
   const [suggestedLocations, setSuggestedLocations] = useState<string[]>([]);
   const [showLocationSuggestions, setShowLocationSuggestions] = useState(false);
   const locationContainerRef = useRef<HTMLDivElement>(null);
+  const mobileLocationRef = useRef<HTMLDivElement>(null);
 
   // Close location suggestions on click outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (locationContainerRef.current && !locationContainerRef.current.contains(event.target as Node)) {
+      const target = event.target as Node;
+      const insideDesktop = locationContainerRef.current && locationContainerRef.current.contains(target);
+      const insideMobile = mobileLocationRef.current && mobileLocationRef.current.contains(target);
+      if (!insideDesktop && !insideMobile) {
         setShowLocationSuggestions(false);
       }
     };
@@ -167,7 +173,20 @@ function DashboardContent() {
   const [savedJobIds, setSavedJobIds] = useState<(number | string)[]>([]);
   const [applyingJobModalData, setApplyingJobModalData] = useState<{ id: number | string; title: string; company: string } | null>(null);
   const [showCvWarningModal, setShowCvWarningModal] = useState<boolean>(false);
+  const [showMobileFilterModal, setShowMobileFilterModal] = useState<boolean>(false);
+  const [showMobileDetailModal, setShowMobileDetailModal] = useState<boolean>(false);
   const hasShownCvWarningRef = useRef<boolean>(false);
+
+  const activeFilterCount = useMemo(() => {
+    let count = 0;
+    if (categoryFilter && categoryFilter !== 'Semua') count++;
+    if (employmentTypeFilter && employmentTypeFilter !== 'Semua') count++;
+    if (workModeFilter && workModeFilter !== 'Semua') count++;
+    if (experienceFilter && experienceFilter !== 'Semua') count++;
+    if (educationFilter && educationFilter !== 'Semua') count++;
+    if (industryFilter && industryFilter !== 'Semua') count++;
+    return count;
+  }, [categoryFilter, employmentTypeFilter, workModeFilter, experienceFilter, educationFilter, industryFilter]);
 
   const [jobsList, setJobsList] = useState<Job[]>([]);
   const [companiesList, setCompaniesList] = useState<Company[]>([]);
@@ -191,17 +210,6 @@ function DashboardContent() {
       return () => clearTimeout(timer);
     }
   }, [userHasCv, isActualPelamar]);
-
-  // Close location dropdown when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (locationContainerRef.current && !locationContainerRef.current.contains(event.target as Node)) {
-        setShowLocationSuggestions(false);
-      }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
 
   // Synchronize filter input states with URL search params
   useEffect(() => {
@@ -661,12 +669,12 @@ function DashboardContent() {
   }, [selectedJobId, filteredJobs]);
 
   return (
-    <div className="space-y-6 max-w-[1440px] mx-auto">
+    <div className="space-y-4 sm:space-y-6 max-w-[1440px] mx-auto">
 
       {/* TOP SEARCH BANNER (Premium Glassmorphism) */}
-      <div className="relative z-30 bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-8 shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.1)] border border-slate-100 dark:border-slate-800 space-y-6">
+      <div className="relative z-30 bg-white dark:bg-slate-900 rounded-2xl sm:rounded-3xl p-3.5 sm:p-6 md:p-8 shadow-[0_4px_20px_rgb(0,0,0,0.03)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.1)] border border-slate-100 dark:border-slate-800 space-y-3 sm:space-y-4">
         {/* Subtle Background Elements */}
-        <div className="absolute inset-0 overflow-hidden rounded-3xl pointer-events-none">
+        <div className="absolute inset-0 overflow-hidden rounded-2xl sm:rounded-3xl pointer-events-none">
           <div className="absolute top-0 right-0 -mr-20 -mt-20 w-64 h-64 rounded-full bg-blue-50/80 dark:bg-blue-900/10 blur-3xl opacity-60"></div>
           <div className="absolute bottom-0 left-0 -ml-20 -mb-20 w-64 h-64 rounded-full bg-indigo-50/80 dark:bg-indigo-900/10 blur-3xl opacity-60"></div>
         </div>
@@ -713,122 +721,211 @@ function DashboardContent() {
               }
             }
           }}
-          className="relative z-20 grid grid-cols-1 md:grid-cols-12 gap-4"
+          className="relative z-20 space-y-2.5 sm:space-y-0"
         >
-          {/* Left Input: Keyword */}
-          <div className="md:col-span-5 relative flex items-center group">
-            <Search className="absolute left-3.5 text-slate-400 group-focus-within:text-[#1A4B9F] w-4 h-4 pointer-events-none transition-colors" />
-            <input
-              type="text"
-              name="keyword"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder={activeTab === 'companies' ? (language === 'id' ? 'Cari nama perusahaan atau industri...' : 'Search company or industry...') : t.pelamar.dashboard.searchPlaceholder}
-              className="w-full pl-10 pr-4 py-3 bg-slate-50 dark:bg-slate-800/50 border border-slate-200/60 dark:border-slate-700 text-slate-800 dark:text-white rounded-xl text-sm font-semibold placeholder:text-slate-400 outline-none focus:bg-white focus:ring-2 focus:ring-[#1A4B9F]/20 focus:border-[#1A4B9F] transition-all shadow-sm inset-ring-slate-100"
-            />
-          </div>
+          {/* MOBILE SEARCH BAR (< sm): Simple, clean & separate */}
+          <div className="sm:hidden flex flex-col gap-2.5">
+            {/* Row 1: Keyword Input */}
+            <div className="relative flex items-center group">
+              <Search className="absolute left-3.5 text-slate-400 group-focus-within:text-[#1A4B9F] w-4 h-4 pointer-events-none transition-colors" />
+              <input
+                type="text"
+                name="keyword"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder={activeTab === 'companies' ? (language === 'id' ? 'Cari perusahaan atau industri...' : 'Search company or industry...') : t.pelamar.dashboard.searchPlaceholder}
+                className="w-full pl-10 pr-9 py-2.5 bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700 text-slate-800 dark:text-white rounded-xl text-xs font-semibold placeholder:text-slate-400 outline-none focus:bg-white dark:focus:bg-slate-900 focus:ring-2 focus:ring-[#1A4B9F]/20 focus:border-[#1A4B9F] transition-all shadow-2xs"
+              />
+              {searchQuery && (
+                <button
+                  type="button"
+                  onClick={() => setSearchQuery('')}
+                  className="absolute right-3 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1 cursor-pointer"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              )}
+            </div>
 
-          {/* Right Input: Location with Suggestions */}
-          <div className="md:col-span-5 relative z-30 flex items-center group" ref={locationContainerRef}>
-            <MapPin className="absolute left-3.5 text-slate-400 group-focus-within:text-[#1A4B9F] w-4 h-4 pointer-events-none transition-colors" />
-            <input
-              type="text"
-              name="location"
-              value={locationQuery}
-              onFocus={() => setShowLocationSuggestions(true)}
-              onChange={(e) => {
-                setLocationQuery(e.target.value);
-                setShowLocationSuggestions(true);
-              }}
-              placeholder={t.pelamar.dashboard.locationPlaceholder}
-              className="w-full pl-10 pr-10 py-3 bg-slate-50 dark:bg-slate-800/50 border border-slate-200/60 dark:border-slate-700 text-slate-800 dark:text-white rounded-xl text-sm font-semibold placeholder:text-slate-400 outline-none focus:bg-white focus:ring-2 focus:ring-[#1A4B9F]/20 focus:border-[#1A4B9F] transition-all shadow-sm inset-ring-slate-100"
-            />
-            {locationQuery && (
+            {/* Row 2: Location Input */}
+            <div className="relative flex items-center group" ref={mobileLocationRef}>
+              <MapPin className="absolute left-3.5 text-slate-400 group-focus-within:text-[#1A4B9F] w-4 h-4 pointer-events-none transition-colors" />
+              <input
+                type="text"
+                name="location"
+                value={locationQuery}
+                onFocus={() => setShowLocationSuggestions(true)}
+                onChange={(e) => {
+                  setLocationQuery(e.target.value);
+                  setShowLocationSuggestions(true);
+                }}
+                placeholder={t.pelamar.dashboard.locationPlaceholder}
+                className="w-full pl-10 pr-9 py-2.5 bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700 text-slate-800 dark:text-white rounded-xl text-xs font-semibold placeholder:text-slate-400 outline-none focus:bg-white dark:focus:bg-slate-900 focus:ring-2 focus:ring-[#1A4B9F]/20 focus:border-[#1A4B9F] transition-all shadow-2xs"
+              />
+              {locationQuery && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setLocationQuery('');
+                    setShowLocationSuggestions(false);
+                  }}
+                  className="absolute right-3 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1 cursor-pointer"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              )}
+              {showLocationSuggestions && suggestedLocations.length > 0 && (
+                <div className="absolute top-[calc(100%+6px)] left-0 right-0 bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 py-1.5 z-50 text-slate-800 dark:text-slate-200 max-h-52 overflow-y-auto">
+                  <div className="px-3.5 py-1.5 text-[10px] font-bold text-slate-400 uppercase tracking-wider flex items-center justify-between border-b border-slate-50 dark:border-slate-800/50">
+                    <span>{language === 'id' ? 'Lokasi Sering Dicari' : 'Suggested Locations'}</span>
+                    <X className="w-3.5 h-3.5 cursor-pointer hover:text-slate-700 dark:hover:text-slate-300 transition-colors" onClick={() => setShowLocationSuggestions(false)} />
+                  </div>
+                  {suggestedLocations
+                    .filter(loc => !locationQuery || loc.toLowerCase().includes(locationQuery.toLowerCase()))
+                    .map((loc, idx) => (
+                      <div
+                        key={idx}
+                        onMouseDown={(e) => {
+                          e.preventDefault();
+                          setLocationQuery(loc);
+                          setShowLocationSuggestions(false);
+                          updateUrlParams({ location: loc });
+                        }}
+                        className="px-3.5 py-2 hover:bg-[#EFF6FF] dark:hover:bg-slate-800 text-xs font-semibold cursor-pointer flex items-center gap-2 border-b border-slate-50 dark:border-slate-800/50 last:border-0"
+                      >
+                        <MapPin className="w-3.5 h-3.5 text-[#1A4B9F] dark:text-blue-400 shrink-0" />
+                        <span>{loc}</span>
+                      </div>
+                    ))}
+                </div>
+              )}
+            </div>
+
+            {/* Row 3: Standalone Search Button + Filter Button */}
+            <div className="flex items-center gap-2 pt-0.5">
+              <button
+                type="submit"
+                disabled={isSearching}
+                className="flex-1 h-10 bg-[#1A4B9F] hover:bg-[#133878] active:scale-[0.98] disabled:opacity-75 disabled:cursor-not-allowed text-white rounded-xl font-bold text-xs flex items-center justify-center gap-2 transition-all shadow-xs cursor-pointer"
+              >
+                {isSearching ? (
+                  <Loader2 className="w-3.5 h-3.5 animate-spin text-white" />
+                ) : (
+                  <Search className="w-3.5 h-3.5" />
+                )}
+                <span>{isSearching ? (language === 'id' ? 'Mencari...' : 'Searching...') : (language === 'id' ? 'Cari Lowongan' : 'Search Jobs')}</span>
+              </button>
+
               <button
                 type="button"
-                onClick={() => {
-                  setLocationQuery('');
-                  setShowLocationSuggestions(false);
-                }}
-                className="absolute right-4 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1 cursor-pointer transition-colors z-10"
+                onClick={() => setShowMobileFilterModal(true)}
+                className={`h-10 px-3.5 rounded-xl font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer border text-xs shrink-0 ${
+                  activeFilterCount > 0
+                    ? 'bg-blue-50 dark:bg-blue-950/60 border-[#1A4B9F] text-[#1A4B9F] dark:text-blue-300 ring-2 ring-[#1A4B9F]/20'
+                    : 'bg-slate-50 hover:bg-slate-100 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border-slate-200/80 dark:border-slate-700'
+                }`}
               >
-                <X className="w-4 h-4" />
+                <SlidersHorizontal className="w-3.5 h-3.5" />
+                <span>{language === 'id' ? 'Filter' : 'Filter'}</span>
+                {activeFilterCount > 0 && (
+                  <span className="w-4 h-4 rounded-full bg-[#1A4B9F] text-white text-[10px] font-extrabold flex items-center justify-center">
+                    {activeFilterCount}
+                  </span>
+                )}
               </button>
-            )}
-            {/* Location Suggestions Dropdown */}
-            {showLocationSuggestions && suggestedLocations.length > 0 && (
-              <div className="absolute top-[calc(100%+8px)] left-0 right-0 bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200/80 dark:border-slate-800 py-2 z-50 text-slate-800 dark:text-slate-200 max-h-60 overflow-y-auto animate-in fade-in slide-in-from-top-2">
-                <div className="px-4 py-2 text-[11px] font-bold text-slate-400 uppercase tracking-wider flex items-center justify-between border-b border-slate-50 dark:border-slate-800/50">
-                  <span>{language === 'id' ? 'Lokasi Sering Dicari' : 'Suggested Locations'}</span>
-                  <X className="w-4 h-4 cursor-pointer hover:text-slate-700 dark:hover:text-slate-300 transition-colors" onClick={() => setShowLocationSuggestions(false)} />
-                </div>
-                {suggestedLocations
-                  .filter(loc => !locationQuery || loc.toLowerCase().includes(locationQuery.toLowerCase()))
-                  .map((loc, idx) => (
-                    <div
-                      key={idx}
-                      onMouseDown={(e) => {
-                        e.preventDefault();
-                        setLocationQuery(loc);
-                        setShowLocationSuggestions(false);
-                        updateUrlParams({ location: loc });
-                      }}
-                      className="px-5 py-3 hover:bg-[#EFF6FF] dark:hover:bg-slate-800 text-xs font-semibold cursor-pointer flex items-center gap-3 transition-colors border-b border-slate-50 dark:border-slate-800/50 last:border-0"
-                    >
-                      <MapPin className="w-4 h-4 text-[#1A4B9F] dark:text-blue-400" />
-                      <span>{loc}</span>
-                    </div>
-                  ))}
-              </div>
-            )}
+            </div>
           </div>
 
-          {/* Search Button */}
-          <div className="md:col-span-2 flex justify-center md:block relative">
-            <button
-              type="submit"
-              disabled={isSearching}
-              className="w-full h-full min-h-[44px] px-6 bg-[#1A4B9F] hover:bg-[#133878] active:scale-[0.98] disabled:opacity-75 disabled:cursor-not-allowed text-white rounded-xl font-bold flex items-center justify-center gap-2 transition-all shadow-md shadow-blue-900/10 cursor-pointer text-sm"
-            >
-              {isSearching ? (
-                <Loader2 className="w-4 h-4 animate-spin shrink-0 text-white" />
-              ) : (
-                <Search className="w-4 h-4 shrink-0" />
+          {/* DESKTOP SEARCH BAR (>= sm) */}
+          <div className="hidden sm:grid sm:grid-cols-12 gap-3 md:gap-4 items-center">
+            {/* Left Input: Keyword */}
+            <div className="sm:col-span-5 relative flex items-center group">
+              <Search className="absolute left-3.5 text-slate-400 group-focus-within:text-[#1A4B9F] w-4 h-4 pointer-events-none transition-colors" />
+              <input
+                type="text"
+                name="keyword"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder={activeTab === 'companies' ? (language === 'id' ? 'Cari nama perusahaan atau industri...' : 'Search company or industry...') : t.pelamar.dashboard.searchPlaceholder}
+                className="w-full pl-10 pr-4 py-2.5 sm:py-3 bg-slate-50 dark:bg-slate-800/50 border border-slate-200/60 dark:border-slate-700 text-slate-800 dark:text-white rounded-xl text-xs sm:text-sm font-semibold placeholder:text-slate-400 outline-none focus:bg-white focus:ring-2 focus:ring-[#1A4B9F]/20 focus:border-[#1A4B9F] transition-all shadow-2xs inset-ring-slate-100"
+              />
+            </div>
+
+            {/* Middle Input: Location with Suggestions */}
+            <div className="sm:col-span-5 relative z-30 flex items-center group" ref={locationContainerRef}>
+              <MapPin className="absolute left-3.5 text-slate-400 group-focus-within:text-[#1A4B9F] w-4 h-4 pointer-events-none transition-colors" />
+              <input
+                type="text"
+                name="location"
+                value={locationQuery}
+                onFocus={() => setShowLocationSuggestions(true)}
+                onChange={(e) => {
+                  setLocationQuery(e.target.value);
+                  setShowLocationSuggestions(true);
+                }}
+                placeholder={t.pelamar.dashboard.locationPlaceholder}
+                className="w-full pl-10 pr-10 py-2.5 sm:py-3 bg-slate-50 dark:bg-slate-800/50 border border-slate-200/60 dark:border-slate-700 text-slate-800 dark:text-white rounded-xl text-xs sm:text-sm font-semibold placeholder:text-slate-400 outline-none focus:bg-white focus:ring-2 focus:ring-[#1A4B9F]/20 focus:border-[#1A4B9F] transition-all shadow-2xs inset-ring-slate-100"
+              />
+              {locationQuery && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setLocationQuery('');
+                    setShowLocationSuggestions(false);
+                  }}
+                  className="absolute right-4 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1 cursor-pointer transition-colors z-10"
+                >
+                  <X className="w-4 h-4" />
+                </button>
               )}
-              <span>{isSearching ? (language === 'id' ? 'Mencari...' : 'Searching...') : (language === 'id' ? 'Cari' : 'Search')}</span>
-            </button>
+              {/* Location Suggestions Dropdown */}
+              {showLocationSuggestions && suggestedLocations.length > 0 && (
+                <div className="absolute top-[calc(100%+8px)] left-0 right-0 bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200/80 dark:border-slate-800 py-2 z-50 text-slate-800 dark:text-slate-200 max-h-60 overflow-y-auto animate-in fade-in slide-in-from-top-2">
+                  <div className="px-4 py-2 text-[11px] font-bold text-slate-400 uppercase tracking-wider flex items-center justify-between border-b border-slate-50 dark:border-slate-800/50">
+                    <span>{language === 'id' ? 'Lokasi Sering Dicari' : 'Suggested Locations'}</span>
+                    <X className="w-4 h-4 cursor-pointer hover:text-slate-700 dark:hover:text-slate-300 transition-colors" onClick={() => setShowLocationSuggestions(false)} />
+                  </div>
+                  {suggestedLocations
+                    .filter(loc => !locationQuery || loc.toLowerCase().includes(locationQuery.toLowerCase()))
+                    .map((loc, idx) => (
+                      <div
+                        key={idx}
+                        onMouseDown={(e) => {
+                          e.preventDefault();
+                          setLocationQuery(loc);
+                          setShowLocationSuggestions(false);
+                          updateUrlParams({ location: loc });
+                        }}
+                        className="px-5 py-3 hover:bg-[#EFF6FF] dark:hover:bg-slate-800 text-xs font-semibold cursor-pointer flex items-center gap-3 transition-colors border-b border-slate-50 dark:border-slate-800/50 last:border-0"
+                      >
+                        <MapPin className="w-4 h-4 text-[#1A4B9F] dark:text-blue-400" />
+                        <span>{loc}</span>
+                      </div>
+                    ))}
+                </div>
+              )}
+            </div>
+
+            {/* Right Action: Search Button */}
+            <div className="sm:col-span-2">
+              <button
+                type="submit"
+                disabled={isSearching}
+                className="w-full h-11 px-5 bg-[#1A4B9F] hover:bg-[#133878] active:scale-[0.98] disabled:opacity-75 disabled:cursor-not-allowed text-white rounded-xl font-bold flex items-center justify-center gap-2 transition-all shadow-md shadow-blue-900/10 cursor-pointer text-xs sm:text-sm"
+              >
+                {isSearching ? (
+                  <Loader2 className="w-4 h-4 animate-spin shrink-0 text-white" />
+                ) : (
+                  <Search className="w-4 h-4 shrink-0" />
+                )}
+                <span>{isSearching ? (language === 'id' ? 'Mencari...' : 'Searching...') : (language === 'id' ? 'Cari' : 'Search')}</span>
+              </button>
+            </div>
           </div>
         </form>
 
-        {/* Mobile View Switcher (Cari Pekerjaan vs Perusahaan) */}
-        <div className="relative z-10 grid grid-cols-2 gap-1.5 p-1 bg-slate-100 dark:bg-slate-800/80 rounded-xl sm:hidden w-full text-xs font-bold border border-slate-200/50 dark:border-slate-700">
-          <button
-            type="button"
-            onClick={() => switchTab('recommended')}
-            className={`py-2.5 px-3 rounded-lg flex items-center justify-center gap-1.5 transition-all cursor-pointer ${activeTab !== 'companies'
-              ? 'bg-white dark:bg-slate-700 text-[#1A4B9F] dark:text-blue-400 shadow-sm'
-              : 'text-slate-500 dark:text-slate-400 hover:text-slate-700'
-              }`}
-          >
-            <Briefcase className="w-4 h-4" />
-            <span>{t.pelamar.nav.findJobs}</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => switchTab('companies')}
-            className={`py-2.5 px-3 rounded-lg flex items-center justify-center gap-1.5 transition-all cursor-pointer ${activeTab === 'companies'
-              ? 'bg-white dark:bg-slate-700 text-[#1A4B9F] dark:text-blue-400 shadow-sm'
-              : 'text-slate-500 dark:text-slate-400 hover:text-slate-700'
-              }`}
-          >
-            <Building2 className="w-4 h-4" />
-            <span>{t.pelamar.nav.companies} ({companiesList.length})</span>
-          </button>
-        </div>
-
-        {/* 5 Filters Matching Employer Job Posting + Reset Button */}
-        <div className="relative z-10 grid grid-cols-2 sm:flex sm:flex-wrap items-center gap-2.5 pt-2 text-xs w-full">
+        {/* Desktop Filter Row (Hidden on Mobile) */}
+        <div className="relative z-10 hidden sm:flex sm:flex-wrap items-center gap-2.5 pt-2 text-xs w-full">
           {/* Reset Filters */}
           <button
             type="button"
@@ -852,11 +949,14 @@ function DashboardContent() {
                 industry: 'Semua'
               });
             }}
-            className="w-full sm:w-auto px-4 py-2.5 rounded-full bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold border border-slate-200 dark:border-slate-700 transition-colors cursor-pointer flex items-center justify-center gap-1.5"
+            className={`shrink-0 px-3.5 py-2 rounded-full font-bold transition-all cursor-pointer flex items-center gap-1.5 border text-xs ${(categoryFilter !== 'Semua' || employmentTypeFilter !== 'Semua' || workModeFilter !== 'Semua' || experienceFilter !== 'Semua' || educationFilter !== 'Semua' || industryFilter !== 'Semua' || searchQuery || locationQuery)
+                ? 'bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 border-rose-200 dark:border-rose-800'
+                : 'bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-400 border-slate-200/80 dark:border-slate-700'
+              }`}
             title="Reset semua filter ke default"
           >
-            <RefreshCw className="w-4 h-4 shrink-0" />
-            <span className="truncate">{language === 'id' ? 'Semua Filter' : 'All Filters'}</span>
+            <RefreshCw className="w-3.5 h-3.5 shrink-0" />
+            <span>{language === 'id' ? 'Reset' : 'Reset'}</span>
           </button>
 
           {activeTab === 'companies' ? (
@@ -866,7 +966,10 @@ function DashboardContent() {
                 setIndustryFilter(e.target.value);
                 updateUrlParams({ industry: e.target.value });
               }}
-              className="w-full sm:w-auto px-4 py-2.5 rounded-full bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold border border-slate-200 dark:border-slate-700 outline-none cursor-pointer text-xs transition-colors truncate focus:border-[#1A4B9F]"
+              className={`shrink-0 px-3.5 py-2 rounded-full font-semibold border outline-none cursor-pointer text-xs transition-all ${industryFilter !== 'Semua'
+                  ? 'bg-blue-50 dark:bg-blue-950/60 border-[#1A4B9F] text-[#1A4B9F] dark:text-blue-300 font-bold ring-1 ring-[#1A4B9F]/20'
+                  : 'bg-white dark:bg-slate-900 border-slate-200/90 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:border-slate-300 dark:hover:border-slate-600'
+                }`}
             >
               <option value="Semua">{language === 'id' ? 'Semua Industri' : 'All Industries'}</option>
               {industriesList.map((ind, idx) => (
@@ -875,14 +978,17 @@ function DashboardContent() {
             </select>
           ) : (
             <>
-              {/* 1. Filter Kategori Pekerjaan (from database) */}
+              {/* 1. Filter Kategori Pekerjaan */}
               <select
                 value={categoryFilter}
                 onChange={(e) => {
                   setCategoryFilter(e.target.value);
                   updateUrlParams({ kategori_id: e.target.value });
                 }}
-                className="w-full sm:w-auto sm:max-w-[200px] px-4 py-2.5 rounded-full bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold border border-slate-200 dark:border-slate-700 outline-none cursor-pointer text-xs transition-colors truncate focus:border-[#1A4B9F]"
+                className={`shrink-0 px-3.5 py-2 rounded-full font-semibold border outline-none cursor-pointer text-xs transition-all max-w-[200px] ${categoryFilter !== 'Semua'
+                    ? 'bg-blue-50 dark:bg-blue-950/60 border-[#1A4B9F] text-[#1A4B9F] dark:text-blue-300 font-bold ring-1 ring-[#1A4B9F]/20'
+                    : 'bg-white dark:bg-slate-900 border-slate-200/90 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:border-slate-300 dark:hover:border-slate-600'
+                  }`}
               >
                 <option value="Semua">{language === 'id' ? 'Semua Kategori' : 'All Categories'}</option>
                 {categories.map((cat) => (
@@ -899,7 +1005,10 @@ function DashboardContent() {
                   setEmploymentTypeFilter(e.target.value);
                   updateUrlParams({ tipe_pekerjaan: e.target.value });
                 }}
-                className="w-full sm:w-auto px-4 py-2.5 rounded-full bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold border border-slate-200 dark:border-slate-700 outline-none cursor-pointer text-xs transition-colors truncate focus:border-[#1A4B9F]"
+                className={`shrink-0 px-3.5 py-2 rounded-full font-semibold border outline-none cursor-pointer text-xs transition-all ${employmentTypeFilter !== 'Semua'
+                    ? 'bg-blue-50 dark:bg-blue-950/60 border-[#1A4B9F] text-[#1A4B9F] dark:text-blue-300 font-bold ring-1 ring-[#1A4B9F]/20'
+                    : 'bg-white dark:bg-slate-900 border-slate-200/90 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:border-slate-300 dark:hover:border-slate-600'
+                  }`}
               >
                 <option value="Semua">{language === 'id' ? 'Jenis Pekerjaan' : 'Job Type'}</option>
                 <option value="Full-time">Full-time</option>
@@ -916,7 +1025,10 @@ function DashboardContent() {
                   setWorkModeFilter(e.target.value);
                   updateUrlParams({ lokasi_kerja: e.target.value });
                 }}
-                className="w-full sm:w-auto px-4 py-2.5 rounded-full bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold border border-slate-200 dark:border-slate-700 outline-none cursor-pointer text-xs transition-colors truncate focus:border-[#1A4B9F]"
+                className={`shrink-0 px-3.5 py-2 rounded-full font-semibold border outline-none cursor-pointer text-xs transition-all ${workModeFilter !== 'Semua'
+                    ? 'bg-blue-50 dark:bg-blue-950/60 border-[#1A4B9F] text-[#1A4B9F] dark:text-blue-300 font-bold ring-1 ring-[#1A4B9F]/20'
+                    : 'bg-white dark:bg-slate-900 border-slate-200/90 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:border-slate-300 dark:hover:border-slate-600'
+                  }`}
               >
                 <option value="Semua">{language === 'id' ? 'Mode Kerja' : 'Work Mode'}</option>
                 <option value="Hybrid">Hybrid</option>
@@ -931,7 +1043,10 @@ function DashboardContent() {
                   setExperienceFilter(e.target.value);
                   updateUrlParams({ experience_level: e.target.value });
                 }}
-                className="w-full sm:w-auto px-4 py-2.5 rounded-full bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold border border-slate-200 dark:border-slate-700 outline-none cursor-pointer text-xs transition-colors truncate focus:border-[#1A4B9F]"
+                className={`shrink-0 px-3.5 py-2 rounded-full font-semibold border outline-none cursor-pointer text-xs transition-all ${experienceFilter !== 'Semua'
+                    ? 'bg-blue-50 dark:bg-blue-950/60 border-[#1A4B9F] text-[#1A4B9F] dark:text-blue-300 font-bold ring-1 ring-[#1A4B9F]/20'
+                    : 'bg-white dark:bg-slate-900 border-slate-200/90 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:border-slate-300 dark:hover:border-slate-600'
+                  }`}
               >
                 <option value="Semua">{language === 'id' ? 'Tingkat Pengalaman' : 'Experience'}</option>
                 <option value="0 - 1 Tahun">0 - 1 Tahun</option>
@@ -947,7 +1062,10 @@ function DashboardContent() {
                   setEducationFilter(e.target.value);
                   updateUrlParams({ pendidikan_min: e.target.value });
                 }}
-                className="w-full sm:w-auto px-4 py-2.5 rounded-full bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold border border-slate-200 dark:border-slate-700 outline-none cursor-pointer text-xs transition-colors truncate focus:border-[#1A4B9F]"
+                className={`shrink-0 px-3.5 py-2 rounded-full font-semibold border outline-none cursor-pointer text-xs transition-all ${educationFilter !== 'Semua'
+                    ? 'bg-blue-50 dark:bg-blue-950/60 border-[#1A4B9F] text-[#1A4B9F] dark:text-blue-300 font-bold ring-1 ring-[#1A4B9F]/20'
+                    : 'bg-white dark:bg-slate-900 border-slate-200/90 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:border-slate-300 dark:hover:border-slate-600'
+                  }`}
               >
                 <option value="Semua">{language === 'id' ? 'Min. Pendidikan' : 'Min. Education'}</option>
                 <option value="SMA/SMK">SMA / SMK Sederajat</option>
@@ -958,9 +1076,210 @@ function DashboardContent() {
               </select>
             </>
           )}
-
         </div>
       </div>
+
+      {/* MOBILE BOTTOM SHEET FILTER MODAL */}
+      {showMobileFilterModal && (
+        <div className="fixed inset-0 z-50 flex items-end sm:hidden bg-slate-900/60 backdrop-blur-sm animate-in fade-in">
+          <div className="fixed inset-0" onClick={() => setShowMobileFilterModal(false)} />
+          <div className="relative z-10 w-full bg-white dark:bg-slate-900 rounded-t-3xl p-5 shadow-2xl border-t border-slate-200 dark:border-slate-800 max-h-[85vh] flex flex-col animate-in slide-in-from-bottom duration-200">
+            {/* Grabber handle */}
+            <div className="w-12 h-1.5 bg-slate-300 dark:bg-slate-700 rounded-full mx-auto mb-4" />
+
+            {/* Header */}
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+              <div className="flex items-center gap-2">
+                <SlidersHorizontal className="w-4 h-4 text-[#1A4B9F] dark:text-blue-400" />
+                <h3 className="text-base font-bold text-slate-900 dark:text-white">
+                  {language === 'id' ? 'Filter Lowongan' : 'Filter Jobs'}
+                </h3>
+                {activeFilterCount > 0 && (
+                  <span className="px-2 py-0.5 rounded-full bg-blue-100 dark:bg-blue-900/40 text-[#1A4B9F] dark:text-blue-300 text-xs font-bold">
+                    {activeFilterCount} aktif
+                  </span>
+                )}
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowMobileFilterModal(false)}
+                className="p-1.5 rounded-full text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Filter Body - Scrollable */}
+            <div className="flex-1 overflow-y-auto py-4 space-y-4 text-xs font-semibold">
+              {activeTab === 'companies' ? (
+                <div>
+                  <label className="block text-slate-500 mb-1.5 font-bold">
+                    {language === 'id' ? 'Industri Perusahaan' : 'Company Industry'}
+                  </label>
+                  <select
+                    value={industryFilter}
+                    onChange={(e) => {
+                      setIndustryFilter(e.target.value);
+                      updateUrlParams({ industry: e.target.value });
+                    }}
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 font-semibold text-slate-800 dark:text-slate-200 outline-none"
+                  >
+                    <option value="Semua">{language === 'id' ? 'Semua Industri' : 'All Industries'}</option>
+                    {industriesList.map((ind, idx) => (
+                      <option key={idx} value={ind}>{ind}</option>
+                    ))}
+                  </select>
+                </div>
+              ) : (
+                <>
+                  {/* 1. Kategori */}
+                  <div>
+                    <label className="block text-slate-500 mb-1.5 font-bold">
+                      {language === 'id' ? 'Kategori Pekerjaan' : 'Job Category'}
+                    </label>
+                    <select
+                      value={categoryFilter}
+                      onChange={(e) => {
+                        setCategoryFilter(e.target.value);
+                        updateUrlParams({ kategori_id: e.target.value });
+                      }}
+                      className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 font-semibold text-slate-800 dark:text-slate-200 outline-none"
+                    >
+                      <option value="Semua">{language === 'id' ? 'Semua Kategori' : 'All Categories'}</option>
+                      {categories.map((cat) => (
+                        <option key={cat.id} value={cat.id}>
+                          {cat.nama_kategori}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* 2. Tipe Pekerjaan */}
+                  <div>
+                    <label className="block text-slate-500 mb-1.5 font-bold">
+                      {language === 'id' ? 'Jenis Pekerjaan' : 'Job Type'}
+                    </label>
+                    <select
+                      value={employmentTypeFilter}
+                      onChange={(e) => {
+                        setEmploymentTypeFilter(e.target.value);
+                        updateUrlParams({ tipe_pekerjaan: e.target.value });
+                      }}
+                      className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 font-semibold text-slate-800 dark:text-slate-200 outline-none"
+                    >
+                      <option value="Semua">{language === 'id' ? 'Semua Jenis Pekerjaan' : 'All Job Types'}</option>
+                      <option value="Full-time">Full-time</option>
+                      <option value="Contract">Contract</option>
+                      <option value="Part-time">Part-time</option>
+                      <option value="Internship">Internship</option>
+                      <option value="Freelance">Freelance</option>
+                    </select>
+                  </div>
+
+                  {/* 3. Mode Kerja */}
+                  <div>
+                    <label className="block text-slate-500 mb-1.5 font-bold">
+                      {language === 'id' ? 'Mode Kerja' : 'Work Mode'}
+                    </label>
+                    <select
+                      value={workModeFilter}
+                      onChange={(e) => {
+                        setWorkModeFilter(e.target.value);
+                        updateUrlParams({ lokasi_kerja: e.target.value });
+                      }}
+                      className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 font-semibold text-slate-800 dark:text-slate-200 outline-none"
+                    >
+                      <option value="Semua">{language === 'id' ? 'Semua Mode Kerja' : 'All Work Modes'}</option>
+                      <option value="Hybrid">Hybrid</option>
+                      <option value="Remote">Remote</option>
+                      <option value="On-site">On-site</option>
+                    </select>
+                  </div>
+
+                  {/* 4. Pengalaman */}
+                  <div>
+                    <label className="block text-slate-500 mb-1.5 font-bold">
+                      {language === 'id' ? 'Tingkat Pengalaman' : 'Experience Level'}
+                    </label>
+                    <select
+                      value={experienceFilter}
+                      onChange={(e) => {
+                        setExperienceFilter(e.target.value);
+                        updateUrlParams({ experience_level: e.target.value });
+                      }}
+                      className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 font-semibold text-slate-800 dark:text-slate-200 outline-none"
+                    >
+                      <option value="Semua">{language === 'id' ? 'Semua Pengalaman' : 'All Experience'}</option>
+                      <option value="0 - 1 Tahun">0 - 1 Tahun</option>
+                      <option value="2 - 4 Tahun">2 - 4 Tahun</option>
+                      <option value="5+ Tahun">5+ Tahun</option>
+                      <option value="8+ Tahun">8+ Tahun</option>
+                    </select>
+                  </div>
+
+                  {/* 5. Pendidikan */}
+                  <div>
+                    <label className="block text-slate-500 mb-1.5 font-bold">
+                      {language === 'id' ? 'Min. Pendidikan' : 'Min. Education'}
+                    </label>
+                    <select
+                      value={educationFilter}
+                      onChange={(e) => {
+                        setEducationFilter(e.target.value);
+                        updateUrlParams({ pendidikan_min: e.target.value });
+                      }}
+                      className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 font-semibold text-slate-800 dark:text-slate-200 outline-none"
+                    >
+                      <option value="Semua">{language === 'id' ? 'Semua Tingkat Pendidikan' : 'All Education'}</option>
+                      <option value="SMA/SMK">SMA / SMK Sederajat</option>
+                      <option value="D3">D3</option>
+                      <option value="S1">S1</option>
+                      <option value="S2">S2</option>
+                      <option value="S3">S3</option>
+                    </select>
+                  </div>
+                </>
+              )}
+            </div>
+
+            {/* Footer Buttons */}
+            <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center gap-3">
+              <button
+                type="button"
+                onClick={() => {
+                  setCategoryFilter('Semua');
+                  setEmploymentTypeFilter('Semua');
+                  setWorkModeFilter('Semua');
+                  setExperienceFilter('Semua');
+                  setEducationFilter('Semua');
+                  setIndustryFilter('Semua');
+                  updateUrlParams({
+                    kategori_id: 'Semua',
+                    tipe_pekerjaan: 'Semua',
+                    lokasi_kerja: 'Semua',
+                    experience_level: 'Semua',
+                    pendidikan_min: 'Semua',
+                    industry: 'Semua'
+                  });
+                }}
+                className="py-2.5 px-4 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 font-bold hover:bg-slate-100 dark:hover:bg-slate-800 text-xs cursor-pointer"
+              >
+                {language === 'id' ? 'Reset' : 'Reset'}
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowMobileFilterModal(false);
+                  fetchJobsData();
+                }}
+                className="flex-1 py-2.5 px-5 rounded-xl bg-[#1A4B9F] hover:bg-[#133878] text-white font-bold text-xs shadow-md shadow-blue-900/10 cursor-pointer text-center"
+              >
+                {language === 'id' ? 'Terapkan Filter' : 'Apply Filters'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* DUAL-PANE SPLIT VIEW MAIN CONTAINER (Matching KitaLulus Screenshot) */}
       {activeTab === 'companies' ? (
@@ -987,37 +1306,37 @@ function DashboardContent() {
                   <div
                     key={comp.id}
                     onClick={() => router.push(compPath)}
-                    className="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-2xs hover:shadow-md hover:border-[#1A4B9F]/40 transition-all space-y-4 flex flex-col justify-between cursor-pointer group"
+                    className="bg-white dark:bg-slate-900 p-3.5 sm:p-6 rounded-xl sm:rounded-2xl border border-slate-200 dark:border-slate-800 shadow-2xs hover:shadow-md hover:border-[#1A4B9F]/40 transition-all space-y-2.5 sm:space-y-4 flex flex-col justify-between cursor-pointer group"
                   >
-                    <div className="space-y-3">
-                      <div className="flex items-start justify-between gap-3">
+                    <div className="space-y-2 sm:space-y-3">
+                      <div className="flex items-start justify-between gap-2.5">
                         <img
                           src={comp.logo}
                           alt={comp.name}
-                          className="w-14 h-14 rounded-2xl object-cover border border-slate-200 dark:border-slate-700"
+                          className="w-11 h-11 sm:w-14 sm:h-14 rounded-xl sm:rounded-2xl object-cover border border-slate-200 dark:border-slate-700 shrink-0"
                           onError={(e) => {
                             e.currentTarget.onerror = null;
                             e.currentTarget.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 22V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18Z'/%3E%3Cpath d='M6 12H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2'/%3E%3Cpath d='M18 9h2a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-2'/%3E%3Cpath d='M10 6h4'/%3E%3Cpath d='M10 10h4'/%3E%3Cpath d='M10 14h4'/%3E%3Cpath d='M10 18h4'/%3E%3C/svg%3E";
                           }}
                         />
-                        <span className="px-3 py-1 rounded-full bg-[#EFF6FF] dark:bg-slate-800 text-slate-900 dark:text-white font-bold text-xs border border-[#DBEAFE] dark:border-slate-700">
-                          {comp.openJobsCount} {language === 'id' ? 'Lowongan Buka' : 'Open Jobs'}
+                        <span className="px-2.5 py-0.5 sm:px-3 sm:py-1 rounded-full bg-[#EFF6FF] dark:bg-slate-800 text-[#1A4B9F] dark:text-blue-300 font-bold text-[10px] sm:text-xs border border-[#DBEAFE] dark:border-slate-700 shrink-0">
+                          {comp.openJobsCount} {language === 'id' ? 'Lowongan' : 'Open Jobs'}
                         </span>
                       </div>
 
                       <div>
-                        <h4 className="font-bold text-lg text-slate-800 dark:text-white group-hover:text-slate-900 transition-colors">
+                        <h4 className="font-bold text-xs sm:text-lg text-slate-800 dark:text-white group-hover:text-[#1A4B9F] dark:group-hover:text-blue-400 transition-colors truncate">
                           {comp.name}
                         </h4>
-                        <p className="text-xs text-slate-500 font-bold">
+                        <p className="text-[11px] sm:text-xs text-slate-500 font-medium truncate">
                           {comp.industry} • {comp.location}
                         </p>
                       </div>
 
                       <div
-                        className="w-full py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 group-hover:border-[#1A4B9F] group-hover:text-[#1A4B9F] group-hover:bg-[#EFF6FF] dark:group-hover:bg-slate-800 text-slate-600 dark:text-slate-400 text-xs font-bold transition-all flex items-center justify-center gap-2"
+                        className="w-full py-1.5 sm:py-2.5 rounded-lg sm:rounded-xl border border-slate-200 dark:border-slate-800 group-hover:border-[#1A4B9F] group-hover:text-[#1A4B9F] group-hover:bg-[#EFF6FF] dark:group-hover:bg-slate-800 text-slate-600 dark:text-slate-400 text-[11px] sm:text-xs font-bold transition-all flex items-center justify-center gap-1.5"
                       >
-                        <span>{language === 'id' ? 'Lihat' : 'View'} {comp.openJobsCount} {language === 'id' ? 'Lowongan Buka' : 'Open Jobs'}</span>
+                        <span>{language === 'id' ? 'Lihat' : 'View'} {comp.openJobsCount} {language === 'id' ? 'Lowongan' : 'Open Jobs'}</span>
                       </div>
                     </div>
                   </div>
@@ -1158,22 +1477,20 @@ function DashboardContent() {
           <div className="lg:col-span-5 space-y-4">
 
             {/* Dasbor Karir Anda Header Card (Matching Lowongan Terbaru on Landing Page) */}
-            <div className="bg-white dark:bg-slate-900 p-4 sm:p-5 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-2xs space-y-3">
-              <div className="flex items-center justify-between gap-4 border-b border-slate-100 dark:border-slate-800 pb-3">
-                <div className="flex items-center gap-2.5">
-                  <div>
-                    <h2 className="text-base font-bold text-slate-900 dark:text-slate-100 flex items-center gap-1.5 leading-snug">
-                      <span>{t.pelamar.dashboard.title}</span>
-                      <Info className="w-4 h-4 text-slate-400" />
-                    </h2>
-                    <p className="text-xs text-slate-500 dark:text-slate-400 font-semibold">
-                      {filteredJobs.length} {t.pelamar.dashboard.jobMatchesFound}
-                    </p>
-                  </div>
+            <div className="bg-white dark:bg-slate-900 px-3.5 py-3 sm:px-5 sm:py-4 rounded-xl sm:rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-2xs">
+              <div className="flex items-center justify-between gap-3">
+                <div className="min-w-0">
+                  <h2 className="text-xs sm:text-base font-bold text-slate-900 dark:text-slate-100 flex items-center gap-1.5 leading-tight truncate">
+                    <span>{t.pelamar.dashboard.title}</span>
+                    <Info className="w-3.5 h-3.5 text-slate-400 shrink-0 hidden sm:inline" />
+                  </h2>
+                  <p className="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 font-medium truncate mt-0.5">
+                    {filteredJobs.length} {t.pelamar.dashboard.jobMatchesFound}
+                  </p>
                 </div>
 
-                <div className="flex items-center gap-1.5 text-xs text-slate-500 font-bold">
-                  <span>{language === 'id' ? 'Urutkan:' : 'Sort by:'}</span>
+                <div className="flex items-center gap-1.5 text-xs text-slate-500 font-bold shrink-0">
+                  <span className="hidden sm:inline text-xs">{language === 'id' ? 'Urutkan:' : 'Sort by:'}</span>
                   <select
                     value={sortOrder}
                     onChange={(e) => {
@@ -1191,7 +1508,7 @@ function DashboardContent() {
                       setSortOrder(val);
                       updateUrlParams({ sort: val });
                     }}
-                    className="text-slate-900 dark:text-slate-100 font-bold cursor-pointer bg-slate-100 dark:bg-slate-800 px-2.5 py-1 rounded-lg border border-slate-200 dark:border-slate-700 outline-none hover:bg-slate-200/70 dark:hover:bg-slate-700 transition-colors"
+                    className="text-xs font-bold cursor-pointer bg-slate-50 dark:bg-slate-800 px-2 py-1.5 sm:px-2.5 sm:py-1 rounded-lg border border-slate-200 dark:border-slate-700 outline-none hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 transition-colors"
                   >
                     <option
                       className="text-slate-800 dark:text-slate-200 font-medium"
@@ -1274,77 +1591,98 @@ function DashboardContent() {
                     <div
                       key={job.id}
                       id={`job-card-${job.id}`}
-                      onClick={() => setSelectedJobId(job.id)}
-                      className={`p-5 rounded-2xl border transition-all cursor-pointer relative space-y-3 ${isSelected
-                        ? 'bg-white dark:bg-slate-900 border-2 border-[#1A4B9F] ring-1 ring-[#1A4B9F]/20 shadow-md shadow-md ring-2 ring-[#1A4B9F]/20'
+                      onClick={() => {
+                        setSelectedJobId(job.id);
+                        setShowMobileDetailModal(true);
+                      }}
+                      className={`p-3.5 sm:p-5 rounded-xl sm:rounded-2xl border transition-all cursor-pointer relative space-y-2 sm:space-y-3 ${isSelected
+                        ? 'bg-white dark:bg-slate-900 border-2 border-[#1A4B9F] ring-1 ring-[#1A4B9F]/20 shadow-md'
                         : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 shadow-2xs'
                         }`}
                     >
-                      {/* Top Header Card */}
-                      <div className="flex items-start justify-between gap-3">
-                        <div className="flex items-start gap-3">
+                      {/* Top Header Card: Logo + Title + Company + Badges */}
+                      <div className="flex items-start justify-between gap-2.5 sm:gap-3">
+                        <div className="flex items-start gap-2.5 sm:gap-3 min-w-0 flex-1">
                           <img
                             src={job.logo}
                             alt={job.company}
-                            className="w-12 h-12 rounded-2xl object-cover border border-slate-200 dark:border-slate-700 shrink-0"
+                            className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl object-cover border border-slate-200 dark:border-slate-700 shrink-0"
                             onError={(e) => {
                               e.currentTarget.onerror = null;
                               e.currentTarget.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 22V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18Z'/%3E%3Cpath d='M6 12H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2'/%3E%3Cpath d='M18 9h2a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-2'/%3E%3Cpath d='M10 6h4'/%3E%3Cpath d='M10 10h4'/%3E%3Cpath d='M10 14h4'/%3E%3Cpath d='M10 18h4'/%3E%3C/svg%3E";
                             }}
                           />
-                          <div>
-                            <div className="flex flex-wrap items-center gap-1.5 mb-1">
-                              <span className="font-semibold text-xs text-slate-700 dark:text-slate-300">
+                          <div className="min-w-0 flex-1">
+                            <div className="flex flex-wrap items-center gap-1.5 mb-0.5 sm:mb-1">
+                              <span className="font-semibold text-xs text-slate-700 dark:text-slate-300 truncate max-w-[140px] sm:max-w-none">
                                 {job.company}
                               </span>
                               {job.matchScore > 0 && userHasCv && (
-                                <span className="px-2.5 py-0.5 rounded-md bg-[#1A4B9F]/10 dark:bg-[#1A4B9F]/20 text-[#1A4B9F] dark:text-blue-300 font-semibold text-[11px] border border-[#1A4B9F]/20 dark:border-[#1A4B9F]/30 flex items-center gap-1">
+                                <span className="px-1.5 py-0.5 sm:px-2.5 rounded-md bg-[#1A4B9F]/10 dark:bg-[#1A4B9F]/20 text-[#1A4B9F] dark:text-blue-300 font-bold text-[10px] sm:text-[11px] border border-[#1A4B9F]/20 dark:border-[#1A4B9F]/30 flex items-center gap-1 shrink-0">
                                   <span>{job.matchScore}% Cocok</span>
                                 </span>
                               )}
                               {job.isNew && (
-                                <span className="px-2.5 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-semibold text-[11px] border border-slate-200 dark:border-slate-700">
-                                  {language === 'id' ? 'Loker Terbaru' : 'New Job'}
+                                <span className="px-1.5 py-0.5 sm:px-2.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-semibold text-[10px] sm:text-[11px] border border-slate-200 dark:border-slate-700 shrink-0">
+                                  {language === 'id' ? 'Baru' : 'New'}
                                 </span>
                               )}
                               {job.isPromoted && (
-                                <span className="px-2 py-0.5 rounded-md bg-cyan-100 dark:bg-cyan-950/60 text-cyan-800 dark:text-cyan-300 font-semibold text-[10px]">
-                                  {language === 'id' ? 'Dipromosikan' : 'Promoted'}
+                                <span className="px-1.5 py-0.5 sm:px-2 rounded-md bg-cyan-100 dark:bg-cyan-950/60 text-cyan-800 dark:text-cyan-300 font-semibold text-[9px] sm:text-[10px] shrink-0">
+                                  {language === 'id' ? 'Promosi' : 'Promoted'}
                                 </span>
                               )}
                             </div>
-                            <h3 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white leading-snug hover:text-slate-900 transition-colors">
+                            <h3 className="text-sm sm:text-lg font-bold text-slate-900 dark:text-white leading-snug line-clamp-1 sm:line-clamp-none">
                               {job.title}
                             </h3>
                           </div>
                         </div>
+
+                        {/* Mobile bookmark icon */}
+                        <div className="sm:hidden shrink-0">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              toggleSaveJob(job.id);
+                            }}
+                            className="p-1 text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 transition-colors"
+                          >
+                            {isSaved ? (
+                              <BookmarkCheck size={16} className="text-[#1A4B9F] fill-current" />
+                            ) : (
+                              <Bookmark size={16} />
+                            )}
+                          </button>
+                        </div>
                       </div>
 
-                      {/* Kuota Posisi Badge */}
+                      {/* Kuota Posisi Badge (Hidden on mobile to save vertical space) */}
                       {job.openingsCount > 0 && (
-                        <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-slate-100 dark:bg-slate-800/50 text-slate-700 dark:text-slate-300 text-[11px] font-bold border border-slate-200 dark:border-slate-700">
+                        <div className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-slate-100 dark:bg-slate-800/50 text-slate-700 dark:text-slate-300 text-[11px] font-bold border border-slate-200 dark:border-slate-700">
                           <Users size={12} />
                           <span>{language === 'id' ? 'Kuota:' : 'Openings:'} {job.openingsCount} {language === 'id' ? 'Posisi' : 'Positions'}</span>
                         </div>
                       )}
 
                       {/* Detail Bullet Badges */}
-                      <div className="space-y-1.5 text-xs text-slate-600 dark:text-slate-300 font-medium">
-                        <div className="flex items-center gap-1.5">
-                          <MapPin size={14} className="text-slate-400 shrink-0" />
-                          <span>
-                            <strong className="text-slate-800 dark:text-slate-200">{job.location}</strong> • {job.workPolicy} ({job.experienceLevel}) • {job.educationLevel}
+                      <div className="space-y-1 text-xs text-slate-600 dark:text-slate-300 font-medium">
+                        <div className="flex items-center gap-1.5 text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 truncate">
+                          <MapPin size={13} className="text-slate-400 shrink-0" />
+                          <span className="truncate">
+                            <strong className="text-slate-800 dark:text-slate-200">{job.location}</strong> • {job.workPolicy}
+                            <span className="hidden sm:inline"> ({job.experienceLevel}) • {job.educationLevel}</span>
                           </span>
                         </div>
                         <div className="flex items-center gap-1.5">
-                          <DollarSign size={14} className="text-[#1A4B9F] shrink-0" />
-                          <span className="font-bold text-slate-900 dark:text-white text-sm">{job.salary}</span>
+                          <DollarSign size={13} className="text-[#1A4B9F] shrink-0" />
+                          <span className="font-bold text-slate-900 dark:text-white text-xs sm:text-sm">{job.salary}</span>
                         </div>
                       </div>
 
-                      {/* Benefits List */}
+                      {/* Benefits List (Hidden on mobile to keep cards lightweight and compact) */}
                       {job.benefits && job.benefits.length > 0 && (
-                        <div className="flex flex-wrap items-center gap-1.5 pt-1">
+                        <div className="hidden sm:flex flex-wrap items-center gap-1.5 pt-1">
                           {job.benefits.slice(0, 4).map((b, idx) => (
                             <span key={idx} className="px-2 py-0.5 rounded-md bg-slate-50 dark:bg-slate-800/50 text-slate-600 dark:text-slate-400 text-[10px] font-bold border border-slate-200 dark:border-slate-700 flex items-center gap-1">
                               ✓ {b}
@@ -1357,12 +1695,13 @@ function DashboardContent() {
                       )}
 
                       {/* Card Bottom Time & Share/Bookmark */}
-                      <div className="flex items-center justify-between pt-2 border-t border-slate-100 dark:border-slate-800 text-[11px]">
-                        <span className="text-slate-400 font-bold">
-                          {language === 'id' ? 'Diterbitkan:' : 'Published:'} {job.publishDate} • {job.postedAgo}
+                      <div className="flex items-center justify-between pt-1.5 sm:pt-2 border-t border-slate-100 dark:border-slate-800 text-[10px] sm:text-[11px]">
+                        <span className="text-slate-400 font-medium sm:font-bold">
+                          <span className="hidden sm:inline">{language === 'id' ? 'Diterbitkan:' : 'Published:'} {job.publishDate} • </span>
+                          {job.postedAgo}
                         </span>
 
-                        <div className="flex items-center gap-2">
+                        <div className="hidden sm:flex items-center gap-2">
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
@@ -1389,6 +1728,20 @@ function DashboardContent() {
                             <Share2 size={16} />
                           </button>
                         </div>
+
+                        {/* Mobile Share Button */}
+                        <div className="sm:hidden flex items-center gap-1">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setShareJob(job);
+                            }}
+                            className="p-1 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"
+                            title="Bagikan"
+                          >
+                            <Share2 size={13} />
+                          </button>
+                        </div>
                       </div>
                     </div>
                   );
@@ -1398,7 +1751,7 @@ function DashboardContent() {
           </div>
 
           {/* RIGHT COLUMN: DYNAMIC JOB DETAIL PANE (~62% Width / 7 Cols) */}
-          <div className="lg:col-span-7 sticky top-28 h-[calc(100vh-130px)]">
+          <div className="hidden lg:block lg:col-span-7 sticky top-28 h-[calc(100vh-130px)]">
             {selectedJob && (
               <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-md overflow-y-auto h-full custom-scrollbar">
 
@@ -1657,6 +2010,216 @@ function DashboardContent() {
             )}
           </div>
 
+        </div>
+      )}
+
+      {/* MOBILE JOB DETAIL FULLSCREEN DRAWER / MODAL */}
+      {showMobileDetailModal && selectedJob && (
+        <div className="lg:hidden fixed inset-0 z-[60] bg-white dark:bg-slate-900 flex flex-col animate-in fade-in slide-in-from-bottom-6 duration-200">
+          {/* Top Sticky Header */}
+          <div className="sticky top-0 z-20 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md px-4 py-3 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between gap-3 shadow-2xs">
+            <button
+              type="button"
+              onClick={() => setShowMobileDetailModal(false)}
+              className="flex items-center gap-1.5 text-xs font-bold text-slate-700 dark:text-slate-200 hover:text-[#1A4B9F] py-1 px-1.5 -ml-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+            >
+              <ArrowLeft size={18} />
+              <span>{language === 'id' ? 'Kembali' : 'Back'}</span>
+            </button>
+
+            <div className="flex items-center gap-1">
+              <button
+                type="button"
+                onClick={() => toggleSaveJob(selectedJob.id)}
+                className="p-2 rounded-xl text-slate-500 hover:text-slate-900 dark:hover:text-white transition-colors cursor-pointer"
+                title={savedJobIds.some(id => String(id) === String(selectedJob.id)) ? 'Hapus Simpan' : 'Simpan'}
+              >
+                {savedJobIds.some(id => String(id) === String(selectedJob.id)) ? (
+                  <BookmarkCheck size={18} className="text-[#1A4B9F] fill-current" />
+                ) : (
+                  <Bookmark size={18} />
+                )}
+              </button>
+              <button
+                type="button"
+                onClick={() => setShareJob(selectedJob)}
+                className="p-2 rounded-xl text-slate-500 hover:text-slate-900 dark:hover:text-white transition-colors cursor-pointer"
+                title="Bagikan Lowongan"
+              >
+                <Share2 size={18} />
+              </button>
+            </div>
+          </div>
+
+          {/* Scrollable Content */}
+          <div className="flex-1 overflow-y-auto p-4 space-y-5 pb-24">
+            {/* Header: Company, Logo, Title, Badges */}
+            <div className="flex items-start gap-3.5 pb-4 border-b border-slate-100 dark:border-slate-800">
+              <img
+                src={selectedJob.logo}
+                alt={selectedJob.company}
+                className="w-14 h-14 rounded-2xl object-cover border border-slate-200 dark:border-slate-700 shrink-0"
+                onError={(e) => {
+                  e.currentTarget.onerror = null;
+                  e.currentTarget.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 22V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18Z'/%3E%3Cpath d='M6 12H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2'/%3E%3Cpath d='M18 9h2a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-2'/%3E%3Cpath d='M10 6h4'/%3E%3Cpath d='M10 10h4'/%3E%3Cpath d='M10 14h4'/%3E%3Cpath d='M10 18h4'/%3E%3C/svg%3E";
+                }}
+              />
+              <div className="min-w-0 flex-1 space-y-1">
+                <div className="flex flex-wrap items-center gap-1.5">
+                  <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                    {selectedJob.company}
+                  </span>
+                  {selectedJob.isNew && (
+                    <span className="px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-semibold text-[10px] border border-slate-200 dark:border-slate-700">
+                      {language === 'id' ? 'Baru' : 'New'}
+                    </span>
+                  )}
+                  {selectedJob.isPromoted && (
+                    <span className="px-2 py-0.5 rounded-md bg-cyan-100 dark:bg-cyan-950/60 text-cyan-800 dark:text-cyan-300 font-semibold text-[10px]">
+                      {language === 'id' ? 'Promosi' : 'Promoted'}
+                    </span>
+                  )}
+                </div>
+                <h1 className="text-base font-bold text-slate-900 dark:text-white leading-tight">
+                  {selectedJob.title}
+                </h1>
+                {selectedJob.openingsCount > 0 && (
+                  <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-[10px] font-bold">
+                    <Users size={11} />
+                    <span>{language === 'id' ? 'Kuota:' : 'Openings:'} {selectedJob.openingsCount} {language === 'id' ? 'Posisi' : 'Positions'}</span>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* PO-Fit Match Assessment Card */}
+            {userHasCv ? (
+              <div className="p-3.5 bg-slate-50 dark:bg-slate-800/60 rounded-2xl border border-slate-200/80 dark:border-slate-700 flex items-center gap-3">
+                <div className="w-11 h-11 rounded-xl bg-[#1A4B9F] text-white flex flex-col items-center justify-center font-bold text-xs shadow-2xs shrink-0">
+                  <span>{selectedJob.matchScore}%</span>
+                  <span className="text-[8px] font-normal uppercase tracking-tight">Cocok</span>
+                </div>
+                <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+                  {selectedJob.reason}
+                </p>
+              </div>
+            ) : isActualPelamar ? (
+              <div className="p-3 bg-amber-50 dark:bg-amber-950/30 rounded-xl border border-amber-200 dark:border-amber-800/60 flex items-center justify-between gap-2.5 text-xs text-amber-800 dark:text-amber-200">
+                <div className="flex items-center gap-2 min-w-0">
+                  <Info className="w-4 h-4 text-amber-600 shrink-0" />
+                  <p className="text-[11px] leading-snug truncate">
+                    {language === 'id' ? 'Lengkapi CV untuk rekomendasi personal.' : 'Complete CV for matching score.'}
+                  </p>
+                </div>
+                <Link
+                  href="/applicant/upload-cv"
+                  className="px-2.5 py-1 bg-amber-600 text-white font-bold text-[11px] rounded-lg shrink-0"
+                >
+                  {language === 'id' ? 'Lengkapi' : 'Complete'}
+                </Link>
+              </div>
+            ) : null}
+
+            {/* Info Grid Cards */}
+            <div className="grid grid-cols-2 gap-2 text-xs">
+              <div className="p-2.5 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-100 dark:border-slate-800">
+                <p className="text-[10px] text-slate-400 font-bold uppercase">{language === 'id' ? 'Gaji' : 'Salary'}</p>
+                <p className="font-bold text-slate-900 dark:text-white mt-0.5">{selectedJob.salary}</p>
+              </div>
+              <div className="p-2.5 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-100 dark:border-slate-800">
+                <p className="text-[10px] text-slate-400 font-bold uppercase">{language === 'id' ? 'Lokasi' : 'Location'}</p>
+                <p className="font-bold text-slate-900 dark:text-white mt-0.5 truncate">{selectedJob.location}</p>
+              </div>
+              <div className="p-2.5 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-100 dark:border-slate-800">
+                <p className="text-[10px] text-slate-400 font-bold uppercase">{language === 'id' ? 'Mode Kerja' : 'Policy'}</p>
+                <p className="font-semibold text-slate-800 dark:text-slate-200 mt-0.5 truncate">{selectedJob.workPolicy}</p>
+              </div>
+              <div className="p-2.5 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-100 dark:border-slate-800">
+                <p className="text-[10px] text-slate-400 font-bold uppercase">{language === 'id' ? 'Pendidikan' : 'Education'}</p>
+                <p className="font-semibold text-slate-800 dark:text-slate-200 mt-0.5 truncate">{selectedJob.educationLevel}</p>
+              </div>
+            </div>
+
+            {/* Benefits */}
+            {selectedJob.benefits && selectedJob.benefits.length > 0 && (
+              <div className="space-y-1.5">
+                <p className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">{language === 'id' ? 'Benefit & Fasilitas:' : 'Benefits:'}</p>
+                <div className="flex flex-wrap items-center gap-1.5">
+                  {selectedJob.benefits.map((b, idx) => (
+                    <span key={idx} className="px-2 py-0.5 rounded-md bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-[11px] font-medium border border-slate-200 dark:border-slate-700">
+                      ✓ {b}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Description */}
+            <div className="space-y-2 text-xs text-slate-700 dark:text-slate-300 leading-relaxed pt-2 border-t border-slate-100 dark:border-slate-800">
+              <h3 className="font-bold text-xs text-slate-900 dark:text-white uppercase tracking-wider">
+                {t.pelamar.dashboard.aboutRole}
+              </h3>
+              <ul className="space-y-1.5 list-disc pl-4">
+                {selectedJob.descriptionBullets.map((bullet, idx) => (
+                  <li key={idx}>{bullet}</li>
+                ))}
+              </ul>
+            </div>
+
+            {/* Responsibilities */}
+            {selectedJob.responsibilitiesBullets && selectedJob.responsibilitiesBullets.length > 0 && (
+              <div className="space-y-2 text-xs text-slate-700 dark:text-slate-300">
+                <h3 className="font-bold text-xs text-slate-900 dark:text-white uppercase tracking-wider">
+                  {language === 'id' ? 'Tanggung Jawab Utama' : 'Responsibilities'}
+                </h3>
+                <ul className="space-y-1.5 list-disc pl-4 font-medium">
+                  {selectedJob.responsibilitiesBullets.map((resp, idx) => (
+                    <li key={idx}>{resp}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {/* Requirements */}
+            <div className="space-y-2 text-xs text-slate-700 dark:text-slate-300">
+              <h3 className="font-bold text-xs text-slate-900 dark:text-white uppercase tracking-wider">
+                {t.pelamar.dashboard.requirements}
+              </h3>
+              <ul className="space-y-1.5 list-disc pl-4 font-medium">
+                {selectedJob.criteriaBullets.map((crit, idx) => (
+                  <li key={idx}>{crit}</li>
+                ))}
+              </ul>
+            </div>
+
+            {/* Placement Info */}
+            <div className="space-y-1 text-xs text-slate-600 dark:text-slate-400 pt-2 border-t border-slate-100 dark:border-slate-800">
+              <h3 className="font-bold text-xs text-slate-900 dark:text-white uppercase tracking-wider">
+                {language === 'id' ? 'Lokasi Penempatan' : 'Placement'}
+              </h3>
+              <p>{selectedJob.placementInfo}</p>
+            </div>
+          </div>
+
+          {/* Bottom Fixed Action Bar */}
+          <div className="fixed bottom-0 left-0 right-0 z-30 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md px-4 py-3 border-t border-slate-200 dark:border-slate-800 flex items-center gap-2.5 shadow-2xl">
+            {appliedJobs.some(id => String(id) === String(selectedJob.id)) ? (
+              <div className="flex-1 py-3 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 font-bold text-xs flex items-center justify-center gap-2 border border-emerald-300 dark:border-emerald-800">
+                <CheckCircle2 size={16} /> {language === 'id' ? 'Anda sudah melamar posisi ini' : 'Already applied'}
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={() => {
+                  handleApplyWithCv(selectedJob.id, selectedJob.company, selectedJob.title);
+                }}
+                className="flex-1 py-3 bg-[#1A4B9F] hover:bg-[#133878] active:scale-[0.98] text-white rounded-xl font-bold text-xs sm:text-sm flex items-center justify-center gap-2 shadow-lg shadow-blue-900/15 cursor-pointer"
+              >
+                <Send size={15} />
+                <span>{t.pelamar.dashboard.applyNow}</span>
+              </button>
+            )}
+          </div>
         </div>
       )}
 
