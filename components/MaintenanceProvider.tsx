@@ -47,118 +47,90 @@ export default function MaintenanceProvider({ children }: { children: React.Reac
     }
 
     return (
-      <div className="fixed inset-0 z-[9999] min-h-screen w-screen bg-[#040814] text-slate-100 flex flex-col justify-between p-6 sm:p-12 lg:p-16 font-sans antialiased overflow-hidden selection:bg-[#1A4B9F] selection:text-white">
+      <div className="fixed inset-0 z-[9999] min-h-screen w-screen bg-[#0A1120] text-slate-100 flex flex-col justify-between font-sans antialiased overflow-hidden selection:bg-[#1A4B9F] selection:text-white">
         
-        {/* Right Side 3D Geometric Prism Artwork (AWS-style geometric facet design in AI-RecruitPro brand colors) */}
-        <div className="absolute top-0 right-0 w-full lg:w-3/5 h-full pointer-events-none overflow-hidden opacity-90">
-          {/* Subtle Ambient Glow Orbs */}
-          <div className="absolute top-1/4 right-10 w-[500px] h-[500px] bg-[#1A4B9F]/30 rounded-full blur-[130px]" />
-          <div className="absolute bottom-0 right-0 w-[400px] h-[400px] bg-cyan-500/20 rounded-full blur-[110px]" />
+        {/* Background Layer: Blended Landing Page Colors & Glowing Accent Lines */}
+        <div className="absolute inset-0 pointer-events-none overflow-hidden z-0">
           
-          {/* SVG 3D Geometric Prism Facets */}
-          <svg
-            className="absolute top-0 right-0 h-full w-full object-cover"
-            viewBox="0 0 1000 1000"
-            preserveAspectRatio="none"
-            fill="none"
-            xmlns="http://www.w3.org/2000/svg"
-          >
+          {/* Landing Page Gelembung (Top Right) */}
+          <div className="absolute -top-[15%] -right-[5%] w-[60%] h-[85%] bg-[#1A4B9F]/20 rounded-[120px] rotate-[25deg] blur-2xl"></div>
+
+          {/* Landing Page Gelembung (Bottom Left Solid Blue) */}
+          <div className="absolute -bottom-[20%] -left-[10%] w-[45%] max-w-[550px] aspect-square bg-[#3886F6]/25 rounded-full blur-3xl"></div>
+
+          {/* Deep Ambient Center Glow */}
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[700px] bg-[#1A4B9F]/15 rounded-full blur-[140px]"></div>
+
+          {/* Grid Lines Pattern */}
+          <div className="absolute inset-0 bg-[linear-gradient(to_right,#1e293b_1px,transparent_1px),linear-gradient(to_bottom,#1e293b_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_50%,#000_70%,transparent_100%)] opacity-30"></div>
+
+          {/* Perpaduan Garis-Garis Glowing Warna Logo (#1A4B9F & #3886F6) */}
+          <svg className="absolute inset-0 w-full h-full opacity-60" xmlns="http://www.w3.org/2000/svg">
             <defs>
-              <linearGradient id="facet1" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stopColor="#1A4B9F" stopOpacity="0.85" />
-                <stop offset="100%" stopColor="#0284C7" stopOpacity="0.9" />
+              <linearGradient id="logoLineGrad1" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stopColor="#1A4B9F" stopOpacity="0" />
+                <stop offset="50%" stopColor="#3886F6" stopOpacity="0.8" />
+                <stop offset="100%" stopColor="#60A5FA" stopOpacity="0" />
               </linearGradient>
-              <linearGradient id="facet2" x1="0%" y1="100%" x2="100%" y2="0%">
-                <stop offset="0%" stopColor="#0EA5E9" stopOpacity="0.8" />
-                <stop offset="100%" stopColor="#10B981" stopOpacity="0.85" />
-              </linearGradient>
-              <linearGradient id="facet3" x1="100%" y1="0%" x2="0%" y2="100%">
-                <stop offset="0%" stopColor="#06B6D4" stopOpacity="0.75" />
-                <stop offset="100%" stopColor="#1E3A8A" stopOpacity="0.9" />
-              </linearGradient>
-              <linearGradient id="darkOverlay" x1="0%" y1="0%" x2="100%" y2="0%">
-                <stop offset="0%" stopColor="#040814" stopOpacity="1" />
-                <stop offset="45%" stopColor="#040814" stopOpacity="0.9" />
-                <stop offset="100%" stopColor="#040814" stopOpacity="0.1" />
+              <linearGradient id="logoLineGrad2" x1="100%" y1="0%" x2="0%" y2="100%">
+                <stop offset="0%" stopColor="#3886F6" stopOpacity="0" />
+                <stop offset="50%" stopColor="#1A4B9F" stopOpacity="0.7" />
+                <stop offset="100%" stopColor="#2563EB" stopOpacity="0" />
               </linearGradient>
             </defs>
 
-            {/* Geometric Poly Facets */}
-            <path d="M450 0 L1000 0 L1000 1000 L750 1000 Z" fill="url(#facet1)" />
-            <path d="M750 0 L1000 250 L1000 1000 L600 1000 Z" fill="url(#facet2)" opacity="0.9" />
-            <path d="M850 0 L1000 0 L1000 650 Z" fill="url(#facet3)" opacity="0.8" />
-            
-            {/* Split Gradient Overlay blending Left Dark Side to Right Prism */}
-            <rect width="1000" height="1000" fill="url(#darkOverlay)" />
+            {/* Glowing Accent Lines */}
+            <path d="M-100 200 Q 400 100, 900 400 T 2000 600" fill="none" stroke="url(#logoLineGrad1)" strokeWidth="2.5" />
+            <path d="M-100 350 Q 500 250, 1100 500 T 2000 750" fill="none" stroke="url(#logoLineGrad2)" strokeWidth="2" />
+            <path d="M-100 500 Q 600 350, 1200 650 T 2000 900" fill="none" stroke="url(#logoLineGrad1)" strokeWidth="1.5" opacity="0.6" />
           </svg>
         </div>
 
-        {/* Background Grid Pattern */}
-        <div className="absolute inset-0 bg-[radial-gradient(#1e293b_1px,transparent_1px)] [background-size:32px_32px] opacity-25 pointer-events-none" />
+        {/* Content Outer Container: Matches Landing Page Grid Margin Exactly */}
+        <div className="max-w-[1440px] w-full mx-auto px-6 sm:px-10 lg:px-14 min-h-screen flex flex-col justify-between py-8 sm:py-12 lg:py-14 relative z-10">
+          
+          {/* Header Section */}
+          <header className="flex items-center justify-between">
+            <div className="space-y-1.5">
+              <div className="flex items-center gap-2.5 sm:gap-3">
+                <Image
+                  src="/logo_hd.png"
+                  alt="AI-RecruitPro Logo"
+                  width={280}
+                  height={280}
+                  quality={100}
+                  unoptimized
+                  className="h-8 sm:h-9 md:h-10 w-auto object-contain shrink-0"
+                  priority
+                />
+                <span className="font-extrabold text-xs sm:text-sm md:text-base tracking-tight text-white leading-none">
+                  AI-RecruitPro
+                </span>
+              </div>
 
-        {/* Header Section (Brand Identity & Eyebrow Tag) */}
-        <header className="relative z-10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-          <div className="space-y-3">
-            <div className="flex items-center gap-3">
-              <Image
-                src="/logo_hd.png"
-                alt="AI-RecruitPro Logo"
-                width={280}
-                height={280}
-                quality={100}
-                unoptimized
-                className="h-9 sm:h-11 w-auto object-contain shrink-0"
-                priority
-              />
-              <span className="font-extrabold text-lg sm:text-xl tracking-tight text-white leading-none">
-                AI-RecruitPro
-              </span>
+              <div className="text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-[#3886F6]">
+                Mode Pemeliharaan Sistem
+              </div>
             </div>
+          </header>
 
-            <div className="text-[11px] sm:text-xs font-mono font-bold uppercase tracking-[0.2em] text-blue-400/90">
-              AI-RECRUITPRO SYSTEM MAINTENANCE
-            </div>
-          </div>
+          {/* Hero Headline Section */}
+          <main className="my-auto py-10 max-w-4xl space-y-5">
+            <h1 className="text-3xl sm:text-5xl lg:text-6xl font-extrabold text-white tracking-tight leading-[1.12]">
+              Pemeliharaan Sistem Sedang Berlangsung
+            </h1>
 
-          {/* Live Status Badge */}
-          <div className="inline-flex items-center gap-2.5 px-4 py-1.5 rounded-full bg-slate-900/80 border border-blue-500/30 backdrop-blur-md text-blue-300 text-xs font-semibold tracking-wide shrink-0 shadow-lg">
-            <span className="relative flex h-2.5 w-2.5">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-blue-500"></span>
-            </span>
-            <span>Pemeliharaan Terjadwal</span>
-          </div>
-        </header>
+            <p className="text-sm sm:text-lg text-slate-300 font-normal leading-relaxed max-w-2xl">
+              Saat ini platform kami sedang menjalani pemeliharaan rutin untuk peningkatan performa dan keandalan layanan. Layanan publik akan segera kembali aktif setelah proses pemeliharaan selesai.
+            </p>
+          </main>
 
-        {/* Hero Headline & Content Section */}
-        <main className="relative z-10 my-auto py-12 max-w-4xl space-y-6">
-          <h1 className="text-3xl sm:text-5xl lg:text-6xl font-extrabold text-white tracking-tight leading-[1.12]">
-            Pemeliharaan & Peningkatan Sistem Sedang Berlangsung
-          </h1>
+          {/* Footer Section */}
+          <footer className="pt-6 border-t border-slate-800/80 flex items-center justify-between text-xs text-slate-400">
+            <p>&copy; {new Date().getFullYear()} AI-RecruitPro. Seluruh Hak Cipta Dilindungi.</p>
+          </footer>
 
-          <p className="text-sm sm:text-lg text-slate-300 font-normal leading-relaxed max-w-2xl">
-            Saat ini tim teknis kami sedang memperbarui infrastruktur server untuk meningkatkan performa, keandalan sistem, dan kecepatan rekrutmen. Layanan publik akan segera kembali aktif setelah proses pemeliharaan selesai.
-          </p>
-
-          {/* Status Bar Indicator */}
-          <div className="pt-4 flex flex-wrap items-center gap-4 text-xs sm:text-sm text-slate-400">
-            <div className="flex items-center gap-2 px-3.5 py-1.5 rounded-lg bg-slate-900/60 border border-slate-800 backdrop-blur-sm">
-              <span className="w-2 h-2 rounded-full bg-emerald-400" />
-              <span>Status Server: <strong className="text-white">Upgrading</strong></span>
-            </div>
-            
-            <div className="flex items-center gap-2 px-3.5 py-1.5 rounded-lg bg-slate-900/60 border border-slate-800 backdrop-blur-sm">
-              <span className="w-2 h-2 rounded-full bg-blue-400" />
-              <span>Keamanan & Data: <strong className="text-white">100% Terenkripsi</strong></span>
-            </div>
-          </div>
-        </main>
-
-        {/* Footer Section */}
-        <footer className="relative z-10 pt-6 border-t border-slate-800/60 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-500">
-          <p>&copy; {new Date().getFullYear()} AI-RecruitPro. Seluruh Hak Cipta Dilindungi.</p>
-          <p className="font-mono text-[11px] text-slate-600">SLA Availability: 99.9% Optimal</p>
-        </footer>
+        </div>
 
       </div>
     );
