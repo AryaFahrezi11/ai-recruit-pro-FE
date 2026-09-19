@@ -16,7 +16,8 @@ import {
   KeyRound, 
   Send, 
   Sparkles,
-  Info
+  Info,
+  Upload
 } from 'lucide-react';
 import { fetchAuth } from '@/lib/api/auth';
 import { toast } from 'react-hot-toast';
@@ -133,12 +134,14 @@ export default function SystemSettingsPage() {
   const [testEmailModal, setTestEmailModal] = useState<boolean>(false);
   const [testEmailRecipient, setTestEmailRecipient] = useState<string>('');
   const [isSendingTest, setIsSendingTest] = useState<boolean>(false);
+  const [isUploadingLogo, setIsUploadingLogo] = useState<boolean>(false);
 
   const [settings, setSettings] = useState<Record<string, any>>({
     maintenance_mode: false,
     seo_title: '',
     seo_description: '',
     seo_keywords: '',
+    app_logo_url: '/logo_hd.png',
     public_domain_url: '',
     public_backend_url: '',
     support_whatsapp: '',
@@ -150,6 +153,38 @@ export default function SystemSettingsPage() {
     smtp_from: '',
     ...DEFAULT_TEMPLATES
   });
+
+  const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error('Ukuran logo maksimal 10 MB!');
+      return;
+    }
+
+    setIsUploadingLogo(true);
+    const formData = new FormData();
+    formData.append('file', file);
+
+    try {
+      const res = await fetch('/api/upload', {
+        method: 'POST',
+        body: formData,
+      });
+      const data = await res.json();
+      if (res.ok && data.url) {
+        handleChange('app_logo_url', data.url);
+        toast.success('Logo baru berhasil diunggah!');
+      } else {
+        toast.error(data.error || 'Gagal mengunggah file logo');
+      }
+    } catch (err) {
+      toast.error('Terjadi kesalahan saat mengunggah logo');
+    } finally {
+      setIsUploadingLogo(false);
+    }
+  };
 
   useEffect(() => {
     loadSettings();
@@ -409,6 +444,47 @@ export default function SystemSettingsPage() {
               <div>
                 <h2 className="text-base font-extrabold text-slate-900 dark:text-white mb-4">Pengaturan Umum, SEO & Domain Resmi</h2>
                 <div className="space-y-4">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-2">Logo Resmi Aplikasi (App Logo)</label>
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 p-4 bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-xl">
+                      <div className="w-20 h-20 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl flex items-center justify-center p-2 shrink-0 shadow-2xs">
+                        {settings.app_logo_url ? (
+                          /* eslint-disable-next-html-element */
+                          <img 
+                            src={settings.app_logo_url} 
+                            alt="Logo Aplikasi" 
+                            className="max-w-full max-h-full object-contain"
+                          />
+                        ) : (
+                          <Globe className="text-slate-400" size={32} />
+                        )}
+                      </div>
+                      <div className="flex-1 space-y-2 w-full">
+                        <div className="flex items-center gap-2">
+                          <label className="px-3.5 py-2 bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-slate-200 text-white dark:text-black text-xs font-extrabold rounded-lg shadow-2xs flex items-center gap-2 transition-all cursor-pointer">
+                            <Upload size={14} />
+                            {isUploadingLogo ? 'Mengunggah...' : 'Unggah File Logo'}
+                            <input 
+                              type="file" 
+                              accept="image/*" 
+                              onChange={handleLogoUpload}
+                              disabled={isUploadingLogo}
+                              className="hidden" 
+                            />
+                          </label>
+                          <span className="text-[11px] text-slate-400">PNG, SVG, JPG (Maks. 10MB)</span>
+                        </div>
+                        <input 
+                          type="text" 
+                          value={settings.app_logo_url || ''}
+                          onChange={(e) => handleChange('app_logo_url', e.target.value)}
+                          placeholder="/logo_hd.png atau https://domain.com/logo.png"
+                          className="w-full px-3 py-1.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-xs text-slate-800 dark:text-slate-100 font-mono focus:ring-2 focus:ring-slate-400 outline-none"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
                   <div>
                     <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Domain Resmi Utama Website (Frontend Public Domain)</label>
                     <input 

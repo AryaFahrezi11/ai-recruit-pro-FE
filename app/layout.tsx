@@ -35,6 +35,8 @@ export async function generateMetadata(): Promise<Metadata> {
     "software rekrutmen perusahaan"
   ];
 
+  let logoUrl = `${siteUrl}/logo_hd.png`;
+
   try {
     // Next.js fetch API can be used directly on the server side
     const res = await fetch(`${getBaseUrl()}/config/public`, { next: { revalidate: 60 } });
@@ -42,6 +44,11 @@ export async function generateMetadata(): Promise<Metadata> {
       const config = await res.json();
       if (config.seo_title) title = config.seo_title;
       if (config.seo_description) description = config.seo_description;
+      if (config.app_logo_url) {
+        logoUrl = config.app_logo_url.startsWith('http') 
+          ? config.app_logo_url 
+          : `${siteUrl}${config.app_logo_url.startsWith('/') ? '' : '/'}${config.app_logo_url}`;
+      }
       if (config.seo_keywords) {
         if (typeof config.seo_keywords === 'string') {
           keywordsList = config.seo_keywords.split(',').map((k: string) => k.trim()).filter(Boolean);
@@ -80,7 +87,7 @@ export async function generateMetadata(): Promise<Metadata> {
       siteName: "AI Recruit Pro",
       images: [
         {
-          url: `${siteUrl}/logo_hd.png`,
+          url: logoUrl,
           width: 1200,
           height: 630,
           alt: "AI Recruit Pro Logo",
@@ -93,7 +100,7 @@ export async function generateMetadata(): Promise<Metadata> {
       card: "summary_large_image",
       title: title,
       description: description,
-      images: [`${siteUrl}/logo_hd.png`],
+      images: [logoUrl],
       creator: "@airecruitpro",
     },
     robots: {
