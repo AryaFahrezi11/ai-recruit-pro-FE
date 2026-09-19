@@ -17,10 +17,10 @@ export default function Footer() {
   return (
     <footer className="bg-slate-950 text-slate-300 py-10 sm:py-14 mt-auto no-print border-t border-slate-800/80 font-sans">
       <div className="max-w-[1440px] mx-auto px-6 sm:px-10 lg:px-14 space-y-10">
-        
+
         {/* Main Footer Content Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8 lg:gap-10">
-          
+
           {/* Brand & Mission Column (2 Cols on lg) */}
           <div className="lg:col-span-2 space-y-4 pr-0 lg:pr-6">
             <Link href="/" onClick={handleHomeClick} className="flex items-center gap-3 group">
@@ -145,7 +145,7 @@ export default function Footer() {
         {/* Bottom Bar Footer */}
         <div className="pt-6 border-t border-slate-800/80 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-400">
           <p>&copy; {new Date().getFullYear()} AI-RecruitPro. Hak Cipta Dilindungi.</p>
-          
+
           <div className="flex items-center gap-6">
             <span>Indonesia (ID)</span>
           </div>

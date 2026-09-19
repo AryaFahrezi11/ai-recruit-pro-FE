@@ -77,7 +77,7 @@ export function ApplyJobModal({ job, cvData, onClose, onSuccess }: ApplyJobModal
   const initialLetter = cvData?.fullName ? cvData.fullName.charAt(0).toUpperCase() : 'P';
 
   return (
-    <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 sm:p-6 animate-in fade-in duration-300">
+    <div className="fixed inset-0 z-[70] bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 sm:p-6 animate-in fade-in duration-300">
       <div className="bg-white dark:bg-slate-900 w-full max-w-[560px] rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden relative flex flex-col max-h-[95vh] animate-in zoom-in-95 duration-300">
 
         {/* Modal Header */}

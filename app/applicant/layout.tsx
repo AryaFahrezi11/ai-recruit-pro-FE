@@ -15,7 +15,9 @@ import {
   ClockCheck,
   LogOut,
   ChevronDown,
-  BookOpen
+  BookOpen,
+  Menu,
+  X
 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { api, removeAuthToken } from '@/lib/api';
@@ -37,11 +39,10 @@ function PelamarDesktopNav({ navItems, pathname }: { navItems: any[]; pathname: 
           <Link
             key={item.name}
             href={item.href}
-            className={`text-sm font-semibold transition-colors relative ${
-              isActive
+            className={`text-sm font-semibold transition-colors relative ${isActive
                 ? 'text-[#1A4B9F] dark:text-blue-400 font-bold after:content-[""] after:absolute after:bottom-[-20px] after:left-0 after:right-0 after:h-[3px] after:bg-[#1A4B9F] dark:after:bg-blue-400'
                 : 'text-slate-600 dark:text-slate-300 hover:text-[#1A4B9F] dark:hover:text-blue-400'
-            }`}
+              }`}
           >
             {item.name}
           </Link>
@@ -64,16 +65,15 @@ function PelamarMobileNav({ navItems, pathname }: { navItems: any[]; pathname: s
         const currentView = searchParams.get('view');
         const isViewQueryMatch = itemView === currentView || (!itemView && !currentView);
         const isActive = isPathActive && isViewQueryMatch;
-        
+
         return (
           <Link
             key={item.name}
             href={item.href}
-            className={`flex-1 flex items-center justify-center gap-1.5 py-3 px-2 text-xs whitespace-nowrap relative transition-all ${
-              isActive
+            className={`flex-1 flex items-center justify-center gap-1.5 py-3 px-2 text-xs whitespace-nowrap relative transition-all ${isActive
                 ? 'text-[#1A4B9F] dark:text-blue-400 font-bold after:content-[""] after:absolute after:bottom-0 after:left-2 after:right-2 after:h-[2.5px] after:bg-[#1A4B9F] dark:after:bg-blue-400 after:rounded-full'
                 : 'text-slate-500 dark:text-slate-400 font-medium hover:text-slate-800 dark:hover:text-slate-200'
-            }`}
+              }`}
           >
             <Icon size={15} className={`transition-transform ${isActive ? 'text-[#1A4B9F] dark:text-blue-400 scale-105' : 'text-slate-400 dark:text-slate-500'}`} />
             <span>{item.name}</span>
@@ -94,6 +94,7 @@ export default function PelamarPerfectLayout({
   const { t } = useTranslation();
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [userProfile, setUserProfile] = useState<{ email: string; name: string }>({
     email: 'pelamar@example.com',
@@ -104,6 +105,10 @@ export default function PelamarPerfectLayout({
   const [hasUnreadNotification, setHasUnreadNotification] = useState(false);
 
   useEffect(() => {
+    setIsMobileMenuOpen(false);
+  }, [pathname]);
+
+  useEffect(() => {
     setIsMounted(true);
 
     const isLoggedIn = localStorage.getItem('isPelamarLoggedIn');
@@ -111,11 +116,11 @@ export default function PelamarPerfectLayout({
     const role = localStorage.getItem('user_role');
 
     // Public pages under /applicant accessible to anyone (guests, admins, developers, employers)
-    const isPublicPage = 
-      pathname === '/applicant/dashboard' || 
-      pathname === '/applicant/companies' || 
+    const isPublicPage =
+      pathname === '/applicant/dashboard' ||
+      pathname === '/applicant/companies' ||
       pathname.startsWith('/applicant/companies/') ||
-      pathname === '/applicant/login' || 
+      pathname === '/applicant/login' ||
       pathname === '/applicant/register';
 
     if (isPublicPage) {
@@ -172,7 +177,7 @@ export default function PelamarPerfectLayout({
           }
         })
         .catch((err) => console.error('Failed to fetch profile in layout:', err));
-        
+
       // Fetch applications to check for unread status updates with cache busting
       api
         .get(`/applications/?t=${new Date().getTime()}`, { cache: 'no-store' })
@@ -183,7 +188,7 @@ export default function PelamarPerfectLayout({
             let savedStatuses: Record<string, string> = {};
             try {
               if (savedStatusesStr) savedStatuses = JSON.parse(savedStatusesStr);
-            } catch (e) {}
+            } catch (e) { }
 
             let hasUnread = false;
             for (const app of appsList) {
@@ -290,8 +295,8 @@ export default function PelamarPerfectLayout({
 
             <div className="h-6 w-[1px] bg-slate-200 dark:bg-slate-800 hidden sm:block"></div>
 
-            {/* Profile Avatar with Dropdown */}
-            <div className="relative" ref={dropdownRef}>
+            {/* Desktop Profile Avatar with Dropdown */}
+            <div className="relative hidden lg:block" ref={dropdownRef}>
               <button
                 onClick={() => setIsProfileOpen(!isProfileOpen)}
                 className="relative flex items-center gap-2 p-1 rounded-full border-2 border-[#1A4B9F]/30 hover:border-[#1A4B9F] bg-white dark:bg-slate-800 transition-all cursor-pointer shadow-xs group"
@@ -358,14 +363,121 @@ export default function PelamarPerfectLayout({
               )}
             </div>
 
+            {/* Mobile Burger Menu Button (Senada & Konsisten dengan Navbar Publik) */}
+            <button
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              className="lg:hidden relative w-10 h-10 flex items-center justify-center rounded-xl bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-200 border border-slate-200/80 dark:border-slate-700/80 active:scale-95 transition-all"
+              aria-label="Menu"
+            >
+              {isMobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
+              {hasUnreadNotification && !isMobileMenuOpen && (
+                <span className="absolute top-2 right-2 w-2.5 h-2.5 bg-red-500 rounded-full animate-pulse"></span>
+              )}
+            </button>
+
           </div>
 
         </div>
 
-        {/* Mobile Navigation Bar Links */}
-        <Suspense fallback={null}>
-          <PelamarMobileNav navItems={navItems} pathname={pathname} />
-        </Suspense>
+        {/* Mobile Navigation Drawer (Senada & Konsisten dengan Navbar Publik) */}
+        {isMobileMenuOpen && (
+          <div className="lg:hidden absolute top-full left-0 w-full bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 shadow-xl px-5 py-4 flex flex-col gap-1 max-h-[85vh] overflow-y-auto z-50 animate-in fade-in slide-in-from-top-2">
+            {/* User Profile Snippet */}
+            <div className="flex items-center gap-3 p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/70 dark:border-slate-700/60 mb-2">
+              <div className="w-10 h-10 rounded-full bg-[#1A4B9F] text-white flex items-center justify-center font-bold text-sm shrink-0 shadow-2xs">
+                {userProfile.name ? userProfile.name.charAt(0).toUpperCase() : 'P'}
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="text-xs font-bold text-slate-900 dark:text-white truncate">
+                  {userProfile.name}
+                </p>
+                <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate">
+                  {userProfile.email}
+                </p>
+              </div>
+            </div>
+
+            {/* Navigation Links */}
+            <Link
+              href="/applicant/dashboard"
+              onClick={() => setIsMobileMenuOpen(false)}
+              className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-bold transition-colors ${pathname === '/applicant/dashboard'
+                  ? 'bg-blue-50 dark:bg-blue-950/40 text-[#1A4B9F] dark:text-blue-400'
+                  : 'text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800'
+                }`}
+            >
+              <Search size={16} className="text-[#1A4B9F] dark:text-blue-400" />
+              <span>{t.pelamar.nav.findJobs}</span>
+            </Link>
+
+            <Link
+              href="/applicant/companies"
+              onClick={() => setIsMobileMenuOpen(false)}
+              className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-bold transition-colors ${pathname?.startsWith('/applicant/companies')
+                  ? 'bg-blue-50 dark:bg-blue-950/40 text-[#1A4B9F] dark:text-blue-400'
+                  : 'text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800'
+                }`}
+            >
+              <Building2 size={16} className="text-[#1A4B9F] dark:text-blue-400" />
+              <span>{t.pelamar.nav.companies}</span>
+            </Link>
+
+            <Link
+              href="/applicant/upload-cv"
+              onClick={() => setIsMobileMenuOpen(false)}
+              className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-bold transition-colors ${pathname === '/applicant/upload-cv'
+                  ? 'bg-blue-50 dark:bg-blue-950/40 text-[#1A4B9F] dark:text-blue-400'
+                  : 'text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800'
+                }`}
+            >
+              <BookOpen size={16} className="text-[#1A4B9F] dark:text-blue-400" />
+              <span>CV Saya</span>
+            </Link>
+
+            <Link
+              href="/applicant/status"
+              onClick={() => setIsMobileMenuOpen(false)}
+              className={`flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-bold transition-colors ${pathname === '/applicant/status'
+                  ? 'bg-blue-50 dark:bg-blue-950/40 text-[#1A4B9F] dark:text-blue-400'
+                  : 'text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800'
+                }`}
+            >
+              <div className="flex items-center gap-3">
+                <ClockCheck size={16} className="text-[#1A4B9F] dark:text-blue-400" />
+                <span>{t.pelamar.profile.applicationHistory}</span>
+              </div>
+              {hasUnreadNotification && (
+                <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse"></span>
+              )}
+            </Link>
+
+            <Link
+              href="/applicant/saved"
+              onClick={() => setIsMobileMenuOpen(false)}
+              className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-bold transition-colors ${pathname === '/applicant/saved'
+                  ? 'bg-blue-50 dark:bg-blue-950/40 text-[#1A4B9F] dark:text-blue-400'
+                  : 'text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800'
+                }`}
+            >
+              <Bookmark size={16} className="text-[#1A4B9F] dark:text-blue-400" />
+              <span>{t.pelamar.profile.savedJobs}</span>
+            </Link>
+
+            {/* Divider & Logout */}
+            <div className="border-t border-slate-100 dark:border-slate-800 my-1 pt-1">
+              <button
+                onClick={() => {
+                  setIsMobileMenuOpen(false);
+                  handleLogout();
+                }}
+                className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-bold text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors cursor-pointer text-left"
+              >
+                <LogOut size={16} />
+                <span>{t.pelamar.profile.logout}</span>
+              </button>
+            </div>
+          </div>
+        )}
       </header>
 
       {/* Main Content Area */}
@@ -394,13 +506,13 @@ export default function PelamarPerfectLayout({
               Anda perlu melakukan login kembali untuk dapat melamar pekerjaan dan mengakses fitur CV ATS.
             </p>
             <div className="flex items-center justify-end gap-2.5 pt-1">
-              <button 
+              <button
                 onClick={() => setShowLogoutModal(false)}
                 className="px-4 py-2 rounded-full text-xs font-bold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors cursor-pointer"
               >
                 Batal
               </button>
-              <button 
+              <button
                 onClick={confirmLogout}
                 className="px-5 py-2 rounded-full text-xs font-semibold bg-red-600 hover:bg-red-700 text-white shadow-md transition-colors cursor-pointer"
               >

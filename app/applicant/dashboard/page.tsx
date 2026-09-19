@@ -1349,129 +1349,6 @@ function DashboardContent() {
         /* DUAL-PANE KITALULUS SPLIT VIEW */
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
 
-          {/* RICH SOCIAL SHARE MODAL */}
-          {shareJob && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fadeIn">
-              <div className="bg-white dark:bg-slate-900 rounded-2xl w-full max-w-lg p-6 sm:p-8 shadow-2xl relative border border-slate-200 dark:border-slate-800 space-y-6">
-
-                {/* Modal Header */}
-                <div className="flex items-start justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 rounded-2xl bg-[#EFF6FF] dark:bg-slate-800 text-slate-900 dark:text-white flex items-center justify-center shrink-0">
-                      <Share2 size={24} />
-                    </div>
-                    <div>
-                      <h3 className="text-lg font-bold text-slate-900 dark:text-white">{language === 'id' ? 'Bagikan Lowongan Pekerjaan' : 'Share Job Opening'}</h3>
-                      <p className="text-xs text-slate-500 font-bold line-clamp-1">
-                        {shareJob.title} • {shareJob.company}
-                      </p>
-                    </div>
-                  </div>
-                  <button
-                    onClick={() => setShareJob(null)}
-                    className="p-2 rounded-full text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-700 transition-colors cursor-pointer"
-                  >
-                    <X size={20} />
-                  </button>
-                </div>
-
-                {/* Social Media Share Buttons Grid */}
-                <div className="space-y-2">
-                  <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
-                    {language === 'id' ? 'Pilih Media Sosial untuk Berbagi:' : 'Choose Social Media to Share:'}
-                  </p>
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                    {/* WhatsApp */}
-                    <button
-                      onClick={() => {
-                        const url = typeof window !== 'undefined' ? window.location.origin + '/jobs/' + shareJob.id : '';
-                        const text = language === 'id'
-                          ? `Lowongan Pekerjaan: ${shareJob.title} di ${shareJob.company}\n\nApply & lihat detail loker:\n${url}`
-                          : `Job Opening: ${shareJob.title} at ${shareJob.company}\n\nApply & view job details:\n${url}`;
-                        window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`, '_blank');
-                      }}
-                      className="p-3.5 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 hover:bg-emerald-100 dark:hover:bg-emerald-900/50 text-emerald-700 dark:text-emerald-300 font-semibold text-xs flex flex-col items-center gap-2 transition-all cursor-pointer group shadow-2xs"
-                    >
-                      <div className="w-10 h-10 rounded-full bg-emerald-500 text-white flex items-center justify-center group-hover:scale-110 transition-transform">
-                        <MessageCircle size={20} />
-                      </div>
-                      <span>WhatsApp</span>
-                    </button>
-
-                    {/* Telegram */}
-                    <button
-                      onClick={() => {
-                        const url = typeof window !== 'undefined' ? window.location.origin + '/jobs/' + shareJob.id : '';
-                        const text = language === 'id' ? `Lowongan Pekerjaan: ${shareJob.title} di ${shareJob.company}` : `Job Opening: ${shareJob.title} at ${shareJob.company}`;
-                        window.open(`https://t.me/share/url?url=${encodeURIComponent(url)}&text=${encodeURIComponent(text)}`, '_blank');
-                      }}
-                      className="p-3.5 rounded-2xl bg-sky-50 dark:bg-sky-950/40 border border-sky-200 dark:border-sky-800 hover:bg-sky-100 dark:hover:bg-sky-900/50 text-sky-700 dark:text-sky-300 font-semibold text-xs flex flex-col items-center gap-2 transition-all cursor-pointer group shadow-2xs"
-                    >
-                      <div className="w-10 h-10 rounded-full bg-sky-500 text-white flex items-center justify-center group-hover:scale-110 transition-transform">
-                        <Send size={20} />
-                      </div>
-                      <span>Telegram</span>
-                    </button>
-
-                    {/* LinkedIn */}
-                    <button
-                      onClick={() => {
-                        const url = typeof window !== 'undefined' ? window.location.origin + '/jobs/' + shareJob.id : '';
-                        window.open(`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(url)}`, '_blank');
-                      }}
-                      className="p-3.5 rounded-2xl bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800 hover:bg-blue-100 dark:hover:bg-blue-900/50 text-blue-700 dark:text-blue-300 font-semibold text-xs flex flex-col items-center gap-2 transition-all cursor-pointer group shadow-2xs"
-                    >
-                      <div className="w-10 h-10 rounded-full bg-[#0A66C2] text-white flex items-center justify-center group-hover:scale-110 transition-transform">
-                        <Globe size={20} />
-                      </div>
-                      <span>LinkedIn</span>
-                    </button>
-
-                    {/* Email */}
-                    <button
-                      onClick={() => {
-                        const url = typeof window !== 'undefined' ? window.location.origin + '/jobs/' + shareJob.id : '';
-                        const subject = language === 'id' ? `Lowongan Pekerjaan: ${shareJob.title} di ${shareJob.company}` : `Job Opening: ${shareJob.title} at ${shareJob.company}`;
-                        const body = language === 'id'
-                          ? `Halo,\n\nSaya ingin membagikan info lowongan pekerjaan berikut:\n\nPosisi: ${shareJob.title}\nPerusahaan: ${shareJob.company}\nLokasi: ${shareJob.location}\n\nLink detail & pendaftaran: ${url}`
-                          : `Hello,\n\nI would like to share the following job opening:\n\nPosition: ${shareJob.title}\nCompany: ${shareJob.company}\nLocation: ${shareJob.location}\n\nApply & view job details: ${url}`;
-                        window.open(`mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`, '_blank');
-                      }}
-                      className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-semibold text-xs flex flex-col items-center gap-2 transition-all cursor-pointer group shadow-2xs"
-                    >
-                      <div className="w-10 h-10 rounded-full bg-slate-700 text-white flex items-center justify-center group-hover:scale-110 transition-transform">
-                        <Mail size={20} />
-                      </div>
-                      <span>Email</span>
-                    </button>
-                  </div>
-                </div>
-
-                {/* Copy Link Input Bar */}
-                <div className="space-y-2">
-                  <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
-                    {language === 'id' ? 'Atau Salin Tautan Link:' : 'Or Copy Link:'}
-                  </p>
-                  <div className="p-2 pl-4 bg-slate-50 dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 flex items-center gap-2">
-                    <input
-                      type="text"
-                      readOnly
-                      value={typeof window !== 'undefined' ? window.location.origin + '/jobs/' + shareJob.id : ''}
-                      className="w-full bg-transparent text-xs sm:text-sm font-semibold text-slate-700 dark:text-slate-300 outline-none truncate"
-                    />
-                    <button
-                      onClick={handleCopyLink}
-                      className="px-4 py-2.5 bg-[#1A4B9F] hover:bg-[#133878] text-white text-xs font-bold rounded-xl transition-all cursor-pointer shrink-0 shadow-sm flex items-center gap-1.5"
-                    >
-                      <Copy size={14} />
-                      <span>{language === 'id' ? 'Salin Link' : 'Copy Link'}</span>
-                    </button>
-                  </div>
-                </div>
-
-              </div>
-            </div>
-          )}
 
           {/* LEFT COLUMN: SELECTABLE JOB CARDS LIST (~38% Width / 5 Cols) */}
           <div className="lg:col-span-5 space-y-4">
@@ -2219,6 +2096,136 @@ function DashboardContent() {
                 <span>{t.pelamar.dashboard.applyNow}</span>
               </button>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* RICH SOCIAL SHARE MODAL */}
+      {shareJob && (
+        <div 
+          className="fixed inset-0 z-[80] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fadeIn"
+          onClick={() => setShareJob(null)}
+        >
+          <div 
+            className="bg-white dark:bg-slate-900 rounded-2xl w-full max-w-lg p-6 sm:p-8 shadow-2xl relative border border-slate-200 dark:border-slate-800 space-y-6 animate-in zoom-in-95 duration-200"
+            onClick={(e) => e.stopPropagation()}
+          >
+
+            {/* Modal Header */}
+            <div className="flex items-start justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-2xl bg-[#EFF6FF] dark:bg-slate-800 text-slate-900 dark:text-white flex items-center justify-center shrink-0">
+                  <Share2 size={24} />
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold text-slate-900 dark:text-white">{language === 'id' ? 'Bagikan Lowongan Pekerjaan' : 'Share Job Opening'}</h3>
+                  <p className="text-xs text-slate-500 font-bold line-clamp-1">
+                    {shareJob.title} • {shareJob.company}
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setShareJob(null)}
+                className="p-2 rounded-full text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-700 transition-colors cursor-pointer"
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            {/* Social Media Share Buttons Grid */}
+            <div className="space-y-2">
+              <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                {language === 'id' ? 'Pilih Media Sosial untuk Berbagi:' : 'Choose Social Media to Share:'}
+              </p>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                {/* WhatsApp */}
+                <button
+                  onClick={() => {
+                    const url = typeof window !== 'undefined' ? window.location.origin + '/jobs/' + shareJob.id : '';
+                    const text = language === 'id'
+                      ? `Lowongan Pekerjaan: ${shareJob.title} di ${shareJob.company}\n\nApply & lihat detail loker:\n${url}`
+                      : `Job Opening: ${shareJob.title} at ${shareJob.company}\n\nApply & view job details:\n${url}`;
+                    window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`, '_blank');
+                  }}
+                  className="p-3.5 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 hover:bg-emerald-100 dark:hover:bg-emerald-900/50 text-emerald-700 dark:text-emerald-300 font-semibold text-xs flex flex-col items-center gap-2 transition-all cursor-pointer group shadow-2xs"
+                >
+                  <div className="w-10 h-10 rounded-full bg-emerald-500 text-white flex items-center justify-center group-hover:scale-110 transition-transform">
+                    <MessageCircle size={20} />
+                  </div>
+                  <span>WhatsApp</span>
+                </button>
+
+                {/* Telegram */}
+                <button
+                  onClick={() => {
+                    const url = typeof window !== 'undefined' ? window.location.origin + '/jobs/' + shareJob.id : '';
+                    const text = language === 'id' ? `Lowongan Pekerjaan: ${shareJob.title} di ${shareJob.company}` : `Job Opening: ${shareJob.title} at ${shareJob.company}`;
+                    window.open(`https://t.me/share/url?url=${encodeURIComponent(url)}&text=${encodeURIComponent(text)}`, '_blank');
+                  }}
+                  className="p-3.5 rounded-2xl bg-sky-50 dark:bg-sky-950/40 border border-sky-200 dark:border-sky-800 hover:bg-sky-100 dark:hover:bg-sky-900/50 text-sky-700 dark:text-sky-300 font-semibold text-xs flex flex-col items-center gap-2 transition-all cursor-pointer group shadow-2xs"
+                >
+                  <div className="w-10 h-10 rounded-full bg-sky-500 text-white flex items-center justify-center group-hover:scale-110 transition-transform">
+                    <Send size={20} />
+                  </div>
+                  <span>Telegram</span>
+                </button>
+
+                {/* LinkedIn */}
+                <button
+                  onClick={() => {
+                    const url = typeof window !== 'undefined' ? window.location.origin + '/jobs/' + shareJob.id : '';
+                    window.open(`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(url)}`, '_blank');
+                  }}
+                  className="p-3.5 rounded-2xl bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800 hover:bg-blue-100 dark:hover:bg-blue-900/50 text-blue-700 dark:text-blue-300 font-semibold text-xs flex flex-col items-center gap-2 transition-all cursor-pointer group shadow-2xs"
+                >
+                  <div className="w-10 h-10 rounded-full bg-[#0A66C2] text-white flex items-center justify-center group-hover:scale-110 transition-transform">
+                    <Globe size={20} />
+                  </div>
+                  <span>LinkedIn</span>
+                </button>
+
+                {/* Email */}
+                <button
+                  onClick={() => {
+                    const url = typeof window !== 'undefined' ? window.location.origin + '/jobs/' + shareJob.id : '';
+                    const subject = language === 'id' ? `Lowongan Pekerjaan: ${shareJob.title} di ${shareJob.company}` : `Job Opening: ${shareJob.title} at ${shareJob.company}`;
+                    const body = language === 'id'
+                      ? `Halo,\n\nSaya ingin membagikan info lowongan pekerjaan berikut:\n\nPosisi: ${shareJob.title}\nPerusahaan: ${shareJob.company}\nLokasi: ${shareJob.location}\n\nLink detail & pendaftaran: ${url}`
+                      : `Hello,\n\nI would like to share the following job opening:\n\nPosition: ${shareJob.title}\nCompany: ${shareJob.company}\nLocation: ${shareJob.location}\n\nApply & view job details: ${url}`;
+                    window.open(`mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`, '_blank');
+                  }}
+                  className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-semibold text-xs flex flex-col items-center gap-2 transition-all cursor-pointer group shadow-2xs"
+                >
+                  <div className="w-10 h-10 rounded-full bg-slate-700 text-white flex items-center justify-center group-hover:scale-110 transition-transform">
+                    <Mail size={20} />
+                  </div>
+                  <span>Email</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Copy Link Input Bar */}
+            <div className="space-y-2">
+              <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                {language === 'id' ? 'Atau Salin Tautan Link:' : 'Or Copy Link:'}
+              </p>
+              <div className="p-2 pl-4 bg-slate-50 dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 flex items-center gap-2">
+                <input
+                  type="text"
+                  readOnly
+                  value={typeof window !== 'undefined' ? window.location.origin + '/jobs/' + shareJob.id : ''}
+                  className="w-full bg-transparent text-xs sm:text-sm font-semibold text-slate-700 dark:text-slate-300 outline-none truncate"
+                />
+                <button
+                  onClick={handleCopyLink}
+                  className="px-4 py-2.5 bg-[#1A4B9F] hover:bg-[#133878] text-white text-xs font-bold rounded-xl transition-all cursor-pointer shrink-0 shadow-sm flex items-center gap-1.5"
+                >
+                  <Copy size={14} />
+                  <span>{language === 'id' ? 'Salin Link' : 'Copy Link'}</span>
+                </button>
+              </div>
+            </div>
+
           </div>
         </div>
       )}
