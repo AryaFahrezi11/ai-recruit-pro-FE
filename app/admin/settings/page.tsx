@@ -138,6 +138,7 @@ export default function SystemSettingsPage() {
     maintenance_mode: false,
     seo_title: '',
     seo_description: '',
+    seo_keywords: '',
     public_domain_url: '',
     public_backend_url: '',
     support_whatsapp: '',
@@ -452,6 +453,18 @@ export default function SystemSettingsPage() {
                       placeholder="Temukan talenta terbaik dan lowongan kerja impian dengan analisis CV otomatis, screening video, dan proses transparan di AI Recruit Pro."
                       className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-slate-400 outline-none resize-none font-medium"
                     />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Kata Kunci SEO (SEO Keywords, dipisahkan koma)</label>
+                    <textarea 
+                      value={settings.seo_keywords || ''}
+                      onChange={(e) => handleChange('seo_keywords', e.target.value)}
+                      rows={2}
+                      placeholder="AI Recruit Pro, airecruitpro, airecruit-pro, rekrutmen AI, platform rekrutmen, screening CV otomatis"
+                      className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-slate-400 outline-none resize-none font-medium"
+                    />
+                    <p className="text-[11px] text-slate-400 mt-1">Masukkan kata kunci pencarian yang relevan, dipisahkan dengan koma.</p>
                   </div>
                 </div>
               </div>

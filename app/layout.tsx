@@ -22,6 +22,18 @@ const siteUrl = "https://www.airecruit-pro.com";
 export async function generateMetadata(): Promise<Metadata> {
   let title = "AI Recruit Pro - Platform Rekrutmen Cerdas Berbasis AI";
   let description = "AI Recruit Pro adalah platform rekrutmen berbasis AI terdepan di Indonesia untuk mempercepat pencocokan kandidat, screening CV otomatis, dan seleksi talenta terbaik.";
+  let keywordsList = [
+    "AI Recruit Pro",
+    "airecruitpro",
+    "airecruit-pro",
+    "ai recruit pro indonesia",
+    "platform rekrutmen AI",
+    "rekrutmen cerdas",
+    "applicant tracking system AI",
+    "screening CV otomatis",
+    "lowongan kerja AI",
+    "software rekrutmen perusahaan"
+  ];
 
   try {
     // Next.js fetch API can be used directly on the server side
@@ -30,6 +42,13 @@ export async function generateMetadata(): Promise<Metadata> {
       const config = await res.json();
       if (config.seo_title) title = config.seo_title;
       if (config.seo_description) description = config.seo_description;
+      if (config.seo_keywords) {
+        if (typeof config.seo_keywords === 'string') {
+          keywordsList = config.seo_keywords.split(',').map((k: string) => k.trim()).filter(Boolean);
+        } else if (Array.isArray(config.seo_keywords)) {
+          keywordsList = config.seo_keywords;
+        }
+      }
     }
   } catch (error) {
     console.error("Failed to fetch SEO metadata", error);
@@ -42,18 +61,7 @@ export async function generateMetadata(): Promise<Metadata> {
       template: "%s | AI Recruit Pro",
     },
     description: description,
-    keywords: [
-      "AI Recruit Pro",
-      "airecruitpro",
-      "airecruit-pro",
-      "ai recruit pro indonesia",
-      "platform rekrutmen AI",
-      "rekrutmen cerdas",
-      "applicant tracking system AI",
-      "screening CV otomatis",
-      "lowongan kerja AI",
-      "software rekrutmen perusahaan"
-    ],
+    keywords: keywordsList,
     authors: [{ name: "AI Recruit Pro Team", url: siteUrl }],
     creator: "AI Recruit Pro",
     publisher: "AI Recruit Pro",
