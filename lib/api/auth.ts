@@ -65,22 +65,31 @@ export const fetchAuth = async (url: string, options: RequestInit = {}) => {
   });
   
   if (res.status === 401) {
-    const isPublicApplicantPage = typeof window !== 'undefined' && 
-      (window.location.pathname === '/applicant/dashboard' || 
-       window.location.pathname === '/applicant/companies' ||
-       window.location.pathname.startsWith('/applicant/companies/'));
+    const isPublicPage = typeof window !== 'undefined' && 
+      (window.location.pathname === '/' || 
+       window.location.pathname === '/about' ||
+       window.location.pathname === '/terms' ||
+       window.location.pathname === '/privacy' ||
+       window.location.pathname === '/companies' ||
+       window.location.pathname.startsWith('/companies/'));
 
-    if (!isPublicApplicantPage) {
+    if (!isPublicPage) {
       // Optional: auto-logout on 401
       useAppStore.getState().logout();
       if (typeof window !== 'undefined') {
         const isPelamar = window.location.pathname.startsWith('/applicant');
         const isAdmin = window.location.pathname.startsWith('/admin');
+        const isCampus = window.location.pathname.startsWith('/campus');
+        const isPerusahaan = window.location.pathname.startsWith('/jobs') || window.location.pathname.startsWith('/pipeline');
         
         if (isAdmin) {
           window.location.href = '/admin/login';
         } else if (isPelamar) {
           window.location.href = '/applicant/login';
+        } else if (isCampus) {
+          window.location.href = '/campus/login';
+        } else if (isPerusahaan) {
+          window.location.href = '/perusahaan/login';
         } else {
           window.location.href = '/login';
         }

@@ -232,7 +232,7 @@ export default function GlintsCleanCompanyDetailPage({ params }: { params: Promi
         <h2 className="text-xl font-bold text-slate-800 dark:text-white mb-2">Profil Perusahaan Tidak Ditemukan</h2>
         <p className="text-slate-500 font-medium text-xs max-w-md">Profil perusahaan ini mungkin belum terverifikasi atau informasi tidak tersedia saat ini.</p>
         <button
-          onClick={() => router.push(isApplicantRoute ? '/applicant/dashboard?view=companies' : '/companies')}
+          onClick={() => router.push(isApplicantRoute ? '/applicant/companies' : '/companies')}
           className="px-5 py-2.5 rounded-full bg-[#1A4B9F] text-white text-xs font-bold hover:bg-[#133A7A] transition-colors mt-5"
         >
           Lihat Semua Perusahaan
@@ -402,7 +402,15 @@ export default function GlintsCleanCompanyDetailPage({ params }: { params: Promi
                   return (
                     <div
                       key={idx}
-                      onClick={() => router.push(`/applicant/dashboard?jobId=${job.id}`)}
+                      onClick={() => {
+                        const token = typeof window !== 'undefined' ? localStorage.getItem('access_token') : null;
+                        const isPelamar = typeof window !== 'undefined' && localStorage.getItem('isPelamarLoggedIn') === 'true';
+                        if (token && isPelamar) {
+                          router.push(`/applicant/dashboard?jobId=${job.id}`);
+                        } else {
+                          router.push(`/applicant/login?redirect=${encodeURIComponent(`/applicant/dashboard?jobId=${job.id}`)}`);
+                        }
+                      }}
                       className="bg-white dark:bg-slate-950 rounded-2xl border border-slate-200 dark:border-slate-800 p-5 shadow-2xs hover:shadow-lg hover:border-[#1A4B9F] transition-all flex flex-col justify-between space-y-4 cursor-pointer group"
                     >
                       <div className="space-y-3">
@@ -471,7 +479,7 @@ export default function GlintsCleanCompanyDetailPage({ params }: { params: Promi
             </p>
           </section>
 
-          {/* -------------------- SECTION 3: KULTUR PERUSAHAAN (DUMMY) -------------------- */}
+          {/* -------------------- SECTION 3: KULTUR PERUSAHAAN -------------------- */}
           <section id="kultur-perusahaan" className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-6 sm:p-8 shadow-xs space-y-6">
             <h2 className="text-xl font-bold text-slate-900 dark:text-white border-b border-slate-100 dark:border-slate-800 pb-4">Kultur Perusahaan</h2>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
@@ -489,7 +497,7 @@ export default function GlintsCleanCompanyDetailPage({ params }: { params: Promi
             </div>
           </section>
 
-          {/* -------------------- SECTION 4: FASILITAS & TUNJANGAN (DUMMY) -------------------- */}
+          {/* -------------------- SECTION 4: FASILITAS & TUNJANGAN -------------------- */}
           <section id="fasilitas" className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-6 sm:p-8 shadow-xs space-y-6">
             <h2 className="text-xl font-bold text-slate-900 dark:text-white border-b border-slate-100 dark:border-slate-800 pb-4">Fasilitas & Tunjangan</h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">

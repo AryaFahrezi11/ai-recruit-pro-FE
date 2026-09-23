@@ -97,8 +97,8 @@ export default function PelamarPerfectLayout({
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [userProfile, setUserProfile] = useState<{ email: string; name: string }>({
-    email: 'pelamar@example.com',
-    name: 'Pelamar AI'
+    email: '',
+    name: ''
   });
   const dropdownRef = useRef<HTMLDivElement>(null);
   const [isMounted, setIsMounted] = useState(false);
@@ -111,72 +111,64 @@ export default function PelamarPerfectLayout({
   useEffect(() => {
     setIsMounted(true);
 
-    const isLoggedIn = localStorage.getItem('isPelamarLoggedIn');
-    const token = localStorage.getItem('access_token');
-    const role = localStorage.getItem('user_role');
-
-    // Public pages under /applicant accessible to anyone (guests, admins, developers, employers)
-    const isPublicPage =
-      pathname === '/applicant/dashboard' ||
-      pathname === '/applicant/companies' ||
-      pathname.startsWith('/applicant/companies/') ||
-      pathname === '/applicant/login' ||
-      pathname === '/applicant/register';
-
-    if (isPublicPage) {
-      if (isLoggedIn) {
-        const savedEmail = localStorage.getItem('user_email');
-        const savedName = localStorage.getItem('user_name');
-        if (savedEmail || savedName) {
-          const formattedName = savedName || savedEmail?.split('@')[0] || 'Pelamar AI';
-          setUserProfile({ email: savedEmail || 'pelamar@example.com', name: formattedName });
-        }
-        api
-          .get('/users/profile')
-          .then((res) => {
-            if (res) {
-              const email = res.email || savedEmail || 'pelamar@example.com';
-              const name = res.profil?.nama_lengkap || res.email?.split('@')[0] || 'Pelamar AI';
-              setUserProfile({ email, name });
-              localStorage.setItem('user_email', email);
-            }
-          })
-          .catch(() => null);
-      }
+    // Auth pages (login & register) do not require applicant authentication
+    if (pathname === '/applicant/login' || pathname === '/applicant/register') {
       setIsAuthenticated(true);
       return;
     }
 
-    // Protected candidate routes (upload-cv, status, saved, interviews)
+    const isLoggedIn = typeof window !== 'undefined' ? localStorage.getItem('isPelamarLoggedIn') : null;
+    const token = typeof window !== 'undefined' ? localStorage.getItem('access_token') : null;
+    const role = typeof window !== 'undefined' ? localStorage.getItem('user_role') : null;
+
+    // Role-based protection: redirect employers, campuses, or admins to their appropriate dashboards
     if (role === 'perusahaan') {
-      router.push('/dashboard');
+      router.replace('/jobs');
+      return;
+    }
+    if (role === 'campus') {
+      router.replace('/campus/dashboard');
+      return;
+    }
+    if (role === 'admin' || role === 'superadmin') {
+      router.replace('/admin/dashboard');
       return;
     }
 
-    if (!isLoggedIn && !token) {
-      router.push('/applicant/login');
+    // If an unauthenticated guest lands on /applicant/companies, redirect them to public /companies
+    if (!token && (pathname === '/applicant/companies' || pathname.startsWith('/applicant/companies/'))) {
+      router.replace('/companies');
       return;
     }
 
-    if (isLoggedIn) {
-      const savedEmail = localStorage.getItem('user_email');
-      const savedName = localStorage.getItem('user_name');
-      if (savedEmail || savedName) {
-        const formattedName = savedName || savedEmail?.split('@')[0] || 'Pelamar AI';
-        setUserProfile({ email: savedEmail || 'pelamar@example.com', name: formattedName });
-      }
+    // Strictly protect applicant dashboard and candidate features: require valid login
+    if (!token || !isLoggedIn) {
+      setIsAuthenticated(false);
+      router.replace('/applicant/login');
+      return;
+    }
 
-      api
-        .get('/users/profile')
-        .then((res) => {
-          if (res) {
-            const email = res.email || savedEmail || 'pelamar@example.com';
-            const name = res.profil?.nama_lengkap || res.email?.split('@')[0] || 'Pelamar AI';
-            setUserProfile({ email, name });
-            localStorage.setItem('user_email', email);
-          }
-        })
-        .catch((err) => console.error('Failed to fetch profile in layout:', err));
+    setIsAuthenticated(true);
+
+    const savedEmail = localStorage.getItem('user_email') || '';
+    const savedName = localStorage.getItem('user_name') || '';
+    if (savedEmail || savedName) {
+      const formattedName = savedName || (savedEmail ? savedEmail.split('@')[0] : 'Pelamar');
+      setUserProfile({ email: savedEmail, name: formattedName });
+    }
+
+    api
+      .get('/users/profile')
+      .then((res) => {
+        if (res) {
+          const email = res.email || savedEmail;
+          const name = res.profil?.nama_lengkap || res.name || (res.email ? res.email.split('@')[0] : '') || savedName || 'Pelamar';
+          setUserProfile({ email, name });
+          if (email) localStorage.setItem('user_email', email);
+          if (name) localStorage.setItem('user_name', name);
+        }
+      })
+      .catch((err) => console.error('Failed to fetch profile in layout:', err));
 
       // Fetch applications to check for unread status updates with cache busting
       api
@@ -210,13 +202,10 @@ export default function PelamarPerfectLayout({
       };
       window.addEventListener('seen_statuses_updated', handleSeenStatusesUpdate);
 
-      setIsAuthenticated(true);
-      return () => {
-        window.removeEventListener('seen_statuses_updated', handleSeenStatusesUpdate);
-      };
-    } else {
-      setIsAuthenticated(false);
-    }
+    setIsAuthenticated(true);
+    return () => {
+      window.removeEventListener('seen_statuses_updated', handleSeenStatusesUpdate);
+    };
   }, [pathname, router]);
 
   // Handle clicking outside profile dropdown to close
@@ -302,7 +291,7 @@ export default function PelamarPerfectLayout({
                 className="relative flex items-center gap-2 p-1 rounded-full border-2 border-[#1A4B9F]/30 hover:border-[#1A4B9F] bg-white dark:bg-slate-800 transition-all cursor-pointer shadow-xs group"
               >
                 <div className="relative w-8 h-8 rounded-full bg-[#1A4B9F] text-white flex items-center justify-center font-bold text-sm shadow-inner">
-                  {userProfile.name ? userProfile.name.charAt(0).toUpperCase() : 'P'}
+                  {userProfile.name ? userProfile.name.charAt(0).toUpperCase() : (userProfile.email ? userProfile.email.charAt(0).toUpperCase() : 'P')}
                   {hasUnreadNotification && (
                     <span className="absolute -top-1 -right-1 w-3.5 h-3.5 bg-red-500 border-2 border-white rounded-full animate-pulse"></span>
                   )}
@@ -314,8 +303,8 @@ export default function PelamarPerfectLayout({
               {isProfileOpen && (
                 <div className="absolute right-0 mt-3 w-64 bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 p-3 space-y-1.5 z-50 animate-in fade-in slide-in-from-top-2">
                   <div className="px-4 py-3 border-b border-slate-100 dark:border-slate-800 space-y-0.5">
-                    <p className="text-xs font-bold text-[#1A4B9F] dark:text-blue-400">{userProfile.name}</p>
-                    <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate">{userProfile.email}</p>
+                    <p className="text-xs font-bold text-[#1A4B9F] dark:text-blue-400">{userProfile.name || 'Profil Pelamar'}</p>
+                    <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate">{userProfile.email || 'Email Akun'}</p>
                   </div>
 
                   <Link

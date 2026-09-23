@@ -113,21 +113,30 @@ export async function apiRequest<T = any>(
     });
 
     if (response.status === 401) {
-      const isPublicApplicantPage = typeof window !== 'undefined' &&
-        (window.location.pathname === '/applicant/dashboard' ||
-          window.location.pathname === '/applicant/companies' ||
-          window.location.pathname.startsWith('/applicant/companies/'));
+      const isPublicPage = typeof window !== 'undefined' &&
+        (window.location.pathname === '/' ||
+          window.location.pathname === '/about' ||
+          window.location.pathname === '/terms' ||
+          window.location.pathname === '/privacy' ||
+          window.location.pathname === '/companies' ||
+          window.location.pathname.startsWith('/companies/'));
 
-      if (!isPublicApplicantPage) {
+      if (!isPublicPage) {
         removeAuthToken();
         if (typeof window !== 'undefined' && !window.location.pathname.includes('/login')) {
           const isPelamar = window.location.pathname.startsWith('/applicant');
           const isAdmin = window.location.pathname.startsWith('/admin');
+          const isCampus = window.location.pathname.startsWith('/campus');
+          const isPerusahaan = window.location.pathname.startsWith('/jobs') || window.location.pathname.startsWith('/pipeline');
 
           if (isAdmin) {
             window.location.href = '/admin/login';
           } else if (isPelamar) {
             window.location.href = '/applicant/login';
+          } else if (isCampus) {
+            window.location.href = '/campus/login';
+          } else if (isPerusahaan) {
+            window.location.href = '/perusahaan/login';
           } else {
             window.location.href = '/login';
           }

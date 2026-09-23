@@ -231,26 +231,37 @@ function DashboardContent() {
 
   // 1. Initial Load: Auxiliary filters, profile, verified companies, applications, saved jobs (runs once on mount)
   useEffect(() => {
-    const savedEmail = localStorage.getItem('user_email') || 'pelamar@example.com';
-    const derivedName = savedEmail.split('@')[0].replace(/[._-]/g, ' ');
-    const formattedName = derivedName.charAt(0).toUpperCase() + derivedName.slice(1);
+    const token = typeof window !== 'undefined' ? localStorage.getItem('access_token') : null;
+    const isLoggedIn = typeof window !== 'undefined' ? localStorage.getItem('isPelamarLoggedIn') : null;
+    const userRole = typeof window !== 'undefined' ? localStorage.getItem('user_role') : null;
+
+    if (!token || !isLoggedIn || (userRole && userRole !== 'pelamar')) {
+      router.replace('/applicant/login');
+      return;
+    }
+
+    const savedEmail = localStorage.getItem('user_email') || '';
+    const savedName = localStorage.getItem('user_name') || '';
+    const derivedName = savedName || (savedEmail ? savedEmail.split('@')[0].replace(/[._-]/g, ' ') : '');
+    const formattedName = derivedName ? (derivedName.charAt(0).toUpperCase() + derivedName.slice(1)) : '';
 
     const savedCv = localStorage.getItem('candidateCvData');
     if (savedCv) {
-      setCvDetails(JSON.parse(savedCv));
+      try {
+        setCvDetails(JSON.parse(savedCv));
+      } catch (e) {
+        setCvDetails(null);
+      }
     } else {
       setCvDetails({
         fullName: formattedName,
-        jobTitle: 'Pelamar AI Recruit Pro',
-        skills: 'Frontend, Software Engineering, Problem Solving',
-        summary: 'Seorang profesional yang berdedikasi tinggi dengan fokus pada problem solving dan pengembangan perangkat lunak modern.',
-        experiences: [
-          { role: 'Software Engineer', company: 'PT. Teknologi Masa Depan', period: '2022 - Sekarang', description: 'Mengembangkan aplikasi web responsif menggunakan Next.js dan TypeScript.' }
-        ],
-        education: [
-          { school: 'Universitas Komputer Indonesia', degree: 'S1 Teknik Informatika', period: '2018 - 2022', gpa: '3.80' }
-        ],
-        updatedAt: 'Hari ini'
+        jobTitle: '',
+        skills: '',
+        summary: '',
+        experiences: [],
+        education: [],
+        certifications: [],
+        updatedAt: ''
       });
     }
 
@@ -266,8 +277,7 @@ function DashboardContent() {
 
     const loadInitialData = async () => {
       try {
-        const userRole = typeof localStorage !== 'undefined' ? localStorage.getItem('user_role') : null;
-        const isPelamarRole = !userRole || userRole === 'pelamar' || (typeof localStorage !== 'undefined' && localStorage.getItem('isPelamarLoggedIn'));
+        const isPelamarRole = userRole === 'pelamar' || isLoggedIn === 'true';
 
         const [locRes, catRes, resComp, resProfile, resApps, indRes] = await Promise.all([
           api.get('/jobs/locations').catch(() => null),
@@ -351,8 +361,8 @@ function DashboardContent() {
           }
 
           setCvDetails({
-            fullName: p.nama_lengkap && p.nama_lengkap !== 'Nama Pelamar' ? p.nama_lengkap : (resProfile.email?.split('@')[0] || 'Pelamar'),
-            jobTitle: p.judul_posisi || 'Pelamar AI Recruit Pro',
+            fullName: p.nama_lengkap && p.nama_lengkap !== 'Nama Pelamar' ? p.nama_lengkap : (resProfile.email?.split('@')[0] || ''),
+            jobTitle: p.judul_posisi || '',
             email: resProfile.email || p.email,
             phone: p.no_telepon || '',
             location: p.alamat || '',

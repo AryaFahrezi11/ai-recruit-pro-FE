@@ -88,6 +88,17 @@ function CompaniesPageContent() {
     };
   }, []);
 
+  // Redirect unauthenticated visitors attempting to view the applicant companies view to public /companies
+  useEffect(() => {
+    if (isApplicantRoute && typeof window !== 'undefined') {
+      const token = localStorage.getItem('access_token');
+      const isLoggedIn = localStorage.getItem('isPelamarLoggedIn') === 'true';
+      if (!token || !isLoggedIn) {
+        router.replace('/companies');
+      }
+    }
+  }, [isApplicantRoute, router]);
+
   // Pagination State (Max 15 boxes per page)
   const [currentPage, setCurrentPage] = useState(initialPage);
   const itemsPerPage = 15;

@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useTranslation } from '@/hooks/useTranslation';
 import { api } from '@/lib/api';
 import {
@@ -24,6 +24,7 @@ import {
 
 export default function WawancaraVideoPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { t } = useTranslation();
 
   const [isCameraOn, setIsCameraOn] = useState(true);
@@ -97,7 +98,11 @@ export default function WawancaraVideoPage() {
       const formData = new FormData();
       formData.append('video', selectedVideo);
 
-      const appId = localStorage.getItem('current_application_id') || 'DUMMY_ID';
+      const appId = searchParams.get('id') || localStorage.getItem('current_application_id');
+      if (!appId) {
+        alert("ID lamaran tidak ditemukan. Harap buka wawancara melalui menu Riwayat Lamaran.");
+        return;
+      }
       await api.post(`/applications/${appId}/upload-video`, formData);
       alert("Video Anda berhasil diunggah! Data Anda telah dikirim dan akan segera direview oleh tim rekrutmen perusahaan.");
       router.push('/applicant/status?showReview=true');
