@@ -423,7 +423,7 @@ function AdminUsersContent() {
       setIsAddModalOpen(false);
       loadUsers();
     } catch (error: any) {
-      const errorMsg = error.message === 'Failed to fetch'
+      const errorMsg = error.message === 'Tidak dapat terhubung ke server'
         ? 'Tidak dapat terhubung ke server. Periksa koneksi internet Anda.'
         : (error.message || 'Gagal menambahkan pengguna');
       toast.error(errorMsg);
@@ -455,7 +455,7 @@ function AdminUsersContent() {
       setIsEditModalOpen(false);
       loadUsers();
     } catch (error: any) {
-      const errorMsg = error.message === 'Failed to fetch'
+      const errorMsg = error.message === 'Tidak dapat terhubung ke server'
         ? 'Tidak dapat terhubung ke server. Periksa koneksi internet Anda.'
         : (error.message || 'Gagal memperbarui pengguna');
       toast.error(errorMsg);

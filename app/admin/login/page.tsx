@@ -34,7 +34,7 @@ export default function AdminLoginPage() {
       toast.success('Login Admin Berhasil');
       router.push('/admin');
     } catch (error: any) {
-      const errorMsg = error.message === 'Failed to fetch' 
+      const errorMsg = error.message === 'Tidak dapat terhubung ke server' 
         ? 'Tidak dapat terhubung ke server. Periksa koneksi internet Anda.' 
         : (error.message || 'Gagal login. Periksa kembali email dan password.');
       toast.error(errorMsg);
