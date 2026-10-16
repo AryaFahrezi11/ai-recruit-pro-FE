@@ -117,7 +117,7 @@ function SavedJobsContent() {
         const qs = apiParams.toString();
 
         // 2. Fetch all jobs from backend API
-        const resJobs = await api.get(qs ? `/jobs/?${qs}` : '/jobs/');
+        const resJobs = await api.get(qs ? `/jobs?${qs}` : '/jobs');
         const rawJobsList = Array.isArray(resJobs) ? resJobs : (resJobs?.data && Array.isArray(resJobs.data) ? resJobs.data : []);
 
         if (rawJobsList.length > 0) {

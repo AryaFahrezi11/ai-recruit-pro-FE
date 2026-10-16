@@ -103,7 +103,7 @@ function JobOpeningsContent() {
       const data: JobItem[] = await res.json();
       setJobs(data);
     } catch (err: any) {
-      const msg = err.message === 'Failed to fetch'
+      const msg = err.message === 'Tidak dapat terhubung ke server'
         ? 'Tidak dapat terhubung ke server. Periksa koneksi internet Anda.'
         : (err.message || 'Terjadi kesalahan saat memuat lowongan.');
       setError(msg);
