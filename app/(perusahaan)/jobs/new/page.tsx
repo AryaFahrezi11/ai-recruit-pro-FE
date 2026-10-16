@@ -214,8 +214,8 @@ function CreateJobForm() {
     loadJob();
   }, [editId]);
 
-  const handlePublish = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handlePublish = async (e?: React.FormEvent, forceStatus?: 'draft' | 'active') => {
+    if (e) e.preventDefault();
     setIsSubmitting(true);
     setErrorMsg(null);
 
@@ -297,6 +297,8 @@ function CreateJobForm() {
       }
     }
 
+    const isDraft = forceStatus === 'draft' || visibility === 'Draft' || visibility === 'Internal';
+
     const payload = {
       judul_posisi: jobTitle,
       deskripsi_pekerjaan: summary,
@@ -321,33 +323,39 @@ function CreateJobForm() {
       ai_keywords_json: JSON.stringify(aiKeywords),
       video_questions_json: JSON.stringify(videoQuestions),
       openings_count: openingsCount,
-      status: visibility === 'Draft' ? 'draft' : 'active'
+      status: isDraft ? 'draft' : 'active'
     };
 
     try {
-      const url = editId
-        ? getApiUrl(`/jobs/${editId}`)
-        : getApiUrl('/jobs');
+      const endpoint = editId
+        ? `/api/jobs/${editId}`
+        : '/api/jobs';
       const method = editId ? 'PUT' : 'POST';
 
-      const res = await fetch(url, {
+      const res = await fetchAuth(endpoint, {
         method,
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
         body: JSON.stringify(payload)
       });
 
       if (res.ok) {
         setShowSuccessModal(true);
       } else {
-        const errData = await res.json();
-        setErrorMsg(`Gagal menyimpan loker: ${errData.detail || 'Terjadi kesalahan'}`);
+        const errData = await res.json().catch(() => ({}));
+        let errMsg = 'Terjadi kesalahan saat menyimpan lowongan';
+        if (typeof errData.detail === 'string') {
+          errMsg = errData.detail;
+        } else if (Array.isArray(errData.detail)) {
+          errMsg = errData.detail.map((e: any) => e.msg || JSON.stringify(e)).join(', ');
+        } else if (errData.message) {
+          errMsg = errData.message;
+        }
+        setErrorMsg(`Gagal menyimpan loker: ${errMsg}`);
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
-      setErrorMsg("Terjadi kesalahan jaringan saat menyimpan data.");
+      setErrorMsg(err.message === 'Failed to fetch'
+        ? "Tidak dapat terhubung ke server. Periksa koneksi jaringan Anda."
+        : (err.message || "Terjadi kesalahan jaringan saat menyimpan data."));
     } finally {
       setIsSubmitting(false);
     }
@@ -1019,7 +1027,7 @@ function CreateJobForm() {
                 className="w-full px-4 py-2.5 bg-muted/30 border border-border rounded-lg text-sm text-foreground focus:outline-none focus:border-primary"
               >
                 <option value="Public">Publik</option>
-                <option value="Internal">Draf</option>
+                <option value="Draft">Draf</option>
               </select>
             </div>
           </div>
@@ -1039,7 +1047,9 @@ function CreateJobForm() {
             <div className="flex items-center gap-3">
               <button
                 type="button"
-                className="px-5 py-2.5 border border-border hover:bg-muted text-foreground text-xs font-semibold rounded-lg transition-colors flex items-center gap-2"
+                onClick={() => handlePublish(undefined, 'draft')}
+                disabled={isSubmitting}
+                className="px-5 py-2.5 border border-border hover:bg-muted text-foreground text-xs font-semibold rounded-lg transition-colors flex items-center gap-2 disabled:opacity-50"
               >
                 <Save size={16} />
                 {t.jobs.saveDraft}
@@ -1075,9 +1085,11 @@ function CreateJobForm() {
             <div className="w-16 h-16 rounded-full bg-emerald-500/10 text-emerald-500 flex items-center justify-center mx-auto mb-2">
               <CheckCircle2 size={36} />
             </div>
-            <h3 className="text-xl font-bold text-foreground">{t.jobs.jobPublishedSuccess}</h3>
+            <h3 className="text-xl font-bold text-foreground">
+              {visibility === 'Draft' || visibility === 'Internal' ? 'Draf Lowongan Berhasil Disimpan' : t.jobs.jobPublishedSuccess}
+            </h3>
             <p className="text-xs text-muted-foreground leading-relaxed">
-              Lowongan <strong>{jobTitle}</strong> ({categories.find(c => c.id === categoryId)?.nama_kategori}) kini aktif dan siap menerima berkas pelamar dengan aturan seleksi AI (Threshold {threshold}%).
+              Lowongan <strong>{jobTitle}</strong> ({categories.find(c => c.id === categoryId)?.nama_kategori}) {visibility === 'Draft' || visibility === 'Internal' ? 'kini tersimpan sebagai draf dan dapat dipublikasikan kapan saja.' : `kini aktif dan siap menerima berkas pelamar dengan aturan seleksi AI (Threshold ${threshold}%).`}
             </p>
             <button
               onClick={handleSuccessClose}
