@@ -327,7 +327,7 @@ function CreateJobForm() {
     try {
       const url = editId
         ? getApiUrl(`/jobs/${editId}`)
-        : getApiUrl('/jobs/');
+        : getApiUrl('/jobs');
       const method = editId ? 'PUT' : 'POST';
 
       const res = await fetch(url, {
