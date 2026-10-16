@@ -103,7 +103,7 @@ export default function PendingApprovalPage() {
 
   const handleLogout = () => {
     localStorage.clear();
-    router.push('/login');
+    window.location.href = '/login';
   };
 
   const isApproved = Boolean(profileData?.profil?.is_verified);

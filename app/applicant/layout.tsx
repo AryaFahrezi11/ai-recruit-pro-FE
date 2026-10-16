@@ -225,11 +225,10 @@ export default function PelamarPerfectLayout({
   };
 
   const confirmLogout = () => {
-    localStorage.removeItem('isPelamarLoggedIn');
     removeAuthToken();
     setShowLogoutModal(false);
     toast.success('Berhasil keluar dari sistem.');
-    router.push('/applicant/login');
+    window.location.href = '/applicant/login';
   };
 
   const navItems = [

@@ -21,7 +21,30 @@ export const useAppStore = create<AppState>()(
       user: null,
       setToken: (token) => set({ token }),
       setUser: (user) => set({ user }),
-      logout: () => set({ token: null, user: null }),
+      logout: () => {
+        if (typeof window !== 'undefined') {
+          const keysToRemove = [
+            'access_token',
+            'user_role',
+            'user_id',
+            'user_email',
+            'user_name',
+            'isPerusahaanLoggedIn',
+            'isPelamarLoggedIn',
+            'isCampusLoggedIn',
+            'isAdminLoggedIn',
+            'candidateCvData',
+            'candidateCvCreated',
+            'app-storage',
+          ];
+          keysToRemove.forEach((key) => localStorage.removeItem(key));
+          try {
+            sessionStorage.clear();
+          } catch {}
+          window.dispatchEvent(new Event('auth_state_changed'));
+        }
+        set({ token: null, user: null });
+      },
       setMobileSidebar: (isOpen) => set({ isMobileSidebarOpen: isOpen }),
       toggleMobileSidebar: () => set((state) => ({ isMobileSidebarOpen: !state.isMobileSidebarOpen })),
 

@@ -16,7 +16,7 @@ import {
   LogOut,
   ChevronRight
 } from 'lucide-react';
-import { api } from '@/lib/api';
+import { api, removeAuthToken } from '@/lib/api';
 
 interface NavbarProps {
   activePage?: 'home' | 'jobs' | 'categories' | 'companies' | 'about' | string;
@@ -54,10 +54,7 @@ export default function Navbar({ activePage }: NavbarProps) {
 
   const handleLogout = () => {
     setIsUserDropdownOpen(false);
-    localStorage.removeItem('access_token');
-    localStorage.removeItem('user_role');
-    localStorage.removeItem('isPelamarLoggedIn');
-    localStorage.removeItem('isPerusahaanLoggedIn');
+    removeAuthToken();
     setAuthState({
       isLoggedIn: false,
       role: null,
@@ -70,8 +67,7 @@ export default function Navbar({ activePage }: NavbarProps) {
     window.location.href = '/';
   };
 
-  useEffect(() => {
-    setMounted(true);
+  const syncAuth = () => {
     try {
       const token = typeof window !== 'undefined' ? localStorage.getItem('access_token') : null;
       const role = typeof window !== 'undefined' ? localStorage.getItem('user_role') : null;
@@ -87,7 +83,7 @@ export default function Navbar({ activePage }: NavbarProps) {
           url = '/jobs';
           badge = 'Perusahaan';
           defaultName = 'Perusahaan';
-        } else if (role === 'campus') {
+        } else if (role === 'campus' || role === 'kampus') {
           url = '/campus/dashboard';
           badge = 'Perguruan Tinggi';
           defaultName = 'Universitas';
@@ -132,11 +128,34 @@ export default function Navbar({ activePage }: NavbarProps) {
             })
             .catch(() => null);
         }
+      } else {
+        setAuthState({
+          isLoggedIn: false,
+          role: null,
+          targetUrl: '/applicant/dashboard',
+          displayName: 'Pelamar',
+          accountBadge: 'Pencari Kerja',
+          userInitial: 'A',
+          email: '',
+        });
       }
     } catch {
       // safe fallback
     }
-  }, []);
+  };
+
+  useEffect(() => {
+    setMounted(true);
+    syncAuth();
+
+    const handleAuthChange = () => syncAuth();
+    window.addEventListener('auth_state_changed', handleAuthChange);
+    window.addEventListener('storage', handleAuthChange);
+    return () => {
+      window.removeEventListener('auth_state_changed', handleAuthChange);
+      window.removeEventListener('storage', handleAuthChange);
+    };
+  }, [pathname]);
 
   // Determine active section link
   const isHome = activePage === 'home' || pathname === '/';
