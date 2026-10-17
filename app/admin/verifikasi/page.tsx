@@ -52,6 +52,8 @@ interface CompanyVerificationItem {
   hr_id_card_url?: string;
   is_verified?: boolean;
   is_banned?: boolean;
+  email?: string;
+  is_gmail?: boolean;
   status?: string;
   rejection_reason?: string;
 }
@@ -295,9 +297,20 @@ function AdminVerificationContent() {
             >
               {c.nama_perusahaan || '-'}
             </button>
-            <span className="text-[11px] text-slate-400 dark:text-slate-500 block truncate max-w-[200px]">
-              {[c.kota, c.provinsi].filter(Boolean).join(', ') || 'Lokasi belum diisi'}
-            </span>
+            <div className="flex items-center gap-1.5 flex-wrap mt-0.5">
+              <span className="text-[11px] text-slate-400 dark:text-slate-500 block truncate max-w-[140px]">
+                {[c.kota, c.provinsi].filter(Boolean).join(', ') || 'Lokasi belum diisi'}
+              </span>
+              {c.email && (
+                <span className={`inline-flex items-center px-1.5 py-0.2 rounded text-[9px] font-bold ${
+                  c.is_gmail || c.email.toLowerCase().includes('@gmail.com')
+                    ? 'bg-amber-100 text-amber-800 dark:bg-amber-950/80 dark:text-amber-300'
+                    : 'bg-blue-100 text-blue-800 dark:bg-blue-950/80 dark:text-blue-300'
+                }`}>
+                  {c.is_gmail || c.email.toLowerCase().includes('@gmail.com') ? 'Gmail (Wajib NIB)' : 'Domain Perusahaan'}
+                </span>
+              )}
+            </div>
           </div>
         </div>
       )

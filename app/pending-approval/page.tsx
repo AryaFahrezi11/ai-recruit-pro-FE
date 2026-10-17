@@ -210,11 +210,15 @@ ${profileData?.profil?.hr_name || companyName}`;
 
           {/* Heading & Notice */}
           <div className="space-y-3 max-w-xl mx-auto">
-            {isRejected && (
+            {isRejected ? (
               <span className="inline-block px-4 py-1.5 rounded-full bg-rose-50 dark:bg-rose-950/50 text-rose-700 dark:text-rose-400 font-extrabold text-xs border border-rose-200 dark:border-rose-800 uppercase tracking-wider">
                 Verifikasi Ditolak / Perlu Perbaikan
               </span>
-            )}
+            ) : (profileData?.email?.toLowerCase().includes('@gmail.com') || profileData?.email?.toLowerCase().includes('@googlemail.com')) ? (
+              <span className="inline-block px-4 py-1.5 rounded-full bg-amber-50 dark:bg-amber-950/50 text-amber-700 dark:text-amber-400 font-extrabold text-xs border border-amber-200 dark:border-amber-800 uppercase tracking-wider">
+                Pendaftar Akun Gmail — Menunggu ACC Dokumen NIB oleh Admin
+              </span>
+            ) : null}
 
             <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-white leading-tight">
               {isRejected
@@ -225,7 +229,9 @@ ${profileData?.profil?.hr_name || companyName}`;
             <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 leading-relaxed pt-1">
               {isRejected
                 ? 'Tim kami telah memeriksa data perusahaan/UMKM Anda dan menemukan beberapa berkas yang perlu diperbaiki. Silakan cek catatan admin di bawah ini.'
-                : 'Terima kasih telah mendaftarkan perusahaan/UMKM Anda. Tim admin kami sedang memeriksa berkas NIB/NPWP dan ID Card HRD yang telah Anda unggah. Kami akan mengabari Anda setelah proses verifikasi selesai.'}
+                : (profileData?.email?.toLowerCase().includes('@gmail.com') || profileData?.email?.toLowerCase().includes('@googlemail.com'))
+                ? 'Terima kasih telah mendaftar. Karena Anda mendaftar menggunakan email Gmail, tim Admin kami sedang meninjau dokumen NIB/Izin Usaha dan ID Card yang Anda unggah untuk disetujui (ACC) secara manual.'
+                : 'Terima kasih telah mendaftarkan perusahaan/UMKM Anda. Tim admin kami sedang memeriksa berkas legalitas yang telah Anda unggah.'}
             </p>
           </div>
 
