@@ -362,7 +362,7 @@ export default function Navbar({ activePage }: NavbarProps) {
                         </div>
                         <div>
                           <div className="text-xs font-bold text-slate-900 dark:text-white group-hover:text-[#1A4B9F] dark:group-hover:text-blue-400 transition-colors">
-                            Perusahaan
+                            Perusahaan/UMKM
                           </div>
                           <div className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 leading-tight">
                             Kelola lowongan & pelamar
@@ -488,7 +488,7 @@ export default function Navbar({ activePage }: NavbarProps) {
                   <div className="w-9 h-9 rounded-lg bg-slate-200/60 dark:bg-slate-700 text-slate-700 dark:text-slate-200 flex items-center justify-center mb-2 group-hover:bg-[#1A4B9F]/10 group-hover:text-[#1A4B9F] transition-colors">
                     <Building2 size={18} />
                   </div>
-                  <span className="text-xs font-bold truncate max-w-full">Perusahaan</span>
+                  <span className="text-xs font-bold truncate max-w-full">Perusahaan/UMKM</span>
                 </Link>
 
                 <Link

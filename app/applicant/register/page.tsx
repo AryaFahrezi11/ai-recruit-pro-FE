@@ -280,7 +280,7 @@ export default function PelamarRegisterPage() {
           className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 hover:text-[#1A4B9F] dark:hover:text-blue-400 hover:border-[#1A4B9F]/40 shadow-xs text-xs font-semibold transition-all group"
         >
           <Building2 size={15} className="text-[#1A4B9F] dark:text-blue-400" />
-          <span>Akun Perusahaan</span>
+          <span>Akun Perusahaan/UMKM</span>
           <ArrowRight size={14} className="text-slate-400 group-hover:translate-x-0.5 transition-transform" />
         </Link>
       </header>

@@ -83,7 +83,7 @@ export default function Footer() {
               </li>
               <li>
                 <Link href="/perusahaan/login" className="hover:text-white transition-colors">
-                  Portal Mitra Perusahaan
+                  Portal Mitra Perusahaan/UMKM
                 </Link>
               </li>
               <li>
@@ -103,7 +103,7 @@ export default function Footer() {
               </li>
               <li>
                 <Link href="/register" className="hover:text-white transition-colors">
-                  Registrasi Perusahaan
+                  Registrasi Perusahaan/UMKM
                 </Link>
               </li>
             </ul>

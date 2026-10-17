@@ -84,7 +84,7 @@ export default function PendingApprovalPage() {
 
         const p = data.profil;
         if (p?.is_verified) {
-          toast.success('Selamat! Akun perusahaan Anda telah disetujui Admin!');
+          toast.success('Selamat! Akun perusahaan/UMKM Anda telah disetujui Admin!');
         }
       } else if (profileRes && profileRes.status === 401) {
         localStorage.clear();
@@ -137,20 +137,20 @@ export default function PendingApprovalPage() {
   const hrPos = profileData?.profil?.hr_position ? ` (${profileData.profil.hr_position})` : '';
   const hrWhatsapp = profileData?.profil?.hr_whatsapp || '-';
 
-  const emailSubject = `Konfirmasi Verifikasi Akun Perusahaan - ${companyName}`;
+  const emailSubject = `Konfirmasi Verifikasi Akun Perusahaan/UMKM - ${companyName}`;
   const emailBody =
     `Yth. Tim Administrator AI-Recruit Pro,
 
-Saya ingin mengonfirmasi status peninjauan dan verifikasi akun perusahaan kami:
+Saya ingin mengonfirmasi status peninjauan dan verifikasi akun perusahaan/UMKM kami:
 
-• Nama Perusahaan Resmi : ${companyName}
+• Nama Perusahaan/UMKM Resmi : ${companyName}
 • Nomor NIB / NPWP       : ${nibNumber}
 • Email Akun Terdaftar  : ${accountEmail}
 • Perwakilan HRD         : ${hrName}${hrPos}
 • Nomor WhatsApp HRD     : ${hrWhatsapp}
 • Waktu Pendaftaran      : ${formattedRegistrationDate}
 
-Seluruh dokumen persyaratan legalitas (NIB/NPWP dan ID Card HRD) telah berhasil kami unggah ke sistem. Mohon bantuannya untuk meninjau dan mengaktifkan akun perusahaan kami agar kami dapat mulai menggunakan platform AI-Recruit Pro.
+Seluruh dokumen persyaratan legalitas (NIB/NPWP dan ID Card HRD) telah berhasil kami unggah ke sistem. Mohon bantuannya untuk meninjau dan mengaktifkan akun perusahaan/UMKM kami agar kami dapat mulai menggunakan platform AI-Recruit Pro.
 
 Terima kasih atas perhatian dan kerja samanya.
 
@@ -181,7 +181,7 @@ ${profileData?.profil?.hr_name || companyName}`;
               AI-RecruitPro
             </span>
             <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest mt-1">
-              Portal Perusahaan
+              Portal Perusahaan/UMKM
             </span>
           </div>
         </Link>
@@ -218,14 +218,14 @@ ${profileData?.profil?.hr_name || companyName}`;
 
             <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-white leading-tight">
               {isRejected
-                ? 'Pengajuan Akun Perusahaan Memerlukan Perbaikan'
+                ? 'Pengajuan Akun Perusahaan/UMKM Memerlukan Perbaikan'
                 : 'Pendaftaran Akun Berhasil Dikirim'}
             </h1>
 
             <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 leading-relaxed pt-1">
               {isRejected
-                ? 'Tim kami telah memeriksa data perusahaan Anda dan menemukan beberapa berkas yang perlu diperbaiki. Silakan cek catatan admin di bawah ini.'
-                : 'Terima kasih telah mendaftarkan perusahaan Anda. Tim admin kami sedang memeriksa berkas NIB/NPWP dan ID Card HRD yang telah Anda unggah. Kami akan mengabari Anda setelah proses verifikasi selesai.'}
+                ? 'Tim kami telah memeriksa data perusahaan/UMKM Anda dan menemukan beberapa berkas yang perlu diperbaiki. Silakan cek catatan admin di bawah ini.'
+                : 'Terima kasih telah mendaftarkan perusahaan/UMKM Anda. Tim admin kami sedang memeriksa berkas NIB/NPWP dan ID Card HRD yang telah Anda unggah. Kami akan mengabari Anda setelah proses verifikasi selesai.'}
             </p>
           </div>
 
@@ -235,7 +235,7 @@ ${profileData?.profil?.hr_name || companyName}`;
               <div className="flex items-center gap-3">
                 <CheckCircle2 size={28} className="text-emerald-600 dark:text-emerald-400 shrink-0" />
                 <div>
-                  <h3 className="font-bold text-sm sm:text-base">Akun Perusahaan Berhasil Disetujui!</h3>
+                  <h3 className="font-bold text-sm sm:text-base">Akun Perusahaan/UMKM Berhasil Disetujui!</h3>
                   <p className="text-xs text-emerald-700 dark:text-emerald-400">Verifikasi dokumen Anda telah selesai. Anda sekarang dapat mengakses dashboard rekrutmen secara penuh.</p>
                 </div>
               </div>
@@ -257,7 +257,7 @@ ${profileData?.profil?.hr_name || companyName}`;
                     Pengajuan Verifikasi Memerlukan Perbaikan
                   </h3>
                   <p className="text-xs sm:text-sm text-rose-700 dark:text-rose-300 mt-1">
-                    Berikut adalah catatan perbaikan resmi dari Administrator untuk perusahaan Anda:
+                    Berikut adalah catatan perbaikan resmi dari Administrator untuk perusahaan/UMKM Anda:
                   </p>
 
                   <div className="mt-3 p-3.5 bg-white dark:bg-slate-900 rounded-xl border border-rose-200 dark:border-rose-900/60 text-xs sm:text-sm text-slate-800 dark:text-slate-200 font-medium leading-relaxed">
@@ -287,7 +287,7 @@ ${profileData?.profil?.hr_name || companyName}`;
                 <AlertCircle size={28} className="text-amber-600 dark:text-amber-400 shrink-0" />
                 <div>
                   <h3 className="font-bold text-sm sm:text-base">Data &amp; Dokumen Belum Lengkap!</h3>
-                  <p className="text-xs text-amber-700 dark:text-amber-400">Mohon lengkapi profil perusahaan dan berkas fisik NIB serta KTP/ID Card di Tahap 3.</p>
+                  <p className="text-xs text-amber-700 dark:text-amber-400">Mohon lengkapi profil perusahaan/UMKM dan berkas fisik NIB serta KTP/ID Card di Tahap 3.</p>
                 </div>
               </div>
               <Link
@@ -330,7 +330,7 @@ ${profileData?.profil?.hr_name || companyName}`;
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
                   <div>
                     <span className="text-slate-400 dark:text-slate-500 font-semibold flex items-center gap-1.5 mb-0.5">
-                      <Building2 size={13} /> Nama Perusahaan Resmi:
+                      <Building2 size={13} /> Nama Perusahaan/UMKM Resmi:
                     </span>
                     <span className="font-bold text-slate-800 dark:text-slate-100 text-sm">
                       {profileData?.profil?.nama_perusahaan || '-'}
