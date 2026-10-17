@@ -7,6 +7,7 @@ import Image from 'next/image';
 import { useTranslation } from '@/hooks/useTranslation';
 import { useAppStore } from '@/lib/store/useAppStore';
 import { toast } from 'react-hot-toast';
+import { removeAuthToken } from '@/lib/api';
 import {
   LayoutDashboard,
   Users,
@@ -196,9 +197,10 @@ export function Sidebar({ isBlocked = false }: { isBlocked?: boolean }) {
               <button 
                 onClick={() => {
                   setShowLogoutModal(false);
+                  removeAuthToken();
                   logout();
                   toast.success('Berhasil keluar dari akun perusahaan.');
-                  router.push('/login');
+                  window.location.href = '/login';
                 }}
                 className="px-4 py-2 rounded-lg text-sm font-semibold bg-rose-500 hover:bg-rose-600 text-white transition-colors"
               >

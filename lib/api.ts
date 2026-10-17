@@ -58,16 +58,37 @@ export function setAuthToken(token: string) {
   }
 }
 
+import { useAppStore } from '@/lib/store/useAppStore';
+
 export function removeAuthToken() {
   if (typeof window !== 'undefined') {
-    localStorage.removeItem('access_token');
-    localStorage.removeItem('user_role');
-    localStorage.removeItem('user_id');
-    localStorage.removeItem('user_email');
-    localStorage.removeItem('isPerusahaanLoggedIn');
-    localStorage.removeItem('isPelamarLoggedIn');
-    localStorage.removeItem('candidateCvData');
-    localStorage.removeItem('candidateCvCreated');
+    const keysToRemove = [
+      'access_token',
+      'user_role',
+      'user_id',
+      'user_email',
+      'user_name',
+      'isPerusahaanLoggedIn',
+      'isPelamarLoggedIn',
+      'isCampusLoggedIn',
+      'isAdminLoggedIn',
+      'candidateCvData',
+      'candidateCvCreated',
+      'app-storage',
+      'pendingRegistrationStatus',
+      'pendingCompanyName',
+      'pendingNibNumber',
+      'pendingHrName',
+      'pendingWhatsapp',
+    ];
+    keysToRemove.forEach((key) => localStorage.removeItem(key));
+    try {
+      sessionStorage.clear();
+    } catch {}
+    try {
+      useAppStore.getState().logout();
+    } catch {}
+    window.dispatchEvent(new Event('auth_state_changed'));
   }
 }
 

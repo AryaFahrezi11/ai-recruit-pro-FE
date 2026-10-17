@@ -9,6 +9,7 @@ import {
   LayoutDashboard, Users, ShieldCheck, LogOut, Settings, Menu, X, Briefcase, Database, FileText, MessageSquareQuote
 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
+import { removeAuthToken } from '@/lib/api';
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
@@ -40,9 +41,11 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   }
 
   const handleLogout = () => {
+    setShowLogoutModal(false);
+    removeAuthToken();
     logout();
     toast.success('Logout Admin Berhasil');
-    router.push('/admin/login');
+    window.location.href = '/admin/login';
   };
 
   const navItems = [

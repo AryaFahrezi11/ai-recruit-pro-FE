@@ -6,7 +6,7 @@ import { toast } from 'react-hot-toast';
 import { usePathname, useRouter } from 'next/navigation';
 import { useAppStore } from '@/lib/store/useAppStore';
 import { useTranslation } from '@/hooks/useTranslation';
-import { api } from '@/lib/api';
+import { api, removeAuthToken } from '@/lib/api';
 import { fetchAuth } from '@/lib/api/auth';
 import CampusProfileModal from '@/components/campus/CampusProfileModal';
 import { 
@@ -21,7 +21,7 @@ export default function KampusLayout({
 }) {
   const pathname = usePathname();
   const router = useRouter();
-  const { isMobileSidebarOpen, toggleMobileSidebar } = useAppStore();
+  const { isMobileSidebarOpen, toggleMobileSidebar, logout } = useAppStore();
   const { t } = useTranslation();
   const isAuthPage = pathname === '/campus/login' || pathname === '/campus/register';
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
@@ -716,13 +716,10 @@ export default function KampusLayout({
               <button 
                 onClick={() => {
                   setShowLogoutModal(false);
-                  localStorage.removeItem('access_token');
-                  localStorage.removeItem('user_role');
-                  localStorage.removeItem('user_id');
-                  localStorage.removeItem('user_email');
-                  localStorage.removeItem('isCampusLoggedIn');
+                  removeAuthToken();
+                  logout();
                   toast.success('Berhasil keluar dari akun Universitas.');
-                  router.push('/campus/login');
+                  window.location.href = '/campus/login';
                 }}
                 className="px-5 py-2 rounded-full text-xs font-extrabold bg-rose-600 hover:bg-rose-700 text-white shadow-md transition-colors cursor-pointer"
               >
