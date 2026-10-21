@@ -371,10 +371,6 @@ function CompanyRegistrationInner() {
       setErrorStep3('Harap pilih Ukuran Perusahaan/UMKM.');
       return;
     }
-    if (!websiteUrl.trim()) {
-      setErrorStep3('Harap isi Link Website Resmi Perusahaan/UMKM.');
-      return;
-    }
 
     // Validasi NIB: Wajib untuk Gmail, opsional untuk email perusahaan
     if (isGmail) {
@@ -995,9 +991,11 @@ function CompanyRegistrationInner() {
 
 
                 <div>
-                  <label className={labelBase}>Website Perusahaan/UMKM <span className="text-red-500">*</span></label>
+                  <label className={labelBase}>
+                    Website Perusahaan/UMKM <span className="text-slate-400 font-normal text-[11px]">(Opsional)</span>
+                  </label>
                   <input type="url" value={websiteUrl} onChange={(e) => setWebsiteUrl(e.target.value)}
-                    placeholder="https://www.perusahaan.com" className={inputBase} />
+                    placeholder="https://www.perusahaan.com (Opsional)" className={inputBase} />
                 </div>
 
                 <div>
