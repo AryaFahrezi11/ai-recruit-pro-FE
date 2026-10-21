@@ -7,7 +7,7 @@ import toast from 'react-hot-toast';
 import {
   X, CheckCircle2, XCircle,
   Check, FileText, Video, BarChart3,
-  Upload, Brain, UserCheck, Scan, Download, ExternalLink,
+  Upload, Brain, UserCheck, Download, ExternalLink,
   Clock, AlertCircle, Sparkles, Briefcase, Mail, Phone, Lock, Archive, GraduationCap,
   HelpCircle, Calendar, Send, Edit3, Copy,
   ChevronDown, ChevronUp
@@ -143,7 +143,6 @@ export function CandidateModal({ candidate, onClose, onStatusUpdated }: Candidat
   const [intvNotes, setIntvNotes] = useState(interviewData?.catatan || '');
   const [rejectReason, setRejectReason] = useState('Kualifikasi profil belum memenuhi kebutuhan posisi saat ini.');
   const [expandedQs, setExpandedQs] = useState<Record<number, boolean>>({});
-  const [expandedObservasi, setExpandedObservasi] = useState(false);
   const [expandedKompetensi, setExpandedKompetensi] = useState(false);
 
   const toggleQuestion = (idx: number) => {
@@ -445,72 +444,16 @@ Salam hangat,
 
   // Radar Chart data (Istilah umum kompetensi kerja)
   const radarData = [
-    { subject: 'Komunikasi', A: abilityScore, fullMark: 100 },
-    { subject: 'Pemahaman', A: intelligentScore, fullMark: 100 },
-    { subject: 'Percaya Diri', A: personalityScore, fullMark: 100 },
-    { subject: 'Sikap Kerja', A: attitudeScore, fullMark: 100 },
-    { subject: 'Ketenangan', A: emotionalIntelligenceScore, fullMark: 100 },
+    { subject: 'Ability', A: abilityScore, fullMark: 100 },
+    { subject: 'Intelligent', A: intelligentScore, fullMark: 100 },
+    { subject: 'Personality', A: personalityScore, fullMark: 100 },
+    { subject: 'Attitude', A: attitudeScore, fullMark: 100 },
+    { subject: 'Emotional Intelligent', A: emotionalIntelligenceScore, fullMark: 100 },
   ];
 
-  // Observasi Sikap & Bahasa Tubuh (Gabungan kualitatif deskriptif + persentase konsistensi)
-  const eyeContactVal = aiResult?.parameter_analisis?.kontak_mata !== undefined ? Math.round(aiResult.parameter_analisis.kontak_mata) : 90;
-  const postureVal = aiResult?.parameter_analisis?.gerakan_badan !== undefined ? Math.round(aiResult.parameter_analisis.gerakan_badan) : 85;
   const speechVal = aiResult?.parameter_analisis?.word_per_second_percent !== undefined ? Math.round(aiResult.parameter_analisis.word_per_second_percent) : 82;
-  const gestureVal = aiResult?.parameter_analisis?.gerakan_tangan !== undefined ? Math.round(aiResult.parameter_analisis.gerakan_tangan) : 78;
-  const headVal = aiResult?.parameter_analisis?.gerakan_kepala !== undefined ? Math.round(aiResult.parameter_analisis.gerakan_kepala) : 72;
   const pelafalanStatus = aiResult?.pelafalan?.status || aiResult?.parameter_analisis?.kejelasan_pelafalan || (speechVal >= 70 ? 'Jelas & Fasih' : 'Cukup Jelas');
   const isPelafalanUnclear = pelafalanStatus === 'Pelafalan Tidak Jelas';
-
-  const videoObservations = [
-    {
-      label: 'Fokus & Kontak Mata',
-      statusText: eyeContactVal >= 75 ? 'Sangat Terfokus ke Kamera' : eyeContactVal >= 50 ? 'Cukup Fokus & Interaktif' : 'Kurang Menatap Kamera',
-      value: eyeContactVal,
-      badgeColor: eyeContactVal >= 70 ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20' : 'bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20',
-      dotColor: eyeContactVal >= 70 ? 'bg-emerald-500' : 'bg-blue-500'
-    },
-    {
-      label: 'Kerapian & Postur Duduk',
-      statusText: postureVal >= 75 ? 'Tegap & Sangat Stabil' : postureVal >= 50 ? 'Cukup Tenang & Wajar' : 'Banyak Pergerakan Duduk',
-      value: postureVal,
-      badgeColor: postureVal >= 70 ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20' : 'bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20',
-      dotColor: postureVal >= 70 ? 'bg-emerald-500' : 'bg-blue-500'
-    },
-    {
-      label: 'Kelancaran & Kecepatan Bicara',
-      statusText: speechVal >= 70 ? 'Lancar & Teratur' : speechVal >= 50 ? 'Tempo Wajar & Cukup Jelas' : 'Tempo Kurang Teratur',
-      value: speechVal,
-      badgeColor: speechVal >= 70 ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20' : 'bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20',
-      dotColor: speechVal >= 70 ? 'bg-emerald-500' : 'bg-blue-500'
-    },
-    {
-      label: 'Kejelasan Pelafalan & Artikulasi',
-      statusText: isPelafalanUnclear
-        ? 'Pelafalan Tidak Jelas'
-        : pelafalanStatus === 'Cukup Jelas'
-          ? 'Cukup Jelas'
-          : 'Jelas & Mudah Dipahami',
-      value: isPelafalanUnclear ? 30 : (pelafalanStatus === 'Cukup Jelas' ? 65 : 92),
-      badgeColor: isPelafalanUnclear
-        ? 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/30'
-        : 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20',
-      dotColor: isPelafalanUnclear ? 'bg-rose-500' : 'bg-emerald-500'
-    },
-    {
-      label: 'Gestur Tangan & Keaktifan',
-      statusText: gestureVal >= 60 ? 'Alami & Mendukung Penjelasan' : gestureVal >= 30 ? 'Cukup Wajar' : 'Minim Gestur Tangan',
-      value: gestureVal,
-      badgeColor: gestureVal >= 60 ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20' : 'bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20',
-      dotColor: gestureVal >= 60 ? 'bg-emerald-500' : 'bg-blue-500'
-    },
-    {
-      label: 'Respon Wajah & Anggukan',
-      statusText: headVal >= 60 ? 'Responsif & Ekspresif' : headVal >= 40 ? 'Tenang & Terkendali' : 'Cenderung Kaku',
-      value: headVal,
-      badgeColor: headVal >= 60 ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20' : 'bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20',
-      dotColor: headVal >= 60 ? 'bg-emerald-500' : 'bg-blue-500'
-    },
-  ];
 
   // Handle Decision (Hire / Reject / Interview Lanjutan) -> Move to Archive
   const handleDecision = (outcome: 'hired' | 'rejected' | 'interview_lanjutan') => {
@@ -1724,47 +1667,6 @@ Salam hangat,
 
                 {/* Right Side: Radar Chart, 5 Aspek Kompetensi & Decision Buttons */}
                 <div className="space-y-4">
-                  {/* Observasi Perilaku & Gaya Komunikasi */}
-                  <div className="p-4 bg-card rounded-xl border border-border shadow-sm space-y-3 transition-all">
-                    <div
-                      className="cursor-pointer flex items-center justify-between select-none"
-                      onClick={() => setExpandedObservasi(!expandedObservasi)}
-                    >
-                      <div>
-                        <h4 className="font-bold text-sm text-foreground flex items-center gap-2">
-                          <Scan size={16} className="text-primary" />
-                          <span>Observasi Sikap & Bahasa Tubuh</span>
-                        </h4>
-                        <p className="text-[11px] text-muted-foreground mt-0.5">
-                          Catatan pengamatan fisik rekaman video.
-                        </p>
-                      </div>
-                      <div className={`p-1 rounded-md transition-transform duration-200 ${expandedObservasi ? "rotate-180" : ""}`}>
-                        <ChevronDown size={16} className="text-muted-foreground" />
-                      </div>
-                    </div>
-
-                    {expandedObservasi && (
-                      <div className="space-y-2 pt-3 border-t border-border/50 animate-in slide-in-from-top-2 fade-in duration-200">
-                        {videoObservations.map((item, index) => (
-                          <div key={index} className="p-2.5 bg-muted/30 hover:bg-muted/50 transition-colors rounded-lg border border-border/70 flex items-center justify-between gap-3">
-                            <div className="min-w-0 flex-1">
-                              <span className="text-xs font-semibold text-foreground block truncate">
-                                {item.label}
-                              </span>
-                              <span className="text-[11px] text-muted-foreground flex items-center gap-1.5 mt-0.5 font-medium">
-                                <span className={`w-1.5 h-1.5 rounded-full ${item.dotColor}`} />
-                                {item.statusText}
-                              </span>
-                            </div>
-                            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md border shrink-0 ${item.badgeColor}`}>
-                              {item.value}% Konsisten
-                            </span>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
 
                   {/* Evaluasi Kompetensi & Keputusan HR (Gabungan Radar Chart & Bar) */}
                   <div className="p-5 bg-card rounded-xl border border-border shadow-sm space-y-5 transition-all">
@@ -1802,11 +1704,11 @@ Salam hangat,
                         {/* Read-Only Competency Bars */}
                         <div className="space-y-3.5">
                           {[
-                            { label: 'Komunikasi & Artikulasi', score: Math.round(abilityScore), color: 'bg-blue-600' },
-                            { label: 'Pemahaman & Respon', score: Math.round(intelligentScore), color: 'bg-indigo-600' },
-                            { label: 'Kepercayaan Diri', score: Math.round(personalityScore), color: 'bg-amber-600' },
-                            { label: 'Sikap Kerja & Profesionalisme', score: Math.round(attitudeScore), color: 'bg-emerald-600' },
-                            { label: 'Ketenangan & Emosi', score: Math.round(emotionalIntelligenceScore), color: 'bg-cyan-600' },
+                            { label: 'Ability', score: Math.round(abilityScore), color: 'bg-blue-600' },
+                            { label: 'Intelligent', score: Math.round(intelligentScore), color: 'bg-indigo-600' },
+                            { label: 'Personality', score: Math.round(personalityScore), color: 'bg-amber-600' },
+                            { label: 'Attitude', score: Math.round(attitudeScore), color: 'bg-emerald-600' },
+                            { label: 'Emotional Intelligent', score: Math.round(emotionalIntelligenceScore), color: 'bg-cyan-600' },
                           ].map((item, i) => (
                             <div key={i} className="space-y-1.5">
                               <div className="flex justify-between items-center text-[11px]">
